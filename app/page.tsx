@@ -1,0 +1,97 @@
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { BrainCircuit, Newspaper, Trophy, ArrowRight } from 'lucide-react';
+
+/** Public landing page (/) marketing Consilio to MBA aspirants. */
+export default function LandingPage() {
+  return (
+    <main className="min-h-screen">
+      {/* Header */}
+      <header className="border-b border-border bg-white">
+        <div className="container flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-xl font-bold tracking-tight text-slate-900">
+              Consilio
+            </span>
+            <span className="hidden rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 sm:inline-block">
+              MBA prep
+            </span>
+          </Link>
+          <nav className="flex items-center gap-2">
+            <Link href="/login">
+              <Button variant="ghost">Login</Button>
+            </Link>
+            <Link href="/signup">
+              <Button className="bg-amber-500 text-white hover:bg-amber-600">Sign up free</Button>
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="container py-20 lg:py-28">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            Built for Indian MBA students
+          </span>
+          <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
+            Your AI co-pilot for{' '}
+            <span className="text-amber-500">case interviews</span> and GD prep
+          </h1>
+          <p className="mt-6 text-lg leading-relaxed text-slate-600">
+            Daily cases, AI feedback, GD-ready news briefs. Built for Indian MBA students. Practice like it&apos;s placement season every day.
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/signup">
+              <Button size="lg" className="bg-amber-500 text-white hover:bg-amber-600">
+                Sign up free <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button size="lg" variant="outline">Login</Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="container pb-20">
+        <div className="grid gap-6 md:grid-cols-3">
+          <FeatureCard
+            icon={<BrainCircuit className="h-6 w-6 text-amber-500" />}
+            title="AI-scored case practice"
+            description="Submit answers to real guesstimate, profitability and market-sizing cases. Get structured feedback in under a minute."
+          />
+          <FeatureCard
+            icon={<Newspaper className="h-6 w-6 text-amber-500" />}
+            title="Daily GD briefs"
+            description="Curated news + smart angles, data points and how-to-open lines. Walk into any GD with a sharp opinion."
+          />
+          <FeatureCard
+            icon={<Trophy className="h-6 w-6 text-amber-500" />}
+            title="Peer leaderboard"
+            description="Compete with MBA aspirants across India. Climb the ranks with every case you crack."
+          />
+        </div>
+      </section>
+
+      <footer className="border-t border-border bg-slate-50">
+        <div className="container py-8 text-sm text-slate-500">
+          © {new Date().getFullYear()} Consilio. Built for the next generation of consultants.
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+/** Single feature card on the landing page. */
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50">{icon}</div>
+      <h3 className="mt-4 text-lg font-semibold text-slate-900">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">{description}</p>
+    </div>
+  );
+}
