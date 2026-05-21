@@ -27,17 +27,33 @@ export const DIFFICULTY_COLORS: Record<string, string> = {
   hard: 'bg-rose-100 text-rose-800 border-rose-200',
 };
 
-export const SCORE_DIMENSIONS = ['structure', 'logic', 'data_usage', 'communication', 'creativity'] as const;
+export const SCORE_DIMENSIONS = [
+  'structure',
+  'quantitative',
+  'synthesis',
+  'business_judgment',
+  'creativity',
+  'presence',
+] as const;
+
 export type ScoreDimension = (typeof SCORE_DIMENSIONS)[number];
 
 export const SCORE_DIMENSION_LABELS: Record<string, string> = {
   structure: 'Structure',
-  logic: 'Logic',
-  data_usage: 'Data Usage',
-  communication: 'Communication',
+  quantitative: 'Quantitative Skills',
+  synthesis: 'Synthesis & Communication',
+  business_judgment: 'Business Judgment',
   creativity: 'Creativity',
+  presence: 'Professional Tone',
 };
-
+export const SCORE_DIMENSION_MAX: Record<string, number> = {
+  structure: 25,
+  quantitative: 20,
+  synthesis: 20,
+  business_judgment: 15,
+  creativity: 10,
+  presence: 10,
+};
 export const MIN_ANSWER_CHARS = 200;
 
 /** Routes that are accessible without authentication. */
