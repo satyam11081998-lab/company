@@ -4,10 +4,14 @@ import { createClient } from '@/lib/supabase/server';
 import AppNav from '@/components/app-nav';
 import type { UserRow, CaseRow, GdBriefRow, SubmissionRow } from '@/lib/types';
 import { CASE_TYPE_LABELS, DIFFICULTY_COLORS, DIFFICULTY_LABELS } from '@/lib/constants';
-import { Card } from '@/components/ui/card';
+import { Card as _Card } from '@/components/ui/card';
 import { Trophy, Sparkles, FileText, Newspaper, ArrowRight } from 'lucide-react';
+import type React from 'react';
 
 export const dynamic = 'force-dynamic';
+
+// Cast once here — fixes the RefAttributes<any> resolution error regardless of TS/React version
+const Card = _Card as React.ComponentType<{ className?: string; children?: React.ReactNode }>;
 
 /** Authenticated dashboard — today's case, today's brief, points, rank, recent activity. */
 export default async function DashboardPage() {
@@ -44,7 +48,9 @@ export default async function DashboardPage() {
       <AppNav user={userRow} />
       <main className="container py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back{userRow.name ? `, ${userRow.name.split(' ')[0]}` : ''} 👋</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Welcome back{userRow.name ? `, ${userRow.name.split(' ')[0]}` : ''} 👋
+          </h1>
           <p className="mt-1 text-slate-600">Here&apos;s what to work on today.</p>
         </div>
 
@@ -68,8 +74,12 @@ export default async function DashboardPage() {
               <>
                 <h3 className="mt-3 text-xl font-semibold text-slate-900">{todayCase.title}</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">{CASE_TYPE_LABELS[todayCase.type] || todayCase.type}</span>
-                  <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${DIFFICULTY_COLORS[todayCase.difficulty] || ''}`}>{DIFFICULTY_LABELS[todayCase.difficulty] || todayCase.difficulty}</span>
+                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">
+                    {CASE_TYPE_LABELS[todayCase.type] || todayCase.type}
+                  </span>
+                  <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${DIFFICULTY_COLORS[todayCase.difficulty] || ''}`}>
+                    {DIFFICULTY_LABELS[todayCase.difficulty] || todayCase.difficulty}
+                  </span>
                 </div>
                 <p className="mt-3 line-clamp-3 text-sm text-slate-600">{todayCase.content}</p>
                 <Link href={`/cases/${todayCase.id}`} className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-amber-600 hover:underline">
@@ -106,16 +116,29 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Recent activity</h2>
           <Card className="mt-3 divide-y divide-border">
             {recentSubs.length === 0 ? (
-              <p className="p-6 text-sm text-slate-500">No submissions yet — <Link href="/cases" className="font-medium text-amber-600 hover:underline">try a case</Link>.</p>
+              <p className="p-6 text-sm text-slate-500">
+                No submissions yet —{' '}
+                <Link href="/cases" className="font-medium text-amber-600 hover:underline">
+                  try a case
+                </Link>.
+              </p>
             ) : (
               recentSubs.map((s) => (
-                <Link key={s.id} href={`/results/${s.id}`} className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
+                <Link
+                  key={s.id}
+                  href={`/results/${s.id}`}
+                  className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50"
+                >
                   <div>
-                    <p className="text-sm font-medium text-slate-900">Submission · {new Date(s.created_at).toLocaleString()}</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      Submission · {new Date(s.created_at).toLocaleString()}
+                    </p>
                     <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{s.answer_text.slice(0, 120)}…</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-lg font-semibold text-slate-900">{s.score ?? '—'}<span className="text-xs font-normal text-slate-500">/100</span></span>
+                    <span className="text-lg font-semibold text-slate-900">
+                      {s.score ?? '—'}<span className="text-xs font-normal text-slate-500">/100</span>
+                    </span>
                     <ArrowRight className="h-4 w-4 text-slate-400" />
                   </div>
                 </Link>
@@ -129,7 +152,17 @@ export default async function DashboardPage() {
 }
 
 /** Small KPI tile shown on the dashboard. */
-function StatCard({ label, value, icon, sublabel }: { label: string; value: string | number; icon: React.ReactNode; sublabel?: string }) {
+function StatCard({
+  label,
+  value,
+  icon,
+  sublabel,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  sublabel?: string;
+}) {
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between">
