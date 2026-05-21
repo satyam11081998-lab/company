@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import AuthForm from '@/components/auth-form';
 
+export const dynamic = 'force-dynamic';
+
 /** Login page. */
 export default function LoginPage() {
   return (
