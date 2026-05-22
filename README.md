@@ -1,8 +1,8 @@
-# Consilio
+# MECE
 
 AI co-pilot for case interviews and GD prep — built for Indian MBA / PGDM aspirants.
 
-This repo contains the **Next.js 14 + TypeScript + Supabase** frontend for Consilio.
+This repo contains the **Next.js 14 + TypeScript + Supabase** frontend for MECE.
 The AI scoring service lives in a **separate FastAPI repo** and is reached via the
 `NEXT_PUBLIC_API_URL` env variable.
 
@@ -247,4 +247,4 @@ That's it. The frontend deploys statelessly — all data lives in Supabase.
 
 ## 🪪 License
 
-Private — © Consilio. All rights reserved.
+Private — © MECE. All rights reserved.

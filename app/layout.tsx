@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
-  title: 'Consilio — Case interview & GD prep for Indian MBA students',
+  title: 'MECE — Case interview & GD prep for Indian MBA students',
   description: 'Daily cases, structured feedback, and GD-ready news briefs for MBA & PGDM aspirants in India.',
 };
 
@@ -27,7 +27,7 @@ function Footer() {
     <footer className="border-t border-slate-200 bg-white mt-auto">
       <div className="container max-w-6xl py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-900">Consilio</span>
+          <span className="font-semibold text-slate-900">MECE</span>
           <span className="ml-2">© {new Date().getFullYear()}</span>
         </div>
         <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">

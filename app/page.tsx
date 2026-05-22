@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-/** Public landing page (/) marketing Consilio to MBA aspirants.
+/** Public landing page (/) marketing MECE to MBA aspirants.
  *  If the user is already logged in, redirects them straight to /dashboard. */
 export default async function LandingPage() {
   // If user is already authenticated, send them to the dashboard
@@ -23,7 +23,7 @@ export default async function LandingPage() {
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight text-slate-900">
-              Consilio
+              MECE
             </span>
             <span className="hidden rounded-md bg-navy text-navy-foreground px-2 py-0.5 text-xs font-medium sm:inline-block">
               MBA prep
@@ -90,7 +90,7 @@ export default async function LandingPage() {
 
       <footer className="border-t border-border bg-slate-50">
         <div className="container py-8 text-sm text-slate-500">
-          © {new Date().getFullYear()} Consilio. Built for the next generation of consultants.
+          © {new Date().getFullYear()} MECE. Built for the next generation of consultants.
         </div>
       </footer>
     </main>

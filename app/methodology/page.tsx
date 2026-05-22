@@ -21,7 +21,7 @@ export default async function MethodologyPage() {
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Methodology</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-900">
-            How Consilio evaluates your answers
+            How MECE evaluates your answers
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-base leading-relaxed text-slate-600">
             Case interview evaluation isn&apos;t subjective magic. It follows consistent principles
@@ -144,13 +144,13 @@ export default async function MethodologyPage() {
           <h2 className="text-2xl font-bold text-slate-900">Important notes</h2>
           <Card className="mt-6 p-6 space-y-4 text-sm leading-relaxed text-slate-700">
             <p>
-              <strong className="text-slate-900">No official affiliation.</strong> Consilio is an
+              <strong className="text-slate-900">No official affiliation.</strong> MECE is an
               independent platform. We are not affiliated with, endorsed by, or sponsored by
               McKinsey, BCG, Bain, any IIM, FMS Delhi, or any consulting firm or B-school referenced
               on this page.
             </p>
             <p>
-              <strong className="text-slate-900">Evaluation limitations.</strong> Consilio&apos;s
+              <strong className="text-slate-900">Evaluation limitations.</strong> MECE&apos;s
               evaluation augments practice but doesn&apos;t replace human feedback from professors,
               mentors, or peer mock interviews. We assess written submissions; live behavioral
               signals (composure, body language, active listening) are not captured.

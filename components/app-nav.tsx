@@ -9,7 +9,7 @@ export default function AppNav({ user }: { user: UserRow | null }) {
     <header className="sticky top-0 z-30 border-b border-border bg-white/80 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="text-xl font-bold tracking-tight text-slate-900">Consilio</Link>
+          <Link href="/dashboard" className="text-xl font-bold tracking-tight text-slate-900">MECE</Link>
           <nav className="hidden items-center gap-1 text-sm font-medium text-slate-600 md:flex">
             <NavLink href="/dashboard">Dashboard</NavLink>
             <NavLink href="/cases">Cases</NavLink>
