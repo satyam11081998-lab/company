@@ -1,9 +1,21 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { BrainCircuit, Newspaper, Trophy, ArrowRight } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 
-/** Public landing page (/) marketing Consilio to MBA aspirants. */
-export default function LandingPage() {
+export const dynamic = 'force-dynamic';
+
+/** Public landing page (/) marketing Consilio to MBA aspirants.
+ *  If the user is already logged in, redirects them straight to /dashboard. */
+export default async function LandingPage() {
+  // If user is already authenticated, send them to the dashboard
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    redirect('/dashboard');
+  }
+
   return (
     <main className="min-h-screen">
       {/* Header */}
@@ -36,11 +48,11 @@ export default function LandingPage() {
             Built for Indian MBA students
           </span>
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-            Your AI co-pilot for{' '}
-            <span className="text-amber-500">case interviews</span> and GD prep
+            Crack{' '}
+            <span className="text-amber-500">case interviews</span> with structured practice
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-slate-600">
-            Daily cases, AI feedback, GD-ready news briefs. Built for Indian MBA students. Practice like it&apos;s placement season every day.
+            Daily cases, structured feedback grounded in consulting frameworks, and GD-ready news briefs. Built for Indian MBA students preparing for placements.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/signup">
@@ -60,13 +72,13 @@ export default function LandingPage() {
         <div className="grid gap-6 md:grid-cols-3">
           <FeatureCard
             icon={<BrainCircuit className="h-6 w-6 text-amber-500" />}
-            title="AI-scored case practice"
-            description="Submit answers to real guesstimate, profitability and market-sizing cases. Get structured feedback in under a minute."
+            title="Structured case practice"
+            description="Submit answers to real guesstimate, profitability and market-sizing cases. Get rigorous feedback across 6 dimensions in under a minute."
           />
           <FeatureCard
             icon={<Newspaper className="h-6 w-6 text-amber-500" />}
             title="Daily GD briefs"
-            description="Curated news + smart angles, data points and how-to-open lines. Walk into any GD with a sharp opinion."
+            description="Curated news with smart angles, data points and opening lines. Walk into any GD with a sharp, defensible opinion."
           />
           <FeatureCard
             icon={<Trophy className="h-6 w-6 text-amber-500" />}
