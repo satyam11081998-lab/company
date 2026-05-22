@@ -1,3 +1,13 @@
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import AppNav from '@/components/app-nav';
+import type { UserRow, CaseRow, GdBriefRow, SubmissionRow } from '@/lib/types';
+import { CASE_TYPE_LABELS, DIFFICULTY_COLORS, DIFFICULTY_LABELS } from '@/lib/constants';
+import { Card } from '@/components/ui/card';
+import { Trophy, Sparkles, FileText, Newspaper, ArrowRight } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
