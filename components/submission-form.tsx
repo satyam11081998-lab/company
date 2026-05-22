@@ -37,8 +37,8 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
 
   if (isSubmitting) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-amber-200 bg-amber-50 p-12 text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
+      <div className="flex flex-col items-center justify-center rounded-lg border border-primary/20 bg-accent p-12 text-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="mt-4 text-lg font-semibold text-slate-900">Scoring your answer…</p>
         <p className="mt-1 text-sm text-slate-600">This can take 10–20 seconds. Hang tight.</p>
       </div>
@@ -59,7 +59,7 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
         <span className={`text-xs font-medium ${isValid ? 'text-emerald-700' : 'text-slate-500'}`}>
           {charCount} / {MIN_ANSWER_CHARS} characters minimum
         </span>
-        <Button type="submit" disabled={!isValid} className="bg-amber-500 text-white hover:bg-amber-600">
+        <Button type="submit" disabled={!isValid} className="bg-primary text-primary-foreground hover:bg-primary-hover">
           Submit for AI feedback
         </Button>
       </div>

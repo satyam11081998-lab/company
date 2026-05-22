@@ -95,14 +95,14 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
             {mode === 'login' && (
-              <Link href="/forgot-password" className="text-xs font-medium text-amber-600 hover:underline">
+              <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
                 Forgot password?
               </Link>
             )}
           </div>
           <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
         </div>
-        <Button type="submit" disabled={isLoading} className="h-11 w-full bg-amber-500 text-white hover:bg-amber-600">
+        <Button type="submit" disabled={isLoading} className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary-hover">
           {isLoading ? 'Please wait…' : mode === 'login' ? 'Login' : 'Create account'}
         </Button>
       </form>
@@ -111,12 +111,12 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         {mode === 'login' ? (
           <>
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="font-medium text-amber-600 hover:underline">Sign up</Link>
+            <Link href="/signup" className="font-medium text-primary hover:underline">Sign up</Link>
           </>
         ) : (
           <>
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-amber-600 hover:underline">Login</Link>
+            <Link href="/login" className="font-medium text-primary hover:underline">Login</Link>
           </>
         )}
       </p>

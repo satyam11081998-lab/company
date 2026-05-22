@@ -66,7 +66,7 @@ export default function CasesBrowser({ cases }: { cases: CaseRow[] }) {
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   const base = 'rounded-full border px-3 py-1 text-sm font-medium transition-colors';
   const cls = active
-    ? 'border-amber-500 bg-amber-500 text-white'
+    ? 'border-primary bg-primary text-primary-foreground'
     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50';
   return (
     <button type="button" className={`${base} ${cls}`} onClick={onClick}>{label}</button>

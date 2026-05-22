@@ -19,7 +19,7 @@ export default async function MethodologyPage() {
       <AppNav user={userRow} />
       <main className="container max-w-4xl py-12">
         <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-amber-600">Methodology</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Methodology</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-900">
             How Consilio evaluates your answers
           </h1>
@@ -170,7 +170,7 @@ export default async function MethodologyPage() {
 
         <div className="mt-14 flex justify-center">
           <Link href="/cases">
-            <Button className="bg-amber-500 text-white hover:bg-amber-600">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
               Start practicing
             </Button>
           </Link>
@@ -190,7 +190,7 @@ function DimensionCard(props: {
     <Card className="p-6">
       <div className="flex items-start justify-between gap-4">
         <h3 className="text-lg font-semibold text-slate-900">{props.name}</h3>
-        <span className="flex-shrink-0 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+        <span className="flex-shrink-0 rounded-md bg-accent px-2.5 py-1 text-xs font-semibold text-primary">
           {props.max} pts
         </span>
       </div>
@@ -215,7 +215,7 @@ function FrameworkItem(props: { name: string; desc: string }) {
 function SourceLink(props: { title: string; url: string }) {
   return (
     <li>
-      <a href={props.url} target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:text-amber-800 hover:underline">
+      <a href={props.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary hover:underline">
         {props.title}
       </a>
     </li>

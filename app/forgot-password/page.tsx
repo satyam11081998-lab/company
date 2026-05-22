@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
             <div className="space-y-4 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</div>
               <p className="text-sm text-slate-700">Check your email for a reset link.</p>
-              <Link href="/login" className="inline-block text-sm font-medium text-amber-600 hover:underline">Back to login</Link>
+              <Link href="/login" className="inline-block text-sm font-medium text-primary hover:underline">Back to login</Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@iim.example" />
               </div>
-              <Button type="submit" disabled={isLoading} className="h-11 w-full bg-amber-500 text-white hover:bg-amber-600">
+              <Button type="submit" disabled={isLoading} className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary-hover">
                 {isLoading ? 'Sending…' : 'Send reset link'}
               </Button>
               <Link href="/login" className="block text-center text-sm font-medium text-slate-600 hover:underline">Back to login</Link>

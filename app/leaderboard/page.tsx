@@ -59,7 +59,7 @@ export default async function LeaderboardPage() {
                   key={u.id}
                   className={`flex items-center justify-between gap-4 px-5 py-4 ${
                     isCurrentUser
-                      ? 'bg-amber-50 ring-1 ring-inset ring-amber-200'
+                      ? 'bg-accent ring-1 ring-inset ring-primary/20'
                       : isMedal
                       ? medalTints[idx]
                       : ''
@@ -71,13 +71,13 @@ export default async function LeaderboardPage() {
                     </span>
                     <Avatar className="h-10 w-10 border border-border">
                       {u.avatar_url && <AvatarImage src={u.avatar_url} alt={u.name || ''} />}
-                      <AvatarFallback className="bg-amber-100 text-sm font-medium text-amber-800">
+                      <AvatarFallback className="bg-navy text-navy-foreground text-sm font-medium">
                         {u.name?.charAt(0).toUpperCase() || u.email.charAt(0).toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium text-slate-900">
-                        {u.name || u.email.split('@')[0]} {isCurrentUser && <span className="ml-1 text-xs font-semibold text-amber-700">(you)</span>}
+                        {u.name || u.email.split('@')[0]} {isCurrentUser && <span className="ml-1 text-xs font-semibold text-primary">(you)</span>}
                       </p>
                       <p className="text-xs text-slate-500">{subCountByUser[u.id] || 0} submissions</p>
                     </div>

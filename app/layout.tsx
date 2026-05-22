@@ -31,16 +31,16 @@ function Footer() {
           <span className="ml-2">© {new Date().getFullYear()}</span>
         </div>
         <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-          <Link href="/methodology" className="text-slate-600 hover:text-amber-600">
+          <Link href="/methodology" className="text-slate-600 hover:text-primary">
             Methodology
           </Link>
-          <Link href="/cases" className="text-slate-600 hover:text-amber-600">
+          <Link href="/cases" className="text-slate-600 hover:text-primary">
             Cases
           </Link>
-          <Link href="/learn" className="text-slate-600 hover:text-amber-600">
+          <Link href="/learn" className="text-slate-600 hover:text-primary">
             Learn
           </Link>
-          <Link href="/leaderboard" className="text-slate-600 hover:text-amber-600">
+          <Link href="/leaderboard" className="text-slate-600 hover:text-primary">
             Leaderboard
           </Link>
         </nav>

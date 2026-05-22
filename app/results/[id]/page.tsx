@@ -48,7 +48,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
         {/* Big score */}
         <Card className="flex flex-col items-center p-10 text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Your score</p>
-          <p className="mt-3 text-7xl font-bold text-amber-500">
+          <p className="mt-3 text-7xl font-bold text-primary">
             {score}
             <span className="text-3xl font-normal text-slate-400">/100</span>
           </p>
@@ -76,7 +76,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
                   </div>
                   <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-amber-500"
+                      className="h-full rounded-full bg-primary"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -106,7 +106,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
             </ul>
           </Card>
           <Card className="p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-amber-700">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
               Where you can improve
             </h3>
             <ul className="mt-4 space-y-3">
@@ -115,7 +115,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
               ) : (
                 improvements.map((item, idx) => (
                   <li key={idx} className="flex gap-2 text-sm text-slate-700">
-                    <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+                    <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                     <span>{item}</span>
                   </li>
                 ))
@@ -126,7 +126,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
 
         <div className="mt-8 flex justify-center">
           <Link href="/cases">
-            <Button className="bg-amber-500 text-white hover:bg-amber-600">Try another case</Button>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">Try another case</Button>
           </Link>
         </div>
       </main>

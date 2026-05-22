@@ -20,12 +20,12 @@ export default function AppNav({ user }: { user: UserRow | null }) {
         </div>
         <div className="flex items-center gap-3">
           {user && (
-            <span className="hidden text-sm font-medium text-amber-700 sm:inline">{user.points} pts</span>
+            <span className="hidden text-sm font-medium text-primary sm:inline">{user.points} pts</span>
           )}
           <Link href="/profile">
             <Avatar className="h-9 w-9 cursor-pointer border border-border">
               {user?.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name || ''} />}
-              <AvatarFallback className="bg-amber-100 text-sm font-medium text-amber-800">
+              <AvatarFallback className="bg-navy text-navy-foreground text-sm font-medium">
                 {user?.name?.charAt(0).toUpperCase() || user?.email.charAt(0).toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>

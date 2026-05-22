@@ -50,10 +50,10 @@ export default async function DashboardPage() {
 
         {/* Top cards row */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Your points" value={userRow.points} icon={<Sparkles className="h-5 w-5 text-amber-500" />} />
-          <StatCard label="Your rank" value={rankDisplay} icon={<Trophy className="h-5 w-5 text-amber-500" />} />
-          <StatCard label="Submissions" value={recentSubs.length} icon={<FileText className="h-5 w-5 text-amber-500" />} sublabel="recent" />
-          <StatCard label="GD briefs" value={todayBrief ? '1 new' : '—'} icon={<Newspaper className="h-5 w-5 text-amber-500" />} sublabel="today" />
+          <StatCard label="Your points" value={userRow.points} icon={<Sparkles className="h-5 w-5 text-primary" />} />
+          <StatCard label="Your rank" value={rankDisplay} icon={<Trophy className="h-5 w-5 text-primary" />} />
+          <StatCard label="Submissions" value={recentSubs.length} icon={<FileText className="h-5 w-5 text-primary" />} sublabel="recent" />
+          <StatCard label="GD briefs" value={todayBrief ? '1 new' : '—'} icon={<Newspaper className="h-5 w-5 text-primary" />} sublabel="today" />
         </div>
 
         {/* Featured row */}
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
           <Card className="flex flex-col p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Today&apos;s case</h2>
-              <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Recommended</span>
+              <span className="rounded-md bg-navy text-navy-foreground px-2 py-0.5 text-xs font-medium">Recommended</span>
             </div>
             {todayCase ? (
               <>
@@ -72,7 +72,7 @@ export default async function DashboardPage() {
                   <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${DIFFICULTY_COLORS[todayCase.difficulty] || ''}`}>{DIFFICULTY_LABELS[todayCase.difficulty] || todayCase.difficulty}</span>
                 </div>
                 <p className="mt-3 line-clamp-3 text-sm text-slate-600">{todayCase.content}</p>
-                <Link href={`/cases/${todayCase.id}`} className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-amber-600 hover:underline">
+                <Link href={`/cases/${todayCase.id}`} className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                   Solve this case <ArrowRight className="h-4 w-4" />
                 </Link>
               </>
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
               <>
                 <h3 className="mt-3 text-xl font-semibold text-slate-900">{todayBrief.topic}</h3>
                 <p className="mt-3 line-clamp-4 text-sm text-slate-600">{todayBrief.summary}</p>
-                <Link href="/gd-briefs" className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-amber-600 hover:underline">
+                <Link href="/gd-briefs" className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                   Read full brief <ArrowRight className="h-4 w-4" />
                 </Link>
               </>
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Recent activity</h2>
           <Card className="mt-3 divide-y divide-border">
             {recentSubs.length === 0 ? (
-              <p className="p-6 text-sm text-slate-500">No submissions yet — <Link href="/cases" className="font-medium text-amber-600 hover:underline">try a case</Link>.</p>
+              <p className="p-6 text-sm text-slate-500">No submissions yet — <Link href="/cases" className="font-medium text-primary hover:underline">try a case</Link>.</p>
             ) : (
               recentSubs.map((s) => (
                 <Link key={s.id} href={`/results/${s.id}`} className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">

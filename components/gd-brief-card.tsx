@@ -43,7 +43,7 @@ export default function GdBriefCard({ brief }: { brief: GdBriefRow }) {
             </div>
           </div>
           {brief.source_url && (
-            <a href={brief.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-amber-600 hover:underline">
+            <a href={brief.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
               Read the source article <ExternalLink className="h-3.5 w-3.5" />
             </a>
           )}
@@ -56,7 +56,7 @@ export default function GdBriefCard({ brief }: { brief: GdBriefRow }) {
 const ACCENTS: Record<string, string> = {
   emerald: 'border-emerald-200 bg-emerald-50',
   rose: 'border-rose-200 bg-rose-50',
-  amber: 'border-amber-200 bg-amber-50',
+  amber: 'border-primary/20 bg-accent',
   slate: 'border-slate-200 bg-white',
 };
 

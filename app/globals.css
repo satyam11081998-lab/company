@@ -6,52 +6,104 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
+    /* ============================================
+       MECE Color System
+       Navy structural + Cardinal Red accent
+       Based on Stanford GSB / Wall Street Oasis pattern
+       ============================================ */
+
+    /* 60% — Backgrounds */
+    --background: 0 0% 100%;              /* pure white */
+    --foreground: 222 47% 11%;            /* slate-900 for text */
+
+    /* Card / Popover surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 38 92% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 38 92% 95%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 38 92% 50%;
-    --chart-1: 38 92% 50%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 222 47% 11%;
+
+    /* 30% — Structural navy (headers, nav, footer) */
+    --navy: 222 47% 11%;                  /* slate-900 #0f172a */
+    --navy-foreground: 0 0% 100%;         /* white on navy */
+    --navy-soft: 215 25% 27%;             /* slate-700 #334155 */
+
+    /* 10% — Cardinal red (CTAs ONLY, used surgically) */
+    --primary: 0 72% 41%;                 /* cardinal red #b91c1c */
+    --primary-foreground: 0 0% 100%;      /* white on red */
+    --primary-hover: 0 74% 32%;           /* darker red on hover #991b1b */
+
+    /* Semantic — secondary surfaces */
+    --secondary: 210 40% 96%;             /* slate-50 */
+    --secondary-foreground: 222 47% 11%;
+
+    /* Semantic — muted (subtle text/backgrounds) */
+    --muted: 210 40% 96%;                 /* slate-50 */
+    --muted-foreground: 215 16% 47%;      /* slate-500 */
+
+    /* Semantic — accent (subtle hover/active states) */
+    --accent: 0 84% 97%;                  /* red-50 (very light wash) */
+    --accent-foreground: 0 72% 41%;       /* cardinal red text */
+
+    /* Semantic — success (green for correct answers, completion) */
+    --success: 142 71% 29%;               /* green-700 #15803d */
+    --success-foreground: 0 0% 100%;
+    --success-soft: 138 76% 97%;          /* green-50 */
+
+    /* Semantic — warning (amber for non-critical alerts; demoted from primary) */
+    --warning: 32 95% 44%;                /* amber-600 #d97706 */
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 48 96% 89%;           /* amber-100 */
+
+    /* Semantic — destructive (errors; same family as primary but distinct usage) */
+    --destructive: 0 84% 60%;             /* red-500 — for error states */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders / Inputs / Focus rings */
+    --border: 214 32% 91%;                /* slate-200 */
+    --input: 214 32% 91%;
+    --ring: 0 72% 41%;                    /* matches primary */
+
+    /* Chart colors — navy palette with subtle variation */
+    --chart-1: 222 47% 11%;               /* navy */
+    --chart-2: 0 72% 41%;                 /* cardinal red */
+    --chart-3: 215 25% 27%;               /* navy-soft */
+    --chart-4: 142 71% 29%;               /* success green */
+    --chart-5: 215 16% 47%;               /* slate-500 */
+
     --radius: 0.5rem;
   }
+
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Dark mode kept consistent but not the default per research recommendations */
+    --background: 222 47% 6%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 6%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 38 92% 50%;
+    --navy: 222 47% 6%;
+    --navy-foreground: 210 40% 98%;
+    --navy-soft: 215 25% 20%;
+    --primary: 0 72% 51%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217.2 32.6% 17.5%;
+    --primary-hover: 0 74% 42%;
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 38 92% 20%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 0 50% 15%;
+    --accent-foreground: 0 72% 80%;
+    --success: 142 71% 35%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 142 50% 15%;
+    --warning: 32 95% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 32 50% 15%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 38 92% 50%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 0 72% 51%;
   }
 }
 

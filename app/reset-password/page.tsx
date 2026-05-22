@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
           ) : linkError ? (
             <div className="space-y-4 text-center">
               <p className="text-sm text-rose-700">{linkError}</p>
-              <Link href="/forgot-password" className="inline-block text-sm font-medium text-amber-600 hover:underline">Request a new link</Link>
+              <Link href="/forgot-password" className="inline-block text-sm font-medium text-primary hover:underline">Request a new link</Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
                 <Label htmlFor="confirm-password">Confirm new password</Label>
                 <Input id="confirm-password" type="password" required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               </div>
-              <Button type="submit" disabled={isLoading} className="h-11 w-full bg-amber-500 text-white hover:bg-amber-600">
+              <Button type="submit" disabled={isLoading} className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary-hover">
                 {isLoading ? 'Updating…' : 'Update password'}
               </Button>
             </form>

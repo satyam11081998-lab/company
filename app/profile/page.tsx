@@ -37,7 +37,7 @@ export default async function ProfilePage() {
         <Card className="flex flex-col items-center p-8 text-center">
           <Avatar className="h-20 w-20 border border-border">
             {userRow.avatar_url && <AvatarImage src={userRow.avatar_url} alt={userRow.name || ''} />}
-            <AvatarFallback className="bg-amber-100 text-2xl font-semibold text-amber-800">
+            <AvatarFallback className="bg-navy text-navy-foreground text-2xl font-semibold">
               {userRow.name?.charAt(0).toUpperCase() || userRow.email.charAt(0).toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
@@ -53,7 +53,7 @@ export default async function ProfilePage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Recent submissions</h2>
           <Card className="mt-3 divide-y divide-border">
             {submissions.length === 0 ? (
-              <p className="p-6 text-sm text-slate-500">No submissions yet — <Link href="/cases" className="font-medium text-amber-600 hover:underline">try a case</Link>.</p>
+              <p className="p-6 text-sm text-slate-500">No submissions yet — <Link href="/cases" className="font-medium text-primary hover:underline">try a case</Link>.</p>
             ) : (
               submissions.map((s) => (
                 <Link key={s.id} href={`/results/${s.id}`} className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
