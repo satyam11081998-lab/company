@@ -1,27 +1,14 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
-import type { UserRow, CaseRow, GdBriefRow, SubmissionRow } from '@/lib/types';
-import { CASE_TYPE_LABELS, DIFFICULTY_COLORS, DIFFICULTY_LABELS } from '@/lib/constants';
-import { Card } from '@/components/ui/card';
-import { Trophy, Sparkles, FileText, Newspaper, ArrowRight } from 'lucide-react';
-
-export const dynamic = 'force-dynamic';
-
-/** Authenticated dashboard — today's case, today's brief, points, rank, recent activity. */
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
   if (!authUser) redirect('/login');
 
-  const [userRes, todayCaseRes, todayBriefRes, recentSubsRes, rankRes] = await Promise.all([
-    supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
-    supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('gd_briefs').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('submissions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(5),
-    supabase.from('users').select('id, points').order('points', { ascending: false }),
-  ]);
+  // Step 1: fetch the current user first (we need their points to calculate rank)
+  const userRes = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', authUser.id)
+    .maybeSingle();
 
   const userRow = (userRes.data as UserRow | null) || {
     id: authUser.id,
@@ -32,12 +19,20 @@ export default async function DashboardPage() {
     created_at: new Date().toISOString(),
   };
 
+  // Step 2: now fetch everything else in parallel, including the smart rank count
+  const [todayCaseRes, todayBriefRes, recentSubsRes, rankCountRes] = await Promise.all([
+    supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('gd_briefs').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('submissions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(5),
+    // Count users with MORE points than current user — rank = count + 1
+    supabase.from('users').select('id', { count: 'exact', head: true }).gt('points', userRow.points),
+  ]);
+
   const todayCase = todayCaseRes.data as CaseRow | null;
   const todayBrief = todayBriefRes.data as GdBriefRow | null;
   const recentSubs = (recentSubsRes.data as SubmissionRow[] | null) || [];
-  const allUsers = (rankRes.data as { id: string; points: number }[] | null) || [];
-  const rank = allUsers.findIndex((u) => u.id === authUser.id);
-  const rankDisplay = rank >= 0 ? `#${rank + 1}` : '—';
+  const rank = (rankCountRes.count ?? 0) + 1;
+  const rankDisplay = `#${rank}`;
 
   return (
     <div className="min-h-screen bg-slate-50">
