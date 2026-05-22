@@ -1,22 +1,15 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
 import AppNav from '@/components/app-nav';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { UserRow } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+// Static page — cached at build time, served instantly to everyone
+export const revalidate = false;
 
-export default async function MethodologyPage() {
-  const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  const userRow = authUser
-    ? ((await supabase.from('users').select('*').eq('id', authUser.id).maybeSingle()).data as UserRow | null)
-    : null;
-
+export default function MethodologyPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppNav user={userRow} />
+      <AppNav />
       <main className="container max-w-4xl py-12">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Methodology</p>
