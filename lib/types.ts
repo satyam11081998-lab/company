@@ -68,3 +68,36 @@ export interface LeaderboardEntry {
   points: number;
   submission_count: number;
 }
+/** A news headline curated for GD-worthiness. */
+export interface NewsHeadline {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  source_url: string;
+  source_name: string;
+  published_at: string;
+  keywords: string[];
+  category: string;
+  is_star: boolean;
+  has_brief: boolean;
+}
+
+/** A fully-generated GD brief, returned by /news/briefs/{id}. */
+export interface GeneratedBriefData {
+  id: string;
+  headline_id: string;
+  headline_title: string;
+  headline_source_name: string;
+  headline_source_url: string;
+  headline_thumbnail_url: string | null;
+  summary: string;
+  gd_type: string;
+  likely_questions: string[];
+  smart_angles: string[];
+  data_points: string[];
+  opening_lines: string[];
+  counter_arguments: string[];
+  closing_lines: string[];
+  created_at: string;
+}
