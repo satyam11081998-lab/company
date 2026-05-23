@@ -21,12 +21,12 @@ export default async function LearnPage() {
   const entries = (learnRes.data as LearnContentRow[] | null) || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted">
       <AppNav />
       <main className="container py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Learn</h1>
-          <p className="mt-1 text-slate-600">Frameworks and mental models for each case type.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Learn</h1>
+          <p className="mt-1 text-muted-foreground">Frameworks and mental models for each case type.</p>
         </div>
         <LearnReader entries={entries} />
       </main>

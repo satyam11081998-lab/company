@@ -31,18 +31,18 @@ export default async function ProfilePage() {
   const submissions = (submissionsRes.data as SubmissionRow[] | null) || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
       <main className="container max-w-3xl py-10">
-        <Card className="flex flex-col items-center p-8 text-center">
+        <Card className="flex flex-col items-center p-8 text-center border-l-4 border-l-navy">
           <Avatar className="h-20 w-20 border border-border">
             {userRow.avatar_url && <AvatarImage src={userRow.avatar_url} alt={userRow.name || ''} />}
             <AvatarFallback className="bg-navy text-navy-foreground text-2xl font-semibold">
               {userRow.name?.charAt(0).toUpperCase() || userRow.email.charAt(0).toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
-          <h1 className="mt-4 text-2xl font-semibold text-slate-900">{userRow.name || userRow.email.split('@')[0]}</h1>
-          <p className="text-sm text-slate-500">{userRow.email}</p>
+          <h1 className="mt-4 text-2xl font-semibold text-foreground">{userRow.name || userRow.email.split('@')[0]}</h1>
+          <p className="text-sm text-muted-foreground">{userRow.email}</p>
           <div className="mt-6 flex gap-8">
             <Stat label="Points" value={userRow.points} />
             <Stat label="Submissions" value={submissions.length} />
@@ -50,20 +50,20 @@ export default async function ProfilePage() {
         </Card>
 
         <div className="mt-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Recent submissions</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent submissions</h2>
           <Card className="mt-3 divide-y divide-border">
             {submissions.length === 0 ? (
-              <p className="p-6 text-sm text-slate-500">No submissions yet — <Link href="/cases" className="font-medium text-primary hover:underline">try a case</Link>.</p>
+              <p className="p-6 text-sm text-muted-foreground">No submissions yet — <Link href="/cases" className="font-medium text-primary hover:underline">try a case</Link>.</p>
             ) : (
               submissions.map((s) => (
-                <Link key={s.id} href={`/results/${s.id}`} className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
+                <Link key={s.id} href={`/results/${s.id}`} className="flex items-center justify-between p-4 transition-colors hover:bg-muted">
                   <div>
-                    <p className="text-sm font-medium text-slate-900">{new Date(s.created_at).toLocaleString()}</p>
-                    <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{s.answer_text.slice(0, 140)}…</p>
+                    <p className="text-sm font-medium text-foreground">{new Date(s.created_at).toLocaleString()}</p>
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{s.answer_text.slice(0, 140)}…</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-lg font-semibold text-slate-900">{s.score ?? '—'}<span className="text-xs font-normal text-slate-500">/100</span></span>
-                    <ArrowRight className="h-4 w-4 text-slate-400" />
+                    <span className="text-lg font-semibold text-foreground">{s.score ?? '—'}<span className="text-xs font-normal text-muted-foreground">/100</span></span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground/70" />
                   </div>
                 </Link>
               ))
@@ -79,8 +79,8 @@ export default async function ProfilePage() {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
+      <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
     </div>
   );
 }

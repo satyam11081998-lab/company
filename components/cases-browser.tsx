@@ -24,14 +24,14 @@ export default function CasesBrowser({ cases }: { cases: CaseRow[] }) {
       {/* Filters */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Type</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Type</span>
           <Chip label="All" active={selectedType === null} onClick={() => setSelectedType(null)} />
           {CASE_TYPES.map((type) => (
             <Chip key={type} label={CASE_TYPE_LABELS[type]} active={selectedType === type} onClick={() => setSelectedType(type)} />
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Difficulty</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Difficulty</span>
           <Chip label="All" active={selectedDifficulty === null} onClick={() => setSelectedDifficulty(null)} />
           {DIFFICULTIES.map((d) => (
             <Chip key={d} label={DIFFICULTY_LABELS[d]} active={selectedDifficulty === d} onClick={() => setSelectedDifficulty(d)} />
@@ -41,18 +41,18 @@ export default function CasesBrowser({ cases }: { cases: CaseRow[] }) {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <p className="mt-12 text-center text-sm text-slate-500">No cases match these filters.</p>
+        <p className="mt-12 text-center text-sm text-muted-foreground">No cases match these filters.</p>
       ) : (
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((c) => (
-            <Link key={c.id} href={`/cases/${c.id}`}>
+            <Link key={c.id} href={`/cases/${c.id}`} className="hover:-translate-y-0.5 transition-all duration-200">
               <Card className="flex h-full flex-col p-5 transition-shadow hover:shadow-md">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">{CASE_TYPE_LABELS[c.type] || c.type}</span>
+                  <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium text-foreground/80">{CASE_TYPE_LABELS[c.type] || c.type}</span>
                   <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${DIFFICULTY_COLORS[c.difficulty] || ''}`}>{DIFFICULTY_LABELS[c.difficulty] || c.difficulty}</span>
                 </div>
-                <h3 className="mt-3 text-lg font-semibold text-slate-900">{c.title}</h3>
-                <p className="mt-2 line-clamp-3 text-sm text-slate-600">{c.content}</p>
+                <h3 className="mt-3 text-lg font-semibold text-foreground">{c.title}</h3>
+                <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{c.content}</p>
               </Card>
             </Link>
           ))}
@@ -67,7 +67,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   const base = 'rounded-full border px-3 py-1 text-sm font-medium transition-colors';
   const cls = active
     ? 'border-primary bg-primary text-primary-foreground'
-    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50';
+    : 'border-border bg-card text-foreground/80 hover:border-slate-300 hover:bg-muted';
   return (
     <button type="button" className={`${base} ${cls}`} onClick={onClick}>{label}</button>
   );

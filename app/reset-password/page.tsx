@@ -52,16 +52,16 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center bg-muted px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-slate-900">MECE</Link>
-          <h1 className="mt-6 text-2xl font-semibold text-slate-900">Set a new password</h1>
-          <p className="mt-2 text-sm text-slate-600">Pick something strong. Minimum 8 characters.</p>
+          <Link href="/" className="text-2xl font-bold tracking-tight text-foreground">MECE</Link>
+          <h1 className="mt-6 text-2xl font-semibold text-foreground">Set a new password</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Pick something strong. Minimum 8 characters.</p>
         </div>
-        <div className="mt-8 rounded-lg border border-border bg-white p-6 shadow-sm sm:p-8">
+        <div className="mt-8 rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
           {!isReady ? (
-            <p className="text-center text-sm text-slate-500">Loading…</p>
+            <p className="text-center text-sm text-muted-foreground">Loading…</p>
           ) : linkError ? (
             <div className="space-y-4 text-center">
               <p className="text-sm text-rose-700">{linkError}</p>

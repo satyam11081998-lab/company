@@ -71,7 +71,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={isLoading}
-        className="h-12 w-full border border-slate-200 bg-white text-slate-900 shadow-sm hover:bg-slate-50"
+        className="h-12 w-full border border-border bg-card text-foreground shadow-sm hover:bg-muted"
       >
         <GoogleIcon />
         <span className="ml-2 font-medium">Continue with Google</span>
@@ -82,7 +82,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-slate-500">or with email</span>
+          <span className="bg-card px-2 text-muted-foreground">or with email</span>
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-slate-600">
+      <p className="text-center text-sm text-muted-foreground">
         {mode === 'login' ? (
           <>
             Don&apos;t have an account?{' '}

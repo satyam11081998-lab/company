@@ -31,18 +31,18 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center bg-muted px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-slate-900">MECE</Link>
-          <h1 className="mt-6 text-2xl font-semibold text-slate-900">Reset your password</h1>
-          <p className="mt-2 text-sm text-slate-600">Enter the email tied to your account and we&apos;ll send you a reset link.</p>
+          <Link href="/" className="text-2xl font-bold tracking-tight text-foreground">MECE</Link>
+          <h1 className="mt-6 text-2xl font-semibold text-foreground">Reset your password</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Enter the email tied to your account and we&apos;ll send you a reset link.</p>
         </div>
-        <div className="mt-8 rounded-lg border border-border bg-white p-6 shadow-sm sm:p-8">
+        <div className="mt-8 rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
           {isSent ? (
             <div className="space-y-4 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</div>
-              <p className="text-sm text-slate-700">Check your email for a reset link.</p>
+              <p className="text-sm text-foreground/80">Check your email for a reset link.</p>
               <Link href="/login" className="inline-block text-sm font-medium text-primary hover:underline">Back to login</Link>
             </div>
           ) : (
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
               <Button type="submit" disabled={isLoading} className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary-hover">
                 {isLoading ? 'Sending…' : 'Send reset link'}
               </Button>
-              <Link href="/login" className="block text-center text-sm font-medium text-slate-600 hover:underline">Back to login</Link>
+              <Link href="/login" className="block text-center text-sm font-medium text-muted-foreground hover:underline">Back to login</Link>
             </form>
           )}
         </div>

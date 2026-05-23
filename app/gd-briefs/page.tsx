@@ -21,15 +21,15 @@ export default async function GdBriefsPage() {
   const briefs = (briefsRes.data as GdBriefRow[] | null) || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
       <main className="container max-w-4xl py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">GD Briefs</h1>
-          <p className="mt-1 text-slate-600">Sharp takes on the day&apos;s most debate-worthy stories.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">GD Briefs</h1>
+          <p className="mt-1 text-muted-foreground">Sharp takes on the day&apos;s most debate-worthy stories.</p>
         </div>
         {briefs.length === 0 ? (
-          <p className="text-sm text-slate-500">No briefs yet. Check back soon.</p>
+          <p className="text-sm text-muted-foreground">No briefs yet. Check back soon.</p>
         ) : (
           <div className="space-y-4">
             {briefs.map((brief) => (

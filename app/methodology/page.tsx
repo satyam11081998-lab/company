@@ -8,15 +8,15 @@ export const revalidate = false;
 
 export default function MethodologyPage() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted">
       <AppNav />
       <main className="container max-w-4xl py-12">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Methodology</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
             How MECE evaluates your answers
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-base leading-relaxed text-slate-600">
+          <p className="mt-4 max-w-2xl mx-auto text-base leading-relaxed text-muted-foreground">
             Case interview evaluation isn&apos;t subjective magic. It follows consistent principles
             used by top consulting firms and B-schools. We&apos;ve codified those principles into a
             structured 6-dimension rubric, so you get the same rigorous feedback as your peers,
@@ -25,8 +25,8 @@ export default function MethodologyPage() {
         </div>
 
         <section className="mt-14">
-          <h2 className="text-2xl font-bold text-slate-900">The 6 dimensions</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <h2 className="text-2xl font-bold text-foreground">The 6 dimensions</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Every submission is scored across these six areas, totaling 100 points.
           </p>
 
@@ -71,8 +71,8 @@ export default function MethodologyPage() {
         </section>
 
         <section className="mt-14">
-          <h2 className="text-2xl font-bold text-slate-900">Frameworks we recognize</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <h2 className="text-2xl font-bold text-foreground">Frameworks we recognize</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             When you use these frameworks correctly in your answer, the evaluation rewards them.
           </p>
 
@@ -93,14 +93,14 @@ export default function MethodologyPage() {
         </section>
 
         <section className="mt-14">
-          <h2 className="text-2xl font-bold text-slate-900">Publicly available sources</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <h2 className="text-2xl font-bold text-foreground">Publicly available sources</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Our evaluation methodology draws from publicly available materials. We are not affiliated
             with or endorsed by any of these firms or institutions.
           </p>
 
           <Card className="mt-6 p-6">
-            <ul className="space-y-3 text-sm text-slate-700">
+            <ul className="space-y-3 text-sm text-foreground/80">
               <SourceLink
                 title="McKinsey on MECE / Barbara Minto"
                 url="https://www.mckinsey.com/alumni/news-and-events/global-news/alumni-news/barbara-minto-mece-i-invented-it-so-i-get-to-say-how-to-pronounce-it"
@@ -125,7 +125,7 @@ export default function MethodologyPage() {
                 title="McKinsey on Books (Pyramid Principle reference)"
                 url="https://www.mckinsey.com/featured-insights/mckinsey-on-books"
               />
-              <li className="pt-2 text-slate-500 italic">
+              <li className="pt-2 text-muted-foreground italic">
                 Additional methodology draws from publicly shared case prep materials at FMS Delhi,
                 IIM Ahmedabad, IIM Bangalore, and IIM Calcutta consulting clubs.
               </li>
@@ -134,27 +134,27 @@ export default function MethodologyPage() {
         </section>
 
         <section className="mt-14">
-          <h2 className="text-2xl font-bold text-slate-900">Important notes</h2>
-          <Card className="mt-6 p-6 space-y-4 text-sm leading-relaxed text-slate-700">
+          <h2 className="text-2xl font-bold text-foreground">Important notes</h2>
+          <Card className="mt-6 p-6 space-y-4 text-sm leading-relaxed text-foreground/80">
             <p>
-              <strong className="text-slate-900">No official affiliation.</strong> MECE is an
+              <strong className="text-foreground">No official affiliation.</strong> MECE is an
               independent platform. We are not affiliated with, endorsed by, or sponsored by
               McKinsey, BCG, Bain, any IIM, FMS Delhi, or any consulting firm or B-school referenced
               on this page.
             </p>
             <p>
-              <strong className="text-slate-900">Evaluation limitations.</strong> MECE&apos;s
+              <strong className="text-foreground">Evaluation limitations.</strong> MECE&apos;s
               evaluation augments practice but doesn&apos;t replace human feedback from professors,
               mentors, or peer mock interviews. We assess written submissions; live behavioral
               signals (composure, body language, active listening) are not captured.
             </p>
             <p>
-              <strong className="text-slate-900">Consistency over time.</strong> The same rubric is
+              <strong className="text-foreground">Consistency over time.</strong> The same rubric is
               applied to every submission, so you can track genuine improvement across your practice
               sessions rather than relying on the subjective judgment of any single reviewer.
             </p>
             <p>
-              <strong className="text-slate-900">Continuous calibration.</strong> Our rubric is
+              <strong className="text-foreground">Continuous calibration.</strong> Our rubric is
               periodically reviewed against placement outcomes and emerging best practices. If you
               spot an issue with your evaluation, we want to hear about it.
             </p>
@@ -182,14 +182,14 @@ function DimensionCard(props: {
   return (
     <Card className="p-6">
       <div className="flex items-start justify-between gap-4">
-        <h3 className="text-lg font-semibold text-slate-900">{props.name}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{props.name}</h3>
         <span className="flex-shrink-0 rounded-md bg-accent px-2.5 py-1 text-xs font-semibold text-primary">
           {props.max} pts
         </span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-slate-700">{props.description}</p>
-      <p className="mt-3 text-xs leading-relaxed text-slate-500 italic">
-        <span className="font-semibold not-italic text-slate-600">Grounded in: </span>
+      <p className="mt-2 text-sm leading-relaxed text-foreground/80">{props.description}</p>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground italic">
+        <span className="font-semibold not-italic text-muted-foreground">Grounded in: </span>
         {props.groundedIn}
       </p>
     </Card>
@@ -199,8 +199,8 @@ function DimensionCard(props: {
 function FrameworkItem(props: { name: string; desc: string }) {
   return (
     <div>
-      <p className="text-sm font-semibold text-slate-900">{props.name}</p>
-      <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{props.desc}</p>
+      <p className="text-sm font-semibold text-foreground">{props.name}</p>
+      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{props.desc}</p>
     </div>
   );
 }

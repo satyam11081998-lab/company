@@ -42,22 +42,24 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const summary = feedback.summary || 'No summary available yet.';
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
       <main className="container max-w-3xl py-10">
         {/* Big score */}
         <Card className="flex flex-col items-center p-10 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Your score</p>
-          <p className="mt-3 text-7xl font-bold text-primary">
-            {score}
-            <span className="text-3xl font-normal text-slate-400">/100</span>
-          </p>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600">{summary}</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Your score</p>
+          <div className="score-ring score-ring-lg" style={{ '--progress': score } as React.CSSProperties}>
+            <p className="mt-3 text-7xl font-bold text-primary">
+              {score}
+              <span className="text-3xl font-normal text-muted-foreground/70">/100</span>
+            </p>
+          </div>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">{summary}</p>
         </Card>
 
         {/* Breakdown */}
         <Card className="mt-6 p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Breakdown</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Breakdown</h2>
           <div className="mt-4 space-y-4">
             {SCORE_DIMENSIONS.map((dim) => {
               const value = Number(breakdown[dim] ?? 0);
@@ -66,15 +68,15 @@ export default async function ResultPage({ params }: { params: { id: string } })
               return (
                 <div key={dim}>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-foreground/80">
                       {SCORE_DIMENSION_LABELS[dim]}
                     </span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="font-semibold text-foreground">
                       {value}
-                      <span className="text-slate-400">/{max}</span>
+                      <span className="text-muted-foreground/70">/{max}</span>
                     </span>
                   </div>
-                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full rounded-full bg-primary"
                       style={{ width: `${percentage}%` }}
@@ -88,16 +90,16 @@ export default async function ResultPage({ params }: { params: { id: string } })
 
         {/* Strengths / Improvements */}
         <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <Card className="p-6">
+          <Card className="p-6 border-l-4 border-l-success">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-700">
               What you did well
             </h3>
             <ul className="mt-4 space-y-3">
               {strengths.length === 0 ? (
-                <li className="text-sm text-slate-500">No highlights yet.</li>
+                <li className="text-sm text-muted-foreground">No highlights yet.</li>
               ) : (
                 strengths.map((item, idx) => (
-                  <li key={idx} className="flex gap-2 text-sm text-slate-700">
+                  <li key={idx} className="flex gap-2 text-sm text-foreground/80">
                     <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
                     <span>{item}</span>
                   </li>
@@ -105,16 +107,16 @@ export default async function ResultPage({ params }: { params: { id: string } })
               )}
             </ul>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 border-l-4 border-l-primary">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
               Where you can improve
             </h3>
             <ul className="mt-4 space-y-3">
               {improvements.length === 0 ? (
-                <li className="text-sm text-slate-500">No suggestions yet.</li>
+                <li className="text-sm text-muted-foreground">No suggestions yet.</li>
               ) : (
                 improvements.map((item, idx) => (
-                  <li key={idx} className="flex gap-2 text-sm text-slate-700">
+                  <li key={idx} className="flex gap-2 text-sm text-foreground/80">
                     <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                     <span>{item}</span>
                   </li>

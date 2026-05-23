@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import SignOutButton from '@/components/sign-out-button';
+import ThemeToggle from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import type { UserRow } from '@/lib/types';
@@ -44,17 +45,17 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
   }, [initialUser]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link
             href={user ? '/dashboard' : '/'}
-            className="text-xl font-bold tracking-tight text-slate-900"
+            className="text-xl font-bold tracking-tight text-foreground"
           >
             MECE
           </Link>
           {user && (
-            <nav className="hidden items-center gap-1 text-sm font-medium text-slate-600 md:flex">
+            <nav className="hidden items-center gap-1 text-sm font-medium text-muted-foreground md:flex">
               <NavLink href="/dashboard">Dashboard</NavLink>
               <NavLink href="/cases">Cases</NavLink>
               <NavLink href="/gd-briefs">GD Briefs</NavLink>
@@ -64,9 +65,10 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           {loading ? (
-            <div className="h-9 w-24 animate-pulse rounded-md bg-slate-100" />
+            <div className="h-9 w-24 animate-pulse rounded-md bg-muted" />
           ) : user ? (
             <>
               <span className="hidden text-sm font-medium text-primary sm:inline">
@@ -103,7 +105,7 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
 /** Single nav link in the top nav. */
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="rounded-md px-3 py-1.5 transition-colors hover:bg-slate-100 hover:text-slate-900">
+    <Link href={href} className="rounded-md px-3 py-1.5 transition-colors hover:bg-muted hover:text-foreground">
       {children}
     </Link>
   );

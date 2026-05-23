@@ -17,7 +17,7 @@ export default function SignOutButton() {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-slate-600">
+    <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground">
       <LogOut className="mr-2 h-4 w-4" />
       Sign out
     </Button>

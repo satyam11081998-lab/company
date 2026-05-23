@@ -35,21 +35,21 @@ export default async function LeaderboardPage() {
     subCountByUser[row.user_id] = (subCountByUser[row.user_id] || 0) + 1;
   }
 
-  const medalTints = ['bg-yellow-50 border-yellow-200', 'bg-slate-50 border-slate-200', 'bg-orange-50 border-orange-200'];
-  const medalText = ['text-yellow-700', 'text-slate-700', 'text-orange-700'];
+  const medalTints = ['bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800/30', 'bg-muted border-border', 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800/30'];
+  const medalText = ['text-yellow-700 dark:text-yellow-400', 'text-foreground/80', 'text-orange-700 dark:text-orange-400'];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
       <main className="container max-w-3xl py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Leaderboard</h1>
-          <p className="mt-1 text-slate-600">Top case-crackers across India.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Leaderboard</h1>
+          <p className="mt-1 text-muted-foreground">Top case-crackers across India.</p>
         </div>
 
         <Card className="divide-y divide-border overflow-hidden">
           {users.length === 0 ? (
-            <p className="p-6 text-sm text-slate-500">No rankings yet.</p>
+            <p className="p-6 text-sm text-muted-foreground">No rankings yet.</p>
           ) : (
             users.map((u, idx) => {
               const isCurrentUser = u.id === authUser.id;
@@ -66,7 +66,7 @@ export default async function LeaderboardPage() {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <span className={`w-8 text-center text-lg font-bold ${isMedal ? medalText[idx] : 'text-slate-400'}`}>
+                    <span className={`w-8 text-center text-lg font-bold ${isMedal ? medalText[idx] : 'text-muted-foreground/70'}`}>
                       {idx + 1}
                     </span>
                     <Avatar className="h-10 w-10 border border-border">
@@ -76,13 +76,13 @@ export default async function LeaderboardPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-slate-900">
+                      <p className="font-medium text-foreground">
                         {u.name || u.email.split('@')[0]} {isCurrentUser && <span className="ml-1 text-xs font-semibold text-primary">(you)</span>}
                       </p>
-                      <p className="text-xs text-slate-500">{subCountByUser[u.id] || 0} submissions</p>
+                      <p className="text-xs text-muted-foreground">{subCountByUser[u.id] || 0} submissions</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-slate-900">{u.points} <span className="text-xs font-normal text-slate-500">pts</span></p>
+                  <p className="text-lg font-bold text-foreground">{u.points} <span className="text-xs font-normal text-muted-foreground">pts</span></p>
                 </div>
               );
             })

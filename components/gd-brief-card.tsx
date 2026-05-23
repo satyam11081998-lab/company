@@ -17,29 +17,29 @@ export default function GdBriefCard({ brief }: { brief: GdBriefRow }) {
         className="flex w-full items-start justify-between gap-4 p-6 text-left"
       >
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {new Date(brief.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
-          <h2 className="mt-1 text-xl font-semibold text-slate-900">{brief.topic}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">{brief.summary}</p>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">{brief.topic}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{brief.summary}</p>
         </div>
-        <ChevronDown className={`mt-1 h-5 w-5 flex-shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`mt-1 h-5 w-5 flex-shrink-0 text-muted-foreground/70 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="space-y-6 border-t border-border bg-slate-50 p-6">
+        <div className="space-y-6 border-t border-border bg-muted p-6">
           <BriefSection title="Points for" items={brief.points_for} accent="emerald" />
           <BriefSection title="Points against" items={brief.points_against} accent="rose" />
           <BriefSection title="Smart angles" items={brief.smart_angles} accent="amber" />
           <BriefSection title="Data points" items={brief.data_points} accent="slate" />
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-md border border-border bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">How to open</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-700">{brief.how_to_open}</p>
+            <div className="rounded-md border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">How to open</p>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/80">{brief.how_to_open}</p>
             </div>
-            <div className="rounded-md border border-border bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">How to close</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-700">{brief.how_to_close}</p>
+            <div className="rounded-md border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">How to close</p>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/80">{brief.how_to_close}</p>
             </div>
           </div>
           {brief.source_url && (
@@ -57,7 +57,7 @@ const ACCENTS: Record<string, string> = {
   emerald: 'border-emerald-200 bg-emerald-50',
   rose: 'border-rose-200 bg-rose-50',
   amber: 'border-primary/20 bg-accent',
-  slate: 'border-slate-200 bg-white',
+  slate: 'border-border bg-card',
 };
 
 /** Bullet-list section inside an expanded brief. */
@@ -65,8 +65,8 @@ function BriefSection({ title, items, accent }: { title: string; items: string[]
   if (!items || items.length === 0) return null;
   return (
     <div className={`rounded-md border p-4 ${ACCENTS[accent] || ACCENTS.slate}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">{title}</p>
-      <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+      <p className="text-xs font-semibold uppercase tracking-wide text-foreground/80">{title}</p>
+      <ul className="mt-2 space-y-1.5 text-sm text-foreground/80">
         {items.map((item, idx) => (
           <li key={idx} className="flex gap-2"><span>•</span><span>{item}</span></li>
         ))}

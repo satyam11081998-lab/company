@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,11 +8,12 @@
   :root {
     /* ============================================
        MECE Color System
-       Navy structural + Cardinal Red accent
-       Based on Stanford GSB / Wall Street Oasis pattern
+       60 % White/Slate surfaces
+       30 % Navy structural (headers, sidebars, KPI strips)
+       10 % Cardinal Red accent (CTAs, rings, alerts)
        ============================================ */
 
-    /* 60% — Backgrounds */
+    /* 60 % — Backgrounds (white / slate) */
     --background: 0 0% 100%;              /* pure white */
     --foreground: 222 47% 11%;            /* slate-900 for text */
 
@@ -22,12 +23,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* 30% — Structural navy (headers, nav, footer) */
+    /* 30 % — Structural navy */
     --navy: 222 47% 11%;                  /* slate-900 #0f172a */
     --navy-foreground: 0 0% 100%;         /* white on navy */
     --navy-soft: 215 25% 27%;             /* slate-700 #334155 */
 
-    /* 10% — Cardinal red (CTAs ONLY, used surgically) */
+    /* 10 % — Cardinal red (CTAs, rings, accents) */
     --primary: 0 72% 41%;                 /* cardinal red #b91c1c */
     --primary-foreground: 0 0% 100%;      /* white on red */
     --primary-hover: 0 74% 32%;           /* darker red on hover #991b1b */
@@ -44,18 +45,18 @@
     --accent: 0 84% 97%;                  /* red-50 (very light wash) */
     --accent-foreground: 0 72% 41%;       /* cardinal red text */
 
-    /* Semantic — success (green for correct answers, completion) */
+    /* Semantic — success */
     --success: 142 71% 29%;               /* green-700 #15803d */
     --success-foreground: 0 0% 100%;
     --success-soft: 138 76% 97%;          /* green-50 */
 
-    /* Semantic — warning (amber for non-critical alerts; demoted from primary) */
+    /* Semantic — warning */
     --warning: 32 95% 44%;                /* amber-600 #d97706 */
     --warning-foreground: 0 0% 100%;
     --warning-soft: 48 96% 89%;           /* amber-100 */
 
-    /* Semantic — destructive (errors; same family as primary but distinct usage) */
-    --destructive: 0 84% 60%;             /* red-500 — for error states */
+    /* Semantic — destructive */
+    --destructive: 0 84% 60%;             /* red-500 */
     --destructive-foreground: 0 0% 100%;
 
     /* Borders / Inputs / Focus rings */
@@ -63,47 +64,63 @@
     --input: 214 32% 91%;
     --ring: 0 72% 41%;                    /* matches primary */
 
-    /* Chart colors — navy palette with subtle variation */
-    --chart-1: 222 47% 11%;               /* navy */
-    --chart-2: 0 72% 41%;                 /* cardinal red */
-    --chart-3: 215 25% 27%;               /* navy-soft */
-    --chart-4: 142 71% 29%;               /* success green */
-    --chart-5: 215 16% 47%;               /* slate-500 */
+    /* Chart colors */
+    --chart-1: 222 47% 11%;
+    --chart-2: 0 72% 41%;
+    --chart-3: 215 25% 27%;
+    --chart-4: 142 71% 29%;
+    --chart-5: 215 16% 47%;
 
     --radius: 0.5rem;
+
+    /* Engineering grid */
+    --grid-color: 222 47% 11%;
+    --grid-opacity: 0.04;
   }
 
   .dark {
-    /* Dark mode kept consistent but not the default per research recommendations */
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 6%;
-    --popover-foreground: 210 40% 98%;
-    --navy: 222 47% 6%;
-    --navy-foreground: 210 40% 98%;
-    --navy-soft: 215 25% 20%;
-    --primary: 0 72% 51%;
+    /* Deep navy-charcoal — not pure black */
+    --background: 222 47% 6%;             /* #0b0f1a */
+    --foreground: 210 40% 92%;            /* warm off-white */
+
+    --card: 222 40% 10%;                  /* slightly lighter than bg */
+    --card-foreground: 210 40% 92%;
+    --popover: 222 40% 10%;
+    --popover-foreground: 210 40% 92%;
+
+    --navy: 222 47% 14%;                  /* lighter navy for dark mode structural */
+    --navy-foreground: 210 40% 92%;
+    --navy-soft: 215 20% 35%;
+
+    --primary: 0 72% 51%;                 /* brighter red for dark bg contrast */
     --primary-foreground: 0 0% 100%;
     --primary-hover: 0 74% 42%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 0 50% 15%;
-    --accent-foreground: 0 72% 80%;
-    --success: 142 71% 35%;
+
+    --secondary: 222 33% 14%;
+    --secondary-foreground: 210 40% 92%;
+
+    --muted: 222 33% 14%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 0 50% 12%;
+    --accent-foreground: 0 72% 70%;
+
+    --success: 142 71% 40%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 142 50% 15%;
+    --success-soft: 142 40% 14%;
+
     --warning: 32 95% 50%;
     --warning-foreground: 0 0% 100%;
-    --warning-soft: 32 50% 15%;
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --warning-soft: 32 40% 14%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 210 40% 95%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
     --ring: 0 72% 51%;
+
+    --grid-opacity: 0.06;
   }
 }
 
@@ -111,6 +128,105 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   }
+}
+
+/* ===== Engineering Paper Grid Background ===== */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      hsl(var(--grid-color) / var(--grid-opacity)) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      hsl(var(--grid-color) / var(--grid-opacity)) 1px,
+      transparent 1px
+    );
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 40%, transparent 100%);
+}
+
+/* ===== Animations ===== */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ring-fill {
+  from { --ring-progress: 0; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out both;
+}
+
+/* Staggered children animation */
+.stagger-children > * {
+  animation: slide-up 0.4s ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+
+/* ===== Triage Bar (dense activity list) ===== */
+.triage-bar {
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.6s ease-out;
+}
+.triage-green  { background: hsl(var(--success)); }
+.triage-amber  { background: hsl(var(--warning)); }
+.triage-red    { background: hsl(var(--primary)); }
+
+/* ===== Score Ring ===== */
+.score-ring {
+  --size: 120px;
+  --stroke: 8px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(
+    hsl(var(--primary)) calc(var(--progress, 0) * 1%),
+    hsl(var(--border)) calc(var(--progress, 0) * 1%)
+  );
+  position: relative;
+}
+.score-ring::before {
+  content: '';
+  position: absolute;
+  inset: var(--stroke);
+  border-radius: 50%;
+  background: hsl(var(--card));
+}
+.score-ring > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Large score ring variant */
+.score-ring-lg {
+  --size: 160px;
+  --stroke: 10px;
 }

@@ -21,12 +21,12 @@ export default async function CasesPage() {
   const cases = (casesRes.data as CaseRow[] | null) || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
       <main className="container py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Cases</h1>
-          <p className="mt-1 text-slate-600">Pick a case. Practice. Get scored. Repeat.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Cases</h1>
+          <p className="mt-1 text-muted-foreground">Pick a case. Practice. Get scored. Repeat.</p>
         </div>
         <CasesBrowser cases={cases} />
       </main>

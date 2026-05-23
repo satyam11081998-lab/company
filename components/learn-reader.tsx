@@ -28,7 +28,7 @@ export default function LearnReader({ entries }: { entries: LearnContentRow[] })
               className={`block w-full rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-navy text-navy-foreground'
-                  : 'text-slate-700 hover:bg-slate-100'
+                  : 'text-foreground/80 hover:bg-muted'
               }`}
             >
               {CASE_TYPE_LABELS[type]}
@@ -39,12 +39,12 @@ export default function LearnReader({ entries }: { entries: LearnContentRow[] })
 
       <div className="space-y-6">
         {filtered.length === 0 ? (
-          <p className="text-sm text-slate-500">No content yet for this type.</p>
+          <p className="text-sm text-muted-foreground">No content yet for this type.</p>
         ) : (
           filtered.map((entry) => (
             <Card key={entry.id} className="p-6">
-              <h2 className="text-xl font-semibold text-slate-900">{entry.title}</h2>
-              <div className="prose prose-slate mt-3 max-w-none whitespace-pre-line text-slate-700">
+              <h2 className="text-xl font-semibold text-foreground">{entry.title}</h2>
+              <div className="prose prose-slate mt-3 max-w-none whitespace-pre-line text-foreground/80">
                 {entry.body}
               </div>
             </Card>
