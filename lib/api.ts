@@ -29,7 +29,6 @@ export async function submitCaseAnswer(payload: {
   }
   return { submission_id: submissionId };
 }
-import type { NewsHeadline, GeneratedBriefData } from '@/lib/types';
 
 /**
  * Fetch today's curated GD-worthy news headlines.
