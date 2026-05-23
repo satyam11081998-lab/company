@@ -6,6 +6,7 @@ import type { UserRow, CaseRow, GdBriefRow, SubmissionRow } from '@/lib/types';
 import { CASE_TYPE_LABELS, DIFFICULTY_COLORS, DIFFICULTY_LABELS, SCORE_DIMENSIONS, SCORE_DIMENSION_LABELS, SCORE_DIMENSION_MAX } from '@/lib/constants';
 import { Card } from '@/components/ui/card';
 import { Trophy, Sparkles, FileText, Newspaper, ArrowRight, Target, Zap, Award, Star } from 'lucide-react';
+import ProgressChart from '@/components/progress-chart';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,6 +115,11 @@ export default async function DashboardPage() {
               </Card>
             </div>
 
+            {/* ===== Progress Chart ===== */}
+            <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+              <ProgressChart submissions={recentSubs} />
+            </div>
+            
             {/* ===== Heatmap — Recent Submission Scores ===== */}
             {recentSubs.length > 0 && (
               <Card className="p-6 animate-slide-up" style={{ animationDelay: '120ms' }}>
