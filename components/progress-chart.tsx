@@ -25,18 +25,18 @@ export default function ProgressChart(props: ProgressChartProps) {
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Progress over time</h2>
-            <p className="mt-1 text-xs text-muted-foreground/70">Your score trajectory across submissions</p>
+            <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Progress over time</h2>
+            <p className="mt-1 text-base text-muted-foreground/70">Your score trajectory across submissions</p>
           </div>
         </div>
         <div className="mt-8 flex flex-col items-center justify-center py-12 text-center">
           <div className="rounded-full bg-muted p-3">
             <TrendingUp className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="mt-4 text-sm font-medium text-foreground">
+          <p className="mt-4 text-base font-medium text-foreground">
             {submissions.length === 0 ? 'No submissions yet' : 'One submission so far'}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground max-w-xs">
+          <p className="mt-1 text-base text-muted-foreground max-w-xs">
             Submit {submissions.length === 0 ? 'your first case' : 'one more case'} to see your progress chart
           </p>
         </div>
@@ -74,8 +74,8 @@ export default function ProgressChart(props: ProgressChartProps) {
     <Card className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Progress over time</h2>
-          <p className="mt-1 text-xs text-muted-foreground/70">Your score trajectory across {data.length} submissions</p>
+          <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Progress over time</h2>
+          <p className="mt-1 text-base text-muted-foreground/70">Your score trajectory across {data.length} submissions</p>
         </div>
         <TrendBadge direction={trendDirection} delta={Math.round(trendDelta)} />
       </div>
@@ -147,7 +147,7 @@ function TrendBadge(props: { direction: 'up' | 'down' | 'flat'; delta: number })
   const { direction, delta } = props;
   if (direction === 'up') {
     return (
-      <div className="inline-flex items-center gap-1 rounded-md bg-success-soft px-2 py-1 text-xs font-semibold text-success">
+      <div className="inline-flex items-center gap-1 rounded-md bg-success-soft px-2 py-1 text-base font-semibold text-success">
         <TrendingUp className="h-3.5 w-3.5" />
         +{delta} pts trending up
       </div>
@@ -155,14 +155,14 @@ function TrendBadge(props: { direction: 'up' | 'down' | 'flat'; delta: number })
   }
   if (direction === 'down') {
     return (
-      <div className="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-1 text-xs font-semibold text-primary">
+      <div className="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-1 text-base font-semibold text-primary">
         <TrendingDown className="h-3.5 w-3.5" />
         {delta} pts trending down
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
+    <div className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-base font-semibold text-muted-foreground">
       <Minus className="h-3.5 w-3.5" />
       Holding steady
     </div>
@@ -174,7 +174,7 @@ function StatBox(props: { label: string; value: number; highlight?: boolean }) {
     <div className={'rounded-md border p-3 ' + (props.highlight ? 'border-primary/30 bg-accent' : 'border-border bg-muted/50')}>
       <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{props.label}</p>
       <p className={'mt-1 text-xl font-bold tabular-nums ' + (props.highlight ? 'text-primary' : 'text-foreground')}>
-        {props.value}<span className="text-xs font-normal text-muted-foreground">/100</span>
+        {props.value}<span className="text-base font-normal text-muted-foreground">/100</span>
       </p>
     </div>
   );

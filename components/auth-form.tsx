@@ -4,9 +4,6 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 /** Reusable login/signup form. `mode` controls which action runs on submit. */
@@ -66,57 +63,97 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   }
 
   return (
-    <div className="space-y-6">
-      <Button
+    <div className="space-y-5">
+      {/* Google OAuth button */}
+      <button
         type="button"
         onClick={handleGoogleSignIn}
         disabled={isLoading}
-        className="h-12 w-full border border-border bg-card text-foreground shadow-sm hover:bg-muted"
+        className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-60"
       >
         <GoogleIcon />
-        <span className="ml-2 font-medium">Continue with Google</span>
-      </Button>
+        Continue with Google
+      </button>
 
+      {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-border" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">or with email</span>
+        <div className="relative flex justify-center">
+          <span className="bg-white px-3 text-xs text-muted-foreground uppercase tracking-wide">
+            or with email
+          </span>
         </div>
       </div>
 
+      {/* Email/password form */}
       <form onSubmit={handleEmailSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@iim.example" />
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="text-sm font-medium text-foreground">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@iim.example"
+            className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+          />
         </div>
-        <div className="space-y-2">
+
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <label htmlFor="password" className="text-sm font-medium text-foreground">
+              Password
+            </label>
             {mode === 'login' && (
-              <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+              <Link
+                href="/forgot-password"
+                className="text-sm font-medium text-primary hover:text-primary/80"
+              >
                 Forgot password?
               </Link>
             )}
           </div>
-          <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
+          <input
+            id="password"
+            type="password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 8 characters"
+            className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+          />
         </div>
-        <Button type="submit" disabled={isLoading} className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary-hover">
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="btn-primary w-full rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+        >
           {isLoading ? 'Please wait…' : mode === 'login' ? 'Login' : 'Create account'}
-        </Button>
+        </button>
       </form>
 
+      {/* Switch mode link */}
       <p className="text-center text-sm text-muted-foreground">
         {mode === 'login' ? (
           <>
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="font-medium text-primary hover:underline">Sign up</Link>
+            <Link href="/signup" className="text-sm font-medium text-primary hover:text-primary/80">
+              Sign up
+            </Link>
           </>
         ) : (
           <>
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-primary hover:underline">Login</Link>
+            <Link href="/login" className="text-sm font-medium text-primary hover:text-primary/80">
+              Login
+            </Link>
           </>
         )}
       </p>

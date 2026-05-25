@@ -54,7 +54,7 @@ export default function BriefDetailPage() {
       <main className="container max-w-4xl py-10">
         <Link
           href="/gd-briefs"
-          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground mb-6 animate-fade-in"
+          className="inline-flex items-center gap-1 text-base font-medium text-muted-foreground hover:text-foreground mb-6 animate-fade-in"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to all briefs
@@ -68,7 +68,7 @@ export default function BriefDetailPage() {
               <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-foreground">Could not load brief</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+                <p className="mt-1 text-base text-muted-foreground">{error}</p>
               </div>
             </div>
           </Card>
@@ -98,7 +98,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           </div>
         ) : null}
         <div className="p-6">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+          <div className="flex items-center gap-2 text-base text-muted-foreground mb-2">
             <span className="rounded-md bg-accent text-accent-foreground px-2 py-0.5 font-medium">
               {b.gd_type}
             </span>
@@ -113,7 +113,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
             href={b.headline_source_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="mt-3 inline-flex items-center gap-1 text-base font-medium text-primary hover:underline"
           >
             Read original article
             <ExternalLink className="h-3.5 w-3.5" />
@@ -152,7 +152,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           <SectionHeading icon={<Lightbulb className="h-4 w-4" />}>
             Smart angles
           </SectionHeading>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1">
             Non-obvious perspectives that make you stand out
           </p>
           <ul className="mt-4 space-y-3">
@@ -172,12 +172,12 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           <SectionHeading icon={<BarChart3 className="h-4 w-4" />}>
             Data points to cite
           </SectionHeading>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1">
             Concrete numbers with attribution — drop these to sound credible
           </p>
           <ul className="mt-4 space-y-3">
             {b.data_points.map((dp, i) => (
-              <li key={i} className="rounded-md bg-muted p-3 text-sm text-foreground/90 border-l-2 border-l-navy">
+              <li key={i} className="rounded-md bg-muted p-3 text-base text-foreground/90 border-l-2 border-l-navy">
                 {dp}
               </li>
             ))}
@@ -191,12 +191,12 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           <SectionHeading icon={<Quote className="h-4 w-4" />}>
             Opening lines
           </SectionHeading>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1">
             How to start the discussion with authority
           </p>
           <ul className="mt-4 space-y-3">
             {b.opening_lines.map((line, i) => (
-              <li key={i} className="rounded-md bg-accent/30 p-3 text-sm italic text-foreground/90">
+              <li key={i} className="rounded-md bg-accent/30 p-3 text-base italic text-foreground/90">
                 &quot;{line}&quot;
               </li>
             ))}
@@ -210,7 +210,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           <SectionHeading icon={<AlertTriangle className="h-4 w-4" />}>
             Counter-arguments
           </SectionHeading>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1">
             What the other side will say — prepare your response
           </p>
           <ul className="mt-4 space-y-3">
@@ -230,12 +230,12 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           <SectionHeading icon={<Quote className="h-4 w-4" />}>
             Closing lines
           </SectionHeading>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1">
             How to wrap with a memorable takeaway
           </p>
           <ul className="mt-4 space-y-3">
             {b.closing_lines.map((line, i) => (
-              <li key={i} className="rounded-md bg-accent/30 p-3 text-sm italic text-foreground/90">
+              <li key={i} className="rounded-md bg-accent/30 p-3 text-base italic text-foreground/90">
                 &quot;{line}&quot;
               </li>
             ))}
@@ -248,7 +248,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
 
 function SectionHeading(props: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+    <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
       <span className="text-primary">{props.icon}</span>
       {props.children}
     </h2>

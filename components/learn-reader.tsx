@@ -25,7 +25,7 @@ export default function LearnReader({ entries }: { entries: LearnContentRow[] })
               key={type}
               type="button"
               onClick={() => setSelectedType(type)}
-              className={`block w-full rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
+              className={`block w-full rounded-md px-3 py-2 text-left text-base font-medium transition-colors ${
                 isActive
                   ? 'bg-navy text-navy-foreground'
                   : 'text-foreground/80 hover:bg-muted'
@@ -39,7 +39,7 @@ export default function LearnReader({ entries }: { entries: LearnContentRow[] })
 
       <div className="space-y-6">
         {filtered.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No content yet for this type.</p>
+          <p className="text-base text-muted-foreground">No content yet for this type.</p>
         ) : (
           filtered.map((entry) => (
             <Card key={entry.id} className="p-6">

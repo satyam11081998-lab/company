@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,226 +7,312 @@
 @layer base {
   :root {
     /* ============================================
-       MECE Color System
-       60 % White/Slate surfaces
-       30 % Navy structural (headers, sidebars, KPI strips)
-       10 % Cardinal Red accent (CTAs, rings, alerts)
+       MECE — Medusa-style design system
+       Warm off-white bg, white cards, Cardinal Red accent
        ============================================ */
 
-    /* 60 % — Backgrounds (white / slate) */
-    --background: 0 0% 100%;              /* pure white */
-    --foreground: 222 47% 11%;            /* slate-900 for text */
+    --background:     40 20% 97%;       /* #FAF9F6 warm off-white */
+    --foreground:     100 15% 5%;       /* #0D0D0B near-black */
 
-    /* Card / Popover surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --card:           0 0% 100%;
+    --card-foreground: 100 15% 5%;
+    --popover:        0 0% 100%;
+    --popover-foreground: 100 15% 5%;
 
-    /* 30 % — Structural navy */
-    --navy: 222 47% 11%;                  /* slate-900 #0f172a */
-    --navy-foreground: 0 0% 100%;         /* white on navy */
-    --navy-soft: 215 25% 27%;             /* slate-700 #334155 */
+    /* Navy — brand, nav, structural */
+    --navy:           214 72% 13%;      /* #0F1C33 */
+    --navy-foreground: 210 30% 95%;
+    --navy-mid:       214 50% 25%;
+    --navy-soft:      214 30% 45%;
 
-    /* 10 % — Cardinal red (CTAs, rings, accents) */
-    --primary: 0 72% 41%;                 /* cardinal red #b91c1c */
-    --primary-foreground: 0 0% 100%;      /* white on red */
-    --primary-hover: 0 74% 32%;           /* darker red on hover #991b1b */
+    /* Cardinal red — primary accent */
+    --primary:        356 84% 43%;      /* #C8102E */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover:  356 84% 36%;      /* darker on hover */
+    --primary-light:  356 84% 97%;      /* very light tint for badges */
 
-    /* Semantic — secondary surfaces */
-    --secondary: 210 40% 96%;             /* slate-50 */
-    --secondary-foreground: 222 47% 11%;
+    /* Surfaces */
+    --secondary:      40 15% 93%;
+    --secondary-foreground: 100 15% 5%;
+    --muted:          40 12% 93%;
+    --muted-foreground: 40 8% 42%;      /* warm gray */
+    --accent:         356 84% 97%;
+    --accent-foreground: 356 84% 43%;
 
-    /* Semantic — muted (subtle text/backgrounds) */
-    --muted: 210 40% 96%;                 /* slate-50 */
-    --muted-foreground: 215 16% 47%;      /* slate-500 */
-
-    /* Semantic — accent (subtle hover/active states) */
-    --accent: 0 84% 97%;                  /* red-50 (very light wash) */
-    --accent-foreground: 0 72% 41%;       /* cardinal red text */
-
-    /* Semantic — success */
-    --success: 142 71% 29%;               /* green-700 #15803d */
+    /* Semantic */
+    --success:        142 55% 32%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 138 76% 97%;          /* green-50 */
-
-    /* Semantic — warning */
-    --warning: 32 95% 44%;                /* amber-600 #d97706 */
+    --warning:        38 92% 46%;
     --warning-foreground: 0 0% 100%;
-    --warning-soft: 48 96% 89%;           /* amber-100 */
-
-    /* Semantic — destructive */
-    --destructive: 0 84% 60%;             /* red-500 */
+    --destructive:    356 84% 43%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders / Inputs / Focus rings */
-    --border: 214 32% 91%;                /* slate-200 */
-    --input: 214 32% 91%;
-    --ring: 0 72% 41%;                    /* matches primary */
+    /* Chrome */
+    --border:         40 12% 88%;       /* warm light gray border */
+    --border-strong:  40 12% 74%;
+    --input:          40 12% 88%;
+    --ring:           356 84% 43%;
 
-    /* Chart colors */
-    --chart-1: 222 47% 11%;
-    --chart-2: 0 72% 41%;
-    --chart-3: 215 25% 27%;
-    --chart-4: 142 71% 29%;
-    --chart-5: 215 16% 47%;
+    /* Charts */
+    --chart-1: 214 72% 13%;
+    --chart-2: 356 84% 43%;
+    --chart-3: 142 55% 32%;
+    --chart-4: 38 92% 46%;
+    --chart-5: 40 8% 42%;
 
-    --radius: 0.5rem;
+    /* Radius — Medusa uses generous rounding */
+    --radius: 0.75rem;                  /* 12px */
+    --radius-sm: 0.5rem;                /* 8px */
+    --radius-lg: 1rem;                  /* 16px */
+    --radius-full: 9999px;              /* pill */
 
-    /* Engineering grid */
-    --grid-color: 222 47% 11%;
-    --grid-opacity: 0.04;
+    /* Typography */
+    --tracking-tight: -0.03em;
+    --tracking-wide: 0.04em;
   }
 
   .dark {
-    /* Deep navy-charcoal — not pure black */
-    --background: 222 47% 6%;             /* #0b0f1a */
-    --foreground: 210 40% 92%;            /* warm off-white */
+    --background:     214 50% 7%;
+    --foreground:     40 15% 92%;
 
-    --card: 222 40% 10%;                  /* slightly lighter than bg */
-    --card-foreground: 210 40% 92%;
-    --popover: 222 40% 10%;
-    --popover-foreground: 210 40% 92%;
+    --card:           214 40% 11%;
+    --card-foreground: 40 15% 92%;
+    --popover:        214 40% 11%;
+    --popover-foreground: 40 15% 92%;
 
-    --navy: 222 47% 14%;                  /* lighter navy for dark mode structural */
-    --navy-foreground: 210 40% 92%;
-    --navy-soft: 215 20% 35%;
+    --navy:           214 40% 18%;
+    --navy-foreground: 210 25% 92%;
+    --navy-mid:       214 35% 28%;
+    --navy-soft:      214 25% 45%;
 
-    --primary: 0 72% 51%;                 /* brighter red for dark bg contrast */
+    --primary:        356 74% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 74% 42%;
+    --primary-hover:  356 74% 47%;
+    --primary-light:  356 50% 12%;
 
-    --secondary: 222 33% 14%;
-    --secondary-foreground: 210 40% 92%;
+    --secondary:      214 30% 16%;
+    --secondary-foreground: 40 15% 92%;
+    --muted:          214 30% 16%;
+    --muted-foreground: 214 18% 55%;
+    --accent:         356 40% 14%;
+    --accent-foreground: 356 74% 65%;
 
-    --muted: 222 33% 14%;
-    --muted-foreground: 215 20% 55%;
-
-    --accent: 0 50% 12%;
-    --accent-foreground: 0 72% 70%;
-
-    --success: 142 71% 40%;
+    --success:        142 55% 45%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 142 40% 14%;
-
-    --warning: 32 95% 50%;
+    --warning:        38 85% 55%;
     --warning-foreground: 0 0% 100%;
-    --warning-soft: 32 40% 14%;
+    --destructive:    356 74% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 0 62% 55%;
-    --destructive-foreground: 210 40% 95%;
-
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 0 72% 51%;
-
-    --grid-opacity: 0.06;
+    --border:         214 28% 20%;
+    --border-strong:  214 28% 32%;
+    --input:          214 28% 20%;
+    --ring:           356 74% 55%;
   }
 }
 
+/* ── Base reset ─────────────────────────────────────────────────── */
 @layer base {
-  * { @apply border-border; }
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  * { @apply border-border; box-sizing: border-box; }
+  html {
+    font-size: 16px;
+    background-color: hsl(var(--background)); /* fallback + overscroll area */
   }
+  body {
+    background: transparent; /* GeoPattern component provides the tiled bg */
+    color: hsl(var(--foreground));
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "kern" 1, "liga" 1, "cv11" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: var(--tracking-tight);
+  }
+  a { text-decoration: none; }
 }
 
-/* ===== Engineering Paper Grid Background ===== */
-.grid-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(
-      hsl(var(--grid-color) / var(--grid-opacity)) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      hsl(var(--grid-color) / var(--grid-opacity)) 1px,
-      transparent 1px
-    );
-  background-size: 24px 24px;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 40%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 40%, transparent 100%);
+/* ── Utility classes ─────────────────────────────────────────────── */
+@layer utilities {
+  .font-mono-data {
+    font-family: 'SF Mono', 'Fira Mono', ui-monospace, monospace;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.01em;
+  }
+  .text-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  /* Section badge pill (like Medusa "Security and Compliance") */
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--card));
+  }
+  .badge-pill-red {
+    border-color: hsl(var(--primary) / 0.3);
+    color: hsl(var(--primary));
+    background: hsl(var(--primary-light));
+  }
+  /* Medusa-style card */
+  .ui-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  /* Floating card — elevated */
+  .ui-card-floating {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.06);
+  }
+  /* Red pill button */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.15s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary:hover { background: hsl(var(--primary-hover)); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  /* Ghost button */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: transparent;
+    color: hsl(var(--foreground));
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid hsl(var(--border));
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+  }
+  .btn-ghost:hover { border-color: hsl(var(--border-strong)); background: hsl(var(--muted)); }
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th { font-size: 12px; font-weight: 600; color: hsl(var(--muted-foreground)); padding: 8px 12px; text-align: left; border-bottom: 1px solid hsl(var(--border)); }
+  .data-table td { font-size: 14px; padding: 10px 12px; border-bottom: 1px solid hsl(var(--border) / 0.6); }
+  .data-table tr:last-child td { border-bottom: none; }
+  /* Tag/chip */
+  .tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+  .tag-red { background: hsl(var(--primary-light)); color: hsl(var(--primary)); }
+  .tag-navy { background: hsl(var(--navy) / 0.08); color: hsl(var(--navy)); }
+  .tag-green { background: hsl(142 55% 95%); color: hsl(var(--success)); }
+  .tag-amber { background: hsl(38 92% 95%); color: hsl(var(--warning)); }
 }
 
-/* ===== Animations ===== */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+/* ── Nav bar ─────────────────────────────────────────────────────── */
+.nav-bar {
+  background: hsl(var(--navy));
+  border-bottom: 1px solid hsl(var(--navy-mid));
+}
+.nav-bar a { color: hsl(var(--navy-foreground) / 0.55); font-size: 13px; font-weight: 500; }
+.nav-bar a:hover { color: hsl(var(--navy-foreground)); }
+.nav-bar a.active { color: hsl(var(--navy-foreground)); border-bottom: 2px solid hsl(var(--primary)); }
+
+/* ── KPI cell ────────────────────────────────────────────────────── */
+.kpi-cell {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  transition: box-shadow 0.2s;
+}
+.kpi-cell:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes ring-fill {
-  from { --ring-progress: 0; }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out both;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.4s ease-out both;
-}
-
-/* Staggered children animation */
-.stagger-children > * {
-  animation: slide-up 0.4s ease-out both;
-}
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
-
-/* ===== Triage Bar (dense activity list) ===== */
-.triage-bar {
-  height: 4px;
-  border-radius: 2px;
-  transition: width 0.6s ease-out;
-}
-.triage-green  { background: hsl(var(--success)); }
-.triage-amber  { background: hsl(var(--warning)); }
-.triage-red    { background: hsl(var(--primary)); }
-
-/* ===== Score Ring ===== */
+/* ── Score ring ──────────────────────────────────────────────────── */
 .score-ring {
-  --size: 120px;
-  --stroke: 8px;
-  width: var(--size);
-  height: var(--size);
+  --sz: 120px; --sw: 8px;
+  width: var(--sz); height: var(--sz);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   background: conic-gradient(
-    hsl(var(--primary)) calc(var(--progress, 0) * 1%),
-    hsl(var(--border)) calc(var(--progress, 0) * 1%)
+    hsl(var(--primary)) calc(var(--progress,0) * 1%),
+    hsl(var(--border))  calc(var(--progress,0) * 1%)
   );
   position: relative;
 }
 .score-ring::before {
-  content: '';
-  position: absolute;
-  inset: var(--stroke);
-  border-radius: 50%;
+  content: ''; position: absolute;
+  inset: var(--sw); border-radius: 50%;
   background: hsl(var(--card));
 }
-.score-ring > * {
-  position: relative;
-  z-index: 1;
+.score-ring > * { position: relative; z-index: 1; }
+.score-ring-lg  { --sz: 160px; --sw: 10px; }
+
+/* ── Heat cell ───────────────────────────────────────────────────── */
+.heat-cell {
+  width: 32px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: ui-monospace, monospace;
+  font-size: 10px; font-weight: 500;
+  border-radius: 4px;
+  transition: transform 0.15s;
+}
+.heat-cell:hover { transform: scale(1.15); z-index: 10; position: relative; }
+
+/* ── Triage bar ──────────────────────────────────────────────────── */
+.triage          { height: 3px; border-radius: 2px; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.triage-green    { background: hsl(var(--success)); }
+.triage-amber    { background: hsl(var(--warning)); }
+.triage-red      { background: hsl(var(--primary)); }
+
+/* ── Geo pattern lines — light / dark mode ──────────────────────── */
+.geo-line {
+  stroke: rgba(0, 0, 0, 0.06);
+}
+.dark .geo-line {
+  stroke: rgba(255, 255, 255, 0.05);
 }
 
-/* Large score ring variant */
-.score-ring-lg {
-  --size: 160px;
-  --stroke: 10px;
+/* ── Keyframes ───────────────────────────────────────────────────── */
+@keyframes fade-in   { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slide-up  { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes slide-right { from { opacity: 0; transform: translateX(10px) } to { opacity: 1; transform: translateX(0) } }
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
 }
+
+.animate-fade-in    { animation: fade-in  0.5s ease-out both; }
+.animate-slide-up   { animation: slide-up 0.45s ease-out both; }
+.animate-float      { animation: float 4s ease-in-out infinite; }
+
+.stagger > *:nth-child(1) { animation: slide-up 0.45s ease-out 0ms   both; }
+.stagger > *:nth-child(2) { animation: slide-up 0.45s ease-out 80ms  both; }
+.stagger > *:nth-child(3) { animation: slide-up 0.45s ease-out 160ms both; }
+.stagger > *:nth-child(4) { animation: slide-up 0.45s ease-out 240ms both; }
+.stagger > *:nth-child(5) { animation: slide-up 0.45s ease-out 320ms both; }
+.stagger > *:nth-child(6) { animation: slide-up 0.45s ease-out 400ms both; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border-strong)); border-radius: 8px; }

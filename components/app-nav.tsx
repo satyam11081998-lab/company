@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import SignOutButton from '@/components/sign-out-button';
@@ -10,74 +11,93 @@ import { Button } from '@/components/ui/button';
 import type { UserRow } from '@/lib/types';
 
 /**
- * Top nav for all routes (public AND authenticated).
- * Fetches user state client-side so the parent page can be static.
- * Shows authenticated UI (points, avatar, sign-out) when logged in.
- * Shows public UI (Login, Sign up buttons) when logged out.
+ * Full-bleed navy navigation bar.
+ * Consulting-deck aesthetic: structured, dark, precise.
  */
 export default function AppNav({ user: initialUser }: { user?: UserRow | null }) {
   const [user, setUser] = useState<UserRow | null>(initialUser ?? null);
   const [loading, setLoading] = useState(initialUser === undefined);
+  const pathname = usePathname();
 
   useEffect(() => {
-    // If parent already passed user data, skip the fetch
     if (initialUser !== undefined) return;
-
     const supabase = createClient();
-
     async function fetchUser() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      const { data } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .maybeSingle();
+      if (!authUser) { setUser(null); setLoading(false); return; }
+      const { data } = await supabase.from('users').select('*').eq('id', authUser.id).maybeSingle();
       setUser((data as UserRow | null) ?? null);
       setLoading(false);
     }
-
     fetchUser();
   }, [initialUser]);
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="nav-bar sticky top-0 z-40">
+      <div className="container flex h-14 items-center justify-between">
+
+        {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-8">
-          <Link
-            href={user ? '/dashboard' : '/'}
-            className="text-xl font-bold tracking-tight text-foreground"
-          >
-            MECE
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2.5 group">
+            {/* Wordmark: red M, white ECE */}
+            <span className="text-[17px] font-bold tracking-tightest leading-none">
+              <span className="text-primary">M</span>
+              <span className="text-navy-foreground">ECE</span>
+            </span>
+            <span className="hidden sm:block h-3.5 w-px bg-navy-mid" />
+            <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-widest text-navy-foreground/40 leading-none">
+              Case prep
+            </span>
           </Link>
+
           {user && (
-            <nav className="hidden items-center gap-1 text-sm font-medium text-muted-foreground md:flex">
-              <NavLink href="/dashboard">Dashboard</NavLink>
-              <NavLink href="/cases">Cases</NavLink>
-              <NavLink href="/gd-briefs">GD Briefs</NavLink>
-              <NavLink href="/learn">Learn</NavLink>
-              <NavLink href="/leaderboard">Leaderboard</NavLink>
+            <nav className="hidden md:flex items-center gap-0.5">
+              {[
+                { href: '/dashboard',   label: 'Dashboard' },
+                { href: '/cases',       label: 'Cases' },
+                { href: '/gd-briefs',   label: 'GD Briefs' },
+                { href: '/learn',       label: 'Learn' },
+                { href: '/leaderboard', label: 'Leaderboard' },
+              ].map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative px-3 py-1 text-[13px] font-medium transition-colors rounded-sm ${
+                    isActive(href)
+                      ? 'text-navy-foreground'
+                      : 'text-navy-foreground/50 hover:text-navy-foreground/80'
+                  }`}
+                >
+                  {label}
+                  {/* Active underline — cardinal red rule */}
+                  {isActive(href) && (
+                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-none" />
+                  )}
+                </Link>
+              ))}
             </nav>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Right: points + avatar + theme + sign out */}
+        <div className="flex items-center gap-3">
           <ThemeToggle />
+
           {loading ? (
-            <div className="h-9 w-24 animate-pulse rounded-md bg-muted" />
+            <div className="h-7 w-20 animate-pulse rounded-sm bg-navy-mid" />
           ) : user ? (
             <>
-              <span className="hidden text-sm font-medium text-primary sm:inline">
-                {user.points} pts
-              </span>
-              <Link href="/profile">
-                <Avatar className="h-9 w-9 cursor-pointer border border-border">
+              {/* Points display — monospace, red accent */}
+              <div className="hidden sm:flex items-baseline gap-1 border-r border-navy-mid pr-3">
+                <span className="font-mono text-base font-medium text-primary tabular-nums">{user.points}</span>
+                <span className="text-label text-navy-foreground/35">pts</span>
+              </div>
+              <Link href="/profile" className="flex-shrink-0">
+                <Avatar className="h-7 w-7 rounded-sm border border-navy-mid cursor-pointer">
                   {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name || ''} />}
-                  <AvatarFallback className="bg-navy text-navy-foreground text-sm font-medium">
+                  <AvatarFallback className="rounded-sm bg-navy-mid text-navy-foreground text-base font-semibold">
                     {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
@@ -87,10 +107,12 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
           ) : (
             <>
               <Link href="/login">
-                <Button variant="ghost" size="sm">Login</Button>
+                <Button variant="ghost" size="sm" className="text-navy-foreground/60 hover:text-navy-foreground hover:bg-navy-mid h-8 text-base">
+                  Login
+                </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                <Button size="sm" className="bg-primary text-white hover:bg-primary-hover h-8 text-base rounded-sm font-semibold">
                   Sign up free
                 </Button>
               </Link>
@@ -99,14 +121,5 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
         </div>
       </div>
     </header>
-  );
-}
-
-/** Single nav link in the top nav. */
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link href={href} className="rounded-md px-3 py-1.5 transition-colors hover:bg-muted hover:text-foreground">
-      {children}
-    </Link>
   );
 }

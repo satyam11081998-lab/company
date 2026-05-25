@@ -12,7 +12,7 @@ export default function MethodologyPage() {
       <AppNav />
       <main className="container max-w-4xl py-12">
         <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Methodology</p>
+          <p className="text-base font-semibold uppercase tracking-wider text-primary">Methodology</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
             How MECE evaluates your answers
           </h1>
@@ -26,7 +26,7 @@ export default function MethodologyPage() {
 
         <section className="mt-14">
           <h2 className="text-2xl font-bold text-foreground">The 6 dimensions</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-base text-muted-foreground">
             Every submission is scored across these six areas, totaling 100 points.
           </p>
 
@@ -72,7 +72,7 @@ export default function MethodologyPage() {
 
         <section className="mt-14">
           <h2 className="text-2xl font-bold text-foreground">Frameworks we recognize</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-base text-muted-foreground">
             When you use these frameworks correctly in your answer, the evaluation rewards them.
           </p>
 
@@ -94,13 +94,13 @@ export default function MethodologyPage() {
 
         <section className="mt-14">
           <h2 className="text-2xl font-bold text-foreground">Publicly available sources</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-base text-muted-foreground">
             Our evaluation methodology draws from publicly available materials. We are not affiliated
             with or endorsed by any of these firms or institutions.
           </p>
 
           <Card className="mt-6 p-6">
-            <ul className="space-y-3 text-sm text-foreground/80">
+            <ul className="space-y-3 text-base text-foreground/80">
               <SourceLink
                 title="McKinsey on MECE / Barbara Minto"
                 url="https://www.mckinsey.com/alumni/news-and-events/global-news/alumni-news/barbara-minto-mece-i-invented-it-so-i-get-to-say-how-to-pronounce-it"
@@ -135,7 +135,7 @@ export default function MethodologyPage() {
 
         <section className="mt-14">
           <h2 className="text-2xl font-bold text-foreground">Important notes</h2>
-          <Card className="mt-6 p-6 space-y-4 text-sm leading-relaxed text-foreground/80">
+          <Card className="mt-6 p-6 space-y-4 text-base leading-relaxed text-foreground/80">
             <p>
               <strong className="text-foreground">No official affiliation.</strong> MECE is an
               independent platform. We are not affiliated with, endorsed by, or sponsored by
@@ -183,12 +183,12 @@ function DimensionCard(props: {
     <Card className="p-6">
       <div className="flex items-start justify-between gap-4">
         <h3 className="text-lg font-semibold text-foreground">{props.name}</h3>
-        <span className="flex-shrink-0 rounded-md bg-accent px-2.5 py-1 text-xs font-semibold text-primary">
+        <span className="flex-shrink-0 rounded-md bg-accent px-2.5 py-1 text-base font-semibold text-primary">
           {props.max} pts
         </span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-foreground/80">{props.description}</p>
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground italic">
+      <p className="mt-2 text-base leading-relaxed text-foreground/80">{props.description}</p>
+      <p className="mt-3 text-base leading-relaxed text-muted-foreground italic">
         <span className="font-semibold not-italic text-muted-foreground">Grounded in: </span>
         {props.groundedIn}
       </p>
@@ -199,8 +199,8 @@ function DimensionCard(props: {
 function FrameworkItem(props: { name: string; desc: string }) {
   return (
     <div>
-      <p className="text-sm font-semibold text-foreground">{props.name}</p>
-      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{props.desc}</p>
+      <p className="text-base font-semibold text-foreground">{props.name}</p>
+      <p className="mt-0.5 text-base leading-relaxed text-muted-foreground">{props.desc}</p>
     </div>
   );
 }

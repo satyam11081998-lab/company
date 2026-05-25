@@ -3,11 +3,10 @@
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 /**
- * Animated sun/moon toggle for the AppNav.
- * Avoids hydration mismatch by waiting for mount before rendering icon.
+ * Minimal sun/moon toggle — styled for the navy nav context.
+ * Avoids hydration mismatch via mounted state.
  */
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -16,25 +15,21 @@ export default function ThemeToggle() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    // Render placeholder to avoid layout shift
-    return <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Toggle theme"><div className="h-4 w-4" /></Button>;
+    return <div className="h-8 w-8" />;
   }
 
   const isDark = theme === 'dark';
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors"
+    <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="flex items-center justify-center h-8 w-8 rounded-sm text-navy-foreground/40 hover:text-navy-foreground/80 transition-colors"
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {isDark ? (
-        <Sun className="h-4 w-4 transition-transform duration-300 rotate-0" />
-      ) : (
-        <Moon className="h-4 w-4 transition-transform duration-300 rotate-0" />
-      )}
-    </Button>
+      {isDark
+        ? <Sun  className="h-3.5 w-3.5" />
+        : <Moon className="h-3.5 w-3.5" />
+      }
+    </button>
   );
 }

@@ -61,7 +61,7 @@ export default function GdBriefsPage() {
   const regulars = headlines ? headlines.filter((h) => !h.is_star) : [];
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-background">
       <AppNav />
       <main className="container max-w-5xl py-10">
         <div className="mb-8 animate-fade-in">
@@ -82,29 +82,29 @@ export default function GdBriefsPage() {
             </div>
           </div>
         ) : error ? (
-          <Card className="p-6 border-l-4 border-l-destructive">
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-foreground">Could not load headlines</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+                <p className="mt-1 text-base text-muted-foreground">{error}</p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="mt-3 text-sm font-medium text-primary hover:underline"
+                  className="mt-3 text-base font-medium text-primary hover:underline"
                 >
                   Try again
                 </button>
               </div>
             </div>
-          </Card>
+          </div>
         ) : headlines && headlines.length === 0 ? (
-          <Card className="p-10 text-center">
+          <div className="bg-card rounded-xl border border-border shadow-sm p-10 text-center">
             <Newspaper className="h-10 w-10 text-muted-foreground/50 mx-auto" />
             <h3 className="mt-4 font-semibold text-foreground">No headlines yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               Fresh headlines arrive daily. Check back tomorrow.
             </p>
-          </Card>
+          </div>
         ) : (
           <div className="space-y-6">
             {star ? (
@@ -142,7 +142,7 @@ interface CardProps {
 function StarHeadlineCard(props: CardProps) {
   const { headline, generating, onGenerate } = props;
   return (
-    <Card className="overflow-hidden border-l-4 border-l-primary animate-slide-up shadow-md">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-slide-up">
       <div className="grid md:grid-cols-[2fr_3fr]">
         <div className="relative aspect-video md:aspect-auto md:min-h-[240px] bg-navy">
           {headline.thumbnail_url ? (
@@ -160,13 +160,13 @@ function StarHeadlineCard(props: CardProps) {
               <Newspaper className="h-16 w-16" />
             </div>
           )}
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow">
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-base font-semibold text-primary-foreground shadow">
             <Sparkles className="h-3 w-3" />
             Most GD-worthy today
           </div>
         </div>
         <div className="flex flex-col p-6">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-base text-muted-foreground">
             <span className="font-medium">{headline.source_name}</span>
             <span>·</span>
             <span>{formatRelativeTime(headline.published_at)}</span>
@@ -181,14 +181,14 @@ function StarHeadlineCard(props: CardProps) {
             <ExternalLink className="ml-1 inline h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
           </a>
           {headline.description ? (
-            <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{headline.description}</p>
+            <p className="mt-2 line-clamp-3 text-base text-muted-foreground">{headline.description}</p>
           ) : null}
           {headline.keywords.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {headline.keywords.slice(0, 4).map((kw) => (
                 <span
                   key={kw}
-                  className="rounded-md bg-accent text-accent-foreground px-2 py-0.5 text-xs font-medium"
+                  className="rounded-md bg-accent text-accent-foreground px-2 py-0.5 text-base font-medium"
                 >
                   {kw}
                 </span>
@@ -199,7 +199,7 @@ function StarHeadlineCard(props: CardProps) {
             {headline.has_brief ? (
               <Link
                 href={'/gd-briefs/' + headline.id}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover transition-colors"
+                className="btn-primary inline-flex items-center gap-1.5"
               >
                 View brief
                 <ArrowRight className="h-4 w-4" />
@@ -208,7 +208,7 @@ function StarHeadlineCard(props: CardProps) {
               <button
                 onClick={onGenerate}
                 disabled={generating}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="btn-primary inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {generating ? (
                   <>
@@ -226,14 +226,14 @@ function StarHeadlineCard(props: CardProps) {
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
 function HeadlineCard(props: CardProps) {
   const { headline, generating, onGenerate } = props;
   return (
-    <Card className="flex flex-col overflow-hidden transition-shadow hover:shadow-md">
+    <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-video bg-navy">
         {headline.thumbnail_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -252,7 +252,7 @@ function HeadlineCard(props: CardProps) {
         )}
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-base text-muted-foreground">
           <span className="font-medium">{headline.source_name}</span>
           <span>·</span>
           <span>{formatRelativeTime(headline.published_at)}</span>
@@ -281,7 +281,7 @@ function HeadlineCard(props: CardProps) {
           {headline.has_brief ? (
             <Link
               href={'/gd-briefs/' + headline.id}
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-base font-medium text-primary hover:underline"
             >
               View brief
               <ArrowRight className="h-3.5 w-3.5" />
@@ -290,7 +290,7 @@ function HeadlineCard(props: CardProps) {
             <button
               onClick={onGenerate}
               disabled={generating}
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 text-base font-medium text-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {generating ? (
                 <>
@@ -307,21 +307,21 @@ function HeadlineCard(props: CardProps) {
           )}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
 function SkeletonCard(props: { tall?: boolean }) {
   const tallClass = props.tall ? 'h-48 md:h-60' : 'aspect-video';
   return (
-    <Card className="overflow-hidden animate-pulse">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-pulse">
       <div className={'bg-muted ' + tallClass} />
       <div className="p-4 space-y-2">
         <div className="h-3 w-1/3 bg-muted rounded" />
         <div className="h-4 w-full bg-muted rounded" />
         <div className="h-4 w-2/3 bg-muted rounded" />
       </div>
-    </Card>
+    </div>
   );
 }
 

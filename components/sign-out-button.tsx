@@ -2,10 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
-/** Small button that signs the user out and bounces them to /login. */
+/** Sign-out button styled for the navy nav bar. */
 export default function SignOutButton() {
   const router = useRouter();
   const supabase = createClient();
@@ -17,9 +16,13 @@ export default function SignOutButton() {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground">
-      <LogOut className="mr-2 h-4 w-4" />
-      Sign out
-    </Button>
+    <button
+      onClick={handleSignOut}
+      className="flex items-center gap-1.5 text-[13px] font-medium text-navy-foreground/40 hover:text-navy-foreground/80 transition-colors px-2 py-1"
+      aria-label="Sign out"
+    >
+      <LogOut className="h-3.5 w-3.5" />
+      <span className="hidden sm:inline">Sign out</span>
+    </button>
   );
 }
