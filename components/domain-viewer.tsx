@@ -56,15 +56,20 @@ function approachTag(approach: string) {
 function LessonTree({ lessons, depth = 0 }: { lessons: Lesson[]; depth?: number }) {
   if (!lessons || lessons.length === 0) return null;
   return (
-    <ul className={`space-y-1 ${depth > 0 ? 'ml-5 border-l border-border pl-4' : ''}`}>
+    <ul className={`space-y-3 ${depth > 0 ? 'ml-5 border-l border-border pl-4 mt-3' : 'mt-2'}`}>
       {lessons.map((lesson) => (
-        <li key={lesson.id}>
+        <li key={lesson.id} className="flex flex-col">
           <div className="flex items-start gap-2 py-1">
             <span className="font-mono text-[11px] text-muted-foreground/60 flex-shrink-0 mt-0.5">
               {lesson.id}
             </span>
-            <span className="text-sm text-foreground/80 leading-snug">{lesson.title}</span>
+            <span className="text-sm font-semibold text-foreground/90 leading-snug">{lesson.title}</span>
           </div>
+          {lesson.description && (
+            <p className="text-[13px] text-muted-foreground/90 leading-relaxed ml-7 mb-2 bg-muted/30 p-3 rounded-md border border-border/50">
+              {lesson.description}
+            </p>
+          )}
           {lesson.children && lesson.children.length > 0 && (
             <LessonTree lessons={lesson.children} depth={depth + 1} />
           )}
@@ -394,6 +399,22 @@ export default function DomainViewer({ domain, allDomains, learningPaths }: Doma
 
         {/* Main content area */}
         <div className="space-y-10 min-w-0">
+          {/* ── Framework Diagrams ─────────────────────────────────────── */}
+          {['case-interview-methodology', 'profitability', 'frameworks-mental-models', 'guesstimates-market-sizing', 'consulting-foundations'].includes(domain.slug) && (
+            <section className="mb-8 animate-fade-in">
+              <h3 className="text-lg font-bold text-foreground mb-4 tracking-tight flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" /> Core Framework Visuals
+              </h3>
+              <div className="ui-card p-6 bg-background flex justify-center">
+                {domain.slug === 'case-interview-methodology' && <MECEDiagram />}
+                {domain.slug === 'profitability' && <ProfitabilityTree />}
+                {domain.slug === 'frameworks-mental-models' && <IssueTree />}
+                {domain.slug === 'guesstimates-market-sizing' && <HypothesisDriven />}
+                {domain.slug === 'consulting-foundations' && <MintoPyramid />}
+              </div>
+            </section>
+          )}
+
           {/* ── 1. Modules Section ──────────────────────────────── */}
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -715,22 +736,6 @@ export default function DomainViewer({ domain, allDomains, learningPaths }: Doma
                 {domain.competitionSummaries.map((c) => (
                   <CaseCard key={c.code} entry={c} />
                 ))}
-              </div>
-            </section>
-          )}
-
-          {/* ── 11.5 Framework Diagrams ─────────────────────────────────────── */}
-          {['case-interview-methodology', 'profitability', 'frameworks-mental-models', 'guesstimates-market-sizing', 'consulting-foundations'].includes(domain.slug) && (
-            <section className="mb-8">
-              <h3 className="text-lg font-bold text-foreground mb-4 tracking-tight flex items-center gap-2">
-                <Layers className="h-5 w-5 text-primary" /> Core Framework
-              </h3>
-              <div className="ui-card p-6 bg-background flex justify-center">
-                {domain.slug === 'case-interview-methodology' && <MECEDiagram />}
-                {domain.slug === 'profitability' && <ProfitabilityTree />}
-                {domain.slug === 'frameworks-mental-models' && <IssueTree />}
-                {domain.slug === 'guesstimates-market-sizing' && <HypothesisDriven />}
-                {domain.slug === 'consulting-foundations' && <MintoPyramid />}
               </div>
             </section>
           )}

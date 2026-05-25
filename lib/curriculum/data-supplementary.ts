@@ -24,41 +24,42 @@ const mod = (id: string, title: string, lessons: Lesson[]): Module => ({
   lessons,
 });
 
-const lsn = (id: string, title: string, children?: Lesson[]): Lesson => ({
+const lsn = (id: string, title: string, description: string, children?: Lesson[]): Lesson => ({
   id,
   title,
+  description,
   ...(children ? { children } : {}),
 });
 
 // ─── D13 | GROUP DISCUSSION PREPARATION ─────────────────────────
 const d13Modules: Module[] = [
   mod('D13.1', 'GD Fundamentals', [
-    lsn('D13.1.1', 'Types of GD: Case-based, Abstract, Gamified'),
-    lsn('D13.1.2', 'What evaluators measure: content, communication, collaboration'),
-    lsn('D13.1.3', 'Structure: Introduction → Discussion → Conclusion (time allocation)'),
+    lsn('D13.1.1', 'Types of GD: Case-based, Abstract, Gamified', "Case-based GDs involve solving a business problem collaboratively using frameworks. Abstract GDs require interpreting a metaphorical topic and connecting it to real-world scenarios. Gamified GDs test teamwork and logic through puzzle-like scenarios where participants piece together clues."),
+    lsn('D13.1.2', 'What evaluators measure: content, communication, collaboration', "Evaluators look for substantive content that advances the discussion, rather than just speaking time. Communication skills are assessed based on clarity, structure, and active listening. Collaboration is measured by how well you build on others' ideas and facilitate consensus without dominating."),
+    lsn('D13.1.3', 'Structure: Introduction → Discussion → Conclusion (time allocation)', "A structured GD starts with a brief introduction defining the context and framework (10-15%). The core discussion phase (70-80%) should explore multiple dimensions and debate trade-offs. The conclusion (10%) must synthesize the group's insights into actionable recommendations."),
   ]),
   mod('D13.2', 'Case-Based GD (Mahindra/Corporate style)', [
-    lsn('D13.2.1', 'Opening as Chairman: framework + context setting'),
-    lsn('D13.2.2', 'Contributing substance: use consulting frameworks'),
-    lsn('D13.2.3', "Building on others' points professionally"),
-    lsn('D13.2.4', 'Closing with synthesis and action items'),
+    lsn('D13.2.1', 'Opening as Chairman: framework + context setting', "Opening as Chairman establishes leadership by setting the agenda and outlining a clear framework for the discussion. It involves briefly defining the problem statement and proposing a structured path forward. This proactive approach anchors the group and prevents early derailment."),
+    lsn('D13.2.2', 'Contributing substance: use consulting frameworks', "Substantive contributions should be grounded in structured business thinking, utilizing frameworks like 3Cs, 4Ps, or PESTEL. Avoid vague opinions; instead, provide data-driven hypotheses or logical deductions. This elevates the discussion from a general debate to a strategic problem-solving session."),
+    lsn('D13.2.3', "Building on others' points professionally", "Professional collaboration requires acknowledging a peer's point before introducing your own perspective or counter-argument. Phrases like 'Building on what X said...' or 'While I agree with Y, we must also consider...' demonstrate active listening and teamwork. It shows evaluators you value collective output over individual spotlighting."),
+    lsn('D13.2.4', 'Closing with synthesis and action items', "Closing a GD effectively means summarizing the key themes discussed, rather than just repeating your own points. A strong synthesis highlights areas of consensus and acknowledges unresolved trade-offs. Ending with clear, actionable recommendations demonstrates decisive leadership and business acumen."),
   ]),
   mod('D13.3', 'TAS (Tata) GD Format', [
-    lsn('D13.3.1', 'Structure: Chairman (1 min) → Discussion (6 min) → Conclusion (1 min)'),
-    lsn('D13.3.2', 'Rotating Chairman role: everyone gets one turn'),
-    lsn('D13.3.3', "TAS-specific Do's and Don'ts"),
-    lsn('D13.3.4', 'How to prepare for TAS ethics cases'),
-    lsn('D13.3.5', 'TAS previous topics (25 ethical scenarios)'),
+    lsn('D13.3.1', 'Structure: Chairman (1 min) → Discussion (6 min) → Conclusion (1 min)', "The TAS GD format is highly structured, typically starting with a 1-minute Chairman introduction to set the direction. This is followed by a 6-minute open discussion to explore the nuances of the case. Finally, a 1-minute conclusion is expected to summarize findings and deliver a unified recommendation."),
+    lsn('D13.3.2', 'Rotating Chairman role: everyone gets one turn', "The rotating Chairman model ensures every participant gets an opportunity to lead the discussion for a specific segment. It tests adaptive leadership, as you must smoothly transition between being a facilitator and a contributor. Evaluators assess how well you manage time and group dynamics when it is your turn to lead."),
+    lsn('D13.3.3', "TAS-specific Do's and Don'ts", "In TAS GDs, do focus on ethical leadership, long-term stakeholder value, and structured thinking aligned with Tata's core values. Do not be overly aggressive, interrupt others, or prioritize short-term profits over ethical considerations. Collaborative problem-solving is prioritized over cutthroat competition."),
+    lsn('D13.3.4', 'How to prepare for TAS ethics cases', "Preparing for TAS ethics cases requires a deep understanding of the Tata Code of Conduct and its core values like integrity and responsibility. Practice navigating scenarios that present a conflict between profitability and ethics, always prioritizing the latter. Formulate frameworks to evaluate the impact of decisions on all stakeholders, including employees, community, and the environment."),
+    lsn('D13.3.5', 'TAS previous topics (25 ethical scenarios)', "Past TAS topics often involve complex ethical dilemmas, such as whistleblower situations, vendor kickbacks, or environmental concerns. Analyzing these 25 historical scenarios helps identify recurring themes and the expected ethical baseline. Practice developing structured responses that balance immediate crisis management with long-term reputational integrity."),
   ]),
   mod('D13.4', 'Abstract GD Approach', [
-    lsn('D13.4.1', 'Decode the metaphor (literal, philosophical, business, social, tech)'),
-    lsn('D13.4.2', 'Open with multiple interpretations'),
-    lsn('D13.4.3', 'Connect abstract to real-world business/social examples'),
+    lsn('D13.4.1', 'Decode the metaphor (literal, philosophical, business, social, tech)', "Abstract topics must be decoded by exploring multiple interpretations across different dimensions: literal, philosophical, business, social, and technological. This multi-faceted approach prevents the discussion from becoming one-dimensional. Generating diverse interpretations early provides a rich foundation for the group to explore."),
+    lsn('D13.4.2', 'Open with multiple interpretations', "Opening an abstract GD involves presenting a few distinct interpretations of the topic to guide the group's initial thinking. By offering a broad canvas, you invite others to build upon your ideas and find a shared direction. It demonstrates creativity and the ability to think beyond the obvious."),
+    lsn('D13.4.3', 'Connect abstract to real-world business/social examples', "The key to succeeding in an abstract GD is rapidly anchoring the metaphorical topic to tangible real-world examples. Connecting the abstract concept to business strategies, current events, or social issues makes the discussion actionable and relevant. This transitions the group from philosophical debate to practical analysis."),
   ]),
   mod('D13.5', 'Gamified GD Approach', [
-    lsn('D13.5.1', 'Reading and using your chit effectively'),
-    lsn('D13.5.2', 'Finding connectors across clues'),
-    lsn('D13.5.3', 'Building toward consensus conclusion'),
+    lsn('D13.5.1', 'Reading and using your chit effectively', "In gamified GDs, each participant usually receives unique information or 'chits' that must be shared to solve the overall puzzle. Effective reading means quickly identifying the most critical data points in your clue. Using the chit effectively involves communicating your information clearly without overwhelming the group."),
+    lsn('D13.5.2', 'Finding connectors across clues', "Success in a gamified GD depends on identifying the hidden connections between the disparate clues held by different members. This requires active listening and the ability to map out the information logically, often building a timeline or matrix. Identifying these connectors is crucial for unlocking the next step in the problem-solving process."),
+    lsn('D13.5.3', 'Building toward consensus conclusion', "Gamified GDs culminate in a shared goal, requiring the group to build toward a consensus conclusion. It involves synthesizing all the shared clues, eliminating incorrect paths, and agreeing on the final solution. Demonstrating the ability to guide the group to this consensus without being domineering is a key evaluation metric."),
   ]),
 ];
 
@@ -258,25 +259,25 @@ const d14Companies: CompanyProfile[] = [
 
 const d14Modules: Module[] = [
   mod('D14.1', 'Research Framework for Companies', [
-    lsn('D14.1.1', 'Business model, revenue streams, value chain'),
-    lsn('D14.1.2', 'Financial health: revenue, margins, M.Cap'),
-    lsn('D14.1.3', 'Core values and mission statement'),
-    lsn('D14.1.4', 'Recent news, strategic initiatives, CSR'),
+    lsn('D14.1.1', 'Business model, revenue streams, value chain', "Analyzing a company's business model involves understanding how it creates, delivers, and captures value. This includes identifying its primary revenue streams, cost structures, and key customer segments. Mapping the value chain highlights the company's core competencies and areas for potential optimization."),
+    lsn('D14.1.2', 'Financial health: revenue, margins, M.Cap', "Assessing financial health requires examining key metrics like revenue growth, profit margins, and market capitalization. These indicators reveal the company's operational efficiency, market position, and overall stability. Understanding these financials is crucial for diagnosing business problems and evaluating strategic initiatives."),
+    lsn('D14.1.3', 'Core values and mission statement', "A company's core values and mission statement define its culture, purpose, and long-term strategic direction. They provide the guiding principles for decision-making and influence how the company interacts with stakeholders. Aligning your case recommendations with these foundational elements demonstrates deep company understanding."),
+    lsn('D14.1.4', 'Recent news, strategic initiatives, CSR', "Researching recent news and strategic initiatives provides context for a company's current challenges and future trajectory. This includes understanding their M&A activity, product launches, and Corporate Social Responsibility (CSR) efforts. Integrating this recent context into your analysis shows proactive research and commercial awareness."),
   ]),
   mod('D14.2', 'Company Compendium (14 Firms)', []),
   mod('D14.3', 'Sector Research Methodology', [
-    lsn('D14.3.1', 'Technology & Innovation research'),
-    lsn('D14.3.2', 'Regulatory & Policy research'),
-    lsn('D14.3.3', 'Competitor benchmarking research'),
-    lsn('D14.3.4', 'Customer segmentation research'),
-    lsn('D14.3.5', 'Financial performance research'),
+    lsn('D14.3.1', 'Technology & Innovation research', "Technology and innovation research involves tracking emerging trends, patent filings, and R&D investments within a sector. This helps identify potential disruptions, shifts in consumer behavior, and new market opportunities. Understanding the technological landscape is essential for advising companies on digital transformation and future-proofing."),
+    lsn('D14.3.2', 'Regulatory & Policy research', "Regulatory and policy research examines the legal frameworks, government initiatives, and compliance requirements affecting an industry. Changes in policy can significantly alter market dynamics, creating new barriers to entry or opening up subsidies. Anticipating regulatory shifts is a critical component of risk management and strategic planning."),
+    lsn('D14.3.3', 'Competitor benchmarking research', "Competitor benchmarking involves analyzing rival companies across key dimensions such as market share, product offerings, and financial performance. This identifies industry best practices, relative strengths and weaknesses, and potential areas for differentiation. A robust benchmarking exercise informs competitive strategy and positioning."),
+    lsn('D14.3.4', 'Customer segmentation research', "Customer segmentation research divides the broader market into distinct groups based on demographics, psychographics, and purchasing behavior. This allows for targeted marketing, tailored product development, and optimized pricing strategies. Understanding the specific needs and pain points of each segment is vital for driving growth and customer loyalty."),
+    lsn('D14.3.5', 'Financial performance research', "Financial performance research across a sector involves comparing key ratios like profitability, liquidity, and leverage among industry players. This reveals the overall health of the sector, average margins, and capital intensity. Sector-level financial analysis provides a baseline for evaluating individual company performance and identifying outliers."),
   ]),
   mod('D14.4', 'Resource Repository for Research', [
-    lsn('D14.4.1', 'Research papers: ResearchGate'),
-    lsn('D14.4.2', 'Industry reports: McKinsey, Gartner, EY, PwC'),
-    lsn('D14.4.3', 'Financial tools: Cube Software, Forecastr'),
-    lsn('D14.4.4', 'Design: Flaticon, Iconscout, Slidesgo, Slide Geeks'),
-    lsn('D14.4.5', 'Presentation frameworks: Benjamin Ball Presentations'),
+    lsn('D14.4.1', 'Research papers: ResearchGate', "Platforms like ResearchGate provide access to peer-reviewed academic papers and scientific studies. These resources are invaluable for deep-dive research into technical subjects, emerging technologies, or rigorous economic analyses. Leveraging academic research adds a layer of depth and credibility to complex consulting projects."),
+    lsn('D14.4.2', 'Industry reports: McKinsey, Gartner, EY, PwC', "Industry reports from top-tier firms (McKinsey, Gartner, EY, PwC) offer synthesized market intelligence, trend analysis, and strategic frameworks. These reports are essential for quickly getting up to speed on a new sector, understanding macroeconomic drivers, and identifying industry consensus. They provide the 'consulting perspective' on complex market dynamics."),
+    lsn('D14.4.3', 'Financial tools: Cube Software, Forecastr', "Financial tools like Cube Software and Forecastr facilitate advanced financial modeling, scenario planning, and data integration. These platforms streamline the analysis of complex financial data, improving accuracy and efficiency. Proficiency with such tools is increasingly important for data-driven strategic planning and valuation."),
+    lsn('D14.4.4', 'Design: Flaticon, Iconscout, Slidesgo, Slide Geeks', "Design resources (Flaticon, Iconscout, Slidesgo, Slide Geeks) provide high-quality visual assets essential for creating impactful consulting presentations. Professional, consistent design enhances the clarity and persuasiveness of your communication. Leveraging these tools helps translate complex data into easily digestible visual narratives."),
+    lsn('D14.4.5', 'Presentation frameworks: Benjamin Ball Presentations', "Presentation frameworks, such as those from Benjamin Ball, offer structured methodologies for crafting compelling business narratives. These frameworks guide the flow of information, ensuring the core message is delivered clearly and persuasively. Mastering presentation structure is as critical as the underlying analysis in management consulting."),
   ]),
 ];
 
@@ -302,50 +303,50 @@ const d14: Domain = {
 // ─── D15 | BUSINESS & FINANCIAL FUNDAMENTALS ────────────────────
 const d15Modules: Module[] = [
   mod('D15.1', 'Business Economics Fundamentals', [
-    lsn('D15.1.1', 'Supply and demand curves; equilibrium'),
-    lsn('D15.1.2', 'Price elasticity (formula + types)'),
-    lsn('D15.1.3', 'Market structures: Perfect competition, Monopoly, Oligopoly, Monopolistic'),
-    lsn('D15.1.4', 'Price discrimination: 1st, 2nd, 3rd degree'),
+    lsn('D15.1.1', 'Supply and demand curves; equilibrium', "The interaction of supply and demand curves determines the market equilibrium, setting the baseline price and quantity. Shifts in these curves, driven by factors like consumer preferences or input costs, cause the equilibrium to move. Understanding this dynamic is fundamental to analyzing market sizing, pricing strategies, and competitive responses."),
+    lsn('D15.1.2', 'Price elasticity (formula + types)', "Price elasticity measures how sensitive the quantity demanded or supplied is to a change in price. It is calculated as the percentage change in quantity divided by the percentage change in price. Understanding whether a product is elastic (sensitive) or inelastic (insensitive) is crucial for optimizing pricing and maximizing revenue."),
+    lsn('D15.1.3', 'Market structures: Perfect competition, Monopoly, Oligopoly, Monopolistic', "Market structures range from perfect competition (many players, identical products) to monopoly (single player, high barriers). Oligopolies feature a few dominant firms, while monopolistic competition involves differentiated products. Identifying the market structure dictates the appropriate competitive strategy, pricing power, and barriers to entry."),
+    lsn('D15.1.4', 'Price discrimination: 1st, 2nd, 3rd degree', "Price discrimination involves charging different prices to different customers for the same product to capture more consumer surplus. 1st degree charges the maximum each is willing to pay; 2nd degree offers volume discounts; 3rd degree segments the market (e.g., student vs. adult tickets). This is a powerful tool for maximizing profitability in segmented markets."),
   ]),
   mod('D15.2', 'Accounting Fundamentals', [
-    lsn('D15.2.1', 'Key income statement line items: Revenue, COGS, EBITDA, Net Profit'),
-    lsn('D15.2.2', "Balance sheet: Assets = Liabilities + Shareholder's Equity"),
-    lsn('D15.2.3', 'Current vs. non-current assets and liabilities'),
-    lsn('D15.2.4', 'Working capital and operating leverage'),
+    lsn('D15.2.1', 'Key income statement line items: Revenue, COGS, EBITDA, Net Profit', "The income statement tracks a company's financial performance over a specific period, detailing revenues, expenses, and profits. Key items include Revenue (top line), COGS (direct costs), EBITDA (operating proxy), and Net Profit (bottom line). Analyzing these line items helps identify margin compression, cost inefficiencies, and overall profitability trends."),
+    lsn('D15.2.2', "Balance sheet: Assets = Liabilities + Shareholder's Equity", "The balance sheet provides a snapshot of a company's financial position at a specific point in time, based on the equation: Assets = Liabilities + Shareholder's Equity. It details what the company owns, what it owes, and the residual value for owners. This statement is critical for assessing liquidity, solvency, and capital structure."),
+    lsn('D15.2.3', 'Current vs. non-current assets and liabilities', "Assets and liabilities are classified as current (short-term, <1 year) or non-current (long-term, >1 year). Current items relate to daily operations and working capital, while non-current items involve long-term investments and debt. This distinction is vital for analyzing a company's ability to meet its short-term obligations and fund long-term growth."),
+    lsn('D15.2.4', 'Working capital and operating leverage', "Working capital (Current Assets - Current Liabilities) measures a company's short-term liquidity and operational efficiency. Operating leverage refers to the proportion of fixed vs. variable costs; high operating leverage means profits are highly sensitive to sales volume changes. Managing both is crucial for cash flow stability and scaling operations profitably."),
   ]),
   mod('D15.3', 'Financial Ratios & Metrics', [
-    lsn('D15.3.1', 'Profitability: Profit Margin, ROE, ROCE'),
-    lsn('D15.3.2', 'Liquidity: Quick Ratio, Working Capital Ratio'),
-    lsn('D15.3.3', 'Leverage: Debt-to-Equity Ratio'),
-    lsn('D15.3.4', 'Valuation: P/E Ratio, EPS, P/B Ratio'),
-    lsn('D15.3.5', 'Growth: CAGR, Revenue Growth Rate'),
+    lsn('D15.3.1', 'Profitability: Profit Margin, ROE, ROCE', "Profitability ratios assess a company's ability to generate earnings relative to its revenue, assets, or equity. Key metrics include Profit Margin (Net Income/Revenue), ROE (Net Income/Shareholder's Equity), and ROCE (EBIT/Capital Employed). These ratios are fundamental for comparing operational efficiency and investment returns across different firms."),
+    lsn('D15.3.2', 'Liquidity: Quick Ratio, Working Capital Ratio', "Liquidity ratios evaluate a company's capacity to pay off its short-term debt obligations without raising external capital. The Quick Ratio (Current Assets - Inventory / Current Liabilities) and Working Capital Ratio provide insights into immediate financial health. Low liquidity can signal impending cash flow crises, even in profitable companies."),
+    lsn('D15.3.3', 'Leverage: Debt-to-Equity Ratio', "Leverage ratios, such as the Debt-to-Equity Ratio, measure the extent to which a company is financing its operations through debt versus shareholder funds. High leverage amplifies returns during good times but increases insolvency risk during downturns. Assessing leverage is critical when evaluating a company's risk profile and capital structure optimization."),
+    lsn('D15.3.4', 'Valuation: P/E Ratio, EPS, P/B Ratio', "Valuation metrics help determine whether a company's stock is overvalued or undervalued relative to its peers or historical performance. Key ratios include the Price-to-Earnings (P/E) Ratio, Earnings Per Share (EPS), and Price-to-Book (P/B) Ratio. These metrics are heavily used in M&A due diligence and investment analysis to determine fair acquisition prices."),
+    lsn('D15.3.5', 'Growth: CAGR, Revenue Growth Rate', "Growth metrics track a company's historical or projected expansion over time. The Compound Annual Growth Rate (CAGR) provides a smoothed annualized return, while the Revenue Growth Rate measures top-line momentum. Consistent, high growth is a primary driver of premium valuations in many sectors, particularly technology."),
   ]),
   mod('D15.4', 'Finance Concepts', [
-    lsn('D15.4.1', 'Time Value of Money: PV, FV, NPV, IRR'),
-    lsn('D15.4.2', 'Annuity and Perpetuity'),
-    lsn('D15.4.3', 'Capital budgeting: NPV, IRR, Payback Period'),
-    lsn('D15.4.4', 'Break-even: Fixed Costs / Contribution Margin'),
+    lsn('D15.4.1', 'Time Value of Money: PV, FV, NPV, IRR', "The Time Value of Money principle states that a dollar today is worth more than a dollar tomorrow due to its potential earning capacity. Core concepts include Present Value (PV), Future Value (FV), Net Present Value (NPV), and Internal Rate of Return (IRR). These are the foundational calculations for evaluating long-term investments and project viability."),
+    lsn('D15.4.2', 'Annuity and Perpetuity', "An annuity is a series of equal payments made at regular intervals over a fixed period, commonly seen in loan repayments or retirement payouts. A perpetuity is a type of annuity that lasts forever, often used to value preferred stock or steady dividend streams. Understanding these cash flow structures is essential for complex financial modeling."),
+    lsn('D15.4.3', 'Capital budgeting: NPV, IRR, Payback Period', "Capital budgeting is the process a business uses to evaluate potential major projects or investments. Techniques like NPV (discounting cash flows to present value), IRR (finding the break-even discount rate), and Payback Period (time to recover initial investment) are used. These methods ensure capital is allocated to the most value-accretive opportunities."),
+    lsn('D15.4.4', 'Break-even: Fixed Costs / Contribution Margin', "Break-even analysis determines the sales volume required to cover all fixed and variable costs, resulting in zero profit. The formula is Fixed Costs divided by the Contribution Margin per unit (Price - Variable Cost). This is a critical threshold metric used to assess the risk and feasibility of new product launches or pricing changes."),
   ]),
   mod('D15.5', 'Marketing Fundamentals', [
-    lsn('D15.5.1', 'Segmentation, Targeting, Positioning (STP)'),
-    lsn('D15.5.2', 'Bundling, Cross-selling, Upselling'),
-    lsn('D15.5.3', 'Customer lifetime value and acquisition cost'),
+    lsn('D15.5.1', 'Segmentation, Targeting, Positioning (STP)', "STP is a core marketing framework: Segmentation divides the market into distinct groups; Targeting selects the most attractive groups; Positioning defines how the product is perceived relative to competitors. This structured approach ensures marketing efforts are focused, relevant, and differentiated. It forms the basis of any go-to-market strategy."),
+    lsn('D15.5.2', 'Bundling, Cross-selling, Upselling', "Bundling combines multiple products for a single price to increase perceived value and average order size. Cross-selling encourages customers to buy related or complementary items. Upselling persuades customers to purchase a more expensive, upgraded version of their chosen item, directly boosting revenue per user."),
+    lsn('D15.5.3', 'Customer lifetime value and acquisition cost', "Customer Lifetime Value (CLTV) estimates the total net profit a company can expect from a single customer relationship. Customer Acquisition Cost (CAC) is the total expense incurred to acquire a new customer. A sustainable business model requires that CLTV significantly exceeds CAC, typically by a ratio of 3:1 or higher."),
   ]),
   mod('D15.6', 'Valuation Analysis (Applied)', [
-    lsn('D15.6.1', 'Book Value = Assets - Liabilities (Tata Motors FY24 example)'),
-    lsn('D15.6.2', 'Market Cap = Share Price × Outstanding Shares (Tata Motors example)'),
-    lsn('D15.6.3', 'Enterprise Value = MCap + Debt + Minority Interest - Cash'),
+    lsn('D15.6.1', 'Book Value = Assets - Liabilities (Tata Motors FY24 example)', "Book Value represents the net asset value of a company, calculated as Total Assets minus Total Liabilities (and intangible assets). It provides a conservative estimate of what shareholders would receive if the company were liquidated. Comparing Book Value to Market Value highlights how much premium the market places on the company's future growth potential."),
+    lsn('D15.6.2', 'Market Cap = Share Price × Outstanding Shares (Tata Motors example)', "Market Capitalization is the total market value of a company's outstanding shares of stock, calculated as Current Share Price multiplied by Total Outstanding Shares. It represents the public market's consensus on the company's overall equity value. MCap is a primary metric used to categorize companies by size (large-cap, mid-cap, small-cap)."),
+    lsn('D15.6.3', 'Enterprise Value = MCap + Debt + Minority Interest - Cash', "Enterprise Value (EV) is a comprehensive measure of a company's total value, often viewed as the theoretical takeover price. It is calculated as Market Cap plus Total Debt and Minority Interest, minus Cash and Cash Equivalents. EV is preferred over MCap for valuation multiples (like EV/EBITDA) because it accounts for the company's capital structure."),
   ]),
   mod('D15.7', 'ROIC Tree (Return on Invested Capital)', [
-    lsn('D15.7.1', 'ROIC = NOPAT / Investment'),
-    lsn('D15.7.2', 'Decomposition: NOPAT Margin × Capital Turnover'),
-    lsn('D15.7.3', 'Identifying profitability vs. asset efficiency issues'),
+    lsn('D15.7.1', 'ROIC = NOPAT / Investment', "Return on Invested Capital (ROIC) measures how efficiently a company allocates its capital to generate profitable returns. It is calculated as Net Operating Profit After Tax (NOPAT) divided by Invested Capital. A high ROIC indicates a strong competitive advantage and efficient capital utilization, making it a critical metric for long-term value creation."),
+    lsn('D15.7.2', 'Decomposition: NOPAT Margin × Capital Turnover', "The ROIC tree decomposes the metric into two main drivers: NOPAT Margin (profitability) and Capital Turnover (asset efficiency). This decomposition allows analysts to pinpoint exactly why ROIC is changing. A company can improve ROIC either by increasing its profit margins or by generating more sales per dollar of invested capital."),
+    lsn('D15.7.3', 'Identifying profitability vs. asset efficiency issues', "By breaking down ROIC, consultants can diagnose whether a company's underperformance is a profitability issue (low margins due to high costs or low prices) or an asset efficiency issue (bloated inventory or underutilized fixed assets). This directs the focus of operational improvements. It is the cornerstone of financial diagnostic trees."),
   ]),
   mod('D15.8', 'Competitive Profile Matrix', [
-    lsn('D15.8.1', 'Scoring competitors on critical success factors with weighted ratings'),
+    lsn('D15.8.1', 'Scoring competitors on critical success factors with weighted ratings', "The Competitive Profile Matrix (CPM) is a strategic tool that compares a firm and its rivals across Critical Success Factors (CSFs). Each CSF is assigned a weight based on industry importance, and competitors are rated on their performance. This provides a quantifiable, visual representation of competitive strengths and weaknesses."),
   ]),
   mod('D15.9', 'The 40 Elements of Value to a B2B Business', [
-    lsn('D15.9.1', 'Value pyramid: functional → ease → individual → inspirational elements'),
+    lsn('D15.9.1', 'Value pyramid: functional → ease → individual → inspirational elements', "The B2B Elements of Value pyramid categorizes value propositions into four levels: functional (meeting basic needs), ease of doing business (saving time/effort), individual (career advancement), and inspirational (purpose/vision). Products that deliver on multiple, higher-level elements command greater loyalty and pricing power. It provides a framework for differentiating commoditized B2B offerings."),
   ]),
 ];
 
@@ -363,36 +364,36 @@ const d15: Domain = {
 // ─── D16 | PRODUCT STRATEGY & SAAS ECONOMICS ────────────────────
 const d16Modules: Module[] = [
   mod('D16.1', 'Product Management Fundamentals', [
-    lsn('D16.1.1', 'Role of a PM vs. consultant vs. engineer'),
-    lsn('D16.1.2', 'Product lifecycle: Discovery, Delivery, Growth, Decline'),
-    lsn('D16.1.3', 'Opportunity Solution Tree: mapping needs to experiments'),
+    lsn('D16.1.1', 'Role of a PM vs. consultant vs. engineer', "A Product Manager focuses on discovering the 'what' and 'why' of a product to maximize user value and business viability. While engineers handle the 'how' (execution) and consultants advise on broader strategic shifts, the PM owns the product's daily trajectory and cross-functional alignment. This role requires balancing user empathy with hard business metrics."),
+    lsn('D16.1.2', 'Product lifecycle: Discovery, Delivery, Growth, Decline', "The product lifecycle consists of Discovery (identifying the right problem), Delivery (building the solution efficiently), Growth (scaling adoption), and Decline (managing obsolescence). Strategies and key metrics change drastically across these phases. Recognizing the current phase is essential for applying the correct management frameworks and resource allocation."),
+    lsn('D16.1.3', 'Opportunity Solution Tree: mapping needs to experiments', "The Opportunity Solution Tree is a visual framework designed by Teresa Torres to map out the path from a desired business outcome to actionable experiments. It connects a high-level goal to specific user opportunities, potential solutions, and the tests needed to validate them. This ensures product teams build features that directly drive strategic objectives."),
   ]),
   mod('D16.2', 'Feature Prioritization Frameworks', [
-    lsn('D16.2.1', 'RICE: Reach × Impact × Confidence / Effort'),
-    lsn('D16.2.2', 'WSJF: (User Value + Time Criticality + Risk Reduction) / Job Size'),
-    lsn('D16.2.3', 'Kano Model: Must-haves, Performance, Delighters'),
-    lsn('D16.2.4', 'MoSCoW: Must/Should/Could/Won\'t have'),
-    lsn('D16.2.5', 'Impact vs. Effort Matrix: quick wins vs. major projects'),
+    lsn('D16.2.1', 'RICE: Reach × Impact × Confidence / Effort', "RICE is a prioritization framework that scores features based on Reach (how many users affected), Impact (degree of benefit), Confidence (certainty of estimates), divided by Effort (time/resources required). It provides a quantifiable score to compare disparate product ideas objectively. RICE helps teams focus on high-impact, low-effort features while accounting for uncertainty."),
+    lsn('D16.2.2', 'WSJF: (User Value + Time Criticality + Risk Reduction) / Job Size', "Weighted Shortest Job First (WSJF) is an agile prioritization model used to sequence work for maximum economic benefit. It is calculated by dividing the Cost of Delay (User Value + Time Criticality + Risk Reduction) by the Job Size (duration). WSJF ensures teams tackle the most critical, highest-value tasks that can be delivered quickly."),
+    lsn('D16.2.3', 'Kano Model: Must-haves, Performance, Delighters', "The Kano Model categorizes product features based on how they impact customer satisfaction: Must-haves (basic expectations), Performance (linear satisfaction), and Delighters (unexpected bonuses). Over time, Delighters become Must-haves as user expectations evolve. This framework helps balance building foundational features with investing in innovation."),
+    lsn('D16.2.4', "MoSCoW: Must/Should/Could/Won't have", "MoSCoW is a simple categorization technique for requirements: Must have (non-negotiable), Should have (important but not vital), Could have (nice to have), and Won't have (out of scope for now). It is highly effective for managing stakeholder expectations and defining the Minimum Viable Product (MVP). It prevents scope creep during critical delivery phases."),
+    lsn('D16.2.5', 'Impact vs. Effort Matrix: quick wins vs. major projects', "The Impact vs. Effort Matrix is a 2x2 grid that plots potential initiatives based on their expected value and the resources required. It quickly categorizes tasks into 'Quick Wins' (high impact, low effort), 'Major Projects', 'Fill-ins', and 'Thankless Tasks'. This visual tool is excellent for rapid, high-level strategic alignment during workshops."),
   ]),
   mod('D16.3', 'SaaS Unit Economics', [
-    lsn('D16.3.1', 'Customer Acquisition Cost (CAC): formula and benchmarks'),
-    lsn('D16.3.2', 'Lifetime Value (LTV): gross margin × average lifespan'),
-    lsn('D16.3.3', 'LTV:CAC Ratio: healthy = 3:1 (but fragile; use CAC Payback instead)'),
-    lsn('D16.3.4', 'CAC Payback Period: months to recover acquisition cost'),
-    lsn('D16.3.5', 'Annual and Monthly Churn (by SaaS vertical)'),
-    lsn('D16.3.6', 'Net Revenue Retention (NRR): >100% = negative churn'),
+    lsn('D16.3.1', 'Customer Acquisition Cost (CAC): formula and benchmarks', "Customer Acquisition Cost (CAC) is the total marketing and sales expenditure divided by the number of new customers acquired over a given period. It is a fundamental metric for evaluating the efficiency of growth strategies. Industry benchmarks vary wildly by sector, but a rising CAC often indicates market saturation or inefficient spend."),
+    lsn('D16.3.2', 'Lifetime Value (LTV): gross margin × average lifespan', "Lifetime Value (LTV) estimates the total gross margin a company will generate from a single customer over the duration of their relationship. It relies on average order value, purchase frequency, and churn rate. Accurate LTV forecasting is essential for determining how much a company can afford to spend on acquisition."),
+    lsn('D16.3.3', 'LTV:CAC Ratio: healthy = 3:1 (but fragile; use CAC Payback instead)', "The LTV:CAC Ratio evaluates the long-term sustainability of the business model, with 3:1 generally considered a healthy benchmark for SaaS. However, LTV is often based on fragile future assumptions, making this ratio easily manipulated. Investors increasingly look at CAC Payback alongside this ratio for a grounded reality check."),
+    lsn('D16.3.4', 'CAC Payback Period: months to recover acquisition cost', "The CAC Payback Period calculates the number of months required for a customer's gross margin contributions to cover their acquisition cost. A shorter payback period (typically under 12 months for SMBs) means the company recovers cash faster, reducing the need for external funding to fuel growth. It is a critical measure of capital efficiency."),
+    lsn('D16.3.5', 'Annual and Monthly Churn (by SaaS vertical)', "Annual and Monthly Churn measure the percentage of customers (or revenue) lost during a specific period. Churn rates vary significantly by SaaS vertical; mission-critical infrastructure has low churn, while commoditized tools see higher turnover. Managing churn is often more impactful on long-term growth than accelerating new customer acquisition."),
+    lsn('D16.3.6', 'Net Revenue Retention (NRR): >100% = negative churn', "Net Revenue Retention (NRR) measures the percentage of recurring revenue retained from existing customers, factoring in upgrades, downgrades, and churn. An NRR above 100% means the company's revenue from its current base is growing faster than it is losing revenue to churn. High NRR is the hallmark of top-tier SaaS companies, indicating strong product-market fit."),
   ]),
   mod('D16.4', 'SaaS Benchmarks 2025-2026', []),
   mod('D16.5', 'Digital Business Models', [
-    lsn('D16.5.1', 'Freemium vs. Premium vs. Usage-based vs. Flat-rate'),
-    lsn('D16.5.2', 'Product-Led Growth (PLG) vs. Sales-Led Growth'),
-    lsn('D16.5.3', 'Two-sided platforms and network effects'),
-    lsn('D16.5.4', 'Aggregator vs. Platform vs. Direct B2C models'),
+    lsn('D16.5.1', 'Freemium vs. Premium vs. Usage-based vs. Flat-rate', "Digital business models define how a company monetizes its software. Freemium offers basic features for free to build a user base; Premium relies on high-value paid tiers; Usage-based charges per transaction or API call; Flat-rate offers all-you-can-eat access. Selecting the right model depends on the product's value metric and marginal costs."),
+    lsn('D16.5.2', 'Product-Led Growth (PLG) vs. Sales-Led Growth', "Product-Led Growth (PLG) relies on the product itself as the primary driver of acquisition, retention, and expansion, typically utilizing self-serve free trials. Sales-Led Growth relies on human sales teams to navigate complex enterprise procurement processes. Many successful companies eventually adopt a hybrid model, using PLG for SMBs and enterprise sales for larger accounts."),
+    lsn('D16.5.3', 'Two-sided platforms and network effects', "Two-sided platforms connect distinct user groups (e.g., buyers and sellers), creating value through interactions. They rely heavily on network effects, where the platform becomes more valuable as more users join on either side. Overcoming the 'chicken-and-egg' problem to achieve critical mass is the primary strategic challenge for these businesses."),
+    lsn('D16.5.4', 'Aggregator vs. Platform vs. Direct B2C models', "Aggregators (like Google or Zillow) control demand by organizing vast amounts of third-party supply and owning the user relationship. Platforms (like Shopify) provide the underlying infrastructure for others to operate, while Direct B2C models sell proprietary products directly to consumers. Each model has distinct margin profiles, defensibility traits, and scaling challenges."),
   ]),
   mod('D16.6', 'Tech Industry Overviews', [
-    lsn('D16.6.1', 'AI/ML: market size, use cases, government initiatives (India)'),
-    lsn('D16.6.2', 'Google business model (hidden revenue, Maps API, Payments)'),
-    lsn('D16.6.3', 'Global Cloud: AWS vs. Azure vs. GCP; pricing models; IaaS/PaaS/SaaS'),
+    lsn('D16.6.1', 'AI/ML: market size, use cases, government initiatives (India)', "The AI/ML sector is experiencing explosive growth, expanding from niche applications to broad horizontal use cases across all industries. In India, government initiatives like 'IndiaAI' aim to foster local capabilities and datasets. Understanding this landscape involves tracking computing costs, foundational model developments, and sector-specific AI adoption rates."),
+    lsn('D16.6.2', 'Google business model (hidden revenue, Maps API, Payments)', "Google's business model is primarily an advertising ecosystem fueled by user data, but it has diversified significantly. Hidden revenue streams include enterprise cloud services, app store fees, Maps API licensing, and hardware. Analyzing Google requires understanding how these disparate parts create a highly defensible, interconnected moat."),
+    lsn('D16.6.3', 'Global Cloud: AWS vs. Azure vs. GCP; pricing models; IaaS/PaaS/SaaS', "The global cloud computing market is dominated by AWS, Microsoft Azure, and Google Cloud Platform (GCP). They offer services across Infrastructure (IaaS), Platform (PaaS), and Software (SaaS), with complex, usage-based pricing models. Competition centers on enterprise lock-in, data sovereignty features, and specialized AI/ML tooling."),
   ]),
 ];
 
@@ -610,7 +611,7 @@ const d18CompetitionSummaries: CaseEntry[] = [
 
 const d18Modules: Module[] = [
   mod('D18.1', 'Searchable Case Index', [
-    lsn('D18.1.1', 'Filter by: Case Type, Difficulty, Sector, Source, Duration'),
+    lsn('D18.1.1', 'Filter by: Case Type, Difficulty, Sector, Source, Duration', "The Searchable Case Index allows users to efficiently navigate the extensive practice library to target specific skill gaps. Cases can be filtered by type (e.g., profitability, market entry), difficulty level, industry sector, and origin source. This organized approach ensures candidates can systematically build their case-solving repertoire."),
   ]),
   mod('D18.2', 'Profitability (26 cases) → D4.4', []),
   mod('D18.3', 'Market Entry (10 cases) → D5.5', []),
