@@ -17,6 +17,13 @@ import {
   ExternalLink,
   ArrowRight,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { MECEDiagram, ProfitabilityTree, IssueTree, HypothesisDriven, MintoPyramid } from '@/components/framework-diagrams';
 import type {
   Domain,
@@ -84,8 +91,6 @@ function LessonTree({ lessons, depth = 0 }: { lessons: Lesson[]; depth?: number 
    ================================================================ */
 
 function CaseCard({ entry }: { entry: CaseEntry }) {
-  const [open, setOpen] = useState(false);
-
   const fields: { key: keyof CaseEntry; label: string }[] = [
     { key: 'problem', label: 'Problem' },
     { key: 'rootCause', label: 'Root Cause' },
@@ -108,38 +113,42 @@ function CaseCard({ entry }: { entry: CaseEntry }) {
   ];
 
   return (
-    <div className="ui-card p-4 hover:shadow-sm transition-shadow">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full text-left"
-      >
-        <div className="flex items-start gap-2 flex-wrap">
-          <span className="tag tag-navy text-[10px]">{entry.code}</span>
-          {entry.sector && (
-            <span className="tag tag-red text-[10px]">{entry.sector}</span>
-          )}
-          {entry.source && (
-            <span className="tag tag-green text-[10px]">{entry.source}</span>
-          )}
-          <span className="ml-auto mt-0.5">
-            {open ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    <Dialog>
+      <DialogTrigger asChild>
+        <button className="ui-card p-4 hover:shadow-sm transition-shadow text-left h-full flex flex-col items-start w-full focus:outline-none group">
+          <div className="flex items-start gap-2 flex-wrap mb-2">
+            <span className="tag tag-navy text-[10px]">{entry.code}</span>
+            {entry.sector && (
+              <span className="tag tag-red text-[10px]">{entry.sector}</span>
             )}
+            {entry.source && (
+              <span className="tag tag-green text-[10px]">{entry.source}</span>
+            )}
+          </div>
+          <h4 className="text-sm font-bold text-foreground leading-snug">
+            {entry.title}
+          </h4>
+          <span className="mt-auto pt-4 text-[11px] font-semibold text-primary flex items-center gap-1 group-hover:underline">
+            View case details <ArrowRight className="h-3 w-3" />
           </span>
-        </div>
-        <h4 className="text-sm font-bold text-foreground mt-2 leading-snug">
-          {entry.title}
-        </h4>
-      </button>
-
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          open ? 'max-h-[2000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="space-y-2.5 pt-2 border-t border-border">
+        </button>
+      </DialogTrigger>
+      
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-start gap-2 flex-wrap mb-2">
+            <span className="tag tag-navy text-[10px]">{entry.code}</span>
+            {entry.sector && (
+              <span className="tag tag-red text-[10px]">{entry.sector}</span>
+            )}
+            {entry.source && (
+              <span className="tag tag-green text-[10px]">{entry.source}</span>
+            )}
+          </div>
+          <DialogTitle className="text-xl leading-tight">{entry.title}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4 mt-2">
           {fields.map(({ key, label }) => {
             const val = entry[key];
             if (!val) return null;
@@ -148,13 +157,13 @@ function CaseCard({ entry }: { entry: CaseEntry }) {
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                   {label}
                 </p>
-                <p className="text-sm text-foreground/80 leading-relaxed mt-0.5">{val}</p>
+                <p className="text-sm text-foreground/90 leading-relaxed mt-1 whitespace-pre-line">{val}</p>
               </div>
             );
           })}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
