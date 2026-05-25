@@ -1,9 +1,9 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
+
 import SubmissionForm from '@/components/submission-form';
 import HintToggle from '@/components/hint-toggle';
-import type { UserRow, CaseRow } from '@/lib/types';
+import type { CaseRow } from '@/lib/types';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants';
 
 export const revalidate = 300;
@@ -11,21 +11,17 @@ export const revalidate = 300;
 /** Case detail page — full content, hint, and answer submission form. */
 export default async function CaseDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
-  const [userRes, caseRes] = await Promise.all([
-    supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
-    supabase.from('cases').select('*').eq('id', params.id).maybeSingle(),
-  ]);
-
-  const userRow = userRes.data as UserRow | null;
+  const caseRes = await supabase.from('cases').select('*').eq('id', params.id).maybeSingle();
   const caseRow = caseRes.data as CaseRow | null;
   if (!caseRow) notFound();
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav user={userRow} />
+
       <main className="container max-w-4xl py-10">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-md border border-border bg-card px-2 py-0.5 text-base font-medium text-foreground/80">{CASE_TYPE_LABELS[caseRow.type] || caseRow.type}</span>

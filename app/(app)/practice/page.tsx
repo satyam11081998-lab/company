@@ -1,27 +1,23 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
-import PracticeHub from '@/components/practice-hub';
-import type { UserRow, CaseRow } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+import PracticeHub from '@/components/practice-hub';
+import type { CaseRow } from '@/lib/types';
+
+export const revalidate = 60;
 
 export default async function PracticePage() {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
-  const [userRes, casesRes] = await Promise.all([
-    supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
-    supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false }),
-  ]);
+  const casesRes = await supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false });
 
-  const userRow = userRes.data as UserRow | null;
   const cases = (casesRes.data as CaseRow[] | null) || [];
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav user={userRow} />
       <main className="container max-w-6xl py-10">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-h1 text-foreground">Practice</h1>

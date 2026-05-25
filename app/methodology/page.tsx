@@ -1,15 +1,26 @@
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
 import AppNav from '@/components/app-nav';
+import { UserProvider } from '@/components/user-context';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import type { UserRow } from '@/lib/types';
 
-// Static page — cached at build time, served instantly to everyone
-export const revalidate = false;
+export default async function MethodologyPage() {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  let userRow: UserRow | null = null;
+  if (session?.user) {
+    const { data } = await supabase.from('users').select('*').eq('id', session.user.id).maybeSingle();
+    userRow = data as UserRow | null;
+  }
 
-export default function MethodologyPage() {
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav />
+      <UserProvider initialUser={userRow}>
+        <AppNav />
+      </UserProvider>
       <main className="container max-w-4xl py-12">
         <div className="text-center">
           <p className="text-base font-semibold uppercase tracking-wider text-primary">Methodology</p>

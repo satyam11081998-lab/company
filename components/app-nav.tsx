@@ -2,37 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useUser } from '@/components/user-context';
 import SignOutButton from '@/components/sign-out-button';
 import ThemeToggle from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import type { UserRow } from '@/lib/types';
 
 /**
  * Full-bleed navy navigation bar.
  * Consulting-deck aesthetic: structured, dark, precise.
+ * Reads user from UserContext — no auth fetches here.
  */
-export default function AppNav({ user: initialUser }: { user?: UserRow | null }) {
-  const [user, setUser] = useState<UserRow | null>(initialUser ?? null);
-  const [loading, setLoading] = useState(initialUser === undefined);
+export default function AppNav() {
+  const { user } = useUser();
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (initialUser !== undefined) return;
-    const supabase = createClient();
-    async function fetchUser() {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) { setUser(null); setLoading(false); return; }
-      const { data } = await supabase.from('users').select('*').eq('id', authUser.id).maybeSingle();
-      setUser((data as UserRow | null) ?? null);
-      setLoading(false);
-    }
-    fetchUser();
-  }, [initialUser]);
-
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + '/');
 
   return (
     <header className="nav-bar sticky top-0 z-40">
@@ -41,14 +27,13 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-8">
           <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2.5 group">
-            {/* Wordmark: red M, white ECE */}
             <span className="text-[17px] font-bold tracking-tightest leading-none">
               <span className="text-primary">M</span>
               <span className="text-navy-foreground">ECE</span>
             </span>
             <span className="hidden sm:block h-3.5 w-px bg-navy-mid" />
             <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-widest text-navy-foreground/40 leading-none">
-              Case prep
+              Placement prep
             </span>
           </Link>
 
@@ -71,7 +56,6 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
                   }`}
                 >
                   {label}
-                  {/* Active underline — cardinal red rule */}
                   {isActive(href) && (
                     <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-none" />
                   )}
@@ -85,11 +69,8 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
-          {loading ? (
-            <div className="h-7 w-20 animate-pulse rounded-sm bg-navy-mid" />
-          ) : user ? (
+          {user ? (
             <>
-              {/* Points display — monospace, red accent */}
               <div className="hidden sm:flex items-baseline gap-1 border-r border-navy-mid pr-3">
                 <span className="font-mono text-base font-medium text-primary tabular-nums">{user.points}</span>
                 <span className="text-label text-navy-foreground/35">pts</span>
@@ -113,7 +94,7 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
               </Link>
               <Link href="/signup">
                 <Button size="sm" className="bg-primary text-white hover:bg-primary-hover h-8 text-base rounded-sm font-semibold">
-                  Sign up
+                  Sign up free
                 </Button>
               </Link>
             </>

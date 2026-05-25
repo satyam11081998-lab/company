@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trophy, Medal, Star } from 'lucide-react';
 import type { UserRow } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 interface LeaderRow {
   id: string;
@@ -17,8 +17,9 @@ interface LeaderRow {
 
 export default async function LeaderboardPage() {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
   const [userRes, usersRes, subCountsRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
@@ -42,7 +43,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav user={userRow} />
+
       <main className="container max-w-5xl py-10">
 
         {/* ── Page header ─────────────────────────────────────────── */}

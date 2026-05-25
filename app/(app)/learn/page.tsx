@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
-import type { UserRow } from '@/lib/types';
+
 import { ALL_DOMAINS, PLATFORM_STATS } from '@/lib/curriculum';
 import LearnDomainGrid from '@/components/learn-domain-grid';
 import {
@@ -66,15 +65,12 @@ const totalLessons = ALL_DOMAINS.reduce((sum, d) =>
 
 export default async function LearnPage() {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
-
-  const userRes = await supabase.from('users').select('*').eq('id', authUser.id).maybeSingle();
-  const userRow = userRes.data as UserRow | null;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav user={userRow} />
 
       <main className="container max-w-6xl py-10 space-y-12">
 

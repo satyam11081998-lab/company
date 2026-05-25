@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
+
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Check, ArrowRight } from 'lucide-react';
@@ -10,22 +10,18 @@ import {
   SCORE_DIMENSION_LABELS,
   SCORE_DIMENSION_MAX,
 } from '@/lib/constants';
-import type { UserRow, SubmissionRow } from '@/lib/types';
+import type { SubmissionRow } from '@/lib/types';
 
 export const revalidate = false;
 
 /** Results page — shows score, breakdown bars, strengths, improvements. */
 export default async function ResultPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
-  const [userRes, submissionRes] = await Promise.all([
-    supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
-    supabase.from('submissions').select('*').eq('id', params.id).maybeSingle(),
-  ]);
-
-  const userRow = userRes.data as UserRow | null;
+  const submissionRes = await supabase.from('submissions').select('*').eq('id', params.id).maybeSingle();
   const submission = submissionRes.data as SubmissionRow | null;
   if (!submission) notFound();
 
@@ -43,7 +39,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav user={userRow} />
+
       <main className="container max-w-4xl py-10">
         {/* Big score */}
         <Card className="flex flex-col items-center p-10 text-center">

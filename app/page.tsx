@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function LandingPage() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) redirect('/dashboard');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) redirect('/dashboard');
 
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>

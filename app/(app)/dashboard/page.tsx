@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
+
 import DimensionRadar from '@/components/dimension-radar';
 import type { UserRow, CaseRow, GdBriefRow, SubmissionRow } from '@/lib/types';
 import {
@@ -14,8 +14,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
   const [userRes, todayCaseRes, todayBriefRes, recentSubsRes, benchmarkRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
@@ -120,7 +121,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav user={userRow} />
 
       <main className="container max-w-7xl py-10 space-y-6">
 

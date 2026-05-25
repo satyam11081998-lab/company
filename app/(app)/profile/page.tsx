@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import type { UserRow, SubmissionRow } from '@/lib/types';
@@ -12,8 +12,9 @@ export const dynamic = 'force-dynamic';
 /** Profile page — user info, totals, recent submissions. */
 export default async function ProfilePage() {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
   const [userRes, submissionsRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
@@ -32,7 +33,6 @@ export default async function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav user={userRow} />
       <main className="container max-w-5xl py-10">
         <Card className="flex flex-col items-center p-8 text-center border-l-4 border-l-navy">
           <Avatar className="h-20 w-20 border border-border">

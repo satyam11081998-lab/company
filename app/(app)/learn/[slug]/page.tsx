@@ -1,8 +1,6 @@
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
 import DomainViewer from '@/components/domain-viewer';
-import type { UserRow } from '@/lib/types';
 import { getDomainBySlug, getAllSlugs, ALL_DOMAINS, LEARNING_PATHS } from '@/lib/curriculum';
 
 
@@ -17,18 +15,15 @@ interface Props {
 
 export default async function DomainPage({ params }: Props) {
   const supabase = createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) redirect('/login');
+  const authUser = session.user;
 
   const domain = getDomainBySlug(params.slug);
   if (!domain) notFound();
 
-  const userRes = await supabase.from('users').select('*').eq('id', authUser.id).maybeSingle();
-  const userRow = userRes.data as UserRow | null;
-
   return (
     <div className="min-h-screen">
-      <AppNav user={userRow} />
       <main className="container max-w-6xl py-10">
         <DomainViewer
           domain={domain}
