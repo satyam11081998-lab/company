@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
             <p className="text-center text-base text-muted-foreground">Loading…</p>
           ) : linkError ? (
             <div className="space-y-4 text-center">
-              <p className="text-base text-rose-700">{linkError}</p>
+              <p className="text-base text-destructive">{linkError}</p>
               <Link href="/forgot-password" className="inline-block text-base font-medium text-primary hover:underline">Request a new link</Link>
             </div>
           ) : (

@@ -60,7 +60,7 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
           {charCount} / {MIN_ANSWER_CHARS} characters minimum
         </span>
         <Button type="submit" disabled={!isValid} className="bg-primary text-primary-foreground hover:bg-primary-hover">
-          Submit for AI feedback
+          Submit for feedback
         </Button>
       </div>
     </form>

@@ -61,7 +61,7 @@ export default function GdBriefsPage() {
   const regulars = headlines ? headlines.filter((h) => !h.is_star) : [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       <AppNav />
       <main className="container max-w-5xl py-10">
         <div className="mb-8 animate-fade-in">
@@ -115,7 +115,7 @@ export default function GdBriefsPage() {
               />
             ) : null}
             {regulars.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 stagger-children">
+              <div className="grid gap-4 md:grid-cols-2 stagger">
                 {regulars.map((h) => (
                   <HeadlineCard
                     key={h.id}

@@ -11,13 +11,13 @@ export default function HintToggle({ hint }: { hint: string }) {
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left text-base font-semibold text-slate-900"
+        className="flex w-full items-center justify-between px-4 py-3 text-left text-base font-semibold text-foreground"
       >
         <span>{isOpen ? 'Hide hint' : 'Show hint'}</span>
         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="border-t border-primary/20 px-4 py-3 text-base leading-relaxed text-slate-700">
+        <div className="border-t border-primary/20 px-4 py-3 text-base leading-relaxed text-foreground/80">
           {hint}
         </div>
       )}

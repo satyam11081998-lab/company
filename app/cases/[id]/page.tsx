@@ -6,7 +6,7 @@ import HintToggle from '@/components/hint-toggle';
 import type { UserRow, CaseRow } from '@/lib/types';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 /** Case detail page — full content, hint, and answer submission form. */
 export default async function CaseDetailPage({ params }: { params: { id: string } }) {

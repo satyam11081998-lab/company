@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppNav from '@/components/app-nav';
+import DimensionRadar from '@/components/dimension-radar';
 import type { UserRow, CaseRow, GdBriefRow, SubmissionRow } from '@/lib/types';
 import {
   CASE_TYPE_LABELS, DIFFICULTY_COLORS, DIFFICULTY_LABELS,
@@ -16,12 +17,12 @@ export default async function DashboardPage() {
   const { data: { user: authUser } } = await supabase.auth.getUser();
   if (!authUser) redirect('/login');
 
-  const [userRes, todayCaseRes, todayBriefRes, recentSubsRes, rankRes] = await Promise.all([
+  const [userRes, todayCaseRes, todayBriefRes, recentSubsRes, benchmarkRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
     supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('gd_briefs').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('submissions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(8),
-    supabase.from('users').select('id, points').order('points', { ascending: false }),
+    supabase.from('submissions').select('feedback_json').not('feedback_json', 'is', null).limit(100),
   ]);
 
   const userRow = (userRes.data as UserRow | null) || {
@@ -32,11 +33,19 @@ export default async function DashboardPage() {
   const todayCase  = todayCaseRes.data  as CaseRow     | null;
   const todayBrief = todayBriefRes.data as GdBriefRow  | null;
   const recentSubs = (recentSubsRes.data as SubmissionRow[] | null) || [];
-  const allUsers   = (rankRes.data as { id: string; points: number }[] | null) || [];
 
-  const rank       = allUsers.findIndex(u => u.id === authUser.id);
-  const rankNum    = rank >= 0 ? rank + 1 : null;
-  const totalUsers = allUsers.length;
+  const [rankCountRes, totalCountRes] = await Promise.all([
+    supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .gt('points', userRow.points),
+    supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true }),
+  ]);
+
+  const rankNum = (rankCountRes.count ?? 0) + 1;
+  const totalUsers = totalCountRes.count ?? 0;
   const percentile = rankNum && totalUsers > 1
     ? Math.round(((totalUsers - rankNum) / (totalUsers - 1)) * 100)
     : null;
@@ -54,6 +63,26 @@ export default async function DashboardPage() {
     Object.entries(latestFb.breakdown).forEach(([dim, val]) => {
       const pct = val / (SCORE_DIMENSION_MAX[dim] ?? 100);
       if (pct > best) { best = pct; bestDim = SCORE_DIMENSION_LABELS[dim] || dim; }
+    });
+  }
+
+  // Aggregate benchmark from seed submissions
+  const benchmarkAgg = { count: 0, sums: {} as Record<string, number> };
+  (benchmarkRes.data || []).forEach(sub => {
+    const breakdown = (sub.feedback_json as any)?.breakdown;
+    if (breakdown) {
+      benchmarkAgg.count++;
+      Object.entries(breakdown).forEach(([dim, val]) => {
+        if (typeof val === 'number') {
+          benchmarkAgg.sums[dim] = (benchmarkAgg.sums[dim] || 0) + val;
+        }
+      });
+    }
+  });
+  const benchmark: Record<string, number> = {};
+  if (benchmarkAgg.count > 0) {
+    Object.entries(benchmarkAgg.sums).forEach(([dim, total]) => {
+      benchmark[dim] = total / benchmarkAgg.count;
     });
   }
 
@@ -90,7 +119,7 @@ export default async function DashboardPage() {
   const firstName = userRow.name?.split(' ')[0] ?? null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
 
       <main className="container max-w-7xl py-10 space-y-6">
@@ -365,18 +394,17 @@ export default async function DashboardPage() {
           {/* ══════════════════════════════════════════════════════
               CHARTS ROW — Radar + Line chart side by side
           ══════════════════════════════════════════════════════ */}
-          {true && (
             <div className="col-span-12 grid md:grid-cols-2 gap-5 animate-slide-up" style={{ animationDelay: '280ms' }}>
               {/* Radar chart */}
               <div className="ui-card p-5">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Skill Radar</span>
-                    <p className="text-[11px] text-muted-foreground/60 mt-0.5">Latest submission · 6 dimensions</p>
+                    <p className="text-[11px] text-muted-foreground/60 mt-0.5">Latest submission vs Top 10%</p>
                   </div>
                   {bestDim !== '—' && <span className="tag tag-red">Best: {bestDim}</span>}
                 </div>
-                <RadarChart breakdown={latestFb.breakdown} />
+                <DimensionRadar breakdown={latestFb.breakdown} benchmark={benchmark} />
               </div>
               {/* Line chart */}
               <div className="ui-card p-5">
@@ -390,7 +418,6 @@ export default async function DashboardPage() {
                 <ScoreLineChart subs={recentSubs} />
               </div>
             </div>
-          )}
 
           {/* ══════════════════════════════════════════════════════
               RECENT ACTIVITY — white card with activity list
@@ -514,82 +541,7 @@ function LegendRow({ color, label, value, small }: { color: string; label: strin
   );
 }
 
-/* ── Radar chart — hexagonal SVG spider chart ──────────────────── */
-function RadarChart({ breakdown }: { breakdown?: Record<string, number> }) {
-  const dims = [
-    { key: 'structure',   label: 'Structure',  max: SCORE_DIMENSION_MAX['structure']   ?? 25 },
-    { key: 'quantitative',label: 'Quant.',     max: SCORE_DIMENSION_MAX['quantitative']?? 20 },
-    { key: 'synthesis',   label: 'Synthesis',  max: SCORE_DIMENSION_MAX['synthesis']   ?? 20 },
-    { key: 'judgment',    label: 'Judgment',   max: SCORE_DIMENSION_MAX['judgment']    ?? 15 },
-    { key: 'creativity',  label: 'Creativity', max: SCORE_DIMENSION_MAX['creativity']  ?? 10 },
-    { key: 'tone',        label: 'Tone',       max: SCORE_DIMENSION_MAX['tone']        ?? 10 },
-  ];
-  const N = dims.length;
-  const CX = 130, CY = 115, R = 85;
 
-  const pt = (i: number, ratio: number) => {
-    const a = (i * (2 * Math.PI / N)) - Math.PI / 2;
-    return { x: CX + ratio * R * Math.cos(a), y: CY + ratio * R * Math.sin(a) };
-  };
-
-  const toD = (pts: { x: number; y: number }[]) =>
-    pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + ' Z';
-
-  const gridLevels = [0.25, 0.5, 0.75, 1];
-  const userPts = dims.map((d, i) => pt(i, Math.min(1, breakdown ? (breakdown[d.key] ?? 0) / d.max : 0)));
-  const hasData = breakdown && Object.values(breakdown).some(v => v > 0);
-
-  return (
-    <svg viewBox="0 0 260 230" width="100%" style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id="radar-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="hsl(356 84% 43%)" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="hsl(356 84% 43%)" stopOpacity="0.05" />
-        </linearGradient>
-      </defs>
-      {/* Grid hexagons */}
-      {gridLevels.map(level => (
-        <path key={level} d={toD(dims.map((_, i) => pt(i, level)))}
-          fill="none" stroke="hsl(var(--border))" strokeWidth="1" />
-      ))}
-      {/* Axis lines */}
-      {dims.map((_, i) => {
-        const outer = pt(i, 1);
-        return <line key={i} x1={CX} y1={CY} x2={outer.x} y2={outer.y}
-          stroke="hsl(var(--border))" strokeWidth="1" />;
-      })}
-      {/* User fill polygon */}
-      {hasData && (
-        <>
-          <path d={toD(userPts)} fill="url(#radar-fill)"
-            stroke="hsl(356 84% 43%)" strokeWidth="2" strokeLinejoin="round" />
-          {userPts.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="3.5"
-              fill="hsl(356 84% 43%)" stroke="white" strokeWidth="1.5" />
-          ))}
-        </>
-      )}
-      {!hasData && (
-        <text x={CX} y={CY} textAnchor="middle" dominantBaseline="middle"
-          fontSize="11" fill="hsl(var(--muted-foreground))">
-          Submit a case to see radar
-        </text>
-      )}
-      {/* Dimension labels */}
-      {dims.map((d, i) => {
-        const lp = pt(i, 1.22);
-        const textAnchor = lp.x < CX - 5 ? 'end' : lp.x > CX + 5 ? 'start' : 'middle';
-        return (
-          <text key={i} x={lp.x} y={lp.y} textAnchor={textAnchor}
-            dominantBaseline="middle" fontSize="10" fontWeight="600"
-            fill="hsl(var(--muted-foreground))">
-            {d.label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
 
 /* ── Score line chart — smooth SVG with red gradient fill ───────── */
 function ScoreLineChart({ subs }: { subs: SubmissionRow[] }) {

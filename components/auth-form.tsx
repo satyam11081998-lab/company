@@ -69,7 +69,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={isLoading}
-        className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-60"
       >
         <GoogleIcon />
         Continue with Google
@@ -81,7 +81,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-xs text-muted-foreground uppercase tracking-wide">
+          <span className="bg-card px-3 text-xs text-muted-foreground uppercase tracking-wide">
             or with email
           </span>
         </div>

@@ -56,9 +56,9 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
             <nav className="hidden md:flex items-center gap-0.5">
               {[
                 { href: '/dashboard',   label: 'Dashboard' },
-                { href: '/cases',       label: 'Cases' },
-                { href: '/gd-briefs',   label: 'GD Briefs' },
                 { href: '/learn',       label: 'Learn' },
+                { href: '/practice',    label: 'Practice' },
+                { href: '/gd-briefs',   label: 'GD Briefs' },
                 { href: '/leaderboard', label: 'Leaderboard' },
               ].map(({ href, label }) => (
                 <Link
@@ -113,7 +113,7 @@ export default function AppNav({ user: initialUser }: { user?: UserRow | null })
               </Link>
               <Link href="/signup">
                 <Button size="sm" className="bg-primary text-white hover:bg-primary-hover h-8 text-base rounded-sm font-semibold">
-                  Sign up free
+                  Sign up
                 </Button>
               </Link>
             </>

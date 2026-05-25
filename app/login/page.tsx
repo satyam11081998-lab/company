@@ -1,7 +1,7 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import AuthForm from '@/components/auth-form';
 
-export const dynamic = 'force-dynamic';
 
 /** Login page. */
 export default function LoginPage() {
@@ -27,12 +27,14 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="ui-card rounded-xl border border-border bg-white px-8 py-10 shadow-md">
+        <div className="ui-card rounded-xl border border-border px-8 py-10 shadow-md">
           <div className="mb-6 text-center">
             <h1 className="text-xl font-semibold text-foreground">Welcome back</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">Login to continue your case prep.</p>
           </div>
-          <AuthForm mode="login" />
+          <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-muted-foreground">Loading...</div>}>
+            <AuthForm mode="login" />
+          </Suspense>
         </div>
       </div>
     </main>

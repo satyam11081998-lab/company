@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
         <div className="mt-8 rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
           {isSent ? (
             <div className="space-y-4 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</div>
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/10 text-success">✓</div>
               <p className="text-base text-foreground/80">Check your email for a reset link.</p>
               <Link href="/login" className="inline-block text-base font-medium text-primary hover:underline">Back to login</Link>
             </div>

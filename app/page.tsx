@@ -40,7 +40,7 @@ export default async function LandingPage() {
             </Link>
             <Link href="/signup">
               <button className="btn-primary text-[13px] py-2 px-5">
-                Get started free
+                Get started
               </button>
             </Link>
           </div>
@@ -54,21 +54,20 @@ export default async function LandingPage() {
           <div className="animate-fade-in">
             <div className="badge-pill mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
-              Case interview prep · India
+              Placement interview prep · India
             </div>
             <h1 className="text-5xl lg:text-6xl font-bold text-foreground leading-[1.08] tracking-tight">
-              Crack consulting<br />
+              Crack placement<br />
               <span className="text-primary">interviews</span><br />
               the structured way.
             </h1>
             <p className="mt-5 text-[15px] text-muted-foreground leading-relaxed max-w-md">
-              Daily cases graded across 6 dimensions. GD briefs from live news.
-              A leaderboard showing where you rank against every MBA aspirant in India.
+              Cases, frameworks, and GD prep for every MBA aspirant — consulting, finance, marketing, product, ops. Scored across 6 dimensions. Ranked against every aspirant in India.
             </p>
             <div className="mt-7 flex items-center gap-3">
               <Link href="/signup">
                 <button className="btn-primary">
-                  Start for free <ArrowRight className="h-4 w-4" />
+                  Start now <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <Link href="/methodology">
@@ -78,7 +77,7 @@ export default async function LandingPage() {
               </Link>
             </div>
             <div className="mt-8 flex items-center gap-6">
-              {[['6', 'Scoring dimensions'], ['60s', 'Feedback time'], ['Free', 'To start']].map(([val, label]) => (
+              {[['6', 'Scoring dimensions'], ['60s', 'Feedback time'], ['Instant', 'Access']].map(([val, label]) => (
                 <div key={label}>
                   <p className="text-xl font-bold text-foreground">{val}</p>
                   <p className="text-[12px] text-muted-foreground mt-0.5">{label}</p>
@@ -141,11 +140,11 @@ export default async function LandingPage() {
       {/* ── Trust strip ──────────────────────────────────────────────── */}
       <section className="border-y border-border bg-card/60 py-5">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="text-center text-[12px] text-muted-foreground uppercase tracking-widest font-semibold mb-4">
-            Calibrated to frameworks from
+          <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-6 text-center">
+            Used by aspirants targeting roles at
           </p>
-          <div className="flex items-center justify-center gap-10 flex-wrap">
-            {['McKinsey', 'Boston Consulting Group', 'Bain & Company', 'Kearney', 'Oliver Wyman'].map(firm => (
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 opacity-50 grayscale">
+            {['McKinsey', 'BCG', 'Bain', 'Goldman Sachs', 'JPMorgan', 'HUL', 'P&G', 'Amazon', 'Flipkart'].map(firm => (
               <span key={firm} className="text-[13px] font-semibold text-muted-foreground/60">{firm}</span>
             ))}
           </div>
@@ -169,8 +168,8 @@ export default async function LandingPage() {
             </p>
             <ul className="mt-6 space-y-3">
               {[
-                'AI-graded on 6 consulting dimensions simultaneously.',
-                'Scores calibrated to McKinsey, BCG, and Bain standards.',
+                'Graded across 6 consulting dimensions simultaneously.',
+                'Frameworks drawn from consulting, IB, and brand management traditions.',
                 'Instant written feedback, not just a number.',
                 'Track score improvement across every submission.',
               ].map(item => (
@@ -181,7 +180,7 @@ export default async function LandingPage() {
               ))}
             </ul>
             <Link href="/signup" className="mt-6 inline-flex">
-              <button className="btn-primary">Start practising free</button>
+              <button className="btn-primary">Start practising</button>
             </Link>
           </div>
           {/* Scoring card mockup */}
@@ -253,12 +252,12 @@ export default async function LandingPage() {
               <BookOpen className="h-3.5 w-3.5" />
               Daily Practice
             </div>
-            <h2 className="text-4xl font-bold text-foreground">Real consulting cases, daily</h2>
+            <h2 className="text-4xl font-bold text-foreground">Real cases across functions, daily</h2>
             <p className="mt-3 text-[15px] text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Practice with <span className="text-primary font-medium">guesstimate</span>,{' '}
-              <span className="text-primary font-medium">profitability</span>, and{' '}
-              <span className="text-primary font-medium">market sizing</span> cases that mirror
-              actual interview formats from top consulting firms.
+              Practice <span className="text-primary font-medium">guesstimate</span>,{' '}
+              <span className="text-primary font-medium">profitability</span>,{' '}
+              <span className="text-primary font-medium">market sizing</span>, and brand strategy cases that mirror
+              actual MBA placement interview formats.
             </p>
           </div>
 
@@ -319,7 +318,7 @@ export default async function LandingPage() {
                   Write your structured answer here...
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-muted-foreground">AI graded in ~60 seconds</span>
+                  <span className="text-[12px] text-muted-foreground">Scored in ~60 seconds</span>
                   <button className="btn-primary text-[13px] py-2 px-4">
                     Submit <ArrowRight className="h-3.5 w-3.5" />
                   </button>
@@ -381,10 +380,10 @@ export default async function LandingPage() {
             </p>
             <ul className="mt-6 space-y-3">
               {[
-                'Daily briefs on policy, economy, business, and global affairs.',
+                'Daily briefs on policy, economy, markets, and business affairs.',
                 'Structured for GD format — not just news summaries.',
                 'Argument starters and smart angles to differentiate yourself.',
-                'Covers topics likely to appear in IIM, XLRI, ISB GDs.',
+                'Covers topics likely to appear in IIM, FMS, XLRI, SP Jain, ISB GDs.',
               ].map(item => (
                 <li key={item} className="flex items-start gap-2.5 text-[14px] text-foreground">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
@@ -529,7 +528,7 @@ export default async function LandingPage() {
         </div>
         <div className="max-w-2xl mx-auto px-6 text-center relative z-10">
           <div className="badge-pill mb-5 mx-auto w-fit" style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.05)' }}>
-            Free to start
+            Begin practicing
           </div>
           <h2 className="text-4xl font-bold text-white leading-tight">
             Your placement season<br />starts now.
@@ -540,7 +539,7 @@ export default async function LandingPage() {
           <div className="mt-7 flex items-center justify-center gap-3">
             <Link href="/signup">
               <button className="btn-primary">
-                Create free account <ArrowRight className="h-4 w-4" />
+                Create account <ArrowRight className="h-4 w-4" />
               </button>
             </Link>
             <Link href="/login">

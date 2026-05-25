@@ -1,7 +1,7 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import AuthForm from '@/components/auth-form';
 
-export const dynamic = 'force-dynamic';
 
 /** Signup page. */
 export default function SignupPage() {
@@ -27,12 +27,14 @@ export default function SignupPage() {
         </div>
 
         {/* Card */}
-        <div className="ui-card rounded-xl border border-border bg-white px-8 py-10 shadow-md">
+        <div className="ui-card rounded-xl border border-border px-8 py-10 shadow-md">
           <div className="mb-6 text-center">
             <h1 className="text-xl font-semibold text-foreground">Create your account</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">Start your AI-powered case prep in seconds.</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">Start your case prep in seconds.</p>
           </div>
-          <AuthForm mode="signup" />
+          <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-muted-foreground">Loading...</div>}>
+            <AuthForm mode="signup" />
+          </Suspense>
         </div>
       </div>
     </main>

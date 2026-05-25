@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ArrowRight,
 } from 'lucide-react';
+import { MECEDiagram, ProfitabilityTree, IssueTree, HypothesisDriven, MintoPyramid } from '@/components/framework-diagrams';
 import type {
   Domain,
   Module,
@@ -718,7 +719,23 @@ export default function DomainViewer({ domain, allDomains, learningPaths }: Doma
             </section>
           )}
 
-          {/* ── 12. Quiz / Diagram / Flashcard Opportunities ─── */}
+          {/* ── 11.5 Framework Diagrams ─────────────────────────────────────── */}
+          {['case-interview-methodology', 'profitability', 'frameworks-mental-models', 'guesstimates-market-sizing', 'consulting-foundations'].includes(domain.slug) && (
+            <section className="mb-8">
+              <h3 className="text-lg font-bold text-foreground mb-4 tracking-tight flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" /> Core Framework
+              </h3>
+              <div className="ui-card p-6 bg-background flex justify-center">
+                {domain.slug === 'case-interview-methodology' && <MECEDiagram />}
+                {domain.slug === 'profitability' && <ProfitabilityTree />}
+                {domain.slug === 'frameworks-mental-models' && <IssueTree />}
+                {domain.slug === 'guesstimates-market-sizing' && <HypothesisDriven />}
+                {domain.slug === 'consulting-foundations' && <MintoPyramid />}
+              </div>
+            </section>
+          )}
+
+          {/* ── 12. Interactive Opportunities ────────────────────── */}
           {(domain.quizOpportunities || domain.diagramOpportunity || domain.flashcardOpportunities) && (
             <section>
               <div className="flex items-center gap-2 mb-4">

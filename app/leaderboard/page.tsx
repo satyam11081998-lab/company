@@ -41,9 +41,9 @@ export default async function LeaderboardPage() {
   const getInitial = (u: LeaderRow) => (u.name || u.email).charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
-      <main className="container max-w-4xl py-10">
+      <main className="container max-w-5xl py-10">
 
         {/* ── Page header ─────────────────────────────────────────── */}
         <div className="mb-2 animate-fade-in">

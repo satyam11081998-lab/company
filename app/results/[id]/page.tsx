@@ -12,7 +12,7 @@ import {
 } from '@/lib/constants';
 import type { UserRow, SubmissionRow } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = false;
 
 /** Results page — shows score, breakdown bars, strengths, improvements. */
 export default async function ResultPage({ params }: { params: { id: string } }) {
@@ -44,22 +44,22 @@ export default async function ResultPage({ params }: { params: { id: string } })
   return (
     <div className="min-h-screen bg-muted">
       <AppNav user={userRow} />
-      <main className="container max-w-3xl py-10">
+      <main className="container max-w-4xl py-10">
         {/* Big score */}
         <Card className="flex flex-col items-center p-10 text-center">
-          <p className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Your score</p>
+          <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">Your score</p>
           <div className="score-ring score-ring-lg" style={{ '--progress': score } as React.CSSProperties}>
             <p className="mt-3 text-7xl font-bold text-primary">
               {score}
-              <span className="text-3xl font-normal text-muted-foreground/70">/100</span>
+              <span className="text-small font-normal text-muted-foreground/70">/100</span>
             </p>
           </div>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">{summary}</p>
+          <p className="mt-4 max-w-xl text-body leading-relaxed text-muted-foreground">{summary}</p>
         </Card>
 
         {/* Breakdown */}
         <Card className="mt-6 p-6">
-          <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Breakdown</h2>
+          <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">Breakdown</h2>
           <div className="mt-4 space-y-4">
             {SCORE_DIMENSIONS.map((dim) => {
               const value = Number(breakdown[dim] ?? 0);
@@ -67,7 +67,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
               const percentage = Math.max(0, Math.min(100, (value / max) * 100));
               return (
                 <div key={dim}>
-                  <div className="flex items-center justify-between text-base">
+                  <div className="flex items-center justify-between text-body">
                     <span className="font-medium text-foreground/80">
                       {SCORE_DIMENSION_LABELS[dim]}
                     </span>
@@ -91,15 +91,15 @@ export default async function ResultPage({ params }: { params: { id: string } })
         {/* Strengths / Improvements */}
         <div className="mt-6 grid gap-6 md:grid-cols-2">
           <Card className="p-6 border-l-4 border-l-success">
-            <h3 className="text-base font-semibold uppercase tracking-wide text-emerald-700">
+            <h3 className="text-small font-semibold uppercase tracking-wide text-emerald-700">
               What you did well
             </h3>
             <ul className="mt-4 space-y-3">
               {strengths.length === 0 ? (
-                <li className="text-base text-muted-foreground">No highlights yet.</li>
+                <li className="text-body text-muted-foreground">No highlights yet.</li>
               ) : (
                 strengths.map((item, idx) => (
-                  <li key={idx} className="flex gap-2 text-base text-foreground/80">
+                  <li key={idx} className="flex gap-2 text-body text-foreground/80">
                     <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
                     <span>{item}</span>
                   </li>
@@ -108,15 +108,15 @@ export default async function ResultPage({ params }: { params: { id: string } })
             </ul>
           </Card>
           <Card className="p-6 border-l-4 border-l-primary">
-            <h3 className="text-base font-semibold uppercase tracking-wide text-primary">
+            <h3 className="text-small font-semibold uppercase tracking-wide text-primary">
               Where you can improve
             </h3>
             <ul className="mt-4 space-y-3">
               {improvements.length === 0 ? (
-                <li className="text-base text-muted-foreground">No suggestions yet.</li>
+                <li className="text-body text-muted-foreground">No suggestions yet.</li>
               ) : (
                 improvements.map((item, idx) => (
-                  <li key={idx} className="flex gap-2 text-base text-foreground/80">
+                  <li key={idx} className="flex gap-2 text-body text-foreground/80">
                     <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                     <span>{item}</span>
                   </li>

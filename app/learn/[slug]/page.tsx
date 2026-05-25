@@ -5,7 +5,6 @@ import DomainViewer from '@/components/domain-viewer';
 import type { UserRow } from '@/lib/types';
 import { getDomainBySlug, getAllSlugs, ALL_DOMAINS, LEARNING_PATHS } from '@/lib/curriculum';
 
-export const dynamic = 'force-dynamic';
 
 /** Pre-generate all 18 domain slugs */
 export async function generateStaticParams() {
