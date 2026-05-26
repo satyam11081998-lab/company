@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import HomeContent from '@/components/home-content';
-import type { UserRow, SubmissionRow } from '@/lib/types';
+import type { SubmissionRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,21 +11,19 @@ export default async function HomePage() {
   if (!session?.user) redirect('/login');
   const authUser = session.user;
 
-  // Fetch the user's recent submissions to compute light personalization
-  const recentSubsRes = await supabase
+  // Fetch user's full submission history (last 90 days) for heatmap
+  const submissionsRes = await supabase
     .from('submissions')
-    .select('*')
+    .select('id, score, created_at, feedback_json')
     .eq('user_id', authUser.id)
-    .order('created_at', { ascending: false })
-    .limit(20);
+    .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+    .order('created_at', { ascending: false });
 
-  const recentSubs = (recentSubsRes.data as SubmissionRow[] | null) || [];
+  const submissions = (submissionsRes.data as SubmissionRow[] | null) || [];
 
   return (
     <div className="min-h-screen bg-muted">
-      <main className="container max-w-6xl py-8">
-        <HomeContent recentSubmissions={recentSubs} />
-      </main>
+      <HomeContent submissions={submissions} />
     </div>
   );
 }

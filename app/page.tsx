@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import ThemeToggle from '@/components/theme-toggle';
+import TestimonialsCarousel from '@/components/testimonials-carousel';
 import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -516,6 +517,21 @@ export default async function LandingPage() {
               Read full methodology <ArrowRight className="h-4 w-4" />
             </button>
           </Link>
+        </div>
+      </section>
+
+      {/* Testimonials section */}
+      <section className="py-20 px-6 bg-card">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+              WHAT MBA ASPIRANTS SAY
+            </p>
+            <h2 className="mt-2 text-h2 text-foreground">
+              From students who've used MECE in their placement journey.
+            </h2>
+          </div>
+          <TestimonialsCarousel />
         </div>
       </section>
 
