@@ -122,3 +122,49 @@ export interface GeneratedBriefData {
   closing_lines: string[];
   created_at: string;
 }
+
+/** A row from the daily_schedule table — the pre-filled queue of daily cases/guesstimates. */
+export interface DailyScheduleRow {
+  id: string;
+  scheduled_date: string;           // YYYY-MM-DD format
+  case_id: string | null;
+  guesstimate_code: string | null;
+  brief_headline_id: string | null;
+  created_at: string;
+  notes: string | null;
+}
+
+/** Today's daily schedule with joined case info (from the today_daily_schedule view). */
+export interface TodayDailyData {
+  id: string;
+  scheduled_date: string;
+  case_id: string | null;
+  guesstimate_code: string | null;
+  brief_headline_id: string | null;
+  case_title: string | null;
+  case_type: string | null;
+  case_difficulty: string | null;
+}
+
+/** A row from the case_attempts table — tracks attempt order per (user, case). */
+export interface CaseAttemptRow {
+  id: string;
+  user_id: string;
+  case_id: string;
+  submission_id: string;
+  attempt_number: number;
+  is_first_attempt: boolean;
+  counted_for_daily: boolean;
+  daily_date: string | null;
+  created_at: string;
+}
+
+/** A single entry on the daily leaderboard — top scorers on today's daily case. */
+export interface DailyLeaderboardEntry {
+  user_id: string;
+  name: string | null;
+  avatar_url: string | null;
+  score: number;
+  submission_id: string;
+  submitted_at: string;
+}

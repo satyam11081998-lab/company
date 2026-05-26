@@ -1,5 +1,37 @@
 import type { SubmissionRow, NewsHeadline, GeneratedBriefData } from '@/lib/types';
 
+export interface DailyContentResponse {
+  date: string;
+  case: {
+    id: string;
+    title: string;
+    type: string;
+    difficulty: string;
+  } | null;
+  guesstimate_code: string | null;
+  brief: {
+    id: string;
+    title: string;
+    source_name: string;
+    thumbnail_url: string | null;
+  } | null;
+}
+
+export interface DailyLeaderboardResponse {
+  date: string;
+  case_id: string | null;
+  case_title: string | null;
+  entries: {
+    user_id: string;
+    name: string | null;
+    avatar_url: string | null;
+    score: number;
+    submission_id: string;
+    submitted_at: string;
+    rank: number;
+  }[];
+  total_attempts: number;
+}
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
@@ -78,6 +110,38 @@ export async function fetchBrief(headlineId: string): Promise<GeneratedBriefData
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to fetch brief (${res.status}): ${text || res.statusText}`);
+  }
+  return res.json();
+}
+
+/**
+ * Fetch today's daily content (case, guesstimate, brief headline).
+ * Always returns a response, never 404s — if no daily is scheduled, fields are null.
+ */
+export async function fetchDailyToday(): Promise<DailyContentResponse> {
+  const res = await fetch(`${API_URL}/daily/today`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch daily content (${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Fetch the leaderboard for today's daily case.
+ * Top 20 scorers, ranked by score desc, then submitted_at asc.
+ */
+export async function fetchDailyLeaderboard(): Promise<DailyLeaderboardResponse> {
+  const res = await fetch(`${API_URL}/daily/leaderboard`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch daily leaderboard (${res.status})`);
   }
   return res.json();
 }

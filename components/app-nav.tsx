@@ -28,7 +28,7 @@ export default function AppNav() {
 
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-8">
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-2.5 group">
+          <Link href={user ? '/home' : '/'} className="flex items-center gap-2.5 group">
             <span className="text-[17px] font-bold tracking-tightest leading-none">
               <span className="text-primary">M</span>
               <span className="text-navy-foreground">ECE</span>
@@ -42,6 +42,7 @@ export default function AppNav() {
           {user && (
             <nav className="hidden md:flex items-center gap-0.5">
               {[
+                { href: '/home',        label: 'Home' },
                 { href: '/dashboard',   label: 'Dashboard' },
                 { href: '/learn',       label: 'Learn' },
                 { href: '/practice',    label: 'Practice' },

@@ -43,10 +43,10 @@ export async function updateSession(request: NextRequest) {
 
   // If logged in and on auth pages, push them into the app
   if (user && isAuthPage) {
-    const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = '/dashboard';
-    dashUrl.search = '';
-    return NextResponse.redirect(dashUrl);
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = '/home';
+    homeUrl.search = '';
+    return NextResponse.redirect(homeUrl);
   }
 
   return supabaseResponse;

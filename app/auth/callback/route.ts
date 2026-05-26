@@ -4,12 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 /**
  * Auth callback used by Google OAuth and Supabase email magic links
  * (including password reset). Exchanges the code for a session and
- * redirects to `next` or /dashboard.
+ * redirects to `next` or /home.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  const next = url.searchParams.get('next') || '/dashboard';
+  const next = url.searchParams.get('next') || '/home';
 
   if (code) {
     const supabase = createClient();

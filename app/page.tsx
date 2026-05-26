@@ -32,9 +32,9 @@ export default async function LandingPage() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {session?.user ? (
-              <Link href="/dashboard">
+              <Link href="/home">
                 <button className="btn-primary text-[13px] py-2 px-5">
-                  Dashboard
+                  Open MECE
                 </button>
               </Link>
             ) : (
@@ -73,9 +73,9 @@ export default async function LandingPage() {
               Cases, frameworks, and GD prep for every MBA aspirant — consulting, finance, marketing, product, ops. Scored across 6 dimensions. Ranked against every aspirant in India.
             </p>
             <div className="mt-7 flex items-center gap-3">
-              <Link href={session?.user ? "/dashboard" : "/signup"}>
+              <Link href={session?.user ? "/home" : "/signup"}>
                 <button className="btn-primary">
-                  {session?.user ? "Go to dashboard" : "Start now"} <ArrowRight className="h-4 w-4" />
+                  {session?.user ? "Open MECE" : "Start now"} <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <Link href="/methodology">

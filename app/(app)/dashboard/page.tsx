@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 import DimensionRadar from '@/components/dimension-radar';
-import type { UserRow, CaseRow, GdBriefRow, SubmissionRow } from '@/lib/types';
+import type { UserRow, SubmissionRow } from '@/lib/types';
 import {
   CASE_TYPE_LABELS, DIFFICULTY_COLORS, DIFFICULTY_LABELS,
   SCORE_DIMENSIONS, SCORE_DIMENSION_LABELS, SCORE_DIMENSION_MAX
@@ -18,10 +18,8 @@ export default async function DashboardPage() {
   if (!session?.user) redirect('/login');
   const authUser = session.user;
 
-  const [userRes, todayCaseRes, todayBriefRes, recentSubsRes, benchmarkRes] = await Promise.all([
+  const [userRes, recentSubsRes, benchmarkRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
-    supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('gd_briefs').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('submissions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(8),
     supabase.from('submissions').select('feedback_json').not('feedback_json', 'is', null).limit(100),
   ]);
@@ -31,8 +29,6 @@ export default async function DashboardPage() {
     email: authUser.email || '', avatar_url: null, points: 0,
     created_at: new Date().toISOString(),
   };
-  const todayCase  = todayCaseRes.data  as CaseRow     | null;
-  const todayBrief = todayBriefRes.data as GdBriefRow  | null;
   const recentSubs = (recentSubsRes.data as SubmissionRow[] | null) || [];
 
   const [rankCountRes, totalCountRes] = await Promise.all([
@@ -89,7 +85,7 @@ export default async function DashboardPage() {
 
   // Milestones — displayed bottom→top (lowest at bottom, highest at top)
   const MILESTONES = [
-    { pts: 10,   label: 'Day 0 Dreamer',       icon: Target, tip: 'Just showed up. Bold move.' },
+    { pts: 0,    label: 'Day 0 Dreamer',       icon: Target, tip: 'Just showed up. Bold move.' },
     { pts: 50,   label: 'Casebook Collector',   icon: Zap,    tip: 'Downloaded 12 casebooks, read 1.' },
     { pts: 100,  label: 'MECE Believer',        icon: Award,  tip: 'Uses MECE in casual conversation.' },
     { pts: 250,  label: 'Deck Polisher',        icon: Star,   tip: 'Pixel-perfect slides at 2am.' },
@@ -97,10 +93,8 @@ export default async function DashboardPage() {
     { pts: 1000, label: 'PPO Chaser',           icon: Gem,    tip: 'The summer internship grind.' },
     { pts: 2000, label: 'Summer Legend',        icon: Crown,  tip: 'They talk about you in case comps.' },
   ];
-  // Reversed for bottom-to-top rendering (highest milestone on top)
-  const MILESTONES_DISPLAY = [...MILESTONES].reverse();
   const nextMilestone = MILESTONES.find(m => m.pts > userRow.points);
-  const lastReached   = [...MILESTONES].reverse().find(m => m.pts <= userRow.points);
+  const lastReached   = [...MILESTONES].reverse().find(m => m.pts <= userRow.points) || MILESTONES[0];
 
   // Ring geometry — scale to 2000 pts max
   const ptsRingPct   = Math.min(userRow.points / 2000, 1);
@@ -243,148 +237,97 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Col B (4/12): Today's Case + GD Brief stacked ────── */}
-          <div className="col-span-12 md:col-span-4 flex flex-col gap-5">
 
-            {/* Today's case */}
-            <div className="flex-1 ui-card p-5 flex flex-col animate-slide-up" style={{ animationDelay: '70ms' }}>
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Today&apos;s case</span>
-                {todayCase && (
-                  <span className={`tag ${
-                    todayCase.difficulty === 'hard' ? 'tag-red' :
-                    todayCase.difficulty === 'medium' ? 'tag-amber' : 'tag-green'
-                  }`}>
-                    {DIFFICULTY_LABELS[todayCase.difficulty] || todayCase.difficulty}
-                  </span>
-                )}
-              </div>
-              {todayCase ? (
-                <>
-                  <h2 className="text-base font-bold text-foreground leading-snug tracking-tight flex-1">
-                    {todayCase.title}
-                  </h2>
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-3 leading-relaxed">{todayCase.content}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="tag tag-navy">{CASE_TYPE_LABELS[todayCase.type] || todayCase.type}</span>
-                    <Link href={`/cases/${todayCase.id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-hover transition-colors">
-                      Solve <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground flex-1">No active cases yet.</p>
-              )}
-            </div>
-
-            {/* Today's GD brief */}
-            <div className="ui-card p-5 flex flex-col animate-slide-up" style={{ animationDelay: '140ms' }}>
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">GD brief</span>
-                {todayBrief && (
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(todayBrief.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                  </span>
-                )}
-              </div>
-              {todayBrief ? (
-                <>
-                  <h2 className="text-base font-bold text-foreground leading-snug tracking-tight">{todayBrief.topic}</h2>
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-3 leading-relaxed">{todayBrief.summary}</p>
-                  <Link href="/gd-briefs" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-hover transition-colors">
-                    Read brief <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">No briefs yet.</p>
-              )}
-            </div>
-          </div>
 
           {/* ── Col C (3/12): Milestone tracker — bottom-to-top ──── */}
           <div className="col-span-12 md:col-span-3 ui-card p-5 animate-slide-up flex flex-col" style={{ animationDelay: '210ms' }}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Career ladder</span>
               {nextMilestone && (
                 <span className="text-xs font-semibold text-primary">{nextMilestone.pts - userRow.points} pts to go</span>
               )}
             </div>
 
-            {/* Progress bar to next milestone */}
-            {nextMilestone && (
-              <div className="mb-4 pb-4 border-b border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground truncate mr-2">Next: {nextMilestone.label}</span>
-                  <span className="text-xs text-foreground font-mono tabular-nums flex-shrink-0">
-                    {userRow.points} / {nextMilestone.pts}
-                  </span>
-                </div>
-                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all duration-1000"
-                    style={{ width: `${Math.min(100, (userRow.points / nextMilestone.pts) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Ladder — highest milestone on TOP, lowest at BOTTOM */}
+            {/* Ladder — climbed from bottom to top */}
             <div className="flex-1 flex flex-col-reverse">
-              {MILESTONES_DISPLAY.map((m, i) => {
+              {MILESTONES.map((m, i, arr) => {
                 const reached = userRow.points >= m.pts;
-                const isCurrent = nextMilestone?.pts === m.pts;
+                const isCurrent = lastReached?.pts === m.pts;
                 const Icon = m.icon;
-                const isFirst = i === 0;             /* top item = highest milestone */
+                const nextTier = arr[i + 1];
+                
+                let progressToNext = 0;
+                if (isCurrent && nextTier) {
+                  progressToNext = ((userRow.points - m.pts) / (nextTier.pts - m.pts)) * 100;
+                  progressToNext = Math.max(0, Math.min(100, progressToNext));
+                }
+
                 return (
-                  <div key={m.label} className="flex gap-3">
-                    {/* Vertical connector + dot */}
-                    <div className="flex flex-col items-center">
-                      {/* Line ABOVE the dot (toward higher milestone) */}
-                      {!isFirst && (
-                        <div className={`w-px flex-1 min-h-3 ${
-                          reached ? 'bg-navy/50' : 'bg-border'
-                        }`} />
-                      )}
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
-                        reached
-                          ? 'bg-navy border-navy text-white'
-                          : isCurrent
-                          ? 'bg-primary/10 border-primary text-primary'
-                          : 'bg-card border-border text-muted-foreground/40'
-                      }`}>
-                        <Icon className="h-3 w-3" />
-                      </div>
-                      {/* Line BELOW the dot (toward lower milestone) */}
-                      <div className={`w-px flex-1 min-h-3 ${
-                        reached ? 'bg-navy/50' : 'bg-border'
-                      }`} />
-                    </div>
-                    {/* Label row */}
-                    <div className="flex flex-col justify-center flex-1 py-1.5">
-                      <div className="flex items-center justify-between">
-                        <p className={`text-xs font-semibold leading-none ${
-                          reached ? 'text-foreground' : isCurrent ? 'text-primary' : 'text-muted-foreground/50'
+                  <div key={m.label} className="flex flex-col">
+                    <div className={`flex gap-3 py-2 px-3 -mx-3 rounded-r-md transition-colors ${
+                      isCurrent ? 'border-l-4 border-l-primary bg-primary/5' : ''
+                    } ${reached ? 'opacity-100' : 'opacity-50'}`}>
+                      {/* Dot icon */}
+                      <div className="flex flex-col items-center justify-center pt-0.5">
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
+                          isCurrent
+                            ? 'bg-primary/10 border-primary text-primary'
+                            : reached
+                            ? 'bg-navy border-navy text-white'
+                            : 'bg-card border-border text-muted-foreground/40'
                         }`}>
-                          {m.label}
+                          <Icon className="h-3 w-3" />
+                        </div>
+                      </div>
+                      
+                      {/* Label row */}
+                      <div className="flex flex-col justify-center flex-1 py-0.5">
+                        <div className="flex items-center justify-between">
+                          <p className={`text-xs font-semibold leading-none ${
+                            isCurrent ? 'text-primary' : reached ? 'text-foreground' : 'text-muted-foreground'
+                          }`}>
+                            {m.label}
+                          </p>
+                          <span className={`text-[10px] font-mono tabular-nums flex-shrink-0 ${
+                            reached ? 'text-foreground' : 'text-muted-foreground/60'
+                          }`}>
+                            {m.pts}
+                          </span>
+                        </div>
+                        {/* Fun tip */}
+                        {reached && (
+                          <p className="mt-1.5 text-[10px] text-muted-foreground/60 italic normal-case tracking-normal leading-tight">
+                            {m.tip}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Progress bar to NEXT tier */}
+                    {nextTier && (
+                      <div className="flex gap-3 px-3 -mx-3">
+                        {/* The connector line */}
+                        <div className="w-6 flex justify-center py-1">
+                          <div className={`w-px h-full min-h-[24px] ${reached && !isCurrent ? 'bg-navy/30' : 'bg-border/60'}`} />
+                        </div>
+                        {/* The progress bar if current */}
+                        <div className="flex-1 py-3 flex flex-col justify-center">
                           {isCurrent && (
-                            <span className="ml-2 text-[10px] text-primary border border-primary/30 bg-primary/5 px-1.5 py-0.5 rounded-full align-middle">
-                              next
-                            </span>
+                            <div>
+                              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-2">
+                                ↑ Next: {nextTier.label}
+                              </p>
+                              <div className="h-1 bg-border rounded-full overflow-hidden w-full">
+                                <div 
+                                  className="h-full bg-primary transition-all duration-1000" 
+                                  style={{ width: `${progressToNext}%` }}
+                                />
+                              </div>
+                            </div>
                           )}
-                        </p>
-                        <span className={`text-[10px] font-mono tabular-nums flex-shrink-0 ${
-                          reached ? 'text-foreground' : 'text-muted-foreground/40'
-                        }`}>
-                          {m.pts}
-                        </span>
+                        </div>
                       </div>
-                      {/* Fun tip — shows when reached or is next */}
-                      {(reached || isCurrent) && (
-                        <p className="mt-0.5 text-[10px] text-muted-foreground/60 italic normal-case tracking-normal">
-                          {m.tip}
-                        </p>
-                      )}
-                    </div>
+                    )}
                   </div>
                 );
               })}
