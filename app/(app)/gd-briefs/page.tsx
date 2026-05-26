@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import AppNav from '@/components/app-nav';
 import { Card } from '@/components/ui/card';
 import { fetchHeadlines, generateBrief } from '@/lib/api';
 import type { NewsHeadline } from '@/lib/types';
@@ -16,21 +14,8 @@ export default function GdBriefsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.push('/login?next=/gd-briefs');
-        return;
-      }
-      setAuthChecked(true);
-    });
-  }, [router]);
-
-  useEffect(() => {
-    if (!authChecked) return;
     let mounted = true;
     fetchHeadlines()
       .then((data) => {
@@ -44,7 +29,7 @@ export default function GdBriefsPage() {
         setLoading(false);
       });
     return () => { mounted = false; };
-  }, [authChecked]);
+  }, []);
 
   async function handleGenerate(headlineId: string) {
     setGeneratingId(headlineId);
@@ -62,7 +47,6 @@ export default function GdBriefsPage() {
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav />
       <main className="container max-w-5xl py-10">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">GD Briefs</h1>

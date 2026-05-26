@@ -2,37 +2,21 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import AppNav from '@/components/app-nav';
+import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { fetchBrief } from '@/lib/api';
 import type { GeneratedBriefData } from '@/lib/types';
 import { ArrowLeft, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function BriefDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const headlineId = params.id as string;
 
   const [brief, setBrief] = useState<GeneratedBriefData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.push('/login?next=/gd-briefs/' + headlineId);
-        return;
-      }
-      setAuthChecked(true);
-    });
-  }, [router, headlineId]);
-
-  useEffect(() => {
-    if (!authChecked) return;
     let mounted = true;
     fetchBrief(headlineId)
       .then((data) => {
@@ -46,11 +30,10 @@ export default function BriefDetailPage() {
         setLoading(false);
       });
     return () => { mounted = false; };
-  }, [authChecked, headlineId]);
+  }, [headlineId]);
 
   return (
     <div className="min-h-screen bg-muted">
-      <AppNav />
       <main className="container max-w-4xl py-10">
         <Link
           href="/gd-briefs"

@@ -134,6 +134,7 @@ function CaseCard({ entry }: { entry: CaseEntry }) {
         </button>
       </DialogTrigger>
       
+      {/* @ts-ignore - DialogContent from .jsx doesn't export children type */}
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start gap-2 flex-wrap mb-2">
