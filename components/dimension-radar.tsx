@@ -35,9 +35,9 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
   ];
 
   const N = dims.length;
-  const CX = 140;
-  const CY = 120;
-  const R = 85;
+  const CX = 130;
+  const CY = 130; 
+  const R = 85; 
 
   const pt = (i: number, ratio: number) => {
     const a = (i * (2 * Math.PI / N)) - Math.PI / 2;
@@ -59,7 +59,7 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
   const hasBench = benchmark && Object.values(benchmark).some(v => v > 0);
 
   return (
-    <div className="relative w-full pb-6">
+    <div className="relative w-full max-w-[280px] mx-auto pb-4 pt-2">
       <style>{`
         @keyframes drawAxis {
           0% { stroke-dashoffset: ${R}; }
@@ -71,7 +71,7 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
           animation: drawAxis 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes fadeScale {
-          0% { opacity: 0; transform: scale(0.9); transform-origin: ${CX}px ${CY}px; }
+          0% { opacity: 0; transform: scale(0.96); transform-origin: ${CX}px ${CY}px; }
           100% { opacity: 1; transform: scale(1); transform-origin: ${CX}px ${CY}px; }
         }
         .animate-polygon {
@@ -80,23 +80,24 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
         }
       `}</style>
       
-      <svg viewBox="0 0 280 250" width="100%" className="block overflow-visible">
+      <svg viewBox="0 0 260 270" width="100%" className="block overflow-visible">
         <defs>
-          <linearGradient id="radar-fill-enhanced" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(356 84% 43%)" stopOpacity="0.30" />
-            <stop offset="50%" stopColor="hsl(356 84% 43%)" stopOpacity="0.10" />
-            <stop offset="100%" stopColor="hsl(356 84% 43%)" stopOpacity="0.05" />
+          <linearGradient id="radar-fill-user" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
         {/* Grid hexagons */}
         {gridLevels.map(level => (
           <path 
-            key={level} 
+            key={`grid-${level}`} 
             d={toD(dims.map((_, i) => pt(i, level)))}
             fill="none" 
             stroke="hsl(var(--border))" 
-            strokeWidth="1" 
+            strokeOpacity="0.6"
+            strokeWidth="1"
+            strokeLinejoin="round"
           />
         ))}
 
@@ -105,49 +106,77 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
           const outer = pt(i, 1);
           return (
             <line 
-              key={i} 
+              key={`axis-${i}`} 
               x1={CX} y1={CY} 
               x2={outer.x} y2={outer.y}
               stroke="hsl(var(--border))" 
+              strokeOpacity="0.6"
               strokeWidth="1" 
               className={mounted ? "axis-line" : ""}
             />
           );
         })}
 
-        {/* Top 10% Benchmark Polygon (No Fill, Navy Outline) */}
+        {/* Axis Labels (Sleek Pills) on Top Axis */}
+        {gridLevels.map(level => {
+          const p = pt(0, level);
+          const valText = `${level * 100}%`;
+          return (
+            <g key={`label-${level}`} className="pointer-events-none">
+              <rect
+                x={p.x - 14}
+                y={p.y - 7}
+                width={28}
+                height={14}
+                rx={7}
+                fill="hsl(var(--muted))"
+              />
+              <text
+                x={p.x}
+                y={p.y + 0.5}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="8"
+                fontWeight="500"
+                fill="hsl(var(--muted-foreground))"
+              >
+                {valText}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Benchmark Polygon (Dark Solid Outline, No Fill) */}
         {hasBench && (
           <path 
             d={toD(benchPts)} 
             fill="transparent"
-            stroke="hsl(var(--navy))" 
-            strokeWidth="1.5" 
-            strokeDasharray="4 4"
-            className={mounted ? "animate-polygon" : "opacity-0"}
+            stroke="hsl(var(--foreground))" 
+            strokeWidth="1.2" 
+            strokeLinejoin="round"
+            className={mounted ? "animate-polygon drop-shadow-sm" : "opacity-0"}
           />
         )}
 
-        {/* User Fill Polygon */}
+        {/* User Polygon (Primary Color with Translucent Fill) */}
         {hasData ? (
-          <g className={mounted ? "animate-polygon" : "opacity-0"}>
+          <g className={mounted ? "animate-polygon drop-shadow-sm" : "opacity-0"}>
             <path 
               d={toD(userPts)} 
-              fill="url(#radar-fill-enhanced)"
-              stroke="hsl(356 84% 43%)" 
-              strokeWidth="2" 
+              fill="url(#radar-fill-user)"
+              stroke="hsl(var(--primary))" 
+              strokeWidth="1.5" 
               strokeLinejoin="round" 
             />
-            {/* Interactive User Dots */}
+            {/* Invisible Hit Zones for Hover (No visible dots!) */}
             {userPts.map((p, i) => {
               const d = dims[i];
               return (
                 <circle 
                   key={`u-${i}`} 
-                  cx={p.x} cy={p.y} r="4"
-                  fill="hsl(356 84% 43%)" 
-                  stroke="hsl(var(--background))" 
-                  strokeWidth="1.5"
-                  className="cursor-pointer hover:scale-150 transition-transform origin-center"
+                  cx={p.x} cy={p.y} r="8"
+                  fill="transparent" 
+                  className="cursor-pointer"
                   onMouseEnter={() => setHoverNode({
                     label: d.label,
                     userScore: breakdown?.[d.key] ?? 0,
@@ -163,37 +192,36 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
           </g>
         ) : (
           <text 
-            x={CX} y={CY} 
+            x={CX} y={CY + 15} 
             textAnchor="middle" 
             dominantBaseline="middle"
             fontSize="11" 
+            fontWeight="400"
             fill="hsl(var(--muted-foreground))"
           >
-            Submit a case to see radar
+            Submit a case to view
           </text>
         )}
 
-        {/* Dimension labels with curved anchor logic */}
+        {/* Dimension labels outside the grid */}
         {dims.map((d, i) => {
-          // Slightly extend the text radius
           const lp = pt(i, 1.25);
-          // Shift text slightly based on angle so it doesn't overlap perfectly vertical nodes
           const a = (i * (2 * Math.PI / N)) - Math.PI / 2;
           const isTopOrBottom = Math.abs(Math.cos(a)) < 0.1;
           const textAnchor = isTopOrBottom ? 'middle' : (lp.x < CX ? 'end' : 'start');
-          const dy = isTopOrBottom ? (lp.y < CY ? -5 : 5) : 0;
+          const dy = isTopOrBottom ? (lp.y < CY ? -8 : 8) : 0;
 
           return (
             <text 
-              key={i} 
+              key={`dim-${i}`} 
               x={lp.x} 
               y={lp.y + dy} 
               textAnchor={textAnchor}
               dominantBaseline="middle" 
-              fontSize="11" 
-              fontWeight="600"
+              fontSize="10" 
+              fontWeight="500"
               fill="hsl(var(--muted-foreground))"
-              className="transition-colors hover:fill-foreground"
+              className="transition-colors opacity-80"
             >
               {d.label}
             </text>
@@ -203,14 +231,14 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
 
       {/* Legend */}
       {(hasData || hasBench) && (
-        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center gap-6 mt-4">
+        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center gap-6 mt-6">
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-primary/80 border border-primary" />
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">You</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-[hsl(var(--primary))] opacity-80" />
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">You</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-navy" />
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Top 10%</span>
+            <div className="w-2.5 h-2.5 rounded-full border-[1.5px] border-foreground" />
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Top 10%</span>
           </div>
         </div>
       )}
@@ -218,24 +246,24 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
       {/* Tooltip HTML Overlay */}
       {hoverNode && (
         <div 
-          className="absolute z-50 pointer-events-none bg-background/95 backdrop-blur-sm border border-border shadow-md rounded-md p-2.5 text-xs transform -translate-x-1/2 -translate-y-[120%] animate-in fade-in zoom-in duration-150"
+          className="absolute z-50 pointer-events-none bg-background/95 backdrop-blur-md border border-border shadow-lg rounded-md p-2.5 text-xs transform -translate-x-1/2 -translate-y-[120%] animate-in fade-in zoom-in-95 duration-100"
           style={{ 
-            left: `${(hoverNode.x / 280) * 100}%`, 
-            top: `${(hoverNode.y / 250) * 100}%` 
+            left: `${(hoverNode.x / 260) * 100}%`, 
+            top: `${(hoverNode.y / 270) * 100}%` 
           }}
         >
-          <p className="font-bold text-foreground mb-1.5 border-b border-border pb-1">{hoverNode.label}</p>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">You:</span>
-            <span className="font-mono font-medium text-primary">
-              {hoverNode.userScore.toFixed(1)} <span className="text-[9px] text-muted-foreground">/ {hoverNode.max}</span>
+          <p className="font-medium text-foreground mb-1.5 border-b border-border pb-1">{hoverNode.label}</p>
+          <div className="flex items-center justify-between gap-5">
+            <span className="text-muted-foreground font-medium text-[10px] uppercase">You:</span>
+            <span className="font-mono font-medium text-primary text-[11px]">
+              {hoverNode.userScore.toFixed(1)} <span className="text-[9px] text-muted-foreground font-normal">/ {hoverNode.max}</span>
             </span>
           </div>
           {hasBench && (
-            <div className="flex items-center justify-between gap-4 mt-0.5">
-              <span className="text-muted-foreground">Top 10%:</span>
-              <span className="font-mono font-medium text-navy">
-                {hoverNode.benchScore.toFixed(1)} <span className="text-[9px] text-muted-foreground">/ {hoverNode.max}</span>
+            <div className="flex items-center justify-between gap-5 mt-1">
+              <span className="text-muted-foreground font-medium text-[10px] uppercase">Top 10%:</span>
+              <span className="font-mono font-medium text-foreground text-[11px]">
+                {hoverNode.benchScore.toFixed(1)} <span className="text-[9px] text-muted-foreground font-normal">/ {hoverNode.max}</span>
               </span>
             </div>
           )}

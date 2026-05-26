@@ -2,6 +2,8 @@
  * Database row types matching the existing Supabase schema.
  */
 
+export type SubscriptionTier = 'free' | 'lite' | 'pro';
+
 export interface UserRow {
   id: string;
   name: string | null;
@@ -9,6 +11,25 @@ export interface UserRow {
   avatar_url: string | null;
   points: number;
   created_at: string;
+  subscription_tier: SubscriptionTier;
+  subscription_started_at: string | null;
+  subscription_expires_at: string | null;
+  streak_count: number;
+  streak_last_date: string | null;
+}
+
+export interface PaymentRow {
+  id: string;
+  user_id: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string | null;
+  razorpay_signature: string | null;
+  tier: 'lite' | 'pro';
+  amount_paise: number;
+  currency: string;
+  status: 'created' | 'paid' | 'failed' | 'refunded';
+  created_at: string;
+  paid_at: string | null;
 }
 
 export interface CaseRow {

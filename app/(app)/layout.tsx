@@ -28,6 +28,11 @@ export default async function AppLayout({
     avatar_url: session.user.user_metadata?.avatar_url || null,
     points: 0,
     created_at: new Date().toISOString(),
+    subscription_tier: 'free',
+    subscription_started_at: null,
+    subscription_expires_at: null,
+    streak_count: 0,
+    streak_last_date: null,
   };
 
   const user = (userRow as UserRow | null) || fallbackUser;

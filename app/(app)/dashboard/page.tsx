@@ -394,7 +394,7 @@ export default async function DashboardPage() {
           {/* ══════════════════════════════════════════════════════
               CHARTS ROW — Radar + Line chart side by side
           ══════════════════════════════════════════════════════ */}
-            <div className="col-span-12 grid md:grid-cols-2 gap-5 animate-slide-up" style={{ animationDelay: '280ms' }}>
+            <div className="col-span-12 lg:col-span-8 lg:col-start-3 grid md:grid-cols-2 gap-5 animate-slide-up" style={{ animationDelay: '280ms' }}>
               {/* Radar chart */}
               <div className="ui-card p-5">
                 <div className="mb-3 flex items-center justify-between">
@@ -597,54 +597,56 @@ function ScoreLineChart({ subs }: { subs: SubmissionRow[] }) {
   const yLabels = [0, 50, 100];
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id="score-gradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="hsl(356 84% 43%)" stopOpacity="0.18" />
-          <stop offset="85%" stopColor="hsl(356 84% 43%)" stopOpacity="0.02" />
-          <stop offset="100%" stopColor="hsl(356 84% 43%)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
+    <div className="w-full max-w-[420px] mx-auto pt-6 pb-2">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="score-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.18" />
+            <stop offset="85%" stopColor="hsl(var(--primary))" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+          </linearGradient>
+        </defs>
 
-      {/* Y grid + labels */}
-      {yLabels.map(v => {
-        const y = py(v);
-        return (
-          <g key={v}>
-            <line x1={PL} y1={y} x2={W - PR} y2={y}
-              stroke="hsl(var(--border))" strokeWidth="1" strokeDasharray={v === 0 ? 'none' : '3 3'} />
-            <text x={PL - 6} y={y} textAnchor="end" dominantBaseline="middle"
-              fontSize="9" fill="hsl(var(--muted-foreground))">{v}</text>
-          </g>
-        );
-      })}
+        {/* Y grid + labels */}
+        {yLabels.map(v => {
+          const y = py(v);
+          return (
+            <g key={v}>
+              <line x1={PL} y1={y} x2={W - PR} y2={y}
+                stroke="hsl(var(--border))" strokeWidth="1" strokeDasharray={v === 0 ? 'none' : '3 3'} />
+              <text x={PL - 6} y={y} textAnchor="end" dominantBaseline="middle"
+                fontSize="9" fill="hsl(var(--muted-foreground))">{v}</text>
+            </g>
+          );
+        })}
 
-      {/* X axis labels (submission numbers) */}
-      {pts.map((p, i) => (
-        <text key={i} x={p.x} y={H - 6} textAnchor="middle"
-          fontSize="9" fill="hsl(var(--muted-foreground))">
-          #{i + 1}
-        </text>
-      ))}
-
-      {/* Gradient fill */}
-      <path d={fillPath} fill="url(#score-gradient)" />
-
-      {/* Main line */}
-      <path d={linePath} fill="none"
-        stroke="hsl(356 84% 43%)" strokeWidth="2.5"
-        strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* Data point dots */}
-      {pts.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.x} cy={p.y} r="4.5" fill="white" stroke="hsl(356 84% 43%)" strokeWidth="2" />
-          <text x={p.x} y={p.y - 8} textAnchor="middle"
-            fontSize="9" fontWeight="700" fill="hsl(356 84% 43%)">
-            {p.score}
+        {/* X axis labels (submission numbers) */}
+        {pts.map((p, i) => (
+          <text key={i} x={p.x} y={H - 6} textAnchor="middle"
+            fontSize="9" fill="hsl(var(--muted-foreground))">
+            #{i + 1}
           </text>
-        </g>
-      ))}
-    </svg>
+        ))}
+
+        {/* Gradient fill */}
+        <path d={fillPath} fill="url(#score-gradient)" />
+
+        {/* Main line */}
+        <path d={linePath} fill="none"
+          stroke="hsl(var(--primary))" strokeWidth="2.5"
+          strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* Data point dots */}
+        {pts.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="4.5" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="2.5" />
+            <text x={p.x} y={p.y - 10} textAnchor="middle"
+              fontSize="10" fontWeight="700" fill="hsl(var(--primary))">
+              {p.score}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }

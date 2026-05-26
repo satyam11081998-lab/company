@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import ThemeToggle from '@/components/theme-toggle';
 import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight } from 'lucide-react';
@@ -9,7 +8,6 @@ export const dynamic = 'force-dynamic';
 export default async function LandingPage() {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) redirect('/dashboard');
 
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -33,16 +31,26 @@ export default async function LandingPage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Link href="/login">
-              <button className="text-[13px] font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 transition-colors">
-                Login
-              </button>
-            </Link>
-            <Link href="/signup">
-              <button className="btn-primary text-[13px] py-2 px-5">
-                Get started
-              </button>
-            </Link>
+            {session?.user ? (
+              <Link href="/dashboard">
+                <button className="btn-primary text-[13px] py-2 px-5">
+                  Dashboard
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <button className="text-[13px] font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 transition-colors">
+                    Login
+                  </button>
+                </Link>
+                <Link href="/signup">
+                  <button className="btn-primary text-[13px] py-2 px-5">
+                    Get started
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -65,9 +73,9 @@ export default async function LandingPage() {
               Cases, frameworks, and GD prep for every MBA aspirant — consulting, finance, marketing, product, ops. Scored across 6 dimensions. Ranked against every aspirant in India.
             </p>
             <div className="mt-7 flex items-center gap-3">
-              <Link href="/signup">
+              <Link href={session?.user ? "/dashboard" : "/signup"}>
                 <button className="btn-primary">
-                  Start now <ArrowRight className="h-4 w-4" />
+                  {session?.user ? "Go to dashboard" : "Start now"} <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <Link href="/methodology">

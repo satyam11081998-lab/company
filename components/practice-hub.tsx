@@ -20,6 +20,10 @@ const ALL_CASE_STUDIES = ALL_DOMAINS.flatMap(d => d.cases || []);
 export default function PracticeHub({ cases }: PracticeHubProps) {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+
+  // Reset page when search or tab changes
+  useMemo(() => { setPage(1); }, [search, activeTab]);
 
   // Filtering
   const filteredScored = useMemo(() => {
@@ -57,6 +61,24 @@ export default function PracticeHub({ cases }: PracticeHubProps) {
     alert(`Randomly selected: ${item.title}`);
   };
 
+  const allItems = useMemo(() => {
+    const items: any[] = [];
+    if (activeTab === 'all' || activeTab === 'scored') {
+      items.push(...filteredScored.map(c => ({ ...c, _itemType: 'scored' })));
+    }
+    if (activeTab === 'all' || activeTab === 'guesstimates') {
+      items.push(...filteredGuesstimates.map(g => ({ ...g, _itemType: 'guesstimate' })));
+    }
+    if (activeTab === 'all' || activeTab === 'studies') {
+      items.push(...filteredStudies.map(s => ({ ...s, _itemType: 'study' })));
+    }
+    return items;
+  }, [activeTab, filteredScored, filteredGuesstimates, filteredStudies]);
+
+  const itemsPerPage = 9;
+  const totalPages = Math.ceil(allItems.length / itemsPerPage);
+  const paginatedItems = allItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
   return (
     <div className="space-y-6">
       {/* Search & Tabs */}
@@ -88,76 +110,139 @@ export default function PracticeHub({ cases }: PracticeHubProps) {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {(activeTab === 'all' || activeTab === 'scored') && filteredScored.map((c) => (
-          <Card key={c.id} className="ui-card flex flex-col p-5 group hover:border-primary/50 transition-colors">
-            <div className="flex justify-between items-start mb-3">
-              <span className={`tag-${getTopicColor(c.type)} px-2 py-1 rounded text-micro uppercase tracking-wide font-medium`}>
-                {c.type}
-              </span>
-              <span className="text-micro font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
-                {c.difficulty}
-              </span>
-            </div>
-            <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">{c.title}</h3>
-            <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{c.content}</p>
-            <div className="mt-auto pt-4 border-t flex justify-between items-center">
-               <span className="text-small text-muted-foreground">Scored by MECE</span>
-               <Link href={`/cases/${c.id}`} className="text-small font-medium text-primary hover:underline">Practice &rarr;</Link>
-            </div>
-          </Card>
-        ))}
+        {paginatedItems.map((item) => {
+          if (item._itemType === 'scored') {
+            const c = item as CaseRow;
+            return (
+              <Card key={`scored-${c.id}`} className="ui-card flex flex-col p-5 group hover:border-primary/50 transition-colors">
+                <div className="flex justify-between items-start mb-3">
+                  <span className={`tag-${getTopicColor(c.type)} px-2 py-1 rounded text-micro uppercase tracking-wide font-medium`}>
+                    {c.type}
+                  </span>
+                  <span className="text-micro font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                    {c.difficulty}
+                  </span>
+                </div>
+                <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">{c.title}</h3>
+                <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{c.content}</p>
+                <div className="mt-auto pt-4 border-t flex justify-between items-center">
+                   <span className="text-small text-muted-foreground">Scored by MECE</span>
+                   <Link href={`/cases/${c.id}`} className="text-small font-medium text-primary hover:underline">Practice &rarr;</Link>
+                </div>
+              </Card>
+            );
+          }
+          if (item._itemType === 'guesstimate') {
+            const g = item as any;
+            return (
+              <Card key={`guesstimate-${g.code}`} className="ui-card flex flex-col p-5 group hover:border-navy/50 transition-colors">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="tag-navy px-2 py-1 rounded text-micro uppercase tracking-wide font-medium">
+                    Guesstimate
+                  </span>
+                  <button title="View source methodology" className="text-muted-foreground hover:text-navy transition-colors">
+                    <ExternalLink className="h-4 w-4" />
+                  </button>
+                </div>
+                <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-navy transition-colors">{g.title}</h3>
+                <div className="mb-4 flex-grow">
+                  <p className="text-body text-muted-foreground mb-2"><span className="font-medium text-foreground">Approach:</span> {g.approach}</p>
+                  <p className="text-small text-muted-foreground line-clamp-2">{g.keyDetail}</p>
+                </div>
+                <div className="mt-auto pt-4 border-t flex justify-between items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t-navy/10">
+                   <span className="text-small font-medium text-navy truncate pr-4">{g.result}</span>
+                   <Link href={`/learn/guesstimates#${g.code}`} className="text-small font-medium text-navy hover:underline shrink-0">Walkthrough</Link>
+                </div>
+              </Card>
+            );
+          }
+          if (item._itemType === 'study') {
+            const s = item as any;
+            return (
+              <Card key={`study-${s.code}`} className="ui-card flex flex-col p-5 group hover:border-foreground/20 transition-colors">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="tag-amber px-2 py-1 rounded text-micro uppercase tracking-wide font-medium">
+                    Case Study
+                  </span>
+                  <button title="View source methodology" className="text-muted-foreground hover:text-foreground transition-colors">
+                    <ExternalLink className="h-4 w-4" />
+                  </button>
+                </div>
+                <h3 className="text-strong font-semibold text-foreground mb-2">{s.title}</h3>
+                <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{s.problem}</p>
+                <div className="mt-auto pt-4 border-t flex justify-between items-center">
+                   <span className="text-small text-muted-foreground">{s.sector}</span>
+                   <Link href={`/learn/case-studies#${s.code}`} className="text-small font-medium text-foreground hover:underline">Read &rarr;</Link>
+                </div>
+              </Card>
+            );
+          }
+          return null;
+        })}
 
-        {(activeTab === 'all' || activeTab === 'guesstimates') && filteredGuesstimates.map((g) => (
-          <Card key={g.code} className="ui-card flex flex-col p-5 group hover:border-navy/50 transition-colors">
-            <div className="flex justify-between items-start mb-3">
-              <span className="tag-navy px-2 py-1 rounded text-micro uppercase tracking-wide font-medium">
-                Guesstimate
-              </span>
-              <button title="View source methodology" className="text-muted-foreground hover:text-navy transition-colors">
-                <ExternalLink className="h-4 w-4" />
-              </button>
-            </div>
-            <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-navy transition-colors">{g.title}</h3>
-            <div className="mb-4 flex-grow">
-              <p className="text-body text-muted-foreground mb-2"><span className="font-medium text-foreground">Approach:</span> {g.approach}</p>
-              <p className="text-small text-muted-foreground line-clamp-2">{g.keyDetail}</p>
-            </div>
-            <div className="mt-auto pt-4 border-t flex justify-between items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t-navy/10">
-               <span className="text-small font-medium text-navy truncate pr-4">{g.result}</span>
-               <Link href={`/learn/guesstimates#${g.code}`} className="text-small font-medium text-navy hover:underline shrink-0">Walkthrough</Link>
-            </div>
-          </Card>
-        ))}
-
-        {(activeTab === 'all' || activeTab === 'studies') && filteredStudies.map((s) => (
-          <Card key={s.code} className="ui-card flex flex-col p-5 group hover:border-foreground/20 transition-colors">
-            <div className="flex justify-between items-start mb-3">
-              <span className="tag-amber px-2 py-1 rounded text-micro uppercase tracking-wide font-medium">
-                Case Study
-              </span>
-              <button title="View source methodology" className="text-muted-foreground hover:text-foreground transition-colors">
-                <ExternalLink className="h-4 w-4" />
-              </button>
-            </div>
-            <h3 className="text-strong font-semibold text-foreground mb-2">{s.title}</h3>
-            <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{s.problem}</p>
-            <div className="mt-auto pt-4 border-t flex justify-between items-center">
-               <span className="text-small text-muted-foreground">{s.sector}</span>
-               <Link href={`/learn/case-studies#${s.code}`} className="text-small font-medium text-foreground hover:underline">Read &rarr;</Link>
-            </div>
-          </Card>
-        ))}
-
-        {((activeTab === 'all' && [...filteredScored, ...filteredGuesstimates, ...filteredStudies].length === 0) ||
-          (activeTab === 'scored' && filteredScored.length === 0) ||
-          (activeTab === 'guesstimates' && filteredGuesstimates.length === 0) ||
-          (activeTab === 'studies' && filteredStudies.length === 0)) && (
+        {allItems.length === 0 && (
           <div className="col-span-full py-12 text-center">
             <p className="text-body text-muted-foreground">No practice items found matching your search.</p>
             <Button variant="link" onClick={() => setSearch('')} className="mt-2 text-primary">Clear search</Button>
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-8 col-span-full">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setPage(p => Math.max(1, p - 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          
+          <div className="flex items-center gap-1 mx-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => {
+                let start = Math.floor((page - 1) / 3) * 3 + 1;
+                let end = Math.min(totalPages, start + 4);
+                
+                // If we are near the end and have fewer than 5 pages in this window,
+                // shift the start back so we always show up to 5 pages if they exist.
+                if (end - start < 4) {
+                  start = Math.max(1, end - 4);
+                }
+                
+                return p >= start && p <= end;
+              })
+              .map(p => (
+                <Button
+                  key={p}
+                  variant={p === page ? "default" : "outline"}
+                  className="w-10 h-10 p-0"
+                  onClick={() => {
+                    setPage(p);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  {p}
+                </Button>
+            ))}
+          </div>
+
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setPage(p => Math.min(totalPages, p + 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
+            disabled={page === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
