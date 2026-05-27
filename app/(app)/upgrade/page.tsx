@@ -158,10 +158,16 @@ export default function UpgradePage() {
               
               <button 
                 onClick={() => handleUpgrade("lite", 199)}
-                disabled={loading !== null}
+                disabled={loading !== null || user?.subscription_tier === "lite" || user?.subscription_tier === "pro"}
                 className="w-full btn-secondary h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50"
               >
-                {loading === "lite" ? "Processing..." : "Get Lite"}
+                {user?.subscription_tier === "lite" 
+                  ? "Current Plan" 
+                  : user?.subscription_tier === "pro" 
+                    ? "Included in Pro" 
+                    : loading === "lite" 
+                      ? "Processing..." 
+                      : "Get Lite"}
               </button>
             </div>
           </div>
@@ -200,10 +206,14 @@ export default function UpgradePage() {
               
               <button 
                 onClick={() => handleUpgrade("pro", 499)}
-                disabled={loading !== null}
+                disabled={loading !== null || user?.subscription_tier === "pro"}
                 className="w-full bg-primary text-white hover:bg-primary-hover h-10 text-sm font-semibold rounded-md flex items-center justify-center transition-colors shadow-sm disabled:opacity-50"
               >
-                {loading === "pro" ? "Processing..." : "Upgrade to Pro"}
+                {user?.subscription_tier === "pro"
+                  ? "Current Plan"
+                  : loading === "pro" 
+                    ? "Processing..." 
+                    : "Upgrade to Pro"}
               </button>
             </div>
           </div>

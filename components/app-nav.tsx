@@ -89,7 +89,7 @@ export default function AppNav() {
                   </AvatarFallback>
                 </Avatar>
               </Link>
-              {isFree && (
+              {tier !== 'pro' && (
                 <Link 
                   href="/upgrade" 
                   className="hidden md:inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1 border border-primary/20 rounded-sm bg-primary/5"
