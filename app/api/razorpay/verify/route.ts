@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
+import { TIER_PRICES } from '@/lib/tier';
 
 export async function POST(req: Request) {
   try {
@@ -18,6 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
+    if (tier !== 'lite' && tier !== 'pro') {
+      return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
+    }
+
     const secret = process.env.RAZORPAY_KEY_SECRET!;
     const bodyText = razorpay_order_id + '|' + razorpay_payment_id;
     
@@ -27,15 +32,43 @@ export async function POST(req: Request) {
       .digest('hex');
 
     if (expectedSignature === razorpay_signature) {
-      // Signature is valid, update user tier
-      const { error } = await supabase
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+      // Update user tier + subscription dates
+      const { error: updateError } = await supabase
         .from('users')
-        .update({ subscription_tier: tier })
+        .update({
+          subscription_tier: tier,
+          subscription_started_at: now.toISOString(),
+          subscription_expires_at: expiresAt.toISOString(),
+        })
         .eq('id', session.user.id);
         
-      if (error) {
-        console.error("Failed to update user tier in DB:", error);
+      if (updateError) {
+        console.error("Failed to update user tier in DB:", updateError);
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+      }
+
+      // Insert payment record for audit trail
+      const amountPaise = (TIER_PRICES as Record<string, number>)[tier] * 100;
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: session.user.id,
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          tier,
+          amount_paise: amountPaise,
+          currency: 'INR',
+          status: 'paid',
+          paid_at: now.toISOString(),
+        });
+
+      if (paymentError) {
+        // Non-blocking: tier is already updated, log the payment insert failure
+        console.error("Failed to insert payment record:", paymentError);
       }
 
       return NextResponse.json({ success: true });
@@ -50,3 +83,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
