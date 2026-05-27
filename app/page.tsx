@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic';
 export default async function LandingPage() {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
-
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
 
@@ -312,6 +311,7 @@ export default async function LandingPage() {
                 </tbody>
               </table>
             </div>
+          </div>
 
             {/* Card 2: Submit form */}
             <div className="ui-card overflow-hidden">
@@ -481,6 +481,7 @@ export default async function LandingPage() {
                 </tbody>
               </table>
             </div>
+          </div>
           </div>
         </div>
       </section>
