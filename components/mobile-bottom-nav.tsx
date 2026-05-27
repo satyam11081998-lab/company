@@ -72,7 +72,7 @@ export default function MobileBottomNav() {
                   <div className="font-semibold text-foreground">{user?.name || 'User'}</div>
                   <div className="text-sm font-mono text-primary font-medium">{user?.points} pts</div>
                 </div>
-                {tier !== 'free' && <TierBadge tier={tier} size="sm" className="ml-auto" />}
+                {tier !== 'free' && <div className="ml-auto"><TierBadge tier={tier as any} size="sm" /></div>}
               </div>
             </div>
 

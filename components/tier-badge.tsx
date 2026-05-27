@@ -4,9 +4,10 @@ import { Star, Zap, Circle } from 'lucide-react';
 import type { SubscriptionTier } from '@/lib/types';
 import { TIER_LABELS } from '@/lib/tier';
 
-export default function TierBadge({ tier, size = 'sm' }: { 
+export default function TierBadge({ tier, size = 'sm', className = '' }: { 
   tier: SubscriptionTier; 
   size?: 'xs' | 'sm' | 'md';
+  className?: string;
 }) {
   if (tier === 'free') return null; // don't show badge for free users
 
@@ -19,7 +20,7 @@ export default function TierBadge({ tier, size = 'sm' }: {
 
   if (tier === 'lite') {
     return (
-      <span className={`inline-flex items-center font-semibold uppercase tracking-wider rounded-sm bg-amber-500/10 text-amber-600 dark:text-amber-400 ${sizeClasses[size]}`}>
+      <span className={`inline-flex items-center font-semibold uppercase tracking-wider rounded-sm bg-amber-500/10 text-amber-600 dark:text-amber-400 ${sizeClasses[size]} ${className}`.trim()}>
         <Zap className={iconSize} />
         {TIER_LABELS[tier]}
       </span>
@@ -27,7 +28,7 @@ export default function TierBadge({ tier, size = 'sm' }: {
   }
 
   return (
-    <span className={`inline-flex items-center font-semibold uppercase tracking-wider rounded-sm bg-primary/10 text-primary ${sizeClasses[size]}`}>
+    <span className={`inline-flex items-center font-semibold uppercase tracking-wider rounded-sm bg-primary/10 text-primary ${sizeClasses[size]} ${className}`.trim()}>
       <Star className={iconSize} />
       {TIER_LABELS[tier]}
     </span>
