@@ -11,7 +11,7 @@ import { Search, Shuffle, ExternalLink, Activity, Calculator, Briefcase, FileTex
 
 interface PracticeHubProps {
   cases: CaseRow[]; // From database (Scored Cases)
-  attemptedCaseIds?: Set<string>;
+  attemptedCaseIds?: string[];
 }
 
 type TabType = 'all' | 'scored' | 'guesstimates' | 'studies';
@@ -19,7 +19,7 @@ type TabType = 'all' | 'scored' | 'guesstimates' | 'studies';
 const ALL_GUESSTIMATES = ALL_DOMAINS.flatMap(d => d.guesstimates || []);
 const ALL_CASE_STUDIES = ALL_DOMAINS.flatMap(d => d.cases || []);
 
-export default function PracticeHub({ cases, attemptedCaseIds = new Set() }: PracticeHubProps) {
+export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHubProps) {
   const searchParams = useSearchParams();
   const focusDomain = searchParams?.get('focus') || null;
   const focusTab = searchParams?.get('tab') as TabType | null;
@@ -140,7 +140,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = new Set() }: Pra
                 <div className="mt-auto pt-4 border-t flex justify-between items-center">
                    <div className="flex items-center gap-2">
                      <span className="text-small text-muted-foreground">Scored by MECE</span>
-                     {attemptedCaseIds.has(c.id) && (
+                     {attemptedCaseIds.includes(c.id) && (
                        <span className="inline-flex items-center gap-1 text-micro font-semibold text-success">
                          <Check className="h-3 w-3" /> Attempted
                        </span>
