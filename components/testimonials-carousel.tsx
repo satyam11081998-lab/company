@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Quote, Pause, Play } from 'lucide-react';
+import { Quote, Pause, Play, Linkedin } from 'lucide-react';
 import { TESTIMONIALS, type Testimonial } from '@/lib/testimonials';
 
 const AUTO_ROTATE_MS = 5000;
@@ -21,7 +21,13 @@ export default function TestimonialsCarousel() {
     return () => clearInterval(id);
   }, [paused, total]);
 
-  const t: Testimonial = TESTIMONIALS[index];
+  // We show 3 at a time, stepping by 3
+  const visibleTestimonials: Testimonial[] = [];
+  for (let i = 0; i < 3; i++) {
+    visibleTestimonials.push(TESTIMONIALS[(index * 3 + i) % total]);
+  }
+
+  const numDots = Math.ceil(total / 3);
 
   return (
     <Card 
@@ -29,35 +35,47 @@ export default function TestimonialsCarousel() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Decorative quote mark — top left */}
       <Quote className="absolute top-6 left-6 h-10 w-10 text-primary/10" aria-hidden="true" />
       
-      {/* Quote content */}
-      <div className="relative max-w-3xl mx-auto text-center min-h-[200px] flex flex-col justify-center">
-        <blockquote className="text-h3 leading-relaxed text-foreground italic font-light px-4 md:px-12">
-          &ldquo;{t.quote}&rdquo;
-        </blockquote>
-
-        {/* Attribution */}
-        <div className="mt-8 flex flex-col items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-border">
-            {t.avatar_url && <AvatarImage src={t.avatar_url} alt={t.name} />}
-            <AvatarFallback className="bg-navy text-navy-foreground text-sm font-semibold">
-              {t.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-body font-semibold text-foreground">{t.name}</p>
-            <p className="text-small text-muted-foreground">
-              {t.school} · <span className="text-primary">{t.placement}</span>
-            </p>
-          </div>
+      <div className="relative mx-auto min-h-[250px] flex flex-col justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {visibleTestimonials.map((t, idx) => (
+            <div key={`${t.id}-${idx}`} className="flex flex-col text-center">
+              <blockquote className="text-body leading-relaxed text-foreground italic font-light mb-6 flex-grow">
+                &ldquo;{t.quote}&rdquo;
+              </blockquote>
+              <div className="flex flex-col items-center gap-3">
+                <Avatar className="h-12 w-12 border-2 border-border">
+                  {t.avatar_url && <AvatarImage src={t.avatar_url} alt={t.name} />}
+                  <AvatarFallback className="bg-navy text-navy-foreground text-sm font-semibold">
+                    {t.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center justify-center gap-2">
+                    <p className="text-body font-semibold text-foreground">{t.name}</p>
+                    {t.linkedin_url && (
+                      <a href={t.linkedin_url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-[#0A66C2] transition-colors" title="View LinkedIn Profile">
+                        <Linkedin className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-small text-muted-foreground">
+                    {t.school}
+                  </p>
+                  <p className="text-micro text-primary mt-0.5">
+                    {t.placement}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Pagination dots */}
-      <div className="mt-8 flex items-center justify-center gap-2">
-        {TESTIMONIALS.map((_, i) => (
+      <div className="mt-10 flex items-center justify-center gap-2">
+        {Array.from({ length: numDots }).map((_, i) => (
           <button
             key={i}
             onClick={() => setIndex(i)}
@@ -66,7 +84,7 @@ export default function TestimonialsCarousel() {
                 ? 'w-6 bg-primary'
                 : 'w-1.5 bg-border hover:bg-muted-foreground/40'
             }`}
-            aria-label={`Show testimonial ${i + 1}`}
+            aria-label={`Show testimonial page ${i + 1}`}
           />
         ))}
       </div>

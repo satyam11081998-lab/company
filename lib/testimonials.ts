@@ -11,32 +11,36 @@ export interface Testimonial {
   placement: string;     // e.g. "Summer placed at Bain"
   quote: string;         // 2-4 lines
   avatar_url: string | null;
+  linkedin_url?: string;
 }
 
 export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't1',
-    name: 'Aarav Mehta',
-    school: 'IIM Lucknow',
-    placement: 'Summer placed at Bain',
+    name: 'Satyam Kumar',
+    school: 'FMS Delhi',
+    placement: 'MECE Contributor',
     quote: "MECE caught flaws in my hypothesis-driven thinking that no one else had pointed out. Used it daily for three weeks before placement season.",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AaravMehta',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SatyamKumar',
+    linkedin_url: 'https://www.linkedin.com/in/satyam-kumar-8254b4157/'
   },
   {
     id: 't2',
-    name: 'Ananya Reddy',
-    school: 'IIM Shillong',
-    placement: 'Summer placed at McKinsey',
+    name: 'Mohit Kumar Raj',
+    school: 'FMS Delhi',
+    placement: 'MECE Contributor',
     quote: "The 6-dimension scoring is brutally honest — better than mock interviews where peers go easy on you. Pushed me to write tighter syntheses.",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AnanyaReddy',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MohitKumarRaj',
+    linkedin_url: 'https://www.linkedin.com/in/mohit-kumar-raj-b895b6201/'
   },
   {
     id: 't3',
-    name: 'Karan Desai',
-    school: 'SP Jain',
-    placement: 'Final placed at HUL ABM',
+    name: 'Kishan Jayaswal',
+    school: 'FMS Delhi',
+    placement: 'MECE Contributor',
     quote: "GD briefs alone saved me hours of news scanning. Smart angles section taught me how to think about consumer goods cases differently.",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=KaranDesai',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=KishanJayaswal',
+    linkedin_url: 'https://www.linkedin.com/in/kishan-jayaswal/'
   },
   {
     id: 't4',
