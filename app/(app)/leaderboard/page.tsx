@@ -87,16 +87,16 @@ export default async function LeaderboardPage() {
                   2nd (left, medium, slightly lower)
                   1st (center, largest, highest)
                   3rd (right, smallest, lowest) */}
-              <div className="absolute inset-0 flex items-end justify-center pb-8" style={{ paddingLeft: 40, paddingRight: 40 }}>
+              <div className="relative md:absolute inset-0 flex items-end justify-center pb-8 pt-12 md:pt-0 gap-2 md:gap-0" style={{ paddingLeft: 10, paddingRight: 10 }}>
 
                 {/* 2nd place */}
                 {top3[1] && (
-                  <div className="absolute flex flex-col items-center" style={{ left: '18%', bottom: 40 }}>
+                  <div className="relative md:absolute flex flex-col items-center md:left-[18%] md:bottom-10 z-10 order-1 md:order-none">
                     <div className="relative">
-                      <div className="absolute -top-3 -right-3 z-10 w-7 h-7 rounded-full bg-card border-2 border-border flex items-center justify-center">
+                      <div className="absolute -top-3 -right-3 z-10 w-6 h-6 md:w-7 md:h-7 rounded-full bg-card border-2 border-border flex items-center justify-center">
                         <Medal className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
-                      <div className="w-24 h-24 rounded-full border-4 border-border bg-muted overflow-hidden">
+                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-border bg-muted overflow-hidden">
                         <Avatar className="w-full h-full">
                           {top3[1].avatar_url && <AvatarImage src={top3[1].avatar_url} alt={getName(top3[1])} />}
                           <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-800 text-white text-2xl font-bold w-full h-full flex items-center justify-center rounded-none">
@@ -110,7 +110,7 @@ export default async function LeaderboardPage() {
                       <p className="text-xs text-muted-foreground font-mono">{top3[1].points} pts</p>
                     </div>
                     <div className="mt-1.5 flex flex-col items-center">
-                      <div className="bg-muted border border-border w-16 rounded-t-md" style={{ height: 40 }} />
+                      <div className="bg-muted border border-border w-16 rounded-t-md h-[24px] md:h-[40px]" />
                       <div className="text-[11px] font-bold text-muted-foreground bg-muted border border-t-0 border-border w-16 text-center py-0.5 rounded-b-sm">2nd</div>
                     </div>
                   </div>
@@ -118,16 +118,16 @@ export default async function LeaderboardPage() {
 
                 {/* 1st place — center, largest, highest */}
                 {top3[0] && (
-                  <div className="absolute flex flex-col items-center" style={{ left: '50%', transform: 'translateX(-50%)', bottom: 72 }}>
+                  <div className="relative md:absolute flex flex-col items-center md:left-1/2 md:-translate-x-1/2 md:bottom-[72px] z-20 order-2 md:order-none -mt-4 md:-mt-0">
                     <div className="relative">
-                      <div className="absolute -top-4 -right-4 z-10 w-9 h-9 rounded-full bg-amber-400 border-4 border-card flex items-center justify-center shadow-md">
+                      <div className="absolute -top-4 -right-4 z-10 w-8 h-8 md:w-9 md:h-9 rounded-full bg-amber-400 border-4 border-card flex items-center justify-center shadow-md">
                         <Trophy className="h-4 w-4 text-white" />
                       </div>
                       {/* Glowing ring behind avatar */}
                       <div className="absolute inset-0 rounded-full" style={{
                         boxShadow: '0 0 0 6px rgba(200,16,46,0.12), 0 0 0 12px rgba(200,16,46,0.06)'
                       }} />
-                      <div className="w-32 h-32 rounded-full border-4 border-primary bg-muted overflow-hidden relative z-10">
+                      <div className="w-20 h-20 md:w-32 md:h-32 rounded-full border-4 border-primary bg-muted overflow-hidden relative z-10">
                         <Avatar className="w-full h-full">
                           {top3[0].avatar_url && <AvatarImage src={top3[0].avatar_url} alt={getName(top3[0])} />}
                           <AvatarFallback className="bg-gradient-to-br from-primary to-primary-hover text-white text-3xl font-bold w-full h-full flex items-center justify-center rounded-none">
@@ -141,7 +141,7 @@ export default async function LeaderboardPage() {
                       <p className="text-sm text-primary font-mono font-bold">{top3[0].points} pts</p>
                     </div>
                     <div className="mt-1.5 flex flex-col items-center">
-                      <div className="bg-primary/10 border border-primary/20 w-20 rounded-t-md" style={{ height: 60 }} />
+                      <div className="bg-primary/10 border border-primary/20 w-20 rounded-t-md h-[40px] md:h-[60px]" />
                       <div className="text-[12px] font-bold text-primary bg-primary/10 border border-t-0 border-primary/20 w-20 text-center py-0.5 rounded-b-sm">1st</div>
                     </div>
                   </div>
@@ -149,12 +149,12 @@ export default async function LeaderboardPage() {
 
                 {/* 3rd place */}
                 {top3[2] && (
-                  <div className="absolute flex flex-col items-center" style={{ right: '18%', bottom: 16 }}>
+                  <div className="relative md:absolute flex flex-col items-center md:right-[18%] md:bottom-4 z-10 order-3 md:order-none">
                     <div className="relative">
-                      <div className="absolute -top-3 -right-3 z-10 w-7 h-7 rounded-full bg-card border-2 border-border flex items-center justify-center">
+                      <div className="absolute -top-3 -right-3 z-10 w-6 h-6 md:w-7 md:h-7 rounded-full bg-card border-2 border-border flex items-center justify-center">
                         <Star className="h-3.5 w-3.5 text-amber-500" />
                       </div>
-                      <div className="w-20 h-20 rounded-full border-4 border-border bg-muted overflow-hidden">
+                      <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-4 border-border bg-muted overflow-hidden">
                         <Avatar className="w-full h-full">
                           {top3[2].avatar_url && <AvatarImage src={top3[2].avatar_url} alt={getName(top3[2])} />}
                           <AvatarFallback className="bg-gradient-to-br from-amber-500 to-amber-700 text-white text-xl font-bold w-full h-full flex items-center justify-center rounded-none">
@@ -168,7 +168,7 @@ export default async function LeaderboardPage() {
                       <p className="text-xs text-muted-foreground font-mono">{top3[2].points} pts</p>
                     </div>
                     <div className="mt-1.5 flex flex-col items-center">
-                      <div className="bg-muted border border-border w-14 rounded-t-md" style={{ height: 24 }} />
+                      <div className="bg-muted border border-border w-14 rounded-t-md h-[16px] md:h-[24px]" />
                       <div className="text-[11px] font-bold text-muted-foreground bg-muted border border-t-0 border-border w-14 text-center py-0.5 rounded-b-sm">3rd</div>
                     </div>
                   </div>

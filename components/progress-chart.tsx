@@ -229,7 +229,7 @@ export default function ProgressChart({ submissions }: ProgressChartProps) {
             showLegend={false}
             showGridLines={false}
             customTooltip={CustomTooltip}
-            className="h-full w-full"
+            className="h-full w-full [&_.recharts-text]:text-[10px] md:[&_.recharts-text]:text-xs"
             curveType="monotone"
           />
         </div>

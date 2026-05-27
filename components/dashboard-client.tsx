@@ -44,8 +44,8 @@ export default function DashboardClient({
   return (
     <>
       {/* Hero */}
-      <div className="container max-w-6xl pt-10 pb-2">
-        <div className="flex items-start justify-between gap-6">
+      <div className="container max-w-6xl pt-6 md:pt-10 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div>
             <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
               {today}
@@ -56,7 +56,7 @@ export default function DashboardClient({
           </div>
           <Link 
             href="/home"
-            className="inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors flex-shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors flex-shrink-0 w-full sm:w-auto min-h-[44px]"
           >
             Start a case
             <ArrowRight className="h-4 w-4" />
@@ -64,7 +64,7 @@ export default function DashboardClient({
         </div>
       </div>
 
-      <div className="container max-w-6xl pb-16 space-y-10 mt-6">
+      <div className="container max-w-6xl pb-16 space-y-6 md:space-y-10 mt-6">
         {/* SECTION: Performance */}
         <section className="animate-slide-up">
           <SectionHeader 
@@ -181,29 +181,31 @@ function RecentSubmissionsTable({ submissions }: { submissions: SubmissionRow[] 
       <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground mb-4">
         Recent activity
       </h3>
-      <div className="divide-y divide-border">
-        {submissions.map((sub, idx) => (
-          <Link
-            key={sub.id}
-            href={`/results/${sub.id}`}
-            className="flex items-center gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-sm px-2 -mx-2"
-          >
-            <span className="text-micro font-mono text-muted-foreground tabular-nums w-6">
-              {String(idx + 1).padStart(2, '0')}
-            </span>
-            <span className={`text-small font-mono font-semibold tabular-nums w-12 ${scoreColor(sub.score)}`}>
-              {sub.score !== null ? sub.score : '—'}<span className="text-muted-foreground font-normal text-micro">/100</span>
-            </span>
-            <span className="text-small text-foreground flex-1 truncate">
-              {sub.answer_text.slice(0, 90).replace(/\s+/g, ' ')}
-              {sub.answer_text.length > 90 ? '…' : ''}
-            </span>
-            <span className="text-micro text-muted-foreground flex-shrink-0">
-              {new Date(sub.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-            </span>
-            <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          </Link>
-        ))}
+      <div className="overflow-x-auto table-scroll-mobile -mx-2 px-2">
+        <div className="divide-y divide-border min-w-[500px]">
+          {submissions.map((sub, idx) => (
+            <Link
+              key={sub.id}
+              href={`/results/${sub.id}`}
+              className="flex items-center gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-sm px-2 -mx-2"
+            >
+              <span className="text-micro font-mono text-muted-foreground tabular-nums w-6">
+                {String(idx + 1).padStart(2, '0')}
+              </span>
+              <span className={`text-small font-mono font-semibold tabular-nums w-12 ${scoreColor(sub.score)}`}>
+                {sub.score !== null ? sub.score : '—'}<span className="text-muted-foreground font-normal text-micro">/100</span>
+              </span>
+              <span className="text-small text-foreground flex-1 truncate">
+                {sub.answer_text.slice(0, 90).replace(/\s+/g, ' ')}
+                {sub.answer_text.length > 90 ? '…' : ''}
+              </span>
+              <span className="hidden sm:inline text-micro text-muted-foreground flex-shrink-0">
+                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              </span>
+              <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            </Link>
+          ))}
+        </div>
       </div>
     </Card>
   );

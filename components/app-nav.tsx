@@ -73,7 +73,7 @@ export default function AppNav() {
           <ThemeToggle />
 
           {user ? (
-            <>
+            <div className="hidden md:flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2 border-r border-navy-mid pr-3">
                 <div className="flex items-baseline gap-1">
                   <span className="font-mono text-base font-medium text-primary tabular-nums">{user.points}</span>
@@ -99,7 +99,7 @@ export default function AppNav() {
                 </Link>
               )}
               <SignOutButton />
-            </>
+            </div>
           ) : (
             <>
               <Link href="/login">

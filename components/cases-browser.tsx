@@ -76,7 +76,7 @@ function DifficultyTag({ difficulty, label }: { difficulty: string; label: strin
 
 /** Selectable filter chip. */
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  const base = 'rounded-full border px-3 py-1 text-base font-medium transition-colors';
+  const base = 'rounded-full border px-4 md:px-3 py-2 md:py-1 text-base font-medium transition-colors touch-target';
   const cls = active
     ? 'border-primary bg-primary text-primary-foreground'
     : 'border-border bg-card text-foreground/80 hover:border-slate-300 hover:bg-muted';

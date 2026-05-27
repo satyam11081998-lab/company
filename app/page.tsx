@@ -24,7 +24,7 @@ export default async function LandingPage() {
             </Link>
             <div className="hidden md:flex items-center gap-6">
               {[['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
-                <Link key={href} href={href} className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Link key={href} href={href} className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
                   {label}
                 </Link>
               ))}
@@ -65,7 +65,7 @@ export default async function LandingPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
               Placement interview prep · India
             </div>
-            <h1 className="text-5xl lg:text-6xl font-bold text-foreground leading-[1.08] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.08] tracking-tight">
               Crack placement<br />
               <span className="text-primary">interviews</span><br />
               the structured way.
@@ -96,7 +96,7 @@ export default async function LandingPage() {
           </div>
 
           {/* Right — floating UI mockup */}
-          <div className="hidden md:block animate-slide-up">
+          <div className="animate-slide-up mt-10 md:mt-0">
             <div className="relative">
               {/* Geometric outline shapes behind card */}
               <GeoShapes />
@@ -161,8 +161,8 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Feature 1: Scoring (left text + right card) ───────────────── */}
-      <section id="scoring" className="max-w-6xl mx-auto px-6 py-20">
-        <div className="grid md:grid-cols-2 gap-14 items-center">
+      <section id="scoring" className="max-w-6xl mx-auto px-6 py-12 md:py-20">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
           <div>
             <div className="badge-pill mb-4">
               <Shield className="h-3.5 w-3.5" />
@@ -199,33 +199,35 @@ export default async function LandingPage() {
               <span className="tag tag-red">78 / 100</span>
             </div>
             <div className="p-5">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Dimension</th>
-                    <th>Score</th>
-                    <th>Max</th>
-                    <th>Rating</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ['Structure', 21, 25, 'Strong', 'tag-green'],
-                    ['Quantitative', 13, 20, 'Develop', 'tag-amber'],
-                    ['Synthesis', 17, 20, 'Good', 'tag-green'],
-                    ['Judgment', 12, 15, 'Good', 'tag-green'],
-                    ['Creativity', 8, 10, 'Strong', 'tag-green'],
-                    ['Tone', 7, 10, 'Strong', 'tag-green'],
-                  ].map(([dim, score, max, rating, tagClass]) => (
-                    <tr key={dim as string}>
-                      <td className="text-[13px] font-medium text-foreground">{dim as string}</td>
-                      <td className="font-mono font-semibold text-[13px]">{score as number}</td>
-                      <td className="text-[12px] text-muted-foreground">{max as number}</td>
-                      <td><span className={`tag ${tagClass as string}`}>{rating as string}</span></td>
+              <div className="overflow-x-auto table-scroll-mobile">
+                <table className="data-table min-w-[500px]">
+                  <thead>
+                    <tr>
+                      <th>Dimension</th>
+                      <th>Score</th>
+                      <th>Max</th>
+                      <th>Rating</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {[
+                      ['Structure', 21, 25, 'Strong', 'tag-green'],
+                      ['Quantitative', 13, 20, 'Develop', 'tag-amber'],
+                      ['Synthesis', 17, 20, 'Good', 'tag-green'],
+                      ['Judgment', 12, 15, 'Good', 'tag-green'],
+                      ['Creativity', 8, 10, 'Strong', 'tag-green'],
+                      ['Tone', 7, 10, 'Strong', 'tag-green'],
+                    ].map(([dim, score, max, rating, tagClass]) => (
+                      <tr key={dim as string}>
+                        <td className="text-[13px] font-medium text-foreground">{dim as string}</td>
+                        <td className="font-mono font-semibold text-[13px]">{score as number}</td>
+                        <td className="text-[12px] text-muted-foreground">{max as number}</td>
+                        <td><span className={`tag ${tagClass as string}`}>{rating as string}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -277,8 +279,9 @@ export default async function LandingPage() {
                 <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Available Cases</span>
                 <span className="tag tag-navy">3 new today</span>
               </div>
-              <table className="data-table">
-                <thead>
+              <div className="overflow-x-auto table-scroll-mobile">
+                <table className="data-table min-w-[500px]">
+                  <thead>
                   <tr>
                     <th>Case</th>
                     <th>Type</th>
@@ -339,8 +342,8 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Feature 3: GD Briefs (right text + left card) ─────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="grid md:grid-cols-2 gap-14 items-center">
+      <section className="max-w-6xl mx-auto px-6 py-12 md:py-20">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
           {/* Left: GD brief card mockup */}
           <div className="ui-card-floating overflow-hidden">
             <div className="bg-muted/50 px-5 py-3 border-b border-border flex items-center justify-between">
@@ -408,9 +411,9 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Feature 4: Leaderboard (left text + right card) ───────────── */}
-      <section className="bg-card border-y border-border py-20">
+      <section className="bg-card border-y border-border py-12 md:py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-14 items-center">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
             <div>
               <div className="badge-pill mb-4">
                 <Trophy className="h-3.5 w-3.5" />
@@ -448,8 +451,9 @@ export default async function LandingPage() {
                   <span className="text-[11px] text-muted-foreground">Live · 37 students</span>
                 </div>
               </div>
-              <table className="data-table">
-                <thead>
+              <div className="overflow-x-auto table-scroll-mobile">
+                <table className="data-table min-w-[500px]">
+                  <thead>
                   <tr>
                     <th>Rank</th>
                     <th>Name</th>

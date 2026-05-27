@@ -21,7 +21,7 @@ module.exports = {
       },
       fontSize: {
         'label': ['13px', { lineHeight: '1.2', fontWeight: '600', letterSpacing: '0.1em' }],
-        'kpi':   ['52px', { lineHeight: '1', fontWeight: '700', letterSpacing: '-0.04em' }],
+        'kpi':   ['clamp(36px, 5vw, 52px)', { lineHeight: '1', fontWeight: '700', letterSpacing: '-0.04em' }],
       },
       letterSpacing: {
         tightest: '-0.03em',

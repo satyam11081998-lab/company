@@ -51,8 +51,7 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         placeholder="Type out your structure, assumptions and final number. Aim for clear sub-bullets."
-        rows={14}
-        className="resize-none text-base leading-relaxed"
+        className="resize-none text-base leading-relaxed min-h-[250px] md:min-h-[350px]"
         required
       />
       <div className="flex items-center justify-between">

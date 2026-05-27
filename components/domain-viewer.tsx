@@ -415,7 +415,7 @@ export default function DomainViewer({ domain, allDomains, learningPaths }: Doma
                 <Link
                   key={d.slug}
                   href={`/learn/${d.slug}`}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-3 md:py-2 rounded-md text-[13px] md:text-xs transition-colors ${
                     isCurrent
                       ? 'bg-primary text-white font-semibold'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'

@@ -270,7 +270,7 @@ function TabButton({ active, onClick, children, icon }: { active: boolean; onCli
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-full text-small font-semibold transition-all ${
+      className={`flex items-center gap-2 px-4 py-3 md:py-2 rounded-full text-small font-semibold transition-all ${
         active ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
       }`}
     >

@@ -174,9 +174,9 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
               return (
                 <circle 
                   key={`u-${i}`} 
-                  cx={p.x} cy={p.y} r="8"
+                  cx={p.x} cy={p.y} r="14"
                   fill="transparent" 
-                  className="cursor-pointer"
+                  className="cursor-pointer touch-action-none"
                   onMouseEnter={() => setHoverNode({
                     label: d.label,
                     userScore: breakdown?.[d.key] ?? 0,
@@ -186,6 +186,14 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
                     y: p.y
                   })}
                   onMouseLeave={() => setHoverNode(null)}
+                  onClick={() => setHoverNode({
+                    label: d.label,
+                    userScore: breakdown?.[d.key] ?? 0,
+                    benchScore: benchmark?.[d.key] ?? 0,
+                    max: d.max,
+                    x: p.x,
+                    y: p.y
+                  })}
                 />
               );
             })}

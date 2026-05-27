@@ -56,7 +56,7 @@ export default function TierGate(props: TierGateProps) {
           <p className="text-sm text-muted-foreground mb-4 max-w-xs">{message}</p>
           <Link 
             href="/upgrade"
-            className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-md hover:bg-primary-hover transition-colors"
+            className="bg-primary text-white text-base md:text-sm font-semibold px-6 py-3 md:px-4 md:py-2 rounded-md hover:bg-primary-hover transition-colors w-full sm:w-auto text-center"
           >
             <Sparkles className="h-3.5 w-3.5 inline mr-1.5" />
             Upgrade to {requiredLabel}
@@ -74,7 +74,7 @@ export default function TierGate(props: TierGateProps) {
       <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">{message}</p>
       <Link 
         href="/upgrade"
-        className="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-md hover:bg-primary-hover transition-colors"
+        className="inline-flex items-center justify-center gap-1.5 bg-primary text-white text-base md:text-sm font-semibold px-6 py-3 md:px-4 md:py-2 rounded-md hover:bg-primary-hover transition-colors w-full sm:w-auto"
       >
         <Sparkles className="h-3.5 w-3.5" />
         Upgrade to {requiredLabel}

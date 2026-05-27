@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppNav from '@/components/app-nav';
 import { UserProvider } from '@/components/user-context';
+import MobileBottomNav from '@/components/mobile-bottom-nav';
 import type { UserRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +41,10 @@ export default async function AppLayout({
   return (
     <UserProvider initialUser={user}>
       <AppNav />
-      {children}
+      <main className="pb-24 md:pb-0">
+        {children}
+      </main>
+      <MobileBottomNav />
     </UserProvider>
   );
 }

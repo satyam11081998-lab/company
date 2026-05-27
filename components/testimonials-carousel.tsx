@@ -74,18 +74,22 @@ export default function TestimonialsCarousel() {
       </div>
 
       {/* Pagination dots */}
-      <div className="mt-10 flex items-center justify-center gap-2">
+      <div className="mt-10 flex items-center justify-center gap-4 md:gap-2">
         {Array.from({ length: numDots }).map((_, i) => (
           <button
             key={i}
             onClick={() => setIndex(i)}
-            className={`h-1.5 rounded-full transition-all ${
-              i === index
-                ? 'w-6 bg-primary'
-                : 'w-1.5 bg-border hover:bg-muted-foreground/40'
-            }`}
+            className="p-3 -m-3 focus:outline-none"
             aria-label={`Show testimonial page ${i + 1}`}
-          />
+          >
+            <div
+              className={`h-1.5 rounded-full transition-all ${
+                i === index
+                  ? 'w-6 bg-primary'
+                  : 'w-1.5 bg-border hover:bg-muted-foreground/40'
+              }`}
+            />
+          </button>
         ))}
       </div>
 

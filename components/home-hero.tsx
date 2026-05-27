@@ -28,7 +28,7 @@ export default function HomeHero({ submissions }: Props) {
       <div className="absolute inset-0 bg-gradient-to-br from-card via-card to-muted/50 pointer-events-none" />
 
       <div className="relative container max-w-6xl py-12 md:py-16">
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
           <div className="flex-1">
             <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
               {today} · {greeting}

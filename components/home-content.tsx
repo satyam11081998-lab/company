@@ -45,14 +45,14 @@ export default function HomeContent({ submissions }: Props) {
       {/* Section 1: Personalized hero */}
       <HomeHero submissions={submissions} />
 
-      <div className="container max-w-6xl pb-16 space-y-14">
+      <div className="container max-w-6xl pb-16 space-y-8 md:space-y-14">
         {/* Section 2: Today's curated picks */}
         <section className="animate-slide-up">
           <SectionHeader 
             label="TODAY · CURATED FOR YOU"
             subtitle="Three picks updated daily at midnight IST"
           />
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid gap-4 md:gap-5 md:grid-cols-3">
             <DailyPickTile
               icon={<Target className="h-4 w-4" />}
               label={
@@ -117,7 +117,7 @@ export default function HomeContent({ submissions }: Props) {
         {/* Section 5: Quick links */}
         <section className="animate-fade-in" style={{ animationDelay: '240ms' }}>
           <SectionHeader label="EXPLORE" />
-          <div className="grid md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <QuickLink href="/practice" icon={<Target className="h-4 w-4" />} label="Practice" sub="Cases + guesstimates" />
             <QuickLink href="/learn" icon={<BookOpen className="h-4 w-4" />} label="Learn" sub="Frameworks + theory" />
             <QuickLink href="/gd-briefs" icon={<MessageSquare className="h-4 w-4" />} label="GD Briefs" sub="Today's headlines" />

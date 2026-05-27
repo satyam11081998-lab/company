@@ -87,23 +87,26 @@ export default function SubmissionHeatmap({
       </div>
 
       {/* Grid: organize cells into 7 rows × N columns */}
-      <div className="flex gap-[3px]">
-        {Array.from({ length: weeks }).map((_, weekIdx) => (
-          <div key={weekIdx} className="flex flex-col gap-[3px]">
-            {Array.from({ length: 7 }).map((_, dayIdx) => {
-              const cellIdx = weekIdx * 7 + dayIdx;
-              const cell = cells[cellIdx];
-              if (!cell) return <div key={dayIdx} className="h-3 w-3" />;
-              return (
-                <div
-                  key={dayIdx}
-                  className={`h-3 w-3 rounded-sm border transition-transform hover:scale-125 ${intensityClass(cell.count)} ${cell.isToday ? 'ring-1 ring-primary ring-offset-1 ring-offset-card' : ''}`}
-                  title={`${cell.date}: ${cell.count} submission${cell.count !== 1 ? 's' : ''}`}
-                />
-              );
-            })}
-          </div>
-        ))}
+      <div className="overflow-x-auto pb-4 table-scroll-mobile relative">
+        <div className="flex gap-[3px] min-w-max pr-4">
+          {Array.from({ length: weeks }).map((_, weekIdx) => (
+            <div key={weekIdx} className="flex flex-col gap-[3px]">
+              {Array.from({ length: 7 }).map((_, dayIdx) => {
+                const cellIdx = weekIdx * 7 + dayIdx;
+                const cell = cells[cellIdx];
+                if (!cell) return <div key={dayIdx} className="h-3 w-3" />;
+                return (
+                  <div
+                    key={dayIdx}
+                    className={`h-3 w-3 rounded-sm border transition-transform hover:scale-125 ${intensityClass(cell.count)} ${cell.isToday ? 'ring-1 ring-primary ring-offset-1 ring-offset-card' : ''}`}
+                    title={`${cell.date}: ${cell.count} submission${cell.count !== 1 ? 's' : ''}`}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        <div className="absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-card to-transparent pointer-events-none md:hidden" />
       </div>
 
       {/* Legend */}
