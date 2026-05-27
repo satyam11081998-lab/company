@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ALL_DOMAINS } from '@/lib/curriculum';
 import type { CaseRow } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Shuffle, ExternalLink, Activity, Calculator, Briefcase, FileText } from 'lucide-react';
+import { Search, Shuffle, ExternalLink, Activity, Calculator, Briefcase, FileText, Check } from 'lucide-react';
 
 interface PracticeHubProps {
   cases: CaseRow[]; // From database (Scored Cases)
+  attemptedCaseIds?: Set<string>;
 }
 
 type TabType = 'all' | 'scored' | 'guesstimates' | 'studies';
@@ -17,10 +19,20 @@ type TabType = 'all' | 'scored' | 'guesstimates' | 'studies';
 const ALL_GUESSTIMATES = ALL_DOMAINS.flatMap(d => d.guesstimates || []);
 const ALL_CASE_STUDIES = ALL_DOMAINS.flatMap(d => d.cases || []);
 
-export default function PracticeHub({ cases }: PracticeHubProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+export default function PracticeHub({ cases, attemptedCaseIds = new Set() }: PracticeHubProps) {
+  const searchParams = useSearchParams();
+  const focusDomain = searchParams?.get('focus') || null;
+  const focusTab = searchParams?.get('tab') as TabType | null;
+
+  const [activeTab, setActiveTab] = useState<TabType>(focusTab || 'all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    if (focusDomain) {
+      console.warn(`Focus param '?focus=${focusDomain}' ignored: practice-hub doesn't support domain filtering for cases yet. Will wire this after DB migration is fully wired.`);
+    }
+  }, [focusDomain]);
 
   // Reset page when search or tab changes
   useMemo(() => { setPage(1); }, [search, activeTab]);
@@ -83,7 +95,7 @@ export default function PracticeHub({ cases }: PracticeHubProps) {
     <div className="space-y-6">
       {/* Search & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex gap-2 p-1 bg-background/50 backdrop-blur-sm rounded-lg border">
+        <div className="flex flex-wrap gap-2">
           <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon={<Activity className="w-4 h-4" />}>All</TabButton>
           <TabButton active={activeTab === 'scored'} onClick={() => setActiveTab('scored')} icon={<Briefcase className="w-4 h-4" />}>Scored Cases</TabButton>
           <TabButton active={activeTab === 'guesstimates'} onClick={() => setActiveTab('guesstimates')} icon={<Calculator className="w-4 h-4" />}>Guesstimates</TabButton>
@@ -126,7 +138,14 @@ export default function PracticeHub({ cases }: PracticeHubProps) {
                 <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">{c.title}</h3>
                 <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{c.content}</p>
                 <div className="mt-auto pt-4 border-t flex justify-between items-center">
-                   <span className="text-small text-muted-foreground">Scored by MECE</span>
+                   <div className="flex items-center gap-2">
+                     <span className="text-small text-muted-foreground">Scored by MECE</span>
+                     {attemptedCaseIds.has(c.id) && (
+                       <span className="inline-flex items-center gap-1 text-micro font-semibold text-success">
+                         <Check className="h-3 w-3" /> Attempted
+                       </span>
+                     )}
+                   </div>
                    <Link href={`/cases/${c.id}`} className="text-small font-medium text-primary hover:underline">Practice &rarr;</Link>
                 </div>
               </Card>
@@ -251,8 +270,8 @@ function TabButton({ active, onClick, children, icon }: { active: boolean; onCli
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-small font-medium transition-all ${
-        active ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+      className={`flex items-center gap-2 px-4 py-2 rounded-full text-small font-semibold transition-all ${
+        active ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
       }`}
     >
       {icon}

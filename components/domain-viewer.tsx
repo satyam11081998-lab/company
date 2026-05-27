@@ -297,6 +297,30 @@ function CompanyCard({ company }: { company: CompanyProfile }) {
 }
 
 /* ================================================================
+   Practice More CTA
+   ================================================================ */
+
+function PracticeMoreCTA({ domainCount, domainSlug, tab = 'cases' }: { domainCount: number; domainSlug: string; tab?: string }) {
+  return (
+    <div className="ui-card p-5 text-center flex flex-col items-center justify-center">
+      <p className="text-small font-semibold uppercase tracking-wider text-primary mb-1">
+        {domainCount} more example{domainCount !== 1 ? 's' : ''} available
+      </p>
+      <p className="text-body text-foreground mb-3">
+        Practice the rest with real-time AI scoring.
+      </p>
+      <Link 
+        href={`/practice?tab=${tab}&focus=${domainSlug}`}
+        className="inline-flex items-center gap-1.5 bg-primary text-white text-small font-semibold px-4 py-2 rounded-md hover:bg-primary-hover transition-colors"
+      >
+        Practice {domainCount} more
+        <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+/* ================================================================
    Main Component
    ================================================================ */
 
@@ -505,9 +529,16 @@ export default function DomainViewer({ domain, allDomains, learningPaths }: Doma
                 <span className="text-xs text-muted-foreground">({domain.cases.length})</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {domain.cases.map((c) => (
+                {domain.cases.slice(0, 2).map((c) => (
                   <CaseCard key={c.code} entry={c} />
                 ))}
+                {domain.cases.length > 2 && (
+                  <PracticeMoreCTA 
+                    domainCount={domain.cases.length - 2} 
+                    domainSlug={domain.slug} 
+                    tab="cases"
+                  />
+                )}
               </div>
             </section>
           )}
@@ -523,9 +554,16 @@ export default function DomainViewer({ domain, allDomains, learningPaths }: Doma
                 <span className="text-xs text-muted-foreground">({domain.guesstimates.length})</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {domain.guesstimates.map((g) => (
+                {domain.guesstimates.slice(0, 2).map((g) => (
                   <GuessCard key={g.code} entry={g} />
                 ))}
+                {domain.guesstimates.length > 2 && (
+                  <PracticeMoreCTA 
+                    domainCount={domain.guesstimates.length - 2} 
+                    domainSlug={domain.slug} 
+                    tab="guesstimates"
+                  />
+                )}
               </div>
             </section>
           )}

@@ -12,9 +12,13 @@ export default async function PracticePage() {
   if (!session?.user) redirect('/login');
   const authUser = session.user;
 
-  const casesRes = await supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false });
+  const [casesRes, attemptsRes] = await Promise.all([
+    supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+    supabase.from('case_attempts').select('case_id').eq('user_id', authUser.id).eq('is_first_attempt', true),
+  ]);
 
   const cases = (casesRes.data as CaseRow[] | null) || [];
+  const attemptedCaseIds = Array.from(new Set((attemptsRes.data || []).map((a) => a.case_id)));
 
   return (
     <div className="min-h-screen bg-muted">
@@ -25,7 +29,7 @@ export default async function PracticePage() {
             Active practice across cases, guesstimates, and case studies. Pick a category or hit the randomizer.
           </p>
         </div>
-        <PracticeHub cases={cases} />
+        <PracticeHub cases={cases} attemptedCaseIds={attemptedCaseIds} />
       </main>
     </div>
   );

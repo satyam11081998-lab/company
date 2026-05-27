@@ -1,50 +1,131 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-
+import { Card } from '@/components/ui/card';
+import Link from 'next/link';
 import SubmissionForm from '@/components/submission-form';
 import HintToggle from '@/components/hint-toggle';
-import type { CaseRow } from '@/lib/types';
-import { CASE_TYPE_LABELS, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants';
+import CaseAttemptHistory from '@/components/case-attempt-history';
+import CaseRatingPrompt from '@/components/case-rating-prompt';
+import type { CaseRow, SubmissionRow, CaseAttemptRow } from '@/lib/types';
+import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
+import { ArrowRight, Lock, Award } from 'lucide-react';
 
 export const revalidate = 300;
 
-/** Case detail page — full content, hint, and answer submission form. */
 export default async function CaseDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) redirect('/login');
   const authUser = session.user;
 
-  const caseRes = await supabase.from('cases').select('*').eq('id', params.id).maybeSingle();
+  // Parallel fetches
+  const [caseRes, attemptsRes, ratingRes, userRes] = await Promise.all([
+    supabase.from('cases').select('*').eq('id', params.id).maybeSingle(),
+    supabase
+      .from('case_attempts')
+      .select('*, submissions(score, feedback_json, answer_text, created_at)')
+      .eq('user_id', authUser.id)
+      .eq('case_id', params.id)
+      .order('attempt_number', { ascending: false })
+      .limit(5),
+    supabase
+      .from('case_ratings')
+      .select('rating')
+      .eq('user_id', authUser.id)
+      .eq('case_id', params.id)
+      .maybeSingle(),
+    supabase.from('users').select('subscription_tier').eq('id', authUser.id).maybeSingle(),
+  ]);
+
   const caseRow = caseRes.data as CaseRow | null;
   if (!caseRow) notFound();
 
+  const attempts = (attemptsRes.data || []) as Array<CaseAttemptRow & { submissions?: { score: number | null; feedback_json: unknown; answer_text: string; created_at: string } | null }>;
+  const userTier = (userRes.data as { subscription_tier?: string } | null)?.subscription_tier || 'free';
+  const userRating = (ratingRes.data as { rating: string } | null)?.rating || null;
+
+  const hasAttempted = attempts.length > 0;
+  const canReattempt = userTier === 'lite' || userTier === 'pro';
+  const showForm = !hasAttempted || canReattempt;
+
   return (
     <div className="min-h-screen bg-muted">
-
       <main className="container max-w-4xl py-10">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md border border-border bg-card px-2 py-0.5 text-base font-medium text-foreground/80">{CASE_TYPE_LABELS[caseRow.type] || caseRow.type}</span>
-          <span className={`rounded-md border px-2 py-0.5 text-base font-medium ${DIFFICULTY_COLORS[caseRow.difficulty] || ''}`}>{DIFFICULTY_LABELS[caseRow.difficulty] || caseRow.difficulty}</span>
-        </div>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground">{caseRow.title}</h1>
+        <Link 
+          href="/practice"
+          className="inline-flex items-center gap-1 text-small text-muted-foreground hover:text-foreground mb-4"
+        >
+          ← Back to Practice
+        </Link>
 
-        <div className="mt-6 rounded-lg border border-border border-l-4 border-l-primary bg-card p-6 shadow-sm">
-          <p className="whitespace-pre-line text-base leading-relaxed text-foreground/80">{caseRow.content}</p>
-        </div>
+        {/* Case header */}
+        <Card className="p-6 mb-6">
+          <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+            <span>{CASE_TYPE_LABELS[caseRow.type] || caseRow.type}</span>
+            <span>·</span>
+            <span>{DIFFICULTY_LABELS[caseRow.difficulty] || caseRow.difficulty}</span>
+          </div>
+          <h1 className="text-h2 text-foreground mb-4">{caseRow.title}</h1>
+          <p className="text-body text-foreground leading-relaxed whitespace-pre-wrap">
+            {caseRow.content}
+          </p>
+          {caseRow.hint && (
+            <div className="mt-6">
+              <HintToggle hint={caseRow.hint} />
+            </div>
+          )}
+        </Card>
 
-        {caseRow.hint && (
-          <div className="mt-4">
-            <HintToggle hint={caseRow.hint} />
+        {/* Previous attempts (always show if exists) */}
+        {hasAttempted && (
+          <div className="mb-6">
+            <CaseAttemptHistory attempts={attempts} />
           </div>
         )}
 
-        <div className="mt-8">
-          <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Your answer</h2>
-          <div className="mt-3">
-            <SubmissionForm userId={authUser.id} caseId={caseRow.id} />
+        {/* Submission form or upgrade prompt */}
+        {showForm ? (
+          <Card className="p-6">
+            <h2 className="text-h3 text-foreground mb-1">
+              {hasAttempted ? 'Try again' : 'Submit your answer'}
+            </h2>
+            <p className="text-small text-muted-foreground mb-4">
+              {hasAttempted 
+                ? 'Your re-attempt will not change leaderboard position, but the score helps track improvement.'
+                : 'Spend 20-30 minutes structuring your response. Your first attempt counts for the leaderboard.'}
+            </p>
+            <SubmissionForm caseId={caseRow.id} userId={authUser.id} />
+          </Card>
+        ) : (
+          <Card className="p-6 text-center bg-card">
+            <Lock className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+            <h2 className="text-h3 text-foreground mb-2">
+              You've already attempted this case
+            </h2>
+            <p className="text-body text-muted-foreground mb-4 max-w-md mx-auto">
+              Free tier allows one attempt per case. Upgrade to Lite or Pro for unlimited re-attempts.
+            </p>
+            <Link
+              href="/upgrade"
+              className="inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors"
+            >
+              Upgrade for re-attempts
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Card>
+        )}
+
+        {/* Difficulty rating prompt (only if attempted at least once) */}
+        {hasAttempted && (
+          <div className="mt-6">
+            <CaseRatingPrompt 
+              caseId={caseRow.id} 
+              userId={authUser.id}
+              existingRating={userRating as 'easier' | 'right' | 'harder' | null}
+              lastSubmissionId={attempts[0]?.submission_id || null}
+            />
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

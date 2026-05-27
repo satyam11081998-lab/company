@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import type { UserRow, SubmissionRow } from '@/lib/types';
+import type { UserRow, SubmissionRow, BadgeRow } from '@/lib/types';
+import BadgePill from '@/components/badge-pill';
 import { ArrowRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +17,10 @@ export default async function ProfilePage() {
   if (!session?.user) redirect('/login');
   const authUser = session.user;
 
-  const [userRes, submissionsRes] = await Promise.all([
+  const [userRes, submissionsRes, badgesRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
     supabase.from('submissions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(20),
+    supabase.from('user_badges').select('*, badges(*)').eq('user_id', authUser.id).order('earned_at', { ascending: false }),
   ]);
 
   const userRow = (userRes.data as UserRow | null) || {
@@ -30,6 +32,7 @@ export default async function ProfilePage() {
     created_at: new Date().toISOString(),
   };
   const submissions = (submissionsRes.data as SubmissionRow[] | null) || [];
+  const userBadges = (badgesRes.data || []) as Array<{ id: string; earned_at: string; badges: BadgeRow }>;
 
   return (
     <div className="min-h-screen bg-muted">
@@ -48,6 +51,19 @@ export default async function ProfilePage() {
             <Stat label="Submissions" value={submissions.length} />
           </div>
         </Card>
+
+        {userBadges.length > 0 && (
+          <Card className="p-6 mt-6">
+            <h2 className="text-small font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+              Badges earned ({userBadges.length})
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {userBadges.map((ub) => (
+                <BadgePill key={ub.id} badge={ub.badges} size="md" />
+              ))}
+            </div>
+          </Card>
+        )}
 
         <div className="mt-8">
           <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">Recent submissions</h2>

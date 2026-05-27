@@ -7,11 +7,16 @@
  */
 export default function GeoPattern() {
   return (
-    <div
-      aria-hidden="true"
-      className="fixed inset-0 pointer-events-none overflow-hidden"
-      style={{ zIndex: -1 }}
-    >
+    <>
+      {/* Elevate cards so they sit naturally on top of the pattern */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .ui-card, .ui-card-floating, .kpi-cell, .data-table, .badge-pill { position: relative; z-index: 10; }
+      `}} />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none overflow-hidden"
+        style={{ zIndex: 0 }}
+      >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="100%"
@@ -94,5 +99,6 @@ export default function GeoPattern() {
         <rect width="100%" height="100%" fill="url(#geo-bg)" />
       </svg>
     </div>
+    </>
   );
 }

@@ -10,7 +10,8 @@ import {
   SCORE_DIMENSION_LABELS,
   SCORE_DIMENSION_MAX,
 } from '@/lib/constants';
-import type { SubmissionRow } from '@/lib/types';
+import type { SubmissionRow, BadgeRow } from '@/lib/types';
+import BadgePill from '@/components/badge-pill';
 
 export const revalidate = false;
 
@@ -21,7 +22,10 @@ export default async function ResultPage({ params }: { params: { id: string } })
   if (!session?.user) redirect('/login');
   const authUser = session.user;
 
-  const submissionRes = await supabase.from('submissions').select('*').eq('id', params.id).maybeSingle();
+  const [submissionRes, userBadgesRes] = await Promise.all([
+    supabase.from('submissions').select('*').eq('id', params.id).maybeSingle(),
+    supabase.from('user_badges').select('*, badges(*)').eq('trigger_submission_id', params.id),
+  ]);
   const submission = submissionRes.data as SubmissionRow | null;
   if (!submission) notFound();
 
@@ -36,6 +40,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const strengths = feedback.strengths || [];
   const improvements = feedback.improvements || [];
   const summary = feedback.summary || 'No summary available yet.';
+  const newBadges = (userBadgesRes.data || []) as Array<{ id: string; badges: BadgeRow }>;
 
   return (
     <div className="min-h-screen bg-muted">
@@ -52,6 +57,19 @@ export default async function ResultPage({ params }: { params: { id: string } })
           </div>
           <p className="mt-4 max-w-xl text-body leading-relaxed text-muted-foreground">{summary}</p>
         </Card>
+
+        {newBadges.length > 0 && (
+          <Card className="p-5 mt-6 mb-6 bg-primary/[0.03] border-primary/20">
+            <p className="text-small font-semibold uppercase tracking-wider text-primary mb-3">
+              🎉 New badges earned!
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {newBadges.map((b) => (
+                <BadgePill key={b.id} badge={b.badges as BadgeRow} size="md" />
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* Breakdown */}
         <Card className="mt-6 p-6">

@@ -168,3 +168,45 @@ export interface DailyLeaderboardEntry {
   submission_id: string;
   submitted_at: string;
 }
+
+/** A badge definition from the badges catalog. */
+export interface BadgeRow {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;          // Lucide icon name as string
+  category: 'milestone' | 'streak' | 'mastery' | 'social';
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  points_reward: number;
+  created_at: string;
+}
+
+/** A badge earned by a user, joined with badge details. */
+export interface UserBadgeRow {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: string;
+  trigger_submission_id: string | null;
+  badge?: BadgeRow;       // populated by joined queries
+}
+
+/** A user's difficulty rating for a case. */
+export interface CaseRatingRow {
+  id: string;
+  case_id: string;
+  user_id: string;
+  rating: 'easier' | 'right' | 'harder';
+  submission_id: string | null;
+  created_at: string;
+}
+
+/** Aggregated rating distribution for a case (used in display). */
+export interface CaseRatingAggregate {
+  case_id: string;
+  total: number;
+  easier_count: number;
+  right_count: number;
+  harder_count: number;
+  perceived_difficulty: 'easier' | 'right' | 'harder' | null;
+}
