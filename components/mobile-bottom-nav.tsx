@@ -28,7 +28,7 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-[4.5rem] bg-navy/98 backdrop-blur-md border-t border-navy-mid pb-safe flex items-center justify-around px-1 shadow-2xl">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-md border-t border-border pb-safe flex items-center justify-around px-2 shadow-lg">
         {tabs.map((tab) => {
           const active = isActive(tab.href);
           const Icon = tab.icon;
@@ -37,20 +37,20 @@ export default function MobileBottomNav() {
               key={tab.href} 
               href={tab.href}
               onClick={() => setMoreOpen(false)}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 touch-target ${active ? 'text-primary' : 'text-navy-foreground/50 hover:text-navy-foreground/80'}`}
+              className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
+              <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
+              <span className="text-[10px] font-medium leading-none">{tab.label}</span>
             </Link>
           );
         })}
         
         <button 
           onClick={() => setMoreOpen(!moreOpen)}
-          className={`flex flex-col items-center justify-center w-full h-full space-y-1 touch-target ${moreOpen ? 'text-primary' : 'text-navy-foreground/50 hover:text-navy-foreground/80'}`}
+          className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${moreOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
         >
-          {moreOpen ? <X className="w-[22px] h-[22px]" strokeWidth={2.5} /> : <Menu className="w-[22px] h-[22px]" strokeWidth={2} />}
-          <span className="text-[10px] font-medium">More</span>
+          {moreOpen ? <X className="w-5 h-5" strokeWidth={2.5} /> : <Menu className="w-5 h-5" strokeWidth={2} />}
+          <span className="text-[10px] font-medium leading-none">More</span>
         </button>
       </nav>
 
