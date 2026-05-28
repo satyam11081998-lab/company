@@ -43,11 +43,11 @@ export default function GdBriefsPage() {
   }
 
   const star = headlines ? headlines.find((h) => h.is_star) || null : null;
-  const regulars = headlines ? headlines.filter((h) => !h.is_star) : [];
+  const regulars = headlines ? headlines.filter((h) => !h.is_star).slice(0, 9) : [];
 
   return (
     <div className="min-h-screen bg-muted">
-      <main className="container max-w-5xl py-10">
+      <main className="container max-w-6xl py-8">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">GD Briefs</h1>
           <p className="mt-1 text-muted-foreground">
@@ -99,7 +99,7 @@ export default function GdBriefsPage() {
               />
             ) : null}
             {regulars.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 stagger">
+              <div className="grid gap-4 md:grid-cols-3 stagger">
                 {regulars.map((h) => (
                   <HeadlineCard
                     key={h.id}
@@ -235,8 +235,8 @@ function HeadlineCard(props: CardProps) {
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-center gap-1.5 text-base text-muted-foreground">
+      <div className="flex flex-1 flex-col p-3">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="font-medium">{headline.source_name}</span>
           <span>·</span>
           <span>{formatRelativeTime(headline.published_at)}</span>
@@ -245,7 +245,7 @@ function HeadlineCard(props: CardProps) {
           href={headline.source_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1.5 line-clamp-3 text-base font-semibold leading-snug text-foreground hover:text-primary transition-colors"
+          className="mt-1.5 line-clamp-3 text-sm font-semibold leading-snug text-foreground hover:text-primary transition-colors"
         >
           {headline.title}
         </a>
@@ -261,11 +261,11 @@ function HeadlineCard(props: CardProps) {
             ))}
           </div>
         ) : null}
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2">
           {headline.has_brief ? (
             <Link
               href={'/gd-briefs/' + headline.id}
-              className="inline-flex items-center gap-1 text-base font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
             >
               View brief
               <ArrowRight className="h-3.5 w-3.5" />
@@ -274,7 +274,7 @@ function HeadlineCard(props: CardProps) {
             <button
               onClick={onGenerate}
               disabled={generating}
-              className="inline-flex items-center gap-1 text-base font-medium text-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {generating ? (
                 <>
