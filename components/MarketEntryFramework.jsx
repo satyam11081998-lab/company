@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 
 const cssString = `
@@ -509,8 +511,8 @@ export default function MarketEntryFramework() {
       <div className="me-nav">
         <button className="me-nav-btn" onClick={() => setSlide(1)}>←</button>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <div className={\`me-dot \${slide === 1 ? 'active' : ''}\`} />
-          <div className={\`me-dot \${slide === 2 ? 'active' : ''}\`} />
+          <div className={`me-dot ${slide === 1 ? 'active' : ''}`} />
+          <div className={`me-dot ${slide === 2 ? 'active' : ''}`} />
         </div>
         <span className="role-a" style={{ margin: '0 8px' }}>
           0{slide} / 02
