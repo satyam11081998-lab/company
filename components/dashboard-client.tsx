@@ -5,7 +5,6 @@ import { ArrowRight, Target } from 'lucide-react';
 import SectionHeader from '@/components/section-header';
 import StatTile from '@/components/stat-tile';
 import CareerLadder from '@/components/career-ladder';
-import DailyRankTile from '@/components/daily-rank-tile';
 import DimensionRadar from '@/components/dimension-radar';
 import ProgressChart from '@/components/progress-chart';
 import SubmissionHeatmap from '@/components/submission-heatmap';
@@ -65,78 +64,142 @@ export default function DashboardClient({
       </div>
 
       <div className="container max-w-6xl pb-16 space-y-6 md:space-y-10 mt-6">
-        {/* SECTION: Performance */}
+        {/* TOP ROW: Stats & Activity */}
         <section className="animate-slide-up">
           <SectionHeader 
-            label="PERFORMANCE"
-            subtitle="How you're doing across the platform"
+            label="PERFORMANCE & ACTIVITY"
+            subtitle="Your platform standing and recent submissions"
           />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatTile
-              label="Points"
-              value={user.points.toLocaleString('en-IN')}
-              sublabel={tierName}
-              dotColor="primary"
-            />
-            <StatTile
-              label="Rank"
-              value={`#${rankNum}`}
-              sublabel={`of ${totalUsers} students`}
-              dotColor="navy"
-            />
-            <StatTile
-              label="Avg Score"
-              value={avgScore !== null ? avgScore.toString() : '—'}
-              valueSuffix={avgScore !== null ? '/100' : ''}
-              sublabel="per submission"
-              dotColor="warning"
-            />
-            <StatTile
-              label="Percentile"
-              value={percentile !== null ? percentile.toString() : '—'}
-              valueSuffix={percentile !== null ? '%ile' : ''}
-              sublabel={nextTierPts ? `next: ${nextTierPts} pts` : 'top tier reached'}
-              dotColor="success"
-            />
+          <div className="grid lg:grid-cols-12 gap-4">
+            {/* 4 Stat Tiles (2x2 grid) */}
+            <div className="lg:col-span-5 grid grid-cols-2 gap-4">
+              <StatTile
+                label="Points"
+                value={user.points.toLocaleString('en-IN')}
+                sublabel={tierName}
+                dotColor="primary"
+              >
+                {/* Progress to next tier visual */}
+                {nextTierPts && (
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <div className="flex justify-between text-micro text-muted-foreground">
+                      <span>Progress to {nextTierPts}</span>
+                      <span className="font-mono font-medium">{Math.round((user.points / nextTierPts) * 100)}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: `${Math.round((user.points / nextTierPts) * 100)}%` }} />
+                    </div>
+                  </div>
+                )}
+              </StatTile>
+
+              <StatTile
+                label="Rank"
+                value={`#${rankNum}`}
+                sublabel={`of ${totalUsers} students`}
+                dotColor="navy"
+              >
+                {/* Context bar visual */}
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="flex flex-col gap-1 w-full">
+                    <div className="flex justify-between text-[10px] uppercase font-semibold text-muted-foreground/60">
+                      <span>#1</span>
+                      <span>#{(Math.ceil(totalUsers / 10) * 10) || 50}</span>
+                    </div>
+                    <div className="relative h-1.5 w-full bg-muted rounded-full">
+                      <div 
+                        className="absolute top-0 h-full w-2 bg-navy rounded-full transform -translate-x-1" 
+                        style={{ left: `${Math.max(5, Math.min(95, (rankNum / totalUsers) * 100))}%` }} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </StatTile>
+
+              <StatTile
+                label="Avg Score"
+                value={avgScore !== null ? avgScore.toString() : '—'}
+                valueSuffix={avgScore !== null ? '/100' : ''}
+                sublabel="per submission"
+                dotColor="warning"
+              >
+                {/* Mini 5-bar sparkline visual */}
+                <div className="mt-2 flex items-end gap-1 h-6">
+                  {submissions.slice(0, 5).reverse().map((sub, i) => {
+                    const score = sub.score || 0;
+                    const height = Math.max(10, score);
+                    return (
+                      <div 
+                        key={i} 
+                        className={`w-full rounded-sm transition-all duration-300 ${score >= 70 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-primary'}`}
+                        style={{ height: `${height}%`, opacity: 0.2 + (i * 0.2) }}
+                        title={`Score: ${score}`}
+                      />
+                    );
+                  })}
+                  {submissions.length === 0 && (
+                    <div className="w-full h-full flex items-center justify-center text-micro text-muted-foreground italic">No data</div>
+                  )}
+                </div>
+              </StatTile>
+
+              <StatTile
+                label="Percentile"
+                value={percentile !== null ? percentile.toString() : '—'}
+                valueSuffix={percentile !== null ? '%ile' : ''}
+                sublabel={percentile !== null ? "Top percentile band" : "Complete a case"}
+                dotColor="success"
+              >
+                {/* Distribution visual */}
+                {percentile !== null && (
+                  <div className="mt-2 flex flex-col gap-1 w-full">
+                    <div className="flex justify-between text-micro text-muted-foreground">
+                      <span>Bottom</span>
+                      <span className="text-success font-medium">Top {100 - percentile}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-gradient-to-r from-muted via-success/20 to-success rounded-full overflow-hidden relative">
+                      <div 
+                        className="absolute top-0 bottom-0 border-r-2 border-background bg-foreground" 
+                        style={{ left: 0, width: `${percentile}%` }} 
+                      />
+                    </div>
+                  </div>
+                )}
+              </StatTile>
+            </div>
+
+            {/* Heatmap */}
+            <div className="lg:col-span-3">
+              <SubmissionHeatmap submissions={submissions} weeks={4} title="Heatmap" />
+            </div>
+
+            {/* Recent Activity */}
+            <div className="lg:col-span-4 h-full">
+              <RecentSubmissionsTable submissions={submissions.slice(0, 5)} />
+            </div>
           </div>
         </section>
 
-        {/* SECTION: Skill Profile */}
+        {/* BOTTOM ROW: Profile, Progress, Ladder */}
         <section className="animate-slide-up" style={{ animationDelay: '60ms' }}>
           <SectionHeader 
-            label="SKILL PROFILE"
-            subtitle="Your strengths and trajectories"
+            label="SKILL PROFILE & CAREER"
+            subtitle="Your strengths and progression"
           />
-          <div className="grid md:grid-cols-2 gap-5">
-            <DimensionRadar breakdown={latestBreakdown} benchmark={benchmark} />
-            <ProgressChart submissions={submissions.slice(0, 12).reverse()} />
-          </div>
-        </section>
-
-        {/* SECTION: Career Journey */}
-        <section className="animate-slide-up" style={{ animationDelay: '120ms' }}>
-          <SectionHeader 
-            label="CAREER JOURNEY"
-            subtitle="Climb the ladder. Earn the badge."
-          />
-          <div className="grid md:grid-cols-2 gap-5">
-            <CareerLadder points={user.points} />
-            <DailyRankTile />
-          </div>
-        </section>
-
-        {/* SECTION: Activity */}
-        <section className="animate-slide-up" style={{ animationDelay: '180ms' }}>
-          <SectionHeader 
-            label="ACTIVITY"
-            subtitle="Your last 30 days at a glance"
-          />
-          <div className="grid md:grid-cols-3 gap-5">
-            <div>
-              <SubmissionHeatmap submissions={submissions} weeks={6} title="Activity heatmap" />
+          <div className="grid lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-3">
+              <Card className="p-4 h-full flex flex-col">
+                <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground mb-2">Skill Profile</h3>
+                <div className="flex-1 flex items-center justify-center w-full">
+                  <DimensionRadar breakdown={latestBreakdown} benchmark={benchmark} />
+                </div>
+              </Card>
             </div>
-            <div className="md:col-span-2">
-              <RecentSubmissionsTable submissions={submissions.slice(0, 8)} />
+            <div className="lg:col-span-6">
+              <ProgressChart submissions={submissions.slice(0, 12).reverse()} />
+            </div>
+            <div className="lg:col-span-3">
+              <CareerLadder points={user.points} />
             </div>
           </div>
         </section>
@@ -177,10 +240,13 @@ function RecentSubmissionsTable({ submissions }: { submissions: SubmissionRow[] 
   }
 
   return (
-    <Card className="p-5">
-      <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-        Recent activity
-      </h3>
+    <Card className="p-4 h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground">
+          Recent activity
+        </h3>
+        <Link href="/home" className="text-micro text-primary font-semibold hover:underline">View All →</Link>
+      </div>
       <div className="overflow-x-auto table-scroll-mobile -mx-2 px-2">
         <div className="divide-y divide-border min-w-[500px]">
           {submissions.map((sub, idx) => (

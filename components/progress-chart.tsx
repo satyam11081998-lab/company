@@ -109,7 +109,7 @@ export default function ProgressChart({ submissions }: ProgressChartProps) {
   // Empty state
   if (data.length < 2) {
     return (
-      <Card className="p-6 h-full flex flex-col border-border/60">
+      <Card className="p-4 h-full flex flex-col border-border/60">
         <div>
           <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">Performance Trajectory</h2>
           <p className="mt-1 text-small text-muted-foreground/70">Score history and moving average</p>
@@ -145,7 +145,7 @@ export default function ProgressChart({ submissions }: ProgressChartProps) {
   const trendDirection = trendDelta > 3 ? 'up' : trendDelta < -3 ? 'down' : 'flat';
 
   return (
-    <Card className="p-6 relative overflow-hidden group border-border/60">
+    <Card className="p-4 relative overflow-hidden group border-border/60">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
           <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">Performance Trajectory</h2>

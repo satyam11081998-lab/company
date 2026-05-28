@@ -80,7 +80,7 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen pb-10">
       <DashboardClient
         user={userRow}
         submissions={recentSubs}

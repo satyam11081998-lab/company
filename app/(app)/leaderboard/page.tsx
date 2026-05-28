@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trophy, Medal, Star } from 'lucide-react';
+import DailyRankTile from '@/components/daily-rank-tile';
 import type { UserRow } from '@/lib/types';
 
 export const revalidate = 30;
@@ -46,14 +47,19 @@ export default async function LeaderboardPage() {
 
       <main className="container max-w-5xl py-10">
 
-        {/* ── Page header ─────────────────────────────────────────── */}
-        <div className="mb-2 animate-fade-in">
-          <span className="badge-pill mb-3">
-            <Trophy className="h-3.5 w-3.5" />
-            Top 50 · India
-          </span>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">Leaderboard</h1>
-          <p className="mt-1 text-[15px] text-muted-foreground">The top case-crackers across MBA aspirants in India.</p>
+        {/* ── Page header & Daily Rank ─────────────────────────────────────────── */}
+        <div className="flex flex-col md:flex-row gap-6 justify-between items-start mb-6 animate-fade-in">
+          <div>
+            <span className="badge-pill mb-3">
+              <Trophy className="h-3.5 w-3.5" />
+              Top 50 · India
+            </span>
+            <h1 className="text-4xl font-bold tracking-tight text-foreground">Leaderboard</h1>
+            <p className="mt-1 text-[15px] text-muted-foreground">The top case-crackers across MBA aspirants in India.</p>
+          </div>
+          <div className="w-full md:w-80 flex-shrink-0">
+            <DailyRankTile />
+          </div>
         </div>
 
         {/* ── Top 3 Podium — quarter-circle arc arrangement ─────── */}

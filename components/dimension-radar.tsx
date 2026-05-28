@@ -47,6 +47,28 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
   const toD = (pts: { x: number; y: number }[]) =>
     pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + ' Z';
 
+  // Smooth curve for user path
+  const toSmoothD = (pts: { x: number; y: number }[]) => {
+    if (pts.length === 0) return '';
+    let d = '';
+    const n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const p0 = pts[(i - 1 + n) % n];
+      const p1 = pts[i];
+      const p2 = pts[(i + 1) % n];
+      const p3 = pts[(i + 2) % n];
+      
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      
+      if (i === 0) d += `M${p1.x},${p1.y} C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+      else d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+    }
+    return d + ' Z';
+  };
+
   const gridLevels = [0.25, 0.5, 0.75, 1];
   
   // Ratios 
@@ -85,6 +107,11 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
           <linearGradient id="radar-fill-user" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.12" />
             <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.02" />
+          </linearGradient>
+          <linearGradient id="radar-stroke-user" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--primary))" />
+            <stop offset="50%" stopColor="#f43f5e" />
+            <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
         </defs>
 
@@ -160,12 +187,13 @@ export default function DimensionRadar({ breakdown, benchmark }: DimensionRadarP
 
         {/* User Polygon (Primary Color with Translucent Fill) */}
         {hasData ? (
-          <g className={mounted ? "animate-polygon drop-shadow-sm" : "opacity-0"}>
+          <g className={mounted ? "animate-polygon drop-shadow-md" : "opacity-0"}>
             <path 
-              d={toD(userPts)} 
+              d={toSmoothD(userPts)} 
               fill="url(#radar-fill-user)"
-              stroke="hsl(var(--primary))" 
-              strokeWidth="1.5" 
+              stroke="url(#radar-stroke-user)" 
+              strokeWidth="2.5" 
+              strokeLinecap="round"
               strokeLinejoin="round" 
             />
             {/* Invisible Hit Zones for Hover (No visible dots!) */}

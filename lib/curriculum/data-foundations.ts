@@ -265,39 +265,783 @@ const D3_MODULES: Module[] = [
 const D4_MODULES: Module[] = [
   {
     id: 'D4.1',
-    title: 'Profitability Case Anatomy',
+    title: "MASTER FRAMEWORK ARCHITECTURE",
     lessons: [
-      { id: 'D4.1.1', title: 'Recognizing a profitability prompt', description: 'Usually triggered by declining margins or a mandate to increase bottom-line growth. Requires rigorous mathematical decomposition before jumping to strategic solutions.' },
-      { id: 'D4.1.2', title: 'Company-specific vs. industry-wide decline', description: 'Determining if the decline is isolated or industry-wide is a critical early diagnostic. Splits the case into internal operational issues versus external macro threats.' },
-      { id: 'D4.1.3', title: 'Timeline and quantum of decline: critical clarifying questions', description: 'Establishing when the decline started isolates the trigger event. Sudden drops imply external shocks, while gradual declines suggest structural industry shifts.' },
-      { id: 'D4.1.4', title: 'Standard opening framework structure', description: 'The universal opening is the Profit Tree branching into Volume × Price and Fixed + Variable Costs. Guarantees isolation of the specific mathematical driver.' },
+      { id: 'D4.1.1', title: "The Governing Equation", description: `**Profit = Revenue − Cost**
+
+But this is a starting point, not a framework. The framework is the complete decomposition of every lever on both sides, mapped to its root-cause diagnostic, India-specific distortion, and industry variant. What follows is that complete map.
+
+---` },
+      { id: 'D4.1.2', title: "LAYER 1: THE REVENUE TREE (Full Decomposition)", description: `### Revenue = Price × Volume × Product Mix
+
+Each of these three multipliers has its own sub-architecture.
+
+---
+
+### 1A. PRICE
+
+Price is not a single number. It has a supply floor, a demand ceiling, and a competitive band between them.
+
+**Price Floor (Cost-Plus Baseline)**
+Minimum viable price = Total Unit Cost + Target Margin
+- Total Unit Cost = Direct Material Cost + Direct Labour + Variable Overhead + Fixed Overhead Allocation
+- The floor is not static — it shifts with input cost inflation, capacity utilization changes, and currency movements (critical for import-heavy industries)
+
+**Price Ceiling (Value-Based)**
+Maximum extractable price = Customer's Willingness to Pay (WTP)
+- WTP is calculated as: Economic Value of Next-Best Alternative + Perceived Incremental Value Premium − Switching Cost
+- Tools to measure WTP: Conjoint Analysis, Van Westendorp Price Sensitivity Meter, Gabor-Granger ladder
+- In India, WTP is segmented acutely: metro premium segment, Tier 1 aspiring class, Tier 2/3 affordability-constrained segment
+
+**Competitive Price Band**
+The actual price lives between floor and ceiling, positioned by:
+- Direct competitor pricing (benchmarked per comparable SKU)
+- Substitute pricing (e.g., for packaged atta, the substitute is loose-weight atta from the kirana)
+- Price-to-quality signaling (premium positioning requires price above the category average)
+
+**Price Realisation Gap (India-Specific)**
+Stated price ≠ Realised price. In India, the gap is created by:
+- Trade discounts to distributors (typically 8–15% for FMCG)
+- Retailer margins demanded by kirana networks (typically 12–20%)
+- Promotional spending (buy-one-get-one, cashback on UPI)
+- GST slab differences between product categories affecting net realisation
+- Regional pricing differences (MRP is uniform; but effective net price after channel cost varies by geography)
+
+---
+
+### 1B. VOLUME
+
+**Volume = Number of Customers × Average Order Size × Purchase Frequency**
+
+#### Number of Customers
+
+**Market Size Calculation:**
+Total Addressable Market (TAM) = Total Target Population × Penetration Rate × Per-Capita Consumption
+
+**Customer Funnel (Revenue-Side Diagnostic):**
+This is the most powerful diagnostic tool when volume is declining. Map every potential customer through five sequential gates:
+
+**Gate 1 — NEED**
+Does the customer have a problem this product solves?
+- Sub-drivers: Demographic shift, lifestyle change, substitute emergence, problem awareness
+- India Distortion: "Latent need" is massive in India (e.g., health insurance need exists but is not felt as urgent until a medical event; toothpaste need in rural India was historically low until oral hygiene campaigns)
+
+**Gate 2 — AWARENESS**
+Does the customer know this product exists?
+- Sub-drivers: Advertising spend, channel reach, word-of-mouth density, digital vs offline mix
+- India Distortion: Rural India awareness is dominated by cable TV, haat/mela activation, and word-of-mouth from SHGs (Self-Help Groups), not digital ads. A product with 90% urban awareness can have 20% rural awareness.
+
+**Gate 3 — ACCESSIBILITY**
+Can the customer physically access this product?
+- Sub-drivers: Distribution depth (# retail touchpoints), last-mile logistics, e-commerce pin-code coverage, pharmacy/clinic proximity for healthcare
+- India Distortion: India has 12–14 million kirana stores. A product "available in India" may actually be available in only 1.2 million outlets — less than 10% distribution depth. This is the single most common volume gap in Indian FMCG.
+
+**Gate 4 — AFFORDABILITY**
+Is the price within the customer's budget?
+- Sub-drivers: Unit price, pack size options, credit availability, EMI/BNPL options
+- India Distortion: India is a sachet economy. The ₹1 shampoo sachet, the ₹5 chai, the ₹10 biscuit pack are not marketing gimmicks — they are structural responses to weekly wage cycles among low-income consumers. Products that only come in ₹200 packs are categorically inaccessible to this segment regardless of awareness.
+
+**Gate 5 — EXPERIENCE & AFTER-SALES**
+Once purchased, does the product deliver enough value to drive repeat purchase?
+- Sub-drivers: Product quality, service responsiveness, complaint resolution, loyalty program, word-of-mouth generation
+- India Distortion: NPS (Net Promoter Score) dynamics in India are extreme — hyper-vocal negative WOM travels fast in dense community networks (WhatsApp groups, colony networks, panchayat conversations)
+
+#### Average Order Size
+- Driven by: Basket composition, upsell/cross-sell effectiveness, pack size architecture
+- India lever: "Premiumisation within affordability" — Indian consumers upgrading from ₹5 to ₹10 packs, or from loose to branded, drives average order size without increasing purchase frequency
+
+#### Purchase Frequency
+- Driven by: Category consumption rate, subscription models, loyalty programs, occasion marketing
+- India lever: Festival cycles (Diwali, Eid, Onam, harvest seasons) create massive frequency spikes; brands that miss these windows suffer disproportionately
+
+---
+
+### 1C. PRODUCT MIX
+
+This is the most commonly underanalysed revenue lever. Two companies with identical total revenue can have completely different profitability if their product mix differs.
+
+**Mix Analysis Framework:**
+Step 1: Map all SKUs on a Revenue vs. Margin matrix
+Step 2: Apply 80/20 Pareto — identify which 20% of SKUs drive 80% of revenue
+Step 3: Identify "margin bleeders" — high-volume, low-margin SKUs (often legacy products maintained for brand equity or distribution reasons)
+Step 4: Identify "margin champions" — lower volume but high-margin SKUs (often premium variants, new launches)
+Step 5: Calculate a Weighted Average Margin (WAM) across the mix
+Step 6: Diagnose if WAM decline is due to (a) margin compression within SKUs, or (b) volume shifting toward lower-margin SKUs
+
+**India Mix Distortion:**
+India's distribution system creates a perverse mix effect. Kirana stores prefer high-turnover, low-margin SKUs (they stock what moves fastest). Premium SKUs often sit unsold. This means the actual sold mix at the retailer level is more low-margin than the company's intended mix — a systemic India-specific problem called "phantom premiumisation."
+
+---` },
+      { id: 'D4.1.3', title: "LAYER 2: THE COST TREE (Full Value Chain Decomposition)", description: `### Cost Architecture: Two Valid Entry Points
+
+**Entry Point A — Fixed vs. Variable**
+Use this when the case involves scale decisions, breakeven analysis, or operational leverage
+- Fixed Costs: Factory rent, machinery depreciation, corporate overheads, management salaries, brand spend, insurance, loan interest (do not move with volume)
+- Variable Costs: Raw materials, packaging, fuel, commission, logistics per unit (move directly with volume)
+- Semi-Variable Costs (often missed): Utility costs, contract labour (move with volume in steps, not linearly)
+- Contribution Margin = Revenue − Variable Costs
+- Breakeven Volume = Fixed Costs ÷ Contribution Margin per Unit
+
+**Entry Point B — Value Chain (Superior for Root-Cause Diagnosis)**
+Use this when you need to find exactly where cost is spiking. Map every node:
+
+### NODE 1: R&D / INNOVATION
+Sub-drivers:
+- Research scientist salaries and lab infrastructure
+- Equipment and technology licensing
+- Patent filing, maintenance, and IP protection costs
+- Clinical trial costs (pharma), product testing costs (FMCG), regulatory approval fees
+- India Note: India has among the lowest R&D spend as % of revenue in global FMCG benchmarks; most Indian companies license technology rather than develop it, making licensing fees a hidden R&D cost
+
+### NODE 2: RAW MATERIAL PROCUREMENT
+Sub-drivers:
+- Commodity price (domestic market rate or imported CIF price)
+- Supplier contract terms (spot vs. long-term; hedged vs. unhedged)
+- Number of active suppliers (concentration risk)
+- Wastage ratio and use efficiency
+- Quality rejection rate
+- India Note: India's agri-commodity prices are subject to government MSP interventions, export bans, and monsoon-driven volatility. A sugar company's procurement cost can swing 30–40% year-on-year based on state government policy.
+
+### NODE 3: INBOUND LOGISTICS
+Sub-drivers:
+- Transport mode (rail vs. road; rail is ~40% cheaper per tonne-km in India but requires proximity to rail lines)
+- Fuel costs (ATF for air, diesel for road — both subject to Indian government pricing policy and global crude)
+- Number of intermediaries in the inbound chain
+- Lead time and its impact on working capital (longer lead time = more inventory = more cash locked up)
+- India Note: India's logistics cost as % of GDP (~13–14%) is nearly double the global benchmark (~8%). This is structural — fragmented trucking industry, poor road quality in Tier 3+ geographies, toll taxes, and state-border delays (pre-GST were worse, but issues remain)
+
+### NODE 4: PRODUCTION / MANUFACTURING
+Sub-drivers:
+- Machinery: Capital cost amortisation, maintenance expense (MTBF — Mean Time Between Failures), upgrade investment
+- Factory rent: Owned vs. leased; lease escalation clauses
+- Electricity: Cost per unit, power availability (India-specific: scheduled power cuts in several states still impact production capacity)
+- Labour: Wages (statutory minimum + actual), overtime, contractor vs. permanent labour ratio
+- Capacity Utilisation (OEE — Overall Equipment Effectiveness): The most important production cost ratio. OEE = Availability × Performance × Quality. At 60% OEE, fixed costs per unit are 40% higher than at 100% OEE.
+- Material Wastage: Defect rate, rework cost, scrap value
+- India Note: India's industrial electricity tariff varies enormously by state (₹4/unit in Gujarat; ₹8+/unit in Maharashtra industrial zones). A manufacturing company's location is therefore a structural cost decision, not just a logistics one.
+
+### NODE 5: STORAGE & WAREHOUSING
+Sub-drivers:
+- Warehouse rent (own vs. 3PL vs. dark store model)
+- Electricity for storage (cold chain is 3–5× more expensive than ambient)
+- Inventory holding cost (includes capital cost of locked-up goods, insurance, obsolescence risk)
+- Inventory days outstanding (IDO): Lower is better; high IDO = cash trap
+- Shrinkage rate (theft, damage, expiry)
+- India Note: India's cold chain capacity is critically underdeveloped. Only ~10% of perishables in India are transported through temperature-controlled supply chains, vs. 90%+ in developed markets. This creates enormous food wastage (~30% of fruit/vegetables) AND forces companies to absorb spoilage costs.
+
+### NODE 6: OUTBOUND LOGISTICS / DISTRIBUTION
+Sub-drivers:
+- Transport mode to distributor/retailer (primary distribution — typically owned fleet or large 3PL)
+- Last-mile delivery cost (secondary distribution — typically local transporters, highly fragmented)
+- Distributor count, territory coverage, order frequency
+- Vehicle routing efficiency (route optimisation is a significant cost lever — 10–15% cost reduction achievable)
+- India Note: India's primary distribution typically works through a C&F (Carrying and Forwarding) agent model: Company → C&F Agent → Distributor → Sub-Distributor → Retailer → Consumer. Each layer demands margin. The total trade margin stack in India is typically 20–35% of consumer price for FMCG. This is structurally higher than most developed markets.
+
+### NODE 7: MARKETING & SALES
+Sub-drivers:
+- Above-the-line (ATL): TV, print, digital advertising; celebrity endorsements; media buying efficiency
+- Below-the-line (BTL): In-store promotions, kirana activation, trade marketing, point-of-sale material
+- Digital marketing: Cost per click, cost per acquisition, ROAS (Return on Ad Spend)
+- Sales force: Salesperson headcount, salary + variable pay + travel + distributor management cost
+- Trade promotions: Discounts, schemes, and incentives offered to distributors and retailers (often 5–8% of revenue in India, often understated in P&Ls)
+- India Note: In India, BTL typically delivers 3–4× better ROI than ATL for rural market penetration. A company spending 80% of its marketing budget on ATL TV ads while trying to penetrate Tier 3 is structurally misallocating spend.
+
+### NODE 8: AFTER-SALES SERVICE
+Sub-drivers:
+- Warranty claim rate and average claim cost
+- Service centre network (own vs. franchised vs. outsourced)
+- Spare parts inventory and supply chain
+- Customer complaint handling (call centre, field service, digital)
+- Returns processing (reverse logistics) cost
+- Net Promoter Score impact on future revenue (after-sales quality directly affects repeat purchase rate)
+
+---` },
+      { id: 'D4.1.4', title: "LAYER 3: MACRO LEVERS (External Forces Impacting Profitability)", description: `### PESTEL for India (India-Native Version)
+
+**P — Political**
+- Government pricing controls: NPPA (National Pharma Pricing Authority) caps drug prices; SEBI caps financial product commissions; state governments intervene in electricity, fuel, and food prices
+- FDI policy: Sector-specific caps (multi-brand retail still restricted in India) affecting competitive entry
+- State-level industrial policies: Capex subsidies, electricity rebates, land allocation (vary dramatically by state)
+- PLI (Production Linked Incentive) schemes: Transform manufacturing economics for electronics, pharma, textiles
+
+**E — Economic**
+- GDP growth rate and its composition (rural consumption growth vs. urban investment-driven)
+- Interest rate cycle (RBI repo rate): Directly impacts cost of capital for capex-heavy industries and NBFC funding costs
+- Inflation: CPI (consumer price inflation affecting demand) vs. WPI (wholesale price inflation affecting input costs) — the gap between these two is a critical profitability signal
+- Exchange rate: INR/USD depreciation increases import costs (electronics, edible oil, crude derivatives)
+- Rural income: Monsoon performance, MSP announcements, MGNREGA spending — all drive rural consumption volumes
+
+**S — Social**
+- Urbanisation rate: Driving premiumisation and shift from loose to branded products
+- Health consciousness: Driving growth of health/wellness categories at the expense of traditional FMCG
+- Demographic dividend: India's median age of ~28 creates a consumption-heavy working-age majority
+- Female workforce participation: Rising in urban areas; creating demand for convenience products, packaged foods, financial services
+
+**T — Technological**
+- UPI and digital payments: Eliminated loose-change transactions (direct blow to ₹1–2 impulse SKUs); enabled data capture on consumer behaviour
+- E-commerce penetration: Disrupting traditional distribution economics; enabling D2C models that bypass the distributor-kirana stack
+- AI/ML in manufacturing: Predictive maintenance reducing equipment downtime; computer vision in quality control
+- India Stack (Aadhaar, ONDC, GeM): Enabling new B2G and D2C models
+
+**E — Environmental**
+- ESG pressure on supply chains: Large FMCG companies facing scrutiny on plastics (single-use plastic ban), palm oil sourcing, water usage
+- Climate impact on agri-commodities: Irregular monsoons creating year-on-year input cost volatility
+- Carbon pricing (emerging): Will impact energy-intensive manufacturing costs
+
+**L — Legal**
+- GST: Standardised but complex; HSN code disputes, ITC (Input Tax Credit) reconciliation create cash flow stress
+- Labour laws: Contract Labour Act, Industrial Disputes Act — create rigidity in workforce management
+- Competition Commission of India (CCI): Increasingly active; price-fixing scrutiny in pharma, telecom, cement
+- Consumer Protection Act 2019: Strengthens product liability; increases after-sales service obligations
+- DPDP Act (Digital Personal Data Protection): Creates compliance costs for data-driven business models
+
+### Porter's Five Forces — India Calibration
+
+**Supplier Power**
+High in: Speciality chemicals (dominated by Chinese suppliers), semiconductor components, rare earth metals, aviation fuel (single supplier — IOC/BPCL/HPCL cartel)
+Low in: Agri-commodities (fragmented farmers), generic labour, standard packaging
+
+**Buyer Power**
+High in: B2B segments (large organised retailers — Reliance, DMart negotiating with FMCG companies); Government procurement (GeM platform drives price transparency)
+Low in: B2C consumer markets (fragmented demand; no single consumer has bargaining power)
+
+**Threat of New Entrants**
+High in: SaaS, D2C consumer brands, fintech (low capital, regulatory barriers easing)
+Low in: Telecom (spectrum scarcity), aviation (aircraft scarcity + DGCA regulation), banking (RBI licensing)
+
+**Threat of Substitutes**
+India-specific substitution patterns: Branded vs. unbranded (loose atta substitutes packaged atta), organised vs. informal (local dhaba substitutes QSR), traditional vs. modern medicine
+
+**Competitive Rivalry**
+Intense in: Telecom (Jio-Airtel-Vi), FMCG (HUL-ITC-P&G), EdTech, Fintech
+Moderate in: Cement (regional oligopolies), Pharma (fragmented but consolidating)
+Low in: Defence manufacturing (PSU dominance)
+
+---` },
     ],
   },
   {
     id: 'D4.2',
-    title: 'Revenue-Side Analysis',
+    title: "COMPLETE DIAGNOSTIC QUESTION SET",
     lessons: [
-      { id: 'D4.2.1', title: 'Disaggregating revenue: volume vs. price', description: 'Determines if the company is selling fewer units or charging less per unit. Dictates investigating market demand factors versus pricing strategy.' },
-      { id: 'D4.2.2', title: 'Customer segment analysis', description: 'Segmenting customers reveals granular behavioral shifts that aggregate totals hide. Crucial when overall revenue is flat but core demographics decline.' },
-      { id: 'D4.2.3', title: 'Product mix shifts and revenue per customer', description: 'Analyzing the product mix uncovers consumers substituting premium products for lower-margin alternatives. Crucial for understanding cannibalization.' },
-      { id: 'D4.2.4', title: 'Channel and geography breakdowns', description: 'Revenue declines often concentrate in specific channels or regions. Isolating this focuses analysis on localized operational failures or regional competition.' },
-      { id: 'D4.2.5', title: 'Demand-side root causes: awareness, accessibility, affordability, acceptability', description: 'The 4A framework systematically diagnoses why customers stop buying. Cleanly structures the qualitative investigation of a volume decline.' },
+      { id: 'D4.2.1', title: "Phase 0: Context Clarification (Ask Before Structuring)", description: `These questions are asked before you lay out your framework. Asking them demonstrates commercial maturity.
+
+1. "When you say profitability has declined, could you confirm — are we talking about absolute profit (rupees), profit margin (%), EBITDA margin, or net margin? The levers differ significantly."
+2. "Over what time period has this decline occurred — one quarter, one financial year, or multi-year? This determines whether we're looking at a structural problem or a seasonal/cyclical one."
+3. "Is this a company-wide decline or is it concentrated in a specific geography, business unit, or product line?"
+4. "Has this decline been flagged as an exception or is it consistent with industry trends? In other words — are competitors also hurting?"
+5. "What is the company's position in the value chain — manufacturer, distributor, retailer, or integrated? This defines which cost nodes we own."
+
+---` },
+      { id: 'D4.2.2', title: "Phase 1: Revenue Diagnostics", description: `### On Price
+6. "Has the average selling price (ASP) per unit changed over the period? Is this a price-led decline or a volume-led decline?"
+7. "If price has declined — was this a deliberate pricing action (competitive response, penetration strategy) or an effective price decline due to higher trade discounts or channel mix shift?"
+8. "What is the price realisation gap — the difference between MRP and the net price the company actually receives after all trade discounts, schemes, and returns?"
+9. "Has the input cost structure changed in a way that has compressed margins without a corresponding price increase? What is the lag between input cost increases and price pass-through?"
+
+### On Volume
+10. "At which stage of the customer funnel is the drop-off occurring — at awareness, accessibility, affordability, or at repeat purchase/experience?"
+11. "Has the total addressable market grown or shrunk? If it has grown but our volume has declined, the issue is market share loss. If the market itself has shrunk, the problem is structural."
+12. "Has distribution depth changed — are we present in more or fewer outlets than 12 months ago? What is the active-outlet count and its trend?"
+13. "Has there been any change in consumer demographics — urban/rural mix, income bracket distribution, age cohort?"
+
+### On Product Mix
+14. "Has the revenue mix across SKUs/product lines changed? Specifically — have premium SKUs lost volume share to economy SKUs, or vice versa?"
+15. "What is the margin profile of each major product line? Where exactly in the portfolio is the margin compression concentrated?"
+16. "Has any new product launch cannibalised an existing high-margin product without delivering equivalent margin?"
+
+---` },
+      { id: 'D4.2.3', title: "Phase 2: Cost Diagnostics", description: `### On Raw Material
+17. "What is the primary raw material, and what is its price trend over the past 12–24 months? Is the company hedged against commodity price movements?"
+18. "Has the supplier concentration changed — are we more or less dependent on a single supplier than before?"
+19. "Has material wastage or rejection rate changed? Is there a quality issue in the input supply chain?"
+
+### On Production
+20. "What is the current capacity utilisation rate? If it is below 70%, fixed costs per unit are likely elevated significantly."
+21. "Has there been any unplanned downtime — machine breakdowns, power outages, labour strikes? What was the revenue loss from this downtime?"
+22. "Has the labour cost per unit changed? Is this due to wage inflation, a shift in permanent-to-contract labour ratio, or productivity decline?"
+
+### On Logistics
+23. "Has the logistics cost per unit or as a percentage of revenue changed? If yes, is this driven by fuel prices, a change in delivery mode, or a change in order size (smaller average orders = higher per-unit delivery cost)?"
+24. "Have we changed our distribution model — for example, moved from direct distribution to a 3PL model, or vice versa? What was the cost impact?"
+
+### On Overheads
+25. "Has there been any increase in fixed overheads — new corporate office leases, management headcount expansion, IT infrastructure investment? These will show as margin compression if revenue hasn't grown proportionally."
+
+---` },
+      { id: 'D4.2.4', title: "Phase 3: Macro & Competitive Diagnostics", description: `26. "Has any significant regulatory change impacted either our cost base (e.g., GST rate change on our product, import duty hike on key inputs) or our revenue (e.g., NPPA price cap, state-level pricing restriction)?"
+27. "Have competitors changed their pricing strategy in the past 12 months? Is there a price war underway, or has a new entrant disrupted the market?"
+28. "Is there a macroeconomic factor — rising inflation, rural income stress, slowdown in urban consumption — that could explain a broad-based volume decline across the industry?"
+
+---` },
     ],
   },
   {
     id: 'D4.3',
-    title: 'Cost-Side Analysis',
+    title: "INDIA-SPECIFIC PROFITABILITY FRAMEWORK",
     lessons: [
-      { id: 'D4.3.1', title: 'Value chain cost mapping: step by step', description: 'Mapping a product\'s physical journey uncovers hidden inefficiencies or vendor price hikes. The most reliable way to scrutinize sequential cost spikes.' },
-      { id: 'D4.3.2', title: 'Fixed vs. variable cost disaggregation', description: 'Identifying which cost type has increased directs you toward capacity utilization issues versus raw material inflation. Crucial for understanding operating leverage.' },
-      { id: 'D4.3.3', title: 'COGS, SG&A, operating cost, financing cost', description: 'Categorizing costs through a P&L format ensures you don\'t overlook non-operational drivers. Profit dips can be driven by financing costs, not just operations.' },
-      { id: 'D4.3.4', title: 'Hidden cost leakages: packaging, logistics, maintenance', description: 'Extreme margin pressure is frequently traced to overlooked operational nuances. Candidates must scrutinize packaging dimensions, return rates, and machine downtime.' },
+      { id: 'D4.3.1', title: "The Six India Distortions That Break Standard Frameworks", description: `Every standard profitability framework is built on developed-market assumptions. These six structural realities of India require specific adjustments.
+
+### DISTORTION 1: The Trade Margin Stack Problem
+**What it is:** India's route-to-market has up to 5 layers between manufacturer and consumer. Each layer demands margin, and together they consume 20–40% of consumer price in FMCG.
+**The Framework Adjustment:** When analysing revenue, always calculate Net Revenue Realisation (NRR) = Gross Revenue − (Distributor Margin + Sub-Distributor Margin + Retailer Margin + Trade Promotions + Returns). A product with ₹100 MRP may yield only ₹60–65 to the manufacturer.
+**The Lever:** Direct-to-consumer (D2C) or modern trade (MT) can improve NRR by 10–15 percentage points by eliminating intermediary layers.
+
+### DISTORTION 2: The GST Complexity Problem
+**What it is:** India's GST has multiple slabs (0%, 5%, 12%, 18%, 28%) and a complex ITC (Input Tax Credit) system. Products can be classified differently at different processing stages, creating tax cascades that impact effective margins.
+**The Framework Adjustment:** Always ask for the "GST-adjusted contribution margin" — not the headline margin. A pharma company selling a drug under NPPA price control on a 12% GST slab while buying API inputs at 18% GST has a structurally compressed ITC position.
+**The Lever:** HSN code optimisation, ITC reconciliation efficiency, and state-level GST incentive structures.
+
+### DISTORTION 3: The Working Capital Trap
+**What it is:** India's credit culture means distributors expect 30–60 day payment terms. Simultaneously, suppliers may demand faster payment for commodities. This creates a structural working capital gap that consumes cash even in profitable businesses.
+**The Framework Adjustment:** Profitability analysis must include Cash Conversion Cycle (CCC) = Inventory Days + Receivable Days − Payable Days. A business with 10% EBITDA margin but a 90-day CCC may have negative free cash flow.
+**The Lever:** Channel financing programs (banks financing distributor payables), factoring, dynamic discounting.
+
+### DISTORTION 4: The Rural-Urban Demand Bifurcation
+**What it is:** Urban India and rural India are effectively two different markets with different price sensitivities, distribution economics, and consumer behaviour. Many profitability models implicitly assume urban dynamics and misread the rural segment.
+**The Framework Adjustment:** Segment the P&L into Urban and Rural components. The margin structures are genuinely different — rural has higher logistics costs but can have lower marketing costs (BTL is cheaper than ATL). A company losing money in rural operations while being profitable in urban is a common India P&L pattern.
+**The Lever:** Rural-specific pack sizes, rural-specific distribution models (van sales vs. hub-and-spoke), and targeted BTL activation.
+
+### DISTORTION 5: The Commodity Input Volatility Problem
+**What it is:** India is uniquely exposed to agricultural commodity volatility due to policy interventions — MSP changes, export bans, state-level procurement, and monsoon sensitivity. Input cost models that assume stable raw material pricing will be structurally wrong.
+**The Framework Adjustment:** Build a "Commodity Sensitivity Analysis" — for a 10% increase in primary input cost, what is the EBITDA margin impact before and after price pass-through? This reveals the company's pricing power relative to input volatility.
+**The Lever:** Long-term supply contracts, commodity hedging (where permitted — agri-commodity hedging on MCX), portfolio diversification across input sources.
+
+### DISTORTION 6: The UPI-Driven Impulse Purchase Elimination
+**What it is:** Pre-UPI, Indian consumers made small, impulse purchases using loose change. A ₹2 toffee, a ₹5 sachet, a ₹10 biscuit — purchased because exact change happened to be available. UPI has eliminated this dynamic. Consumers pay exactly what they intend to pay, and small-denomination impulse purchases have declined structurally.
+**The Framework Adjustment:** For sub-₹20 SKUs, include an "impulse purchase index" in the demand analysis. This should track the correlation between digital payment penetration in a geography and sales volume of sub-₹20 SKUs.
+**The Lever:** Bundle pricing (turn the ₹2 toffee into a ₹10 five-pack), subscription models, or accept the structural volume decline and reposition toward higher-denomination SKUs.
+
+---` },
     ],
   },
   {
     id: 'D4.4',
-    title: 'Profitability Case Practice Bank (26 Cases)',
-    lessons: [],
+    title: "WEAK VS. STRONG ANSWER COMPARISON",
+    lessons: [
+      { id: 'D4.4.1', title: "The India Case Scenario", description: `**Case Prompt (as an MBB interviewer would deliver it):**
+
+"Our client is Surya Biscuits, a mid-sized Indian FMCG company headquartered in Ahmedabad. They manufacture glucose biscuits and cream biscuits across 8 SKUs, with annual revenue of approximately ₹1,800 crore. Their EBITDA margin has declined from 14% to 9% over the past two financial years. The CEO has called us in. Where would you start?"
+
+---` },
+      { id: 'D4.4.2', title: "THE WEAK ANSWER", description: `**Candidate Response:**
+
+"Thank you. I would approach this using the profitability framework. Profitability equals revenue minus costs. On the revenue side, I would look at price, volume, and product mix. On the cost side, I would look at fixed and variable costs. I would also check if this is a company-specific problem or an industry-wide issue.
+
+For revenue, I'd want to know if prices have changed or if volume has fallen. For costs, I'd check if raw material costs have gone up, maybe wheat flour since this is a biscuit company. I'd also look at logistics and labour costs. Additionally, I'd do a PESTEL analysis to understand the external environment.
+
+My hypothesis is that it could be a raw material cost issue — wheat prices have been volatile. I'd recommend they look at hedging or finding cheaper suppliers. I'd also suggest a marketing campaign to increase volume."
+
+---
+
+**Why This Is Weak — The Annotated Critique:**
+
+1. **Generic structure, no business judgment:** The candidate lists the framework's nodes mechanically without demonstrating any commercial intuition about a ₹1,800 crore Indian FMCG biscuit company.
+2. **No clarification questions:** A 500 basis point EBITDA decline is enormous. The candidate should have asked — is this revenue-driven, cost-driven, or both? Over which quarters? Is Parle-G or Britannia also seeing margin pressure?
+3. **Ignores India-specific realities:** No mention of wheat MSP volatility, kirana distribution margin pressure, the Parle dominance in glucose segment, trade scheme inflation, or the fact that glucose biscuits are a near-commodity category.
+4. **Premature hypothesis:** Jumping to "wheat price" and "marketing campaign" without data is a structural error. It closes off exploration of what could be a distribution or mix problem.
+5. **No quantification:** A strong candidate would frame the ₹90 crore EBITDA decline (5% of ₹1,800 crore) and ask what quantum comes from revenue vs. cost before recommending anything.
+6. **Product mix blindness:** No mention of glucose vs. cream biscuit margin differential — which is likely the core issue.
+
+---` },
+      { id: 'D4.4.3', title: "THE STRONG ANSWER", description: `**Candidate Response:**
+
+"Before I structure my approach, I'd like to ask two clarifying questions. First — when you say EBITDA margin has declined from 14% to 9%, are we talking about a consolidated decline, or is it concentrated in a specific product line or geography? Second — is this a Surya-specific phenomenon, or are peers like Priyagold or Dukes also under margin pressure?
+
+Assuming you tell me it's company-specific and broadly spread — here's how I'd structure the investigation.
+
+The 500 basis point decline on ₹1,800 crore revenue represents approximately ₹90 crore of lost EBITDA. I'd want to decompose that ₹90 crore into revenue-side loss versus cost-side loss before going deeper.
+
+**On the Revenue side**, I have three hypotheses, and I'd want to test them in order of likely impact.
+
+First — Product Mix shift. Surya sells both glucose biscuits, which are a near-commodity category competing directly with Parle-G on price, and cream biscuits, which have a structurally higher margin. If volume has shifted toward glucose and away from cream — perhaps because of a competitor cream biscuit promotion or a premiumisation failure — the weighted average margin falls even without any change in unit economics. I'd want the SKU-level revenue and margin data to test this.
+
+Second — Net Revenue Realisation. The glucose biscuit category in India is deeply penetrated into kirana stores, and kirana margins have been under pressure — they've been demanding higher trade schemes. If Surya has been running higher trade promotions to protect shelf space, the gross-to-net gap has widened. I'd check if the net realisation per case has changed even if MRP is unchanged.
+
+Third — Volume and Distribution. Has distribution depth changed? Are they present in the same number of outlets, or has a competitor improved their beat coverage in Surya's core territories in Gujarat and Maharashtra?
+
+**On the Cost side**, I have two priority hypotheses.
+
+First — Wheat flour procurement cost. Wheat is 40–45% of a glucose biscuit's COGS. Wheat procurement prices in India have been volatile due to MSP hikes and export restrictions. If Surya is not hedged and is on spot procurement, a 15–20% wheat price increase would compress EBITDA by approximately 200–250 basis points alone. I'd want the input cost trend vs. their price pass-through lag.
+
+Second — Logistics and distribution cost increase. If Surya has expanded distribution reach into lower-tier markets over this period — which is a common growth move — the per-case logistics cost would have increased, as Tier 3 and rural distribution is structurally more expensive per unit.
+
+Based on this structure, my priority data requests are: SKU-level P&L for FY before and after the decline; net realisation per case by product line; wheat procurement cost trend; and distribution reach metrics by outlet count and geography.
+
+My initial hypothesis, pending data, is that this is a product mix and trade cost problem more than a pure input cost problem — because if wheat were the primary driver, it would show up in a cost per unit increase that maps cleanly to the 500bps decline, and the CEO would likely already know that. The fact that it's described as a mystery suggests a revenue-side or mix issue that the company's internal MIS isn't capturing cleanly."
+
+---
+
+**Why This Is Strong — The Annotated Praise:**
+
+1. **Clarifying questions that reveal commercial maturity:** Distinguishes between consolidated vs. segmented decline; checks industry context.
+2. **Quantification upfront:** Converts "500 bps decline" into "₹90 crore problem" — grounds the analysis in a real number.
+3. **Hypothesis-driven, not framework-driven:** Lists specific hypotheses and explains why each matters before asking for data.
+4. **India-specific knowledge applied naturally:** Mentions Parle-G competitive dynamics, kirana trade scheme pressure, wheat MSP mechanics — not as name-dropping, but as diagnostic logic.
+5. **Separates gross margin from EBITDA levers:** Understands that net realisation is different from MRP.
+6. **Prioritises hypotheses by likely impact:** Tests mix first because it's more diagnostic than pure input cost.
+7. **Strong closing hypothesis with reasoning:** Doesn't just say "need data." Offers a directional view while remaining open to revision.
+
+---` },
+    ],
+  },
+  {
+    id: 'D4.5',
+    title: "THREE MBB CURVEBALL QUESTIONS",
+    lessons: [
+      { id: 'D4.5.1', title: "CURVEBALL 1: The Pricing Power Test", description: `**Interviewer:** "You've identified that wheat costs have risen approximately 18% over two years. But when we looked at Surya's pricing history, they have only taken two price increases — totalling 7% — over the same period. Why would a company not pass through input costs fully? And what would you advise?"
+
+**What the interviewer is testing:** The candidate's understanding of pricing power, price elasticity, competitive dynamics in commodity categories, and the India-specific market realities.
+
+**The Trap:** Many candidates say "they should have raised prices more" — which misses the point entirely. In a near-commodity category like glucose biscuits where Parle-G has not raised prices, Surya simply cannot.
+
+**Strong Answer Direction:**
+- In commodity FMCG categories, pricing power is a function of brand equity premium and competitive position. Surya is not the category leader in glucose (Parle-G is). Raising price above Parle-G is structural suicide — the consumer will simply switch.
+- The real question is not "should they raise prices?" but "should they still be in the glucose biscuit category at all?" If they cannot price for inflation, the category is structurally unattractive for a non-leader.
+- The strategic advice is: reduce glucose biscuit SKUs to minimum viable distribution, and redirect capital and shelf space to cream biscuits where there is genuine brand differentiation and pricing power.
+- Reference the Pricing Power Index logic: Surya's PPI for glucose biscuits is close to 0 (cannot pass through costs). Their PPI for cream biscuits may be 0.6–0.8 (can pass through 60–80% of cost increases). Capital allocation should follow PPI.
+
+---` },
+      { id: 'D4.5.2', title: "CURVEBALL 2: The Distribution Economics Trap", description: `**Interviewer:** "Our analysis shows that Surya's distribution cost has increased from 8% to 11% of revenue over two years. Their sales team says this is because they've expanded into 40,000 new kirana stores in Tier 3 towns. The head of sales considers this a growth investment. The CFO calls it a cost problem. Who is right?"
+
+**What the interviewer is testing:** The candidate's ability to distinguish between a good cost and a bad cost, and to use unit economics to adjudicate between competing narratives.
+
+**The Trap:** Saying one of them is clearly right without asking for data.
+
+**Strong Answer Direction:**
+- The right answer requires a payback analysis: what is the revenue per outlet per year in these new Tier 3 stores, and what is the cost to serve each outlet?
+- If average revenue per Tier 3 outlet per year is ₹12,000 and the cost to serve (logistics + sales rep beat + trade promotions) is ₹9,000 — the contribution is thin and may not recover fixed overhead allocation.
+- Compare to Tier 1/Tier 2 economics: if Tier 1 outlets deliver ₹40,000 revenue per outlet at ₹8,000 cost to serve, the Tier 3 expansion is genuinely dilutive.
+- The diagnostic question: what is the vintage analysis? Outlets opened 18 months ago — are they maturing toward Tier 1 economics, or flatlining?
+- The nuanced answer: The CFO and Head of Sales are both partially right. The expansion was strategically sound (Tier 3 is the growth market in India) but was executed without a minimum viable order size filter, including marginal outlets that will never be economically viable.
+
+---` },
+      { id: 'D4.5.3', title: "CURVEBALL 3: The Structural Decline Test", description: `**Interviewer:** "Let's say our analysis confirms that the glucose biscuit category — which is 60% of Surya's revenue — is in structural decline for the reasons you described: commodity economics, competition from Parle, UPI killing impulse purchases. What do you do with a business where your biggest segment is fundamentally broken?"
+
+**What the interviewer is testing:** Turnaround and portfolio strategy thinking; whether the candidate defaults to optimistic incremental fixes or can make hard strategic calls.
+
+**The Trap:** Recommending more marketing, better distribution, or product innovation within the glucose segment — all incremental responses to a structural problem.
+
+**Strong Answer Direction:**
+This is a portfolio restructuring question, not a profitability optimisation question. Three paths:
+1. **Managed Decline + Capital Reallocation:** Consciously reduce investment in glucose biscuits (cut SKUs, minimise promotional spend, maintain distribution only in profitable outlets) and free up capital for cream biscuits, cookies, and adjacent categories where Surya can compete on brand rather than price.
+2. **Category Exit + B2B Pivot:** Sell the glucose biscuit manufacturing assets or repurpose them for contract manufacturing for other brands. Surya keeps the manufacturing margin without the brand investment cost.
+3. **Premiumisation Architecture:** Launch a "fortified glucose biscuit" positioned as a health product (iron-fortified, Vitamin D, positioned for children's nutrition) — attempts to escape the commodity trap by adding a functional claim that enables price premium and targets institutional buyers (mid-day meal schemes, anganwadis). This requires regulatory approval (FSSAI) and government relationship management.
+- A critical point: whatever path is chosen, the decision must be made within 18 months. Structural declines compound — each year of delay means more cash destroyed.
+
+---` },
+    ],
+  },
+  {
+    id: 'D4.6',
+    title: "THE PRICING POWER INDEX (GAP SOLUTION)",
+    lessons: [
+      { id: 'D4.6.1', title: "The Problem This Solves", description: `Standard profitability frameworks identify that input costs have risen. They do not tell you how much of that cost increase can be passed through to consumers before volume collapses. This gap causes the single most common strategic error in Indian FMCG consulting: recommending a price increase that triggers a volume collapse that more than offsets the margin benefit.
+
+The Pricing Power Index (PPI) fills this gap.
+
+---` },
+      { id: 'D4.6.2', title: "Definition", description: `**Pricing Power Index (PPI) = Percentage of Input Cost Increase That Can Be Passed Through Without Triggering Significant Volume Loss**
+
+PPI = 1.0 means the company can pass through 100% of cost increases (full pricing power — luxury brands, monopoly utilities)
+PPI = 0 means the company cannot raise prices at all without volume collapse (pure commodity, price taker)
+PPI = 0.6 means the company can pass through 60% of cost increases and must absorb 40% as margin compression
+
+---` },
+      { id: 'D4.6.3', title: "How to Calculate PPI", description: `### Step 1: Establish Price Elasticity of Demand (PED)
+PED = % Change in Volume ÷ % Change in Price
+
+For Indian biscuits (benchmark data):
+- Glucose biscuits (commodity): PED typically −2.0 to −3.0 (highly elastic — a 10% price rise causes 20–30% volume decline)
+- Premium cream biscuits: PED typically −0.8 to −1.2 (moderately elastic)
+- Specialty/health biscuits: PED typically −0.4 to −0.7 (inelastic — consumers willing to pay for perceived health benefit)
+
+### Step 2: Establish the "Acceptable Volume Loss Threshold"
+The company defines the maximum volume decline it can absorb before EBITDA impact from volume loss exceeds EBITDA gain from price increase.
+
+**The Break-Even Price Increase Formula:**
+Let:
+- p = current price
+- v = current volume
+- c = variable cost per unit
+- Δp = proposed price increase (%)
+- PED = price elasticity
+
+Volume after price increase = v × (1 + PED × Δp)
+EBITDA after price increase = (p × Δp + p − c) × v × (1 + PED × Δp)
+
+The price increase is EBITDA-positive only if:
+**(Δp) > (−1/PED) × (c/p)**
+
+This gives the minimum required contribution margin ratio for a price increase to be viable.
+
+### Step 3: Calculate PPI
+
+**PPI = (Maximum EBITDA-Positive Price Increase) ÷ (Input Cost Increase Required to Maintain Margin)**
+
+**Worked Example — Surya Glucose Biscuits:**
+- Current ASP: ₹8 per 100g pack
+- Variable cost per pack: ₹5.80
+- Contribution margin: ₹2.20 (27.5%)
+- Wheat cost increase over 2 years: 18%
+- Wheat as % of variable cost: 42%
+- Required price increase to maintain current margin: 18% × 42% = 7.6% (i.e., ₹0.61 per pack)
+- PED for glucose biscuits: −2.5
+- Maximum EBITDA-positive price increase (using formula above): 10.9%
+- But: if Parle-G does not match the price increase, effective PED becomes steeper (−3.5 or worse due to brand switching)
+- Adjusted Maximum EBITDA-Positive Price Increase: 7.5%
+
+**PPI = 7.5% ÷ 7.6% = 0.99**
+
+**Interpretation:** This looks like high pricing power — but it is illusory. The 7.5% is the theoretical maximum only if Parle-G matches the price increase. If Parle-G does not raise prices, the effective PPI drops to approximately 0.3.
+
+**Strategic Implication:** The glucose biscuit PPI is conditionally near-1 (if industry co-moves) and effectively near-0 (if industry does not co-move). This is the correct diagnosis for a category where you are not the leader — you have pricing power only on the leader's terms.
+
+### Step 4: Build the PPI Dashboard by Product Line
+
+| SKU / Category | PED | Max EBITDA+ Price Δ | Required Price Δ | PPI | Strategic Signal |
+|---|---|---|---|---|---|
+| Glucose Biscuit (leader match) | −2.5 | 7.5% | 7.6% | 0.99 | Fragile — depends on Parle |
+| Glucose Biscuit (leader no-match) | −3.5 | 5.4% | 7.6% | 0.71 → effective 0.3 | Structurally weak |
+| Cream Biscuit | −1.1 | 17.1% | 5.2% | 1.0+ (headroom) | Strong pricing power |
+| Specialty Cookie | −0.6 | 31.3% | 5.2% | 1.0+ (significant headroom) | Excellent pricing power |
+
+**Capital Allocation Rule Derived from PPI:**
+Invest marketing, distribution, and innovation budgets in proportion to PPI. A PPI below 0.5 is a red flag for long-term category viability — the company is a price taker, and its margin is hostage to commodity cycle.
+
+---` },
+      { id: 'D4.6.4', title: "The Hyper-Inflation Adjustment (The Previously Unaddressed Gap)", description: `Standard profitability frameworks have no protocol for environments where both input costs and consumer prices move simultaneously, rapidly, and non-linearly — as occurred in India in 2022 during the edible oil supply shock.
+
+**The Dual-Movement Problem:**
+When input costs rise 30%+ in a short window AND consumer inflation simultaneously erodes real purchasing power, the standard PPI calculation breaks down because:
+1. WTP itself declines (consumers' real income falls)
+2. The substitute landscape shifts rapidly (cheaper alternatives emerge)
+3. PED becomes non-linear (at certain absolute price points, consumers switch permanently, not temporarily)
+
+**The Hyper-Inflation Profitability Protocol:**
+In hyper-inflation environments, run a three-scenario stress test:
+
+**Scenario A — Full Pass-Through:** Pass 100% of cost increase to price. Modelled volume impact using stressed PED (apply 1.5× normal PED to reflect income-eroded consumer sensitivity). Calculate EBITDA.
+
+**Scenario B — Partial Pass-Through (50%):** Raise price by 50% of cost increase; absorb remainder as margin compression. Calculate volume at normal PED. Calculate EBITDA.
+
+**Scenario C — Shrinkflation (No Price Increase):** Maintain MRP. Reduce pack weight/quantity by 10–15% to absorb cost increase. Consumer unit volume is maintained; consumer value received decreases. Calculate EBITDA.
+
+**Decision Rule:**
+Choose the scenario with the highest NPV of EBITDA over a 3-year horizon, not just the highest immediate-year EBITDA. Shrinkflation often wins in Year 1 but creates a consumer trust deficit that damages repeat purchase in Years 2–3.
+
+**India-Specific Note on Shrinkflation:**
+India has extensive media and social media coverage of shrinkflation. A ₹5 biscuit pack that went from 80g to 65g over 3 years has been covered by major Indian news outlets. The reputational cost must be included in the NPV calculation.
+
+---` },
+    ],
+  },
+  {
+    id: 'D4.7',
+    title: "VISUAL SPECIFICATIONS & DIAGRAM PROMPTS",
+    lessons: [
+      { id: 'D4.7.1', title: "DIAGRAM 1: THE MASTER PROFITABILITY TREE", description: `**Visual Prompt:**
+
+> Create a top-down hierarchical tree diagram titled "Profit = Revenue − Cost." The root node at the top is "Profit" in a dark box. It branches into two Level 1 nodes: "Revenue" (left, in blue) and "Cost" (right, in red/crimson).
+>
+> Revenue node branches into three Level 2 nodes: "Price," "Volume," and "Product Mix."
+>
+> Price branches into three Level 3 nodes: "Cost Floor (Value Chain)," "Competitive Band," and "Value Ceiling (WTP)." Each has a small annotation: Cost Floor shows "= Total Unit Cost + Margin Target"; Value Ceiling shows "= Customer WTP − Switching Cost."
+>
+> Volume branches into two Level 3 nodes: "# Customers" and "Avg Order Size × Frequency." # Customers further branches into a Level 4 funnel showing five gates in sequence: "Need → Awareness → Accessibility → Affordability → Experience."
+>
+> Product Mix branches into two Level 3 nodes: "SKU Revenue Share" and "SKU Margin Profile," with an annotation reading "Apply 80/20 Pareto."
+>
+> Cost node branches into two Level 2 branches: "By Type (Fixed/Variable)" and "By Value Chain Node." The Value Chain Node branch shows 8 sequential nodes in a horizontal chain: "R&D → Procurement → Inbound Logistics → Production → Storage → Outbound Logistics → Marketing → After-Sales." Each node has a small sub-bullet showing its primary cost driver.
+>
+> Style: Clean corporate, white background, minimal lines, hierarchical spacing, India brand colors (deep navy + crimson accent). All text in sentence case. No drop shadows.
+
+---` },
+      { id: 'D4.7.2', title: "DIAGRAM 2: THE CUSTOMER FUNNEL (REVENUE-SIDE)", description: `**Visual Prompt:**
+
+> Create a vertical inverted funnel with 5 tiers, each progressively narrower from top to bottom. The funnel is titled "Customer Volume Diagnostic — The 5 Gates."
+>
+> Tier 1 (widest): "Need" — annotation: "Does the problem exist for the target consumer?"
+> Tier 2: "Awareness" — annotation: "Does the consumer know this solution exists?"
+> Tier 3: "Accessibility" — annotation: "Can the consumer physically reach the product?"
+> Tier 4: "Affordability" — annotation: "Is the price within the consumer's budget?"
+> Tier 5 (narrowest): "Experience & Repeat" — annotation: "Does post-purchase experience drive loyalty?"
+>
+> On the right side of the funnel, for each tier, show an "India Distortion" callout box:
+> - Need: "Latent needs are vast in rural India — healthcare, insurance, nutrition"
+> - Awareness: "Rural India awareness through cable TV + SHG word-of-mouth, not digital"
+> - Accessibility: "Only 10% of India's 14M kiranas actively stock any given FMCG brand"
+> - Affordability: "Sachet economy: ₹1–₹10 pack architecture is structural, not tactical"
+> - Experience: "Hyper-dense WhatsApp community WOM makes negative experience catastrophic"
+>
+> On the left side, show the "Diagnostic Question" for each tier.
+>
+> Style: Clean funnel with gradient fill from light blue at top to deep navy at bottom. Right callout boxes in amber/gold. Left questions in light gray. India map watermark faintly in background.
+
+---` },
+      { id: 'D4.7.3', title: "DIAGRAM 3: THE VALUE CHAIN COST MAP", description: `**Visual Prompt:**
+
+> Create a horizontal value chain flow diagram with 8 nodes connected by arrows, flowing left to right. Each node is a rounded rectangle. The diagram is titled "Cost Architecture — Value Chain Decomposition."
+>
+> Nodes in order: R&D / Innovation → Raw Material Procurement → Inbound Logistics → Production / Manufacturing → Storage & Warehousing → Outbound Logistics → Marketing & Sales → After-Sales Service
+>
+> Below each node, show 3–4 bullet points listing the specific cost sub-drivers for that node (drawn from the content above).
+>
+> Above each node, show a small "India Alert" icon with a brief India-specific risk flag. For example:
+> - Procurement: "Wheat/sugar MSP volatility; export bans"
+> - Inbound Logistics: "India logistics cost = 13–14% GDP vs 8% global benchmark"
+> - Production: "Electricity tariffs vary ₹4–₹8/unit by state"
+> - Outbound: "C&F Agent → Distributor → Sub-Dist → Retailer = 4-layer margin stack"
+>
+> At the bottom of the diagram, show two horizontal bars:
+> - Bar 1: "Fixed Cost Distribution across nodes" (approximate % breakdown)
+> - Bar 2: "Variable Cost Distribution across nodes"
+>
+> Style: Dark navy nodes with white text. Arrows in crimson. India Alert icons in amber. Clean, structured, no clutter.
+
+---` },
+      { id: 'D4.7.4', title: "DIAGRAM 4: THE PRICING POWER INDEX DASHBOARD", description: `**Visual Prompt:**
+
+> Create a 2-panel dashboard visual titled "Pricing Power Index (PPI) Dashboard."
+>
+> Panel 1 (left): A vertical "thermometer" or gauge visual showing the PPI scale from 0.0 to 1.0+. Mark three zones: Red zone (0–0.4) labeled "Price Taker — Cannot Pass Through Costs"; Amber zone (0.4–0.7) labeled "Conditional Power — Partial Pass-Through"; Green zone (0.7–1.0+) labeled "Price Maker — Full Cost Recovery." Add a pointer or indicator needle for each product line, labeled with the product name and PPI value.
+>
+> Panel 2 (right): A 2×2 matrix with axes: X-axis = "Pricing Power (PPI)" from Low (left) to High (right); Y-axis = "Revenue Share" from Low (bottom) to High (top). Plot 4 product bubbles: Glucose Biscuit (top-left quadrant — high revenue share, low PPI — labeled "Strategic Risk"), Cream Biscuit (top-right — high revenue share, moderate PPI — labeled "Core Investment"), Specialty Cookie (bottom-right — lower revenue share, high PPI — labeled "Growth Bet"), Institutional/B2B (bottom-left — low revenue share, low PPI — labeled "Exit Candidate"). Bubble size represents absolute EBITDA contribution.
+>
+> Below both panels, show the formula: PPI = Maximum EBITDA-Positive Price Increase ÷ Input Cost Increase Required to Maintain Margin. Show the Surya worked example in a callout box.
+>
+> Style: Dashboard aesthetic, dark background, data-forward. Gauge in Panel 1 uses red-amber-green gradient. Matrix in Panel 2 uses light grid lines. Clean, no decorative elements.
+
+---` },
+      { id: 'D4.7.5', title: "DIAGRAM 5: THE WEAK VS. STRONG ANSWER COMPARISON", description: `**Visual Prompt:**
+
+> Create a split-screen comparison visual titled "Same Case, Different Depth."
+>
+> Left panel header: "Weak Answer" (in red). Right panel header: "Strong Answer" (in green).
+>
+> In each panel, show the same 5 evaluation criteria as rows:
+> 1. Opening move
+> 2. Quantification
+> 3. India-specific insight
+> 4. Hypothesis quality
+> 5. Data prioritisation
+>
+> For the Weak Answer column, show the weak response for each criterion in short form. For the Strong Answer column, show the strong response.
+>
+> At the bottom, show a "Signal Score" bar for each: Weak Answer = 2/10; Strong Answer = 9/10. Do not show this as a grade — show it as a visual progress bar.
+>
+> Below the comparison, add a text box: "The gap is not knowledge of the framework. The gap is the ability to apply commercial judgment to a specific India industry context."
+>
+> Style: Two-column table aesthetic with very clean lines. Red accent for weak, green accent for strong. Neutral gray background.
+
+---` },
+      { id: 'D4.7.6', title: "DIAGRAM 6: THE THREE CURVEBALL ZONES", description: `**Visual Prompt:**
+
+> Create a visual titled "The MBB Curveball Architecture — What They're Really Testing."
+>
+> Show three "trap door" cards, each looking like a trapdoor opening beneath the candidate's feet:
+>
+> Card 1: "The Pricing Power Trap"
+> Test: Can you think beyond 'raise prices'?
+> Trap: Recommending price increase in a category where you're not the leader
+> Signal: Understanding of PPI and competitive pricing dynamics
+>
+> Card 2: "The Good Cost vs. Bad Cost Trap"
+> Test: Can you adjudicate competing internal narratives with unit economics?
+> Trap: Siding with CFO or Sales Head without data
+> Signal: Payback analysis, vintage analysis, cost-to-serve per outlet
+>
+> Card 3: "The Structural vs. Cyclical Trap"
+> Test: Can you recognise when a problem cannot be fixed by optimisation?
+> Trap: Recommending operational fixes to a structural market decline
+> Signal: Portfolio strategy thinking — managed decline, exit, or pivot
+>
+> Style: Three cards in a row, each with a dark background and a trapdoor visual element at the bottom. Crimson for trap warnings. White for signal text. Subtle shadow under each card for depth.
+
+---` },
+    ],
+  },
+  {
+    id: 'D4.8',
+    title: "INDUSTRY VARIANT QUICK CARDS",
+    lessons: [
+      { id: 'D4.8.1', title: "AIRLINES (Indigo, Air India, Vistara context)", description: `**Profit Equation:** Profit = RASK − CASK (Revenue per Available Seat Kilometre minus Cost per Available Seat Kilometre)
+
+**Revenue Levers:**
+- Load Factor (% seats filled) × Yield (average fare per km) = RASK
+- Ancillary revenue: Excess baggage, seat upgrades, cargo, advertising, loyalty miles monetisation
+- Route mix: High-yield business routes vs. high-load holiday routes
+- Dynamic pricing algorithm efficiency (yield management)
+
+**Cost Levers:**
+- ATF (Aviation Turbine Fuel): 35–40% of total cost; entirely INR-denominated but indexed to global crude + government levy. India has one of the highest ATF taxes globally (25–30% on base price), structurally disadvantaging Indian carriers vs. international peers.
+- Aircraft lease cost: Operating lease vs. finance lease. For budget carriers, lease cost is the #2 cost item.
+- Airport charges: Landing, parking, ground handling. DIAL (Delhi) and MIAL (Mumbai) charges are significantly higher than secondary airports.
+- MRO (Maintenance, Repair, Overhaul): India has underdeveloped MRO infrastructure; most airlines send aircraft abroad for heavy maintenance, incurring forex and turnaround time costs.
+- Crew cost: Pilots (especially captains) are globally scarce; Indian pilot salaries have increased 30%+ post-COVID due to demand surge.
+
+**India-Specific Pressures:**
+- Bilateral air services agreements limit international expansion
+- IndiGo's dominance (60%+ domestic market share) means pricing discipline on domestic routes follows IndiGo, not market equilibrium
+- GoFirst bankruptcy and SpiceJet distress have concentrated market, giving survivors pricing relief in specific corridors
+
+---` },
+      { id: 'D4.8.2', title: "BANKING / NBFC", description: `**Profit Equation:** NIM (Net Interest Margin) × Asset Base − Credit Costs − Operating Costs = PAT
+
+**NIM = Interest Income Rate − Cost of Funds Rate**
+
+**Revenue Levers:**
+- Yield on advances: Loan book composition (retail vs. corporate vs. SME; secured vs. unsecured)
+- Fee income: Processing fees, forex income, distribution of insurance/mutual funds, credit card fees
+- Treasury income: Mark-to-market gains/losses on bond portfolio
+
+**Cost Levers:**
+- Cost of funds: CASA ratio (Current Account + Savings Account as % of total deposits). Higher CASA = lower cost of funds. CASA of 40%+ is considered strong.
+- Credit cost: NPA (Non-Performing Asset) formation rate × provisioning requirement. India's banking sector has historically struggled with PSB NPAs from infrastructure and real estate loans.
+- Operating cost: Cost-to-Income ratio (OpEx as % of Net Revenue). Digital-native NBFCs can achieve 30–35%; PSBs often at 50–55%.
+
+**India-Specific:**
+- RBI repo rate changes pass through to loan rates quickly but to deposit rates slowly — this creates a temporary NIM expansion during rate hike cycles and NIM compression during rate cut cycles.
+- Priority sector lending mandates (40% of advances must go to agriculture, MSMEs, weaker sections) constrain yield optimisation.
+
+---` },
+      { id: 'D4.8.3', title: "MANUFACTURING / ELECTRONICS", description: `**Profit Equation:** Revenue − (COGS + Logistics + Marketing + Overheads) = EBITDA
+
+**Key Metric:** Contribution Margin per unit = ASP − Variable Manufacturing Cost per unit
+
+**India-Specific Manufacturing Levers:**
+- PLI scheme benefits: 4–6% incentive on incremental production for eligible categories (mobile phones, white goods, AC, LED lighting)
+- SEZ (Special Economic Zone) vs. DTA (Domestic Tariff Area) production economics: SEZ offers duty exemptions on imports but limits domestic sales
+- BCD (Basic Customs Duty): Import duty on finished goods is a significant moat for domestic manufacturers (e.g., 20% BCD on finished TVs protects domestic assemblers)
+- Electricity cost as a % of variable cost: High for energy-intensive processes (aluminium smelting, glass manufacturing)
+
+**Capacity Utilisation Impact:**
+At 50% utilisation: Fixed cost per unit = 2× optimum
+At 70% utilisation: Fixed cost per unit = 1.4× optimum
+At 90% utilisation: Fixed cost per unit ≈ optimum
+Recommendation: A manufacturing EBITDA analysis that doesn't include utilisation rate is incomplete.
+
+---
+
+# APPENDIX: INDIA DATA BENCHMARKS FOR PROFITABILITY CASES
+
+*Use these to calibrate your estimates in cases. Citing approximate benchmarks demonstrates India market knowledge.*
+
+| Metric | Benchmark | Context |
+|---|---|---|
+| FMCG Trade Margin Stack | 22–35% of MRP | Distributor 5–8%, Sub-distributor 3–5%, Retailer 12–20% |
+| India Logistics Cost % GDP | 13–14% | vs. global benchmark of 8% |
+| FMCG EBITDA Margin (Large Player) | 18–22% | HUL ~23%; Dabur ~18–20% |
+| FMCG EBITDA Margin (Mid-Size) | 10–15% | Smaller branded players |
+| Indian Bank CASA Ratio (Good) | 40%+ | HDFC ~44%; Kotak ~53% |
+| Indian Bank NIM (Good) | 3.5–4.5% | Private banks; PSBs typically lower |
+| Airline CASK (IndiGo) | ₹4.5–5.5/ASKM | Among lowest globally |
+| ATF as % of Airline Cost | 35–40% | Varies with crude |
+| India Cold Chain Penetration | ~10% of perishables | vs. 90%+ in developed markets |
+| UPI Transaction Volume | 13+ billion/month (2024) | Highest digital payment volume globally |
+| India Kirana Store Count | 12–14 million | Only top FMCG players reach 1M+ outlets |
+| Rural India Consumer Share | ~45% of total FMCG consumption | Disproportionately glucose biscuit, soap, hair oil |` },
+    ],
   },
 ];
 

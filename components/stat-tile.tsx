@@ -27,7 +27,7 @@ export default function StatTile({
   }[dotColor];
 
   return (
-    <Card className="p-5 flex flex-col min-h-[160px]">
+    <Card className="p-4 flex flex-col min-h-[140px]">
       <div className="flex items-start justify-between mb-3">
         <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
           {label}

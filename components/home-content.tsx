@@ -71,7 +71,7 @@ export default function HomeContent({ submissions }: Props) {
             <DailyPickTile
               icon={<Zap className="h-4 w-4" />}
               label={daily?.guesstimate_code ? `GUESSTIMATE · ${daily.guesstimate_code.toUpperCase()}` : 'GUESSTIMATE'}
-              title={daily?.guesstimate_code ? `Today's guesstimate: ${daily.guesstimate_code}` : "Pick from the bank"}
+              title={daily?.guesstimate_title ? daily.guesstimate_title : (daily?.guesstimate_code ? `Today's guesstimate: ${daily.guesstimate_code}` : "Pick from the bank")}
               context="Sharpen your sizing instincts"
               metaText="~15 min"
               difficultyDots={2}

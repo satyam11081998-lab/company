@@ -9,6 +9,7 @@ export interface DailyContentResponse {
     difficulty: string;
   } | null;
   guesstimate_code: string | null;
+  guesstimate_title?: string | null;
   brief: {
     id: string;
     title: string;

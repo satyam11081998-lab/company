@@ -66,7 +66,7 @@ export default function SubmissionHeatmap({
   }
 
   return (
-    <Card className="p-5">
+    <Card className="p-4">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground">

@@ -40,11 +40,11 @@ export default function CareerLadder({ points }: Props) {
     ? Math.round(((points - current.threshold) / (nextTier.threshold - current.threshold)) * 100)
     : 100;
 
-  // Reversed for display (bottom-up climb)
-  const displayed = [...TIERS].reverse();
+  // Highest at top (index 0), lowest at bottom
+  const displayed = TIERS;
 
   return (
-    <Card className="p-5">
+    <Card className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground">
           Career Ladder
@@ -65,6 +65,25 @@ export default function CareerLadder({ points }: Props) {
 
           return (
             <div key={tier.name}>
+              {/* Progress bar BEFORE the current tier (toward next, which is physically above it in the DOM) */}
+              {isCurrent && nextTier && (
+                <div className="mb-2 px-3">
+                  <div className="flex items-center justify-between text-micro mb-1">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <ArrowUp className="h-3 w-3" />
+                      Next: {nextTier.name}
+                    </span>
+                    <span className="text-primary font-semibold tabular-nums">{progressPct}%</span>
+                  </div>
+                  <div className="h-1 bg-border rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all ${
                   isCurrent
@@ -77,10 +96,10 @@ export default function CareerLadder({ points }: Props) {
                 <div
                   className={`h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0 ${
                     isCurrent
-                      ? 'bg-primary text-white'
+                      ? 'bg-primary text-primary-foreground'
                       : isAchieved
-                      ? 'bg-muted text-foreground'
-                      : 'bg-muted text-muted-foreground/50'
+                      ? 'bg-navy/10 text-navy'
+                      : 'bg-muted text-muted-foreground/60'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -105,25 +124,6 @@ export default function CareerLadder({ points }: Props) {
                   {tier.threshold}
                 </span>
               </div>
-
-              {/* Progress bar AFTER the current tier (toward next, which is the one above in display) */}
-              {isCurrent && nextTier && (
-                <div className="mt-2 mb-2 px-3">
-                  <div className="flex items-center justify-between text-micro mb-1">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <ArrowUp className="h-3 w-3" />
-                      Next: {nextTier.name}
-                    </span>
-                    <span className="text-primary font-semibold tabular-nums">{progressPct}%</span>
-                  </div>
-                  <div className="h-1 bg-border rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all"
-                      style={{ width: `${progressPct}%` }}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
