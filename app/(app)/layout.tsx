@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import AppNav from '@/components/app-nav';
 import { UserProvider } from '@/components/user-context';
 import MobileBottomNav from '@/components/mobile-bottom-nav';
+import Footer from '@/components/footer';
 import type { UserRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -41,8 +42,11 @@ export default async function AppLayout({
   return (
     <UserProvider initialUser={user}>
       <AppNav />
-      <main className="pb-24 md:pb-0">
-        {children}
+      <main className="min-h-[calc(100vh-64px)] flex flex-col">
+        <div className="flex-1 pb-10">
+          {children}
+        </div>
+        <Footer className="pb-24 md:pb-12" />
       </main>
       <MobileBottomNav />
     </UserProvider>

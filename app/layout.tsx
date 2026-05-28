@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} min-h-screen text-foreground antialiased font-sans`}>
+      <body className={`${inter.variable} min-h-screen text-foreground antialiased font-sans overflow-x-hidden`}>
         <ThemeProvider>
           {/* Fixed diagonal parallelogram pattern — same as Medusa template */}
           <GeoPattern />

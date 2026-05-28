@@ -209,7 +209,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-8 col-span-full">
+        <div className="flex flex-wrap justify-center items-center gap-2 mt-8 col-span-full">
           <Button 
             variant="outline" 
             onClick={() => {
@@ -221,7 +221,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
             Previous
           </Button>
           
-          <div className="flex items-center gap-1 mx-2">
+          <div className="flex flex-wrap items-center justify-center gap-1 mx-2">
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(p => {
                 let start = Math.floor((page - 1) / 3) * 3 + 1;

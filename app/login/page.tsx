@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import AuthForm from '@/components/auth-form';
-
+import Logo from '@/components/logo';
 
 /** Login page. */
 export default function LoginPage() {
@@ -20,9 +20,9 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <Link href="/" className="inline-block text-2xl font-bold tracking-tight text-foreground">
-            <span className="text-primary">M</span>ECE
+        <div className="mb-8 flex justify-center">
+          <Link href="/" className="inline-block">
+            <Logo variant="dark" className="scale-[0.8] origin-center -ml-[30px]" />
           </Link>
         </div>
 

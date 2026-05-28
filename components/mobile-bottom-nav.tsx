@@ -28,7 +28,10 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-md border-t border-border pb-safe flex items-center justify-around px-2 shadow-lg">
+      <nav 
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border flex items-center justify-around px-2 shadow-lg"
+        style={{ height: 'calc(4rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         {tabs.map((tab) => {
           const active = isActive(tab.href);
           const Icon = tab.icon;

@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import ThemeToggle from '@/components/theme-toggle';
 import TestimonialsCarousel from '@/components/testimonials-carousel';
+import Logo from '@/components/logo';
+import Footer from '@/components/footer';
 import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -16,10 +18,8 @@ export default async function LandingPage() {
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-[15px] font-bold tracking-tight">
-                <span className="text-primary">M</span>ECE
-              </span>
+            <Link href="/" className="flex items-center -ml-2">
+              <Logo variant="dark" className="scale-[0.65] origin-left -mr-[80px]" />
             </Link>
             <div className="hidden md:flex items-center gap-6">
               {[['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
@@ -581,23 +581,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
-      <footer className="border-t border-border bg-background py-6">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[14px] font-bold">
-              <span className="text-primary">M</span>ECE
-            </span>
-            <span className="text-[12px] text-muted-foreground">© {new Date().getFullYear()}</span>
-          </div>
-          <nav className="flex items-center gap-5">
-            {[['/', 'Home'], ['/methodology', 'Methodology'], ['/cases', 'Cases'], ['/gd-briefs', 'GD Briefs'], ['/leaderboard', 'Leaderboard']].map(([href, label]) => (
-              <Link key={href} href={href} className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">
-                {label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

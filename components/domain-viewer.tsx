@@ -135,30 +135,32 @@ function CaseCard({ entry }: { entry: CaseEntry }) {
       </DialogTrigger>
       
       {/* @ts-ignore - DialogContent from .jsx doesn't export children type */}
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-start gap-2 flex-wrap mb-2">
-            <span className="tag tag-navy text-[10px]">{entry.code}</span>
-            {entry.sector && (
-              <span className="tag tag-red text-[10px]">{entry.sector}</span>
-            )}
-            {entry.source && (
-              <span className="tag tag-green text-[10px]">{entry.source}</span>
-            )}
-          </div>
-          <DialogTitle className="text-xl leading-tight">{entry.title}</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="w-[92vw] sm:w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl p-0 gap-0 border-none shadow-2xl [&>button]:text-white [&>button]:opacity-70 hover:[&>button]:opacity-100 [&>button]:top-5 [&>button]:right-5">
+        <div className="bg-navy px-6 pt-8 pb-6 border-b border-navy-mid/50 relative">
+          <DialogHeader>
+            <div className="flex items-start gap-2 flex-wrap mb-3">
+              <span className="tag bg-white/10 text-white border-transparent text-[10px] backdrop-blur-sm">{entry.code}</span>
+              {entry.sector && (
+                <span className="tag bg-primary/20 text-primary-light border-transparent text-[10px] backdrop-blur-sm">{entry.sector}</span>
+              )}
+              {entry.source && (
+                <span className="tag bg-emerald-500/20 text-emerald-200 border-transparent text-[10px] backdrop-blur-sm">{entry.source}</span>
+              )}
+            </div>
+            <DialogTitle className="text-2xl font-bold leading-tight text-white pr-8">{entry.title}</DialogTitle>
+          </DialogHeader>
+        </div>
         
-        <div className="space-y-4 mt-2">
+        <div className="p-6 md:p-8 space-y-7 bg-card">
           {fields.map(({ key, label }) => {
             const val = entry[key];
             if (!val) return null;
             return (
               <div key={key}>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 border-l-2 border-primary/40 pl-2">
                   {label}
                 </p>
-                <p className="text-sm text-foreground/90 leading-relaxed mt-1 whitespace-pre-line">{val}</p>
+                <p className="text-[15px] text-foreground leading-relaxed whitespace-pre-line pl-2.5">{val}</p>
               </div>
             );
           })}

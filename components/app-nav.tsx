@@ -9,6 +9,7 @@ import TierBadge from '@/components/tier-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
+import Logo from '@/components/logo';
 
 /**
  * Full-bleed navy navigation bar.
@@ -28,15 +29,8 @@ export default function AppNav() {
 
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-8">
-          <Link href={user ? '/home' : '/'} className="flex items-center gap-2.5 group">
-            <span className="text-[17px] font-bold tracking-tightest leading-none">
-              <span className="text-primary">M</span>
-              <span className="text-navy-foreground">ECE</span>
-            </span>
-            <span className="hidden sm:block h-3.5 w-px bg-navy-mid" />
-            <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-widest text-navy-foreground/40 leading-none">
-              Placement prep
-            </span>
+          <Link href={user ? '/home' : '/'} className="flex items-center group -ml-2">
+            <Logo variant="light" className="scale-[0.7] origin-left -mr-[70px]" />
           </Link>
 
           {user && (
