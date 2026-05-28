@@ -35,6 +35,7 @@ export default async function AppLayout({
     subscription_expires_at: null,
     streak_count: 0,
     streak_last_date: null,
+    is_admin: false,
   };
 
   const user = (userRow as UserRow | null) || fallbackUser;

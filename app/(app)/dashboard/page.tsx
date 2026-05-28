@@ -40,6 +40,7 @@ export default async function DashboardPage() {
     subscription_expires_at: null,
     streak_count: 0,
     streak_last_date: null,
+    is_admin: false,
   };
   const recentSubs = (recentSubsRes.data as SubmissionRow[] | null) || [];
 
