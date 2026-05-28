@@ -3,93 +3,112 @@
 import React, { useState } from 'react';
 
 const cssString = `
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;700&display=swap');
-
-  
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap');
 
   .me-wrapper {
     width: 100%;
-    min-height: 500px;
+    min-height: 700px;
     background-color: transparent;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    padding-bottom: 40px;
   }
 
   .me-svg-container {
     width: 100%;
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid hsl(var(--border));
     background-color: hsl(var(--card));
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
   }
 
   @keyframes diagramEnter {
-    0% { opacity: 0; transform: scale(0.98) translateY(5px); }
+    0% { opacity: 0; transform: scale(0.99) translateY(10px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   .me-svg {
     width: 100%;
     height: auto;
-    animation: diagramEnter 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: diagramEnter 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  /* Typography */
-  .text-title {
+  /* Typography Scale for MASSIVE format */
+  .text-h1 {
     font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 22px;
+    font-size: 32px;
     font-weight: 700;
     fill: hsl(var(--navy));
+    letter-spacing: -0.02em;
   }
 
-  .text-header {
+  .text-h2 {
     font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 700;
     fill: white;
+    letter-spacing: 0.02em;
   }
 
-  .text-header-dark {
+  .text-h2-dark {
     font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 700;
+    fill: hsl(var(--navy));
+    letter-spacing: 0.02em;
+  }
+  
+  .text-h2-red {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    fill: hsl(var(--primary));
+    letter-spacing: 0.02em;
+  }
+
+  .text-body-lg {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
     fill: hsl(var(--navy));
   }
 
   .text-body {
     font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 10px;
+    font-size: 13px;
+    line-height: 1.5;
     fill: hsl(var(--navy));
   }
 
   .text-body-muted {
     font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 10px;
+    font-size: 13px;
+    line-height: 1.5;
     fill: hsl(var(--muted-foreground));
   }
 
-  .text-micro {
+  .text-mono {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 8px;
-    fill: hsl(var(--muted-foreground));
-  }
-
-  .text-mono-bold {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     fill: hsl(var(--navy));
+  }
+  
+  .text-mono-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    fill: hsl(var(--muted-foreground));
   }
 
   .text-formula {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
+    font-size: 18px;
     font-weight: 600;
     fill: hsl(var(--navy));
   }
@@ -99,31 +118,34 @@ const cssString = `
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    margin-top: 24px;
+    gap: 20px;
+    margin-top: 32px;
   }
 
   .me-nav-btn {
-    font-size: 18px;
+    font-size: 24px;
     color: hsl(var(--navy));
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px 12px;
+    padding: 8px 16px;
+    transition: color 0.2s, transform 0.2s;
   }
   .me-nav-btn:hover {
     color: hsl(var(--primary));
+    transform: scale(1.1);
   }
 
   .me-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: hsl(var(--border));
-  }
-  .me-dot.active {
     width: 8px;
     height: 8px;
+    border-radius: 50%;
+    background-color: hsl(var(--border));
+    transition: all 0.3s ease;
+  }
+  .me-dot.active {
+    width: 12px;
+    height: 12px;
     background-color: hsl(var(--primary));
   }
 `;
@@ -131,142 +153,136 @@ const cssString = `
 function Slide1() {
   return (
     <div className="me-svg-container" key="slide1">
-      <svg viewBox="0 0 900 500" className="me-svg">
+      <svg viewBox="0 0 1200 700" className="me-svg">
         <defs>
-          <pattern id="grid1" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#9CA3AF" strokeWidth="0.5" strokeOpacity="0.15" />
+          <pattern id="gridLarge" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#9CA3AF" strokeWidth="0.75" strokeOpacity="0.12" />
           </pattern>
+          <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.04" />
+          </filter>
         </defs>
-        <rect width="900" height="500" fill="url(#grid1)" />
+        
+        <rect width="1200" height="700" fill="url(#gridLarge)" />
+
+        {/* Header Ribbon */}
+        <rect x="0" y="0" width="1200" height="6" fill="hsl(var(--navy))" />
+        <rect x="0" y="0" width="200" height="6" fill="hsl(var(--primary))" />
 
         {/* Title */}
-        <rect x="30" y="25" width="4" height="24" fill="hsl(var(--primary))" />
-        <text x="44" y="44" className="text-title">Market Entry Framework</text>
-        <path d="M 30 60 L 870 60" stroke="hsl(var(--navy))" strokeWidth="2" opacity="0.8" />
+        <text x="50" y="65" className="text-h1">Market Entry Framework</text>
+        <path d="M 50 85 L 1150 85" stroke="hsl(var(--border))" strokeWidth="2" opacity="0.8" />
 
-        {/* LEFT SIDEBAR - Initial Questions */}
-        <rect x="30" y="80" width="220" height="390" fill="white" stroke="hsl(var(--border))" strokeWidth="1" rx="6" />
-        <rect x="30" y="80" width="220" height="36" fill="hsl(var(--navy))" rx="6" />
-        {/* Fix top rounded corners only for header */}
-        <rect x="30" y="100" width="220" height="16" fill="hsl(var(--navy))" />
+        {/* LEFT SIDEBAR - Initial Questions (w=280) */}
+        <g filter="url(#shadow)">
+          <rect x="50" y="120" width="280" height="530" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" rx="10" />
+          <path d="M 50 130 Q 50 120 60 120 L 320 120 Q 330 120 330 130 L 330 170 L 50 170 Z" fill="hsl(var(--navy))" />
+        </g>
         
-        <text x="45" y="102" className="text-header">Initial Questions</text>
+        <text x="190" y="152" className="text-h2" textAnchor="middle">Initial Questions</text>
         
-        <g className="text-body" transform="translate(45, 135)">
-          <circle cx="-6" cy="-3" r="2" fill="hsl(var(--primary))" />
-          <text y="0">Clarify objective, growth</text>
-          <text y="14">quantum and targeted timeline.</text>
+        <g className="text-body-lg" transform="translate(75, 210)">
+          <circle cx="-10" cy="-5" r="4" fill="hsl(var(--primary))" />
+          <text y="0" style={{fontWeight: 600}}>Objective &amp; Timeline</text>
+          <text y="22" className="text-body-muted">Clarify the growth quantum</text>
+          <text y="42" className="text-body-muted">and targeted launch date.</text>
           
-          <circle cx="-6" cy="37" r="2" fill="hsl(var(--primary))" />
-          <text y="40">Geography: Why are we looking</text>
-          <text y="54">into this geography? Have they</text>
-          <text y="68">launched this product in</text>
-          <text y="82">another market?</text>
+          <circle cx="-10" cy="85" r="4" fill="hsl(var(--primary))" />
+          <text y="90" style={{fontWeight: 600}}>Geography Rationale</text>
+          <text y="112" className="text-body-muted">Why this specific region?</text>
+          <text y="132" className="text-body-muted">Is it a proven market?</text>
           
-          <circle cx="-6" cy="107" r="2" fill="hsl(var(--primary))" />
-          <text y="110">Business Model: Where does</text>
-          <text y="124">the firm lie in the value chain?</text>
+          <circle cx="-10" cy="175" r="4" fill="hsl(var(--primary))" />
+          <text y="180" style={{fontWeight: 600}}>Value Chain</text>
+          <text y="202" className="text-body-muted">Where does the firm intend</text>
+          <text y="222" className="text-body-muted">to operate in the chain?</text>
           
-          <circle cx="-6" cy="147" r="2" fill="hsl(var(--primary))" />
-          <text y="150">Who are the target customers?</text>
-          <text y="164">Market size &amp; price sensitivity.</text>
+          <circle cx="-10" cy="265" r="4" fill="hsl(var(--primary))" />
+          <text y="270" style={{fontWeight: 600}}>Target Customers</text>
+          <text y="292" className="text-body-muted">Assess market size &amp; price</text>
+          <text y="312" className="text-body-muted">sensitivity of the segment.</text>
           
-          <circle cx="-6" cy="187" r="2" fill="hsl(var(--primary))" />
-          <text y="190">What are the existing products,</text>
-          <text y="204">services, &amp; capabilities of the</text>
-          <text y="218">firm? Any differentiating features?</text>
-          
-          <circle cx="-6" cy="247" r="2" fill="hsl(var(--primary))" />
-          <text y="250">Pricing - given or required?</text>
-          <text y="264">Ask for targeted margin.</text>
-          
-          <circle cx="-6" cy="287" r="2" fill="hsl(var(--primary))" />
-          <text y="290">What is the competitive</text>
-          <text y="304">landscape?</text>
+          <circle cx="-10" cy="355" r="4" fill="hsl(var(--primary))" />
+          <text y="360" style={{fontWeight: 600}}>Product &amp; Differentiator</text>
+          <text y="382" className="text-body-muted">What are existing capabilities?</text>
+          <text y="402" className="text-body-muted">Are there new features?</text>
         </g>
 
         {/* RIGHT AREA - 4 Pillars */}
-        {/* Customer */}
-        <rect x="270" y="80" width="135" height="230" fill="white" stroke="hsl(var(--border))" strokeWidth="1" rx="4" />
-        <rect x="270" y="80" width="135" height="30" fill="hsl(var(--navy))" rx="4" />
-        <rect x="270" y="100" width="135" height="10" fill="hsl(var(--navy))" />
-        <text x="337" y="100" className="text-header" textAnchor="middle">Customer</text>
-        
-        <g className="text-body-muted" transform="translate(285, 130)">
-          <text y="0">- Segments</text>
-          <text y="20">- Needs &amp; Pain Points</text>
-          <text y="40">- Size &amp; Growth</text>
-          <text y="60">- Target Group</text>
-          <text y="80">- Market Share</text>
-          <text y="100">- Price Sensitivity</text>
-        </g>
+        <g filter="url(#shadow)">
+          {/* Customer */}
+          <rect x="360" y="120" width="180" height="310" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" rx="8" />
+          <path d="M 360 128 Q 360 120 368 120 L 532 120 Q 540 120 540 128 L 540 165 L 360 165 Z" fill="hsl(var(--navy))" opacity="0.95" />
+          <text x="450" y="148" className="text-h2" textAnchor="middle">Customer</text>
+          <g className="text-body" transform="translate(380, 200)">
+            <text y="0">• Segments</text>
+            <text y="30">• Needs &amp; Pains</text>
+            <text y="60">• Size &amp; Growth</text>
+            <text y="90">• Target Group</text>
+            <text y="120">• Market Share</text>
+            <text y="150">• Price Sensitivity</text>
+          </g>
 
-        {/* Company */}
-        <rect x="420" y="80" width="135" height="230" fill="white" stroke="hsl(var(--border))" strokeWidth="1" rx="4" />
-        <rect x="420" y="80" width="135" height="30" fill="hsl(var(--navy))" rx="4" />
-        <rect x="420" y="100" width="135" height="10" fill="hsl(var(--navy))" />
-        <text x="487" y="100" className="text-header" textAnchor="middle">Company</text>
-        
-        <g className="text-body-muted" transform="translate(435, 130)">
-          <text y="0">- Product Mix</text>
-          <text y="20">- Resources &amp; Assets</text>
-          <text y="40">- Value Chain Analysis</text>
-          <text y="54" className="text-micro">(Procurement,</text>
-          <text y="66" className="text-micro"> Production,</text>
-          <text y="78" className="text-micro"> Distribution)</text>
-          <text y="98">- Financial Analysis</text>
-          <text y="112" className="text-micro">(Break-even point)</text>
-        </g>
+          {/* Company */}
+          <rect x="560" y="120" width="180" height="310" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" rx="8" />
+          <path d="M 560 128 Q 560 120 568 120 L 732 120 Q 740 120 740 128 L 740 165 L 560 165 Z" fill="hsl(var(--navy))" opacity="0.95" />
+          <text x="650" y="148" className="text-h2" textAnchor="middle">Company</text>
+          <g className="text-body" transform="translate(580, 200)">
+            <text y="0">• Product Mix</text>
+            <text y="30">• Resources</text>
+            <text y="60">• Value Chain</text>
+            <text y="80" className="text-mono-sub">  - Procurement</text>
+            <text y="98" className="text-mono-sub">  - Production</text>
+            <text y="116" className="text-mono-sub">  - Distribution</text>
+            <text y="146">• Break-even Pt.</text>
+          </g>
 
-        {/* Competition */}
-        <rect x="570" y="80" width="135" height="230" fill="white" stroke="hsl(var(--border))" strokeWidth="1" rx="4" />
-        <rect x="570" y="80" width="135" height="30" fill="hsl(var(--navy))" rx="4" />
-        <rect x="570" y="100" width="135" height="10" fill="hsl(var(--navy))" />
-        <text x="637" y="100" className="text-header" textAnchor="middle">Competition</text>
-        
-        <g className="text-body-muted" transform="translate(585, 130)">
-          <text y="0">- No. of competitors</text>
-          <text y="14" className="text-micro">  &amp; market share</text>
-          <text y="34">- SWOT Analysis</text>
-          <text y="54">- 4Ps Strategy</text>
-          <text y="74">- Barriers to entry:</text>
-          <text y="88" className="text-micro">  · Regulations</text>
-          <text y="100" className="text-micro">  · Supplier Power</text>
-          <text y="112" className="text-micro">  · Financial Const.</text>
-        </g>
+          {/* Competition */}
+          <rect x="760" y="120" width="180" height="310" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" rx="8" />
+          <path d="M 760 128 Q 760 120 768 120 L 932 120 Q 940 120 940 128 L 940 165 L 760 165 Z" fill="hsl(var(--navy))" opacity="0.95" />
+          <text x="850" y="148" className="text-h2" textAnchor="middle">Competition</text>
+          <g className="text-body" transform="translate(780, 200)">
+            <text y="0">• Market Share</text>
+            <text y="30">• SWOT Analysis</text>
+            <text y="60">• 4Ps Strategy</text>
+            <text y="90">• Barriers:</text>
+            <text y="110" className="text-mono-sub">  - Regulations</text>
+            <text y="128" className="text-mono-sub">  - Supplier Power</text>
+            <text y="146" className="text-mono-sub">  - Capital Cost</text>
+          </g>
 
-        {/* Product / Gap */}
-        <rect x="720" y="80" width="135" height="230" fill="white" stroke="hsl(var(--border))" strokeWidth="1" rx="4" />
-        <rect x="720" y="80" width="135" height="30" fill="hsl(var(--navy))" rx="4" />
-        <rect x="720" y="100" width="135" height="10" fill="hsl(var(--navy))" />
-        <text x="787" y="100" className="text-header" textAnchor="middle">Product / Gap</text>
-        
-        <g className="text-body-muted" transform="translate(735, 130)">
-          <text y="0">- Gap between</text>
-          <text y="14" className="text-micro">  customer expectation</text>
-          <text y="26" className="text-micro">  &amp; available products</text>
-          <text y="46">- Unique Value Prop</text>
-          <text y="66">- Margin Potential</text>
-          <text y="86">- Substitutes</text>
+          {/* Product */}
+          <rect x="960" y="120" width="180" height="310" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" rx="8" />
+          <path d="M 960 128 Q 960 120 968 120 L 1132 120 Q 1140 120 1140 128 L 1140 165 L 960 165 Z" fill="hsl(var(--navy))" opacity="0.95" />
+          <text x="1050" y="148" className="text-h2" textAnchor="middle">Product Gap</text>
+          <g className="text-body" transform="translate(980, 200)">
+            <text y="0">• Customer Gap</text>
+            <text y="30">• Unique Value</text>
+            <text y="60">• Margin Potential</text>
+            <text y="90">• Substitutes</text>
+            <text y="120">• Regulatory Fit</text>
+          </g>
         </g>
 
         {/* RIGHT AREA BOTTOM - Economic Feasibility */}
-        <rect x="270" y="330" width="585" height="140" fill="rgba(255,255,255,0.7)" stroke="hsl(var(--border))" strokeWidth="1" rx="6" />
-        <path d="M 270 330 L 270 470" stroke="hsl(var(--primary))" strokeWidth="6" />
+        <g filter="url(#shadow)">
+          <rect x="360" y="460" width="780" height="190" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" rx="10" />
+          <rect x="360" y="460" width="8" height="190" fill="hsl(var(--primary))" rx="4" />
+        </g>
         
-        <text x="290" y="360" className="text-mono-bold" fill="hsl(var(--primary))">ECONOMIC ANALYSIS (IS IT WORTH IT?)</text>
+        <text x="395" y="505" className="text-mono" fill="hsl(var(--primary))">ECONOMIC ANALYSIS (IS IT WORTH IT?)</text>
         
-        <rect x="290" y="375" width="540" height="40" fill="rgba(27,42,74,0.04)" rx="4" />
-        <text x="305" y="400" className="text-formula">
+        <rect x="395" y="525" width="710" height="50" fill="hsl(var(--navy))" fillOpacity="0.04" rx="6" stroke="hsl(var(--navy))" strokeOpacity="0.1" strokeWidth="1" />
+        <text x="420" y="557" className="text-formula">
           Profit = ( Market Size × Market Share × (Price − Variable Cost) ) − Fixed Cost
         </text>
         
-        <g className="text-body" transform="translate(290, 440)">
-          <circle cx="4" cy="-3" r="2" fill="hsl(var(--navy))" opacity="0.5" />
-          <text x="12" y="0">Market size &amp; share may often require you to undertake a guesstimate.</text>
+        <g className="text-body-lg" transform="translate(395, 605)">
+          <circle cx="6" cy="-5" r="4" fill="hsl(var(--navy))" opacity="0.4" />
+          <text x="22" y="0">Market size &amp; share may often require you to undertake a guesstimate.</text>
           
-          <circle cx="4" cy="15" r="2" fill="hsl(var(--navy))" opacity="0.5" />
-          <text x="12" y="18">Operational Feasibility: Regulatory/other barriers in setting up a value chain.</text>
+          <circle cx="6" cy="25" r="4" fill="hsl(var(--navy))" opacity="0.4" />
+          <text x="22" y="30">Operational Feasibility: Evaluate regulatory &amp; partner constraints in setting up the value chain.</text>
         </g>
       </svg>
     </div>
@@ -276,123 +292,124 @@ function Slide1() {
 function Slide2() {
   return (
     <div className="me-svg-container" key="slide2">
-      <svg viewBox="0 0 900 500" className="me-svg">
+      <svg viewBox="0 0 1200 700" className="me-svg">
         <defs>
-          <pattern id="grid2" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#9CA3AF" strokeWidth="0.5" strokeOpacity="0.15" />
+          <pattern id="gridLarge2" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#9CA3AF" strokeWidth="0.75" strokeOpacity="0.12" />
           </pattern>
+          <filter id="shadow2" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.04" />
+          </filter>
         </defs>
-        <rect width="900" height="500" fill="url(#grid2)" />
+        
+        <rect width="1200" height="700" fill="url(#gridLarge2)" />
+
+        {/* Header Ribbon */}
+        <rect x="0" y="0" width="1200" height="6" fill="hsl(var(--navy))" />
+        <rect x="0" y="0" width="200" height="6" fill="hsl(var(--primary))" />
 
         {/* Title */}
-        <rect x="30" y="25" width="4" height="24" fill="hsl(var(--primary))" />
-        <text x="44" y="44" className="text-title">Market Entry Framework</text>
-        <path d="M 30 60 L 870 60" stroke="hsl(var(--navy))" strokeWidth="2" opacity="0.8" />
+        <text x="50" y="65" className="text-h1">Market Entry Framework</text>
+        <path d="M 50 85 L 1150 85" stroke="hsl(var(--border))" strokeWidth="2" opacity="0.8" />
 
         {/* LEFT SIDEBAR TAGS */}
-        <rect x="30" y="80" width="140" height="190" fill="hsl(var(--primary))" rx="4" />
-        <text x="100" y="175" className="text-header" textAnchor="middle">Risks Involved</text>
+        <rect x="50" y="120" width="200" height="260" fill="hsl(var(--primary))" rx="8" filter="url(#shadow2)" />
+        <text x="150" y="255" className="text-h2" textAnchor="middle">Risks Involved</text>
 
-        <rect x="30" y="280" width="140" height="190" fill="hsl(var(--navy))" rx="4" />
-        <text x="100" y="375" className="text-header" textAnchor="middle">Modes of Entry</text>
+        <rect x="50" y="400" width="200" height="260" fill="hsl(var(--navy))" rx="8" filter="url(#shadow2)" />
+        <text x="150" y="535" className="text-h2" textAnchor="middle">Modes of Entry</text>
 
         {/* TOP - Risks Tree */}
-        <g strokeWidth="1.5" stroke="hsl(var(--navy))" fill="none" opacity="0.3">
-          <path d="M 530 110 L 530 130 L 380 130 L 380 140" />
-          <path d="M 530 130 L 680 130 L 680 140" />
+        <g strokeWidth="2" stroke="hsl(var(--navy))" fill="none" opacity="0.4">
+          <path d="M 700 160 L 700 200 L 500 200 L 500 215" />
+          <path d="M 700 200 L 900 200 L 900 215" />
           
-          <path d="M 680 170 L 680 190 L 560 190 L 560 200" />
-          <path d="M 680 190 L 800 190 L 800 200" />
+          <path d="M 900 265 L 900 300 L 750 300 L 750 315" />
+          <path d="M 900 300 L 1050 300 L 1050 315" />
         </g>
 
-        <rect x="470" y="80" width="120" height="30" fill="white" stroke="hsl(var(--primary))" strokeWidth="1.5" rx="4" />
-        <text x="530" y="100" className="text-header-dark" textAnchor="middle">Risks</text>
+        <g filter="url(#shadow2)">
+          <rect x="620" y="110" width="160" height="50" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="2" rx="8" />
+          <text x="700" y="140" className="text-h2-dark" textAnchor="middle">Risks</text>
 
-        <rect x="320" y="140" width="120" height="30" fill="white" stroke="hsl(var(--primary))" strokeWidth="1.5" rx="4" />
-        <text x="380" y="160" className="text-header-dark" textAnchor="middle">Internal</text>
-        <text x="380" y="185" className="text-micro" textAnchor="middle">- Constraints</text>
-        <text x="380" y="197" className="text-micro" textAnchor="middle">- Resources</text>
+          <rect x="420" y="215" width="160" height="50" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="2" rx="8" />
+          <text x="500" y="245" className="text-h2-dark" textAnchor="middle">Internal</text>
+          <text x="500" y="280" className="text-mono-sub" textAnchor="middle">Constraints &amp; Resources</text>
 
-        <rect x="620" y="140" width="120" height="30" fill="white" stroke="hsl(var(--primary))" strokeWidth="1.5" rx="4" />
-        <text x="680" y="160" className="text-header-dark" textAnchor="middle">External</text>
+          <rect x="820" y="215" width="160" height="50" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="2" rx="8" />
+          <text x="900" y="245" className="text-h2-dark" textAnchor="middle">External</text>
 
-        <rect x="500" y="200" width="120" height="30" fill="white" stroke="hsl(var(--primary))" strokeWidth="1.5" rx="4" />
-        <text x="560" y="220" className="text-header-dark" textAnchor="middle">Industry Level</text>
-        <text x="560" y="245" className="text-micro" textAnchor="middle">- Competitors / Barrier</text>
+          <rect x="670" y="315" width="160" height="50" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="2" rx="8" />
+          <text x="750" y="345" className="text-h2-dark" textAnchor="middle">Industry Level</text>
+          <text x="750" y="380" className="text-mono-sub" textAnchor="middle">Competitors &amp; Barriers</text>
 
-        <rect x="740" y="200" width="120" height="30" fill="white" stroke="hsl(var(--primary))" strokeWidth="1.5" rx="4" />
-        <text x="800" y="220" className="text-header-dark" textAnchor="middle">Macro Factors</text>
-        <text x="800" y="245" className="text-micro" textAnchor="middle">- PESTEL / Govt.</text>
+          <rect x="970" y="315" width="160" height="50" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="2" rx="8" />
+          <text x="1050" y="345" className="text-h2-dark" textAnchor="middle">Macro Factors</text>
+          <text x="1050" y="380" className="text-mono-sub" textAnchor="middle">PESTEL &amp; Regulations</text>
+        </g>
 
         {/* BOTTOM - Modes of Entry Tree */}
-        <path d="M 190 270 L 870 270" stroke="hsl(var(--border))" strokeWidth="1" strokeDasharray="4 4" />
+        <path d="M 280 390 L 1150 390" stroke="hsl(var(--border))" strokeWidth="2" strokeDasharray="6 6" />
 
-        <g strokeWidth="1.5" stroke="hsl(var(--navy))" fill="none" opacity="0.3">
-          <path d="M 530 310 L 530 330 L 280 330 L 280 340" />
-          <path d="M 530 330 L 446 330 L 446 340" />
-          <path d="M 530 330 L 613 330 L 613 340" />
-          <path d="M 530 330 L 780 330 L 780 340" />
+        <g strokeWidth="2" stroke="hsl(var(--navy))" fill="none" opacity="0.4">
+          <path d="M 700 450 L 700 490 L 400 490 L 400 500" />
+          <path d="M 700 490 L 600 490 L 600 500" />
+          <path d="M 700 490 L 800 490 L 800 500" />
+          <path d="M 700 490 L 1000 490 L 1000 500" />
         </g>
 
-        <rect x="460" y="280" width="140" height="30" fill="hsl(var(--navy))" rx="4" />
-        <text x="530" y="300" className="text-header" textAnchor="middle">How to Enter</text>
+        <g filter="url(#shadow2)">
+          <rect x="610" y="410" width="180" height="40" fill="hsl(var(--navy))" rx="6" />
+          <text x="700" y="437" className="text-h2" textAnchor="middle">How to Enter</text>
 
-        {/* Mode 1: Organic */}
-        <rect x="210" y="340" width="140" height="40" fill="white" stroke="hsl(var(--navy))" strokeWidth="1" rx="4" />
-        <text x="280" y="358" className="text-header-dark" textAnchor="middle">Organic</text>
-        <text x="280" y="370" className="text-micro" textAnchor="middle">(Greenfield)</text>
-        
-        <g className="text-body" transform="translate(210, 400)">
-          <text fill="hsl(var(--success))">+ Retain business control</text>
-          <text y="16" fill="hsl(var(--success))">+ Build experience curve</text>
-          <text y="32" fill="hsl(var(--success))">+ Boosts brand image</text>
-          
-          <text y="52" fill="hsl(var(--primary))">- High capex required</text>
-          <text y="68" fill="hsl(var(--primary))">- High time commitment</text>
+          {/* Mode 1: Organic */}
+          <rect x="310" y="500" width="180" height="50" fill="hsl(var(--card))" stroke="hsl(var(--navy))" strokeWidth="2" rx="8" />
+          <text x="400" y="522" className="text-h2-dark" textAnchor="middle">Organic</text>
+          <text x="400" y="540" className="text-mono-sub" textAnchor="middle">(Greenfield)</text>
+          <g className="text-body" transform="translate(310, 580)">
+            <text fill="hsl(var(--success))" style={{fontWeight:600}}>+ Retain full control</text>
+            <text y="22" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Build experience</text>
+            <text y="44" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Boosts brand</text>
+            <text y="74" fill="hsl(var(--primary))" style={{fontWeight:600}}>- High capex</text>
+            <text y="96" fill="hsl(var(--primary))" style={{fontWeight:600}}>- Slow to scale</text>
+          </g>
+
+          {/* Mode 2: JV */}
+          <rect x="510" y="500" width="180" height="50" fill="hsl(var(--card))" stroke="hsl(var(--navy))" strokeWidth="2" rx="8" />
+          <text x="600" y="522" className="text-h2-dark" textAnchor="middle">Joint Venture</text>
+          <text x="600" y="540" className="text-mono-sub" textAnchor="middle">(Partnership)</text>
+          <g className="text-body" transform="translate(510, 580)">
+            <text fill="hsl(var(--success))" style={{fontWeight:600}}>+ Less investment</text>
+            <text y="22" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Local expertise</text>
+            <text y="44" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Fast scale</text>
+            <text y="74" fill="hsl(var(--primary))" style={{fontWeight:600}}>- Limited control</text>
+            <text y="96" fill="hsl(var(--primary))" style={{fontWeight:600}}>- Brand dilution</text>
+          </g>
+
+          {/* Mode 3: Acquisition */}
+          <rect x="710" y="500" width="180" height="50" fill="hsl(var(--card))" stroke="hsl(var(--navy))" strokeWidth="2" rx="8" />
+          <text x="800" y="522" className="text-h2-dark" textAnchor="middle">Acquisition</text>
+          <text x="800" y="540" className="text-mono-sub" textAnchor="middle">(Brownfield)</text>
+          <g className="text-body" transform="translate(710, 580)">
+            <text fill="hsl(var(--success))" style={{fontWeight:600}}>+ Immediate scope</text>
+            <text y="22" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Utilize local brand</text>
+            <text y="44" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Synergies</text>
+            <text y="74" fill="hsl(var(--primary))" style={{fontWeight:600}}>- High investment</text>
+            <text y="96" fill="hsl(var(--primary))" style={{fontWeight:600}}>- Integration risk</text>
+          </g>
+
+          {/* Mode 4: Outsourcing */}
+          <rect x="910" y="500" width="180" height="50" fill="hsl(var(--card))" stroke="hsl(var(--navy))" strokeWidth="2" rx="8" />
+          <text x="1000" y="522" className="text-h2-dark" textAnchor="middle">Outsourcing</text>
+          <text x="1000" y="540" className="text-mono-sub" textAnchor="middle">(Export / Franchise)</text>
+          <g className="text-body" transform="translate(910, 580)">
+            <text fill="hsl(var(--success))" style={{fontWeight:600}}>+ Lowest fixed cost</text>
+            <text y="22" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Fast market test</text>
+            <text y="44" fill="hsl(var(--success))" style={{fontWeight:600}}>+ Flexibility</text>
+            <text y="74" fill="hsl(var(--primary))" style={{fontWeight:600}}>- Low quality control</text>
+            <text y="96" fill="hsl(var(--primary))" style={{fontWeight:600}}>- Dependency risk</text>
+          </g>
         </g>
-
-        {/* Mode 2: JV */}
-        <rect x="376" y="340" width="140" height="40" fill="white" stroke="hsl(var(--navy))" strokeWidth="1" rx="4" />
-        <text x="446" y="358" className="text-header-dark" textAnchor="middle">Joint Venture</text>
-        <text x="446" y="370" className="text-micro" textAnchor="middle">(Partnership)</text>
-
-        <g className="text-body" transform="translate(376, 400)">
-          <text fill="hsl(var(--success))">+ Less investment</text>
-          <text y="16" fill="hsl(var(--success))">+ Local expertise &amp; network</text>
-          <text y="32" fill="hsl(var(--success))">+ Fast scale &amp; scope</text>
-          
-          <text y="52" fill="hsl(var(--primary))">- Limited control</text>
-          <text y="68" fill="hsl(var(--primary))">- Brand dilution risk</text>
-        </g>
-
-        {/* Mode 3: Acquisition */}
-        <rect x="543" y="340" width="140" height="40" fill="white" stroke="hsl(var(--navy))" strokeWidth="1" rx="4" />
-        <text x="613" y="358" className="text-header-dark" textAnchor="middle">Acquisition</text>
-        <text x="613" y="370" className="text-micro" textAnchor="middle">(Brownfield)</text>
-
-        <g className="text-body" transform="translate(543, 400)">
-          <text fill="hsl(var(--success))">+ Immediate market scope</text>
-          <text y="16" fill="hsl(var(--success))">+ Utilize local established brand</text>
-          <text y="32" fill="hsl(var(--success))">+ Produce synergies</text>
-          
-          <text y="52" fill="hsl(var(--primary))">- Significant investment</text>
-          <text y="68" fill="hsl(var(--primary))">- Integration complexities</text>
-        </g>
-
-        {/* Mode 4: Outsourcing */}
-        <rect x="710" y="340" width="140" height="40" fill="white" stroke="hsl(var(--navy))" strokeWidth="1" rx="4" />
-        <text x="780" y="358" className="text-header-dark" textAnchor="middle">Outsourcing</text>
-        <text x="780" y="370" className="text-micro" textAnchor="middle">(Exporting / Franchising)</text>
-
-        <g className="text-body" transform="translate(710, 400)">
-          <text fill="hsl(var(--success))">+ Lowest fixed cost</text>
-          <text y="16" fill="hsl(var(--success))">+ Speed to test market</text>
-          <text y="32" fill="hsl(var(--success))">+ High flexibility</text>
-          
-          <text y="52" fill="hsl(var(--primary))">- Low quality control</text>
-          <text y="68" fill="hsl(var(--primary))">- Margin leakage / Dependency</text>
-        </g>
-
       </svg>
     </div>
   );
@@ -409,11 +426,11 @@ export default function MarketEntryFramework() {
       
       <div className="me-nav">
         <button className="me-nav-btn" onClick={() => setSlide(1)}>←</button>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <div className={`me-dot ${slide === 1 ? 'active' : ''}`} />
           <div className={`me-dot ${slide === 2 ? 'active' : ''}`} />
         </div>
-        <span className="text-mono-bold" style={{ margin: '0 8px' }}>
+        <span className="text-mono" style={{ margin: '0 8px' }}>
           0{slide} / 02
         </span>
         <button className="me-nav-btn" onClick={() => setSlide(2)}>→</button>
