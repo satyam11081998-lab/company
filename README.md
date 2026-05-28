@@ -248,3 +248,27 @@ That's it. The frontend deploys statelessly — all data lives in Supabase.
 ## 🪪 License
 
 Private — © MECE. All rights reserved.
+
+---
+
+## 📝 Recent Changelog (Not yet committed)
+
+### 1. Global Branding & UI Polish
+- **Logo Integration**: Replaced raw text headers with professional SVG MECE logos (Abstract Nodes, Neon Pyramid, Origami Crane, etc.) across the `AppNav`, `HomeContent`, and `DashboardClient`.
+- **Global Footer**: Implemented a comprehensive `Footer.tsx` across the app providing aesthetic consistency, quick links, and a unified branding strip at the bottom of every page.
+- **Mobile Responsiveness**: Fixed horizontal scrolling overflow bugs on mobile devices.
+- **Bottom Navigation Bar**: Adjusted padding and transparency rules so the bottom nav remains visible on white backgrounds, without layout shifting when scrolling.
+
+### 2. D4 Profitability Curriculum Overhaul
+- **Static Route Override**: Created `app/(app)/learn/profitability/page.tsx` to seamlessly override the dynamic `[slug]` route for D4, allowing for a fully bespoke layout.
+- **Custom Interactive SVGs (`profitability-visuals.tsx`)**: Built 8 large-scale analytical diagrams from scratch:
+  - 4-Tier Master Profit Tree (with click-to-scroll interaction)
+  - Customer Journey Funnel (with India-specific distortions)
+  - 2x2 SKU Revenue/Margin Matrix
+  - 8-node Value Chain Cost Map (with India Alerts)
+  - PESTEL India Hexagon
+  - Trade Margin Waterfall (MRP to NRR)
+  - PPI Speedometer Gauge
+  - Capital Allocation Matrix
+- **MBB-Grade Content**: Rendered the Surya Biscuits case comparison, India-native distortions (kirana margin stack, GST cascade, UPI impulse-kill), and 3 interactive curveball questions directly into the module architecture.
+- **Design System Compliance**: Aligned all custom semantic colors (teal for revenue, coral for cost) perfectly with the existing Tailwind variables and "Medusa" aesthetics.
