@@ -11,6 +11,7 @@ export interface UserRow {
   avatar_url: string | null;
   points: number;
   created_at: string;
+  is_admin: boolean;
   subscription_tier: SubscriptionTier;
   subscription_started_at: string | null;
   subscription_expires_at: string | null;
