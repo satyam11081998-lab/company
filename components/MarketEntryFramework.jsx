@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const cssString = `
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;700&display=swap');
@@ -16,258 +16,89 @@ const cssString = `
 
   .me-wrapper {
     width: 100%;
-    min-height: 480px;
-    background-color: var(--surface);
-    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 20 0 L 0 0 0 20' fill='none' stroke='%239CA3AF' stroke-width='0.5' stroke-opacity='0.12'/%3E%3C/svg%3E");
-    position: relative;
+    min-height: 500px;
+    background-color: transparent;
     display: flex;
     flex-direction: column;
-    padding: 32px;
     box-sizing: border-box;
+  }
+
+  .me-svg-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
     overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   }
 
   @keyframes diagramEnter {
-    from {
-      opacity: 0;
-      transform: scale(0.98) translateY(5px);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
+    0% { opacity: 0; transform: scale(0.98) translateY(5px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
   }
 
-  .me-slide-container {
-    animation: diagramEnter 400ms cubic-bezier(0.16, 1, 0.32, 1) both;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  .me-svg {
+    width: 100%;
+    height: auto;
+    animation: diagramEnter 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  /* Typography Roles */
-  .role-a {
+  /* Typography */
+  .text-title {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    fill: var(--navy);
+  }
+
+  .text-header {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    fill: white;
+  }
+
+  .text-header-dark {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    fill: var(--navy);
+  }
+
+  .text-body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--navy);
+  }
+
+  .text-body-muted {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 10px;
+    fill: var(--muted-fg);
+  }
+
+  .text-micro {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    fill: var(--muted-fg);
+  }
+
+  .text-mono-bold {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 9px;
     font-weight: 600;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--navy);
+    fill: var(--navy);
   }
 
-  .role-b {
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--navy);
-    line-height: 1.2;
-  }
-
-  .role-c {
+  .text-formula {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 7.5px;
-    color: var(--muted-fg);
-    line-height: 1.5;
-  }
-
-  .role-d {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.04em;
-    color: var(--navy);
-  }
-
-  /* Slide 1 Styles */
-  .me-title-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-  }
-
-  .me-title-bar {
-    width: 3px;
-    height: 20px;
-    background-color: var(--primary);
-    margin-right: 10px;
-    display: inline-block;
-  }
-
-  .me-title-text {
-    font-size: 18px;
-  }
-
-  .me-zone-a {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    margin-bottom: 16px;
-  }
-  .me-zone-a::-webkit-scrollbar {
-    display: none;
-  }
-
-  .me-chip {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 5px 10px;
-    background: transparent;
-    color: var(--navy);
-    white-space: nowrap;
-  }
-
-  .me-zone-b {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .me-pillar-card {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.55);
-    padding: 14px;
-    backdrop-filter: blur(3px);
-  }
-
-  .me-pillar-header {
-    background-color: var(--navy);
-    border-radius: 4px;
-    padding: 4px 8px;
-    display: inline-block;
-    margin-bottom: 8px;
-  }
-  .me-pillar-header .role-a {
-    color: white;
-  }
-
-  .me-bullet-list {
-    list-style-type: disc;
-    padding-left: 14px;
-    margin: 0;
-  }
-  .me-bullet-list li {
-    padding-bottom: 2px;
-  }
-
-  .me-zone-c {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-
-  .me-flat-card {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 12px 16px;
-    background: transparent;
-  }
-
-  /* SVG Animations for Slide 1 */
-  @keyframes drawLine {
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-  @keyframes fadeInNode {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .path-l {
-    stroke-dasharray: 100;
-    stroke-dashoffset: 100;
-    animation: drawLine 800ms cubic-bezier(0.16, 1, 0.32, 1) 100ms forwards;
-  }
-  .path-r {
-    stroke-dasharray: 100;
-    stroke-dashoffset: 100;
-    animation: drawLine 800ms cubic-bezier(0.16, 1, 0.32, 1) 200ms forwards;
-  }
-  .path-r-sub {
-    stroke-dasharray: 100;
-    stroke-dashoffset: 100;
-    animation: drawLine 800ms cubic-bezier(0.16, 1, 0.32, 1) 350ms forwards;
-  }
-
-  .node-l { opacity: 0; animation: fadeInNode 400ms ease forwards 900ms; }
-  .node-r { opacity: 0; animation: fadeInNode 400ms ease forwards 1000ms; }
-  .node-r-sub { opacity: 0; animation: fadeInNode 400ms ease forwards 1150ms; }
-
-  /* Slide 2 Styles */
-  .me-table-container {
-    position: relative;
-    border: 1px solid var(--border);
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-
-  .me-table {
-    display: grid;
-    grid-template-columns: 90px 1fr 1fr 1fr 1fr;
-  }
-
-  .me-cell {
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    padding: 10px;
-    background: transparent;
-  }
-  .me-cell:last-child {
-    border-right: none;
-  }
-  .me-row:last-child .me-cell {
-    border-bottom: none;
-  }
-
-  .me-th {
-    background-color: var(--navy);
-    color: white;
-    padding: 8px 10px;
-    border-right: 1px solid var(--border);
-  }
-  .me-th:last-child {
-    border-right: none;
-  }
-
-  .me-row-header {
-    background: rgba(27, 42, 74, 0.06);
-    display: flex;
-    align-items: center;
-  }
-
-  .me-trigger-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-
-  .me-trigger-card {
-    border: 1px solid var(--navy);
-    border-radius: 6px;
-    padding: 10px 14px;
-    background: transparent;
-  }
-  .me-trigger-card.primary {
-    border-color: var(--primary);
-  }
-  .me-trigger-card.primary .role-a {
-    color: var(--primary);
-  }
-
-  @keyframes scanLine { 
-    from { top: 0%; opacity: 1; } 
-    to { top: 100%; opacity: 0; } 
-  }
-  .me-scanline {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background-color: var(--primary);
-    z-index: 10;
-    animation: scanLine 700ms cubic-bezier(0.16, 1, 0.32, 1) forwards;
+    fill: var(--navy);
   }
 
   /* Navigation */
@@ -276,8 +107,7 @@ const cssString = `
     align-items: center;
     justify-content: center;
     gap: 16px;
-    margin-top: auto;
-    padding-top: 24px;
+    margin-top: 24px;
   }
 
   .me-nav-btn {
@@ -303,198 +133,274 @@ const cssString = `
     height: 8px;
     background-color: var(--primary);
   }
-
-  .emerald { color: var(--emerald); }
 `;
 
 function Slide1() {
   return (
-    <div className="me-slide-container" key="slide1">
-      <div className="me-title-row">
-        <div className="me-title-bar" />
-        <span className="role-b me-title-text">Market Entry — Should We Enter?</span>
-      </div>
+    <div className="me-svg-container" key="slide1">
+      <svg viewBox="0 0 900 500" className="me-svg">
+        <defs>
+          <pattern id="grid1" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#9CA3AF" strokeWidth="0.5" strokeOpacity="0.15" />
+          </pattern>
+        </defs>
+        <rect width="900" height="500" fill="url(#grid1)" />
 
-      <div className="me-zone-a">
-        {["Objective & Growth Target", "Geography Rationale", "Value Chain Position", "Customer Segments & Pricing", "Competitive Landscape"].map(text => (
-          <div key={text} className="me-chip role-c" style={{ color: 'var(--navy)' }}>{text}</div>
-        ))}
-      </div>
+        {/* Title */}
+        <rect x="30" y="25" width="4" height="24" fill="var(--primary)" />
+        <text x="44" y="44" className="text-title">Market Entry Framework</text>
+        <path d="M 30 60 L 870 60" stroke="var(--navy)" strokeWidth="2" opacity="0.8" />
 
-      <div className="me-zone-b">
-        {/* Pillar 1 */}
-        <div className="me-pillar-card">
-          <div className="me-pillar-header">
-            <span className="role-a">Customer</span>
-          </div>
-          <ul className="me-bullet-list role-c">
-            <li>Segments & Target Group</li>
-            <li>Needs & Pain Points</li>
-            <li>Market Size & Growth Rate</li>
-            <li>Market Dynamics</li>
-            <li>Reaction to New Entrants</li>
-            <li>Price Sensitivity</li>
-          </ul>
-        </div>
-        {/* Pillar 2 */}
-        <div className="me-pillar-card">
-          <div className="me-pillar-header">
-            <span className="role-a">Company</span>
-          </div>
-          <ul className="me-bullet-list role-c">
-            <li>Product Mix & Key Assets</li>
-            <li>Value Chain Feasibility<br/>(procurement → production → distribution)</li>
-            <li>Operational Capabilities</li>
-            <li>Financial Analysis (Break-Even)</li>
-            <li>Existing Differentiators</li>
-          </ul>
-        </div>
-        {/* Pillar 3 */}
-        <div className="me-pillar-card">
-          <div className="me-pillar-header">
-            <span className="role-a">Competition</span>
-          </div>
-          <ul className="me-bullet-list role-c">
-            <li>No. of Competitors & Market Share</li>
-            <li>4Ps: Product · Price · Place · Promotion</li>
-            <li>SWOT Analysis</li>
-            <li>Barriers to Entry:<br/>
-              &nbsp;&nbsp;Financial Constraints<br/>
-              &nbsp;&nbsp;Govt. Regulations & Patents/IP<br/>
-              &nbsp;&nbsp;Supplier Power<br/>
-              &nbsp;&nbsp;Operational Barriers
-            </li>
-          </ul>
-        </div>
-        {/* Pillar 4 */}
-        <div className="me-pillar-card">
-          <div className="me-pillar-header">
-            <span className="role-a">Product / Gap</span>
-          </div>
-          <ul className="me-bullet-list role-c">
-            <li>Gap: Customer Expectations vs Available Products</li>
-            <li>Unique Value Proposition</li>
-            <li>Margin & Profit Potential</li>
-            <li>Regulatory Fit of Product</li>
-          </ul>
-        </div>
-      </div>
+        {/* LEFT SIDEBAR - Initial Questions */}
+        <rect x="30" y="80" width="220" height="390" fill="white" stroke="var(--border)" strokeWidth="1" rx="6" />
+        <rect x="30" y="80" width="220" height="36" fill="var(--navy)" rx="6" />
+        {/* Fix top rounded corners only for header */}
+        <rect x="30" y="100" width="220" height="16" fill="var(--navy)" />
+        
+        <text x="45" y="102" className="text-header">Initial Questions</text>
+        
+        <g className="text-body" transform="translate(45, 135)">
+          <circle cx="-6" cy="-3" r="2" fill="var(--primary)" />
+          <text y="0">Clarify objective, growth</text>
+          <text y="14">quantum and targeted timeline.</text>
+          
+          <circle cx="-6" cy="37" r="2" fill="var(--primary)" />
+          <text y="40">Geography: Why are we looking</text>
+          <text y="54">into this geography? Have they</text>
+          <text y="68">launched this product in</text>
+          <text y="82">another market?</text>
+          
+          <circle cx="-6" cy="107" r="2" fill="var(--primary)" />
+          <text y="110">Business Model: Where does</text>
+          <text y="124">the firm lie in the value chain?</text>
+          
+          <circle cx="-6" cy="147" r="2" fill="var(--primary)" />
+          <text y="150">Who are the target customers?</text>
+          <text y="164">Market size &amp; price sensitivity.</text>
+          
+          <circle cx="-6" cy="187" r="2" fill="var(--primary)" />
+          <text y="190">What are the existing products,</text>
+          <text y="204">services, &amp; capabilities of the</text>
+          <text y="218">firm? Any differentiating features?</text>
+          
+          <circle cx="-6" cy="247" r="2" fill="var(--primary)" />
+          <text y="250">Pricing - given or required?</text>
+          <text y="264">Ask for targeted margin.</text>
+          
+          <circle cx="-6" cy="287" r="2" fill="var(--primary)" />
+          <text y="290">What is the competitive</text>
+          <text y="304">landscape?</text>
+        </g>
 
-      <div className="me-zone-c">
-        {/* Risk Assessment */}
-        <div className="me-flat-card">
-          <div className="role-a" style={{ marginBottom: 12 }}>RISK ASSESSMENT</div>
-          <svg viewBox="0 0 340 120" style={{ width: '100%', height: 'auto' }}>
-            {/* Lines */}
-            <path d="M 60 25 L 60 40 L 140 40 L 140 50" fill="none" stroke="var(--navy)" strokeWidth="1.2" className="path-l" />
-            <path d="M 60 25 L 60 40 L 260 40 L 260 50" fill="none" stroke="var(--navy)" strokeWidth="1.2" className="path-r" />
-            
-            <path d="M 260 70 L 260 85 L 190 85 L 190 95" fill="none" stroke="var(--navy)" strokeWidth="1.2" className="path-r-sub" />
-            <path d="M 260 70 L 260 85 L 320 85 L 320 95" fill="none" stroke="var(--navy)" strokeWidth="1.2" className="path-r-sub" />
+        {/* RIGHT AREA - 4 Pillars */}
+        {/* Customer */}
+        <rect x="270" y="80" width="135" height="230" fill="white" stroke="var(--border)" strokeWidth="1" rx="4" />
+        <rect x="270" y="80" width="135" height="30" fill="var(--navy)" rx="4" />
+        <rect x="270" y="100" width="135" height="10" fill="var(--navy)" />
+        <text x="337" y="100" className="text-header" textAnchor="middle">Customer</text>
+        
+        <g className="text-body-muted" transform="translate(285, 130)">
+          <text y="0">- Segments</text>
+          <text y="20">- Needs &amp; Pain Points</text>
+          <text y="40">- Size &amp; Growth</text>
+          <text y="60">- Target Group</text>
+          <text y="80">- Market Share</text>
+          <text y="100">- Price Sensitivity</text>
+        </g>
 
-            {/* Root Node */}
-            <rect x="20" y="5" width="80" height="20" fill="var(--navy)" rx="3" />
-            <text x="60" y="19" textAnchor="middle" fill="white" className="role-b" style={{ fontSize: 11 }}>RISKS</text>
+        {/* Company */}
+        <rect x="420" y="80" width="135" height="230" fill="white" stroke="var(--border)" strokeWidth="1" rx="4" />
+        <rect x="420" y="80" width="135" height="30" fill="var(--navy)" rx="4" />
+        <rect x="420" y="100" width="135" height="10" fill="var(--navy)" />
+        <text x="487" y="100" className="text-header" textAnchor="middle">Company</text>
+        
+        <g className="text-body-muted" transform="translate(435, 130)">
+          <text y="0">- Product Mix</text>
+          <text y="20">- Resources &amp; Assets</text>
+          <text y="40">- Value Chain Analysis</text>
+          <text y="54" className="text-micro">(Procurement,</text>
+          <text y="66" className="text-micro"> Production,</text>
+          <text y="78" className="text-micro"> Distribution)</text>
+          <text y="98">- Financial Analysis</text>
+          <text y="112" className="text-micro">(Break-even point)</text>
+        </g>
 
-            {/* Internal Branch */}
-            <g className="node-l">
-              <rect x="90" y="50" width="100" height="20" fill="white" stroke="var(--navy)" strokeWidth="1" rx="3" />
-              <text x="140" y="63" textAnchor="middle" className="role-b" style={{ fontSize: 10 }}>INTERNAL</text>
-              <text x="140" y="80" textAnchor="middle" className="role-c">Constraints · Resources</text>
-            </g>
+        {/* Competition */}
+        <rect x="570" y="80" width="135" height="230" fill="white" stroke="var(--border)" strokeWidth="1" rx="4" />
+        <rect x="570" y="80" width="135" height="30" fill="var(--navy)" rx="4" />
+        <rect x="570" y="100" width="135" height="10" fill="var(--navy)" />
+        <text x="637" y="100" className="text-header" textAnchor="middle">Competition</text>
+        
+        <g className="text-body-muted" transform="translate(585, 130)">
+          <text y="0">- No. of competitors</text>
+          <text y="14" className="text-micro">  &amp; market share</text>
+          <text y="34">- SWOT Analysis</text>
+          <text y="54">- 4Ps Strategy</text>
+          <text y="74">- Barriers to entry:</text>
+          <text y="88" className="text-micro">  · Regulations</text>
+          <text y="100" className="text-micro">  · Supplier Power</text>
+          <text y="112" className="text-micro">  · Financial Const.</text>
+        </g>
 
-            {/* External Branch */}
-            <g className="node-r">
-              <rect x="210" y="50" width="100" height="20" fill="white" stroke="var(--navy)" strokeWidth="1" rx="3" />
-              <text x="260" y="63" textAnchor="middle" className="role-b" style={{ fontSize: 10 }}>EXTERNAL</text>
-            </g>
+        {/* Product / Gap */}
+        <rect x="720" y="80" width="135" height="230" fill="white" stroke="var(--border)" strokeWidth="1" rx="4" />
+        <rect x="720" y="80" width="135" height="30" fill="var(--navy)" rx="4" />
+        <rect x="720" y="100" width="135" height="10" fill="var(--navy)" />
+        <text x="787" y="100" className="text-header" textAnchor="middle">Product / Gap</text>
+        
+        <g className="text-body-muted" transform="translate(735, 130)">
+          <text y="0">- Gap between</text>
+          <text y="14" className="text-micro">  customer expectation</text>
+          <text y="26" className="text-micro">  &amp; available products</text>
+          <text y="46">- Unique Value Prop</text>
+          <text y="66">- Margin Potential</text>
+          <text y="86">- Substitutes</text>
+        </g>
 
-            <g className="node-r-sub">
-              <rect x="130" y="95" width="120" height="20" fill="white" stroke="var(--navy)" strokeWidth="1" rx="3" />
-              <text x="190" y="108" textAnchor="middle" className="role-b" style={{ fontSize: 9 }}>INDUSTRY LEVEL</text>
-              <text x="190" y="123" textAnchor="middle" className="role-c" style={{ fontSize: 6 }}>Attractiveness · Customers · Competitors · Barriers</text>
-            </g>
-
-            <g className="node-r-sub">
-              <rect x="260" y="95" width="120" height="20" fill="white" stroke="var(--navy)" strokeWidth="1" rx="3" />
-              <text x="320" y="108" textAnchor="middle" className="role-b" style={{ fontSize: 9 }}>MACRO FACTORS</text>
-              <text x="320" y="123" textAnchor="middle" className="role-c" style={{ fontSize: 6 }}>PESTEL · Porter's 5F · Currency · Regulations</text>
-            </g>
-          </svg>
-        </div>
-
-        {/* Economic Feasibility */}
-        <div className="me-flat-card">
-          <div className="role-a" style={{ color: 'var(--primary)', marginBottom: 16 }}>ECONOMIC FEASIBILITY</div>
-          <div className="role-d" style={{ marginBottom: 16 }}>
-            Market Size × Market Share × (Price − Variable Cost) − Fixed Cost
-          </div>
-          <div className="role-c">
-            Solve the market sizing guesstimate first.<br/><br/>
-            Qualitatively assess achievable market share.<br/><br/>
-            Operational feasibility: map regulatory/partner constraints per value chain bucket.
-          </div>
-        </div>
-      </div>
+        {/* RIGHT AREA BOTTOM - Economic Feasibility */}
+        <rect x="270" y="330" width="585" height="140" fill="rgba(255,255,255,0.7)" stroke="var(--border)" strokeWidth="1" rx="6" />
+        <path d="M 270 330 L 270 470" stroke="var(--primary)" strokeWidth="6" />
+        
+        <text x="290" y="360" className="text-mono-bold" fill="var(--primary)">ECONOMIC ANALYSIS (IS IT WORTH IT?)</text>
+        
+        <rect x="290" y="375" width="540" height="40" fill="rgba(27,42,74,0.04)" rx="4" />
+        <text x="305" y="400" className="text-formula">
+          Profit = ( Market Size × Market Share × (Price − Variable Cost) ) − Fixed Cost
+        </text>
+        
+        <g className="text-body" transform="translate(290, 440)">
+          <circle cx="4" cy="-3" r="2" fill="var(--navy)" opacity="0.5" />
+          <text x="12" y="0">Market size &amp; share may often require you to undertake a guesstimate.</text>
+          
+          <circle cx="4" cy="15" r="2" fill="var(--navy)" opacity="0.5" />
+          <text x="12" y="18">Operational Feasibility: Regulatory/other barriers in setting up a value chain.</text>
+        </g>
+      </svg>
     </div>
   );
 }
 
 function Slide2() {
   return (
-    <div className="me-slide-container" key="slide2">
-      <div className="me-title-row">
-        <div className="me-title-bar" />
-        <span className="role-b me-title-text">Market Entry — How Do We Enter?</span>
-      </div>
+    <div className="me-svg-container" key="slide2">
+      <svg viewBox="0 0 900 500" className="me-svg">
+        <defs>
+          <pattern id="grid2" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#9CA3AF" strokeWidth="0.5" strokeOpacity="0.15" />
+          </pattern>
+        </defs>
+        <rect width="900" height="500" fill="url(#grid2)" />
 
-      <div className="me-table-container">
-        <div className="me-scanline" />
-        <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr 1fr 1fr' }}>
-          {/* Header Row */}
-          <div className="me-th"></div>
-          <div className="me-th"><span className="role-a" style={{ color: 'white' }}>ORGANIC / GREENFIELD</span></div>
-          <div className="me-th"><span className="role-a" style={{ color: 'white' }}>JOINT VENTURE</span></div>
-          <div className="me-th"><span className="role-a" style={{ color: 'white' }}>BROWNFIELD / ACQUISITION</span></div>
-          <div className="me-th" style={{ borderRight: 'none' }}><span className="role-a" style={{ color: 'white' }}>OUTSOURCING</span></div>
+        {/* Title */}
+        <rect x="30" y="25" width="4" height="24" fill="var(--primary)" />
+        <text x="44" y="44" className="text-title">Market Entry Framework</text>
+        <path d="M 30 60 L 870 60" stroke="var(--navy)" strokeWidth="2" opacity="0.8" />
 
-          {/* Row 1 */}
-          <div className="me-cell me-row-header"><span className="role-a">ADVANTAGES</span></div>
-          <div className="me-cell role-c"><span className="emerald">Retain full control</span> · Build experience curve · Boosts brand equity</div>
-          <div className="me-cell role-c"><span className="emerald">Lower capital investment</span> · Local expertise & networks · High scale quickly</div>
-          <div className="me-cell role-c"><span className="emerald">Immediate market scope</span> · Leverage local brand · Produce synergies</div>
-          <div className="me-cell role-c"><span className="emerald">Speed to market</span> · Low fixed cost · Flexibility</div>
+        {/* LEFT SIDEBAR TAGS */}
+        <rect x="30" y="80" width="140" height="190" fill="var(--primary)" rx="4" />
+        <text x="100" y="175" className="text-header" textAnchor="middle">Risks Involved</text>
 
-          {/* Row 2 */}
-          <div className="me-cell me-row-header"><span className="role-a">DISADVANTAGES</span></div>
-          <div className="me-cell role-c">High capex · High time commitment · Slow to scale</div>
-          <div className="me-cell role-c">Limited operational control · Brand dilution risk</div>
-          <div className="me-cell role-c">Significant investment · Integration complexity · Brand risk</div>
-          <div className="me-cell role-c">Low control over quality · Dependency risk · Margin leakage</div>
+        <rect x="30" y="280" width="140" height="190" fill="var(--navy)" rx="4" />
+        <text x="100" y="375" className="text-header" textAnchor="middle">Modes of Entry</text>
 
-          {/* Row 3 */}
-          <div className="me-cell me-row-header" style={{ borderBottom: 'none' }}><span className="role-a">BEST WHEN</span></div>
-          <div className="me-cell role-c" style={{ borderBottom: 'none' }}>Strong internal capability · Long-term market commitment</div>
-          <div className="me-cell role-c" style={{ borderBottom: 'none' }}>Local expertise critical · Risk-sharing needed</div>
-          <div className="me-cell role-c" style={{ borderBottom: 'none' }}>Speed is priority · Established player exists</div>
-          <div className="me-cell role-c" style={{ borderBottom: 'none' }}>Non-core activity · Testing a new market cheaply</div>
-        </div>
-      </div>
+        {/* TOP - Risks Tree */}
+        <g strokeWidth="1.5" stroke="var(--navy)" fill="none" opacity="0.3">
+          <path d="M 530 110 L 530 130 L 380 130 L 380 140" />
+          <path d="M 530 130 L 680 130 L 680 140" />
+          
+          <path d="M 680 170 L 680 190 L 560 190 L 560 200" />
+          <path d="M 680 190 L 800 190 L 800 200" />
+        </g>
 
-      <div className="me-trigger-row mt-4" style={{ marginTop: 'auto' }}>
-        <div className="me-trigger-card">
-          <div className="role-a" style={{ marginBottom: 6 }}>CHOOSE ORGANIC WHEN</div>
-          <div className="role-c" style={{ color: 'var(--navy)' }}>Internal capability exists. Market is nascent.<br/>Brand protection is paramount.</div>
-        </div>
-        <div className="me-trigger-card">
-          <div className="role-a" style={{ marginBottom: 6 }}>CHOOSE JV / PARTNERSHIP WHEN</div>
-          <div className="role-c" style={{ color: 'var(--navy)' }}>Local knowledge is a moat. Capital constraints present.<br/>Regulatory environment favors local partners.</div>
-        </div>
-        <div className="me-trigger-card primary">
-          <div className="role-a" style={{ marginBottom: 6 }}>CHOOSE ACQUISITION WHEN</div>
-          <div className="role-c" style={{ color: 'var(--navy)' }}>Speed to market &gt; cost. Established distribution needed.<br/>Market share gap must close fast.</div>
-        </div>
-      </div>
+        <rect x="470" y="80" width="120" height="30" fill="white" stroke="var(--primary)" strokeWidth="1.5" rx="4" />
+        <text x="530" y="100" className="text-header-dark" textAnchor="middle">Risks</text>
+
+        <rect x="320" y="140" width="120" height="30" fill="white" stroke="var(--primary)" strokeWidth="1.5" rx="4" />
+        <text x="380" y="160" className="text-header-dark" textAnchor="middle">Internal</text>
+        <text x="380" y="185" className="text-micro" textAnchor="middle">- Constraints</text>
+        <text x="380" y="197" className="text-micro" textAnchor="middle">- Resources</text>
+
+        <rect x="620" y="140" width="120" height="30" fill="white" stroke="var(--primary)" strokeWidth="1.5" rx="4" />
+        <text x="680" y="160" className="text-header-dark" textAnchor="middle">External</text>
+
+        <rect x="500" y="200" width="120" height="30" fill="white" stroke="var(--primary)" strokeWidth="1.5" rx="4" />
+        <text x="560" y="220" className="text-header-dark" textAnchor="middle">Industry Level</text>
+        <text x="560" y="245" className="text-micro" textAnchor="middle">- Competitors / Barrier</text>
+
+        <rect x="740" y="200" width="120" height="30" fill="white" stroke="var(--primary)" strokeWidth="1.5" rx="4" />
+        <text x="800" y="220" className="text-header-dark" textAnchor="middle">Macro Factors</text>
+        <text x="800" y="245" className="text-micro" textAnchor="middle">- PESTEL / Govt.</text>
+
+        {/* BOTTOM - Modes of Entry Tree */}
+        <path d="M 190 270 L 870 270" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
+
+        <g strokeWidth="1.5" stroke="var(--navy)" fill="none" opacity="0.3">
+          <path d="M 530 310 L 530 330 L 280 330 L 280 340" />
+          <path d="M 530 330 L 446 330 L 446 340" />
+          <path d="M 530 330 L 613 330 L 613 340" />
+          <path d="M 530 330 L 780 330 L 780 340" />
+        </g>
+
+        <rect x="460" y="280" width="140" height="30" fill="var(--navy)" rx="4" />
+        <text x="530" y="300" className="text-header" textAnchor="middle">How to Enter</text>
+
+        {/* Mode 1: Organic */}
+        <rect x="210" y="340" width="140" height="40" fill="white" stroke="var(--navy)" strokeWidth="1" rx="4" />
+        <text x="280" y="358" className="text-header-dark" textAnchor="middle">Organic</text>
+        <text x="280" y="370" className="text-micro" textAnchor="middle">(Greenfield)</text>
+        
+        <g className="text-body" transform="translate(210, 400)">
+          <text fill="var(--emerald)">+ Retain business control</text>
+          <text y="16" fill="var(--emerald)">+ Build experience curve</text>
+          <text y="32" fill="var(--emerald)">+ Boosts brand image</text>
+          
+          <text y="52" fill="var(--primary)">- High capex required</text>
+          <text y="68" fill="var(--primary)">- High time commitment</text>
+        </g>
+
+        {/* Mode 2: JV */}
+        <rect x="376" y="340" width="140" height="40" fill="white" stroke="var(--navy)" strokeWidth="1" rx="4" />
+        <text x="446" y="358" className="text-header-dark" textAnchor="middle">Joint Venture</text>
+        <text x="446" y="370" className="text-micro" textAnchor="middle">(Partnership)</text>
+
+        <g className="text-body" transform="translate(376, 400)">
+          <text fill="var(--emerald)">+ Less investment</text>
+          <text y="16" fill="var(--emerald)">+ Local expertise &amp; network</text>
+          <text y="32" fill="var(--emerald)">+ Fast scale &amp; scope</text>
+          
+          <text y="52" fill="var(--primary)">- Limited control</text>
+          <text y="68" fill="var(--primary)">- Brand dilution risk</text>
+        </g>
+
+        {/* Mode 3: Acquisition */}
+        <rect x="543" y="340" width="140" height="40" fill="white" stroke="var(--navy)" strokeWidth="1" rx="4" />
+        <text x="613" y="358" className="text-header-dark" textAnchor="middle">Acquisition</text>
+        <text x="613" y="370" className="text-micro" textAnchor="middle">(Brownfield)</text>
+
+        <g className="text-body" transform="translate(543, 400)">
+          <text fill="var(--emerald)">+ Immediate market scope</text>
+          <text y="16" fill="var(--emerald)">+ Utilize local established brand</text>
+          <text y="32" fill="var(--emerald)">+ Produce synergies</text>
+          
+          <text y="52" fill="var(--primary)">- Significant investment</text>
+          <text y="68" fill="var(--primary)">- Integration complexities</text>
+        </g>
+
+        {/* Mode 4: Outsourcing */}
+        <rect x="710" y="340" width="140" height="40" fill="white" stroke="var(--navy)" strokeWidth="1" rx="4" />
+        <text x="780" y="358" className="text-header-dark" textAnchor="middle">Outsourcing</text>
+        <text x="780" y="370" className="text-micro" textAnchor="middle">(Exporting / Franchising)</text>
+
+        <g className="text-body" transform="translate(710, 400)">
+          <text fill="var(--emerald)">+ Lowest fixed cost</text>
+          <text y="16" fill="var(--emerald)">+ Speed to test market</text>
+          <text y="32" fill="var(--emerald)">+ High flexibility</text>
+          
+          <text y="52" fill="var(--primary)">- Low quality control</text>
+          <text y="68" fill="var(--primary)">- Margin leakage / Dependency</text>
+        </g>
+
+      </svg>
     </div>
   );
 }
@@ -514,7 +420,7 @@ export default function MarketEntryFramework() {
           <div className={`me-dot ${slide === 1 ? 'active' : ''}`} />
           <div className={`me-dot ${slide === 2 ? 'active' : ''}`} />
         </div>
-        <span className="role-a" style={{ margin: '0 8px' }}>
+        <span className="text-mono-bold" style={{ margin: '0 8px' }}>
           0{slide} / 02
         </span>
         <button className="me-nav-btn" onClick={() => setSlide(2)}>→</button>
