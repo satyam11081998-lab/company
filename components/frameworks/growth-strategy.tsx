@@ -624,7 +624,6 @@ function Pill({ children, tone = "navy" }: any) {
 
 export default function GrowthStrategyPage() {
   const router = useRouter();
-  const [active, setActive] = useState("growth");
 
   return (
     <div style={{ background: C.bg, minHeight: "100vh", fontFamily: font, color: C.fg }}>
@@ -677,8 +676,8 @@ export default function GrowthStrategyPage() {
           </div>
         </div>
 
-        {/* Main grid: framework tree + sticky detail panel */}
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 340px", gap: 22, marginTop: 26, alignItems: "start" }}>
+        {/* Main framework diagram */}
+        <div style={{ marginTop: 26 }}>
           {/* Tree card */}
           <div
             style={{
@@ -686,26 +685,21 @@ export default function GrowthStrategyPage() {
               border: `1px solid ${C.border}`,
               borderRadius: 16,
               boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
-              padding: "22px 22px 14px",
+              padding: "22px 22px 22px",
+              overflowX: "auto",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div style={{ fontFamily: font, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted }}>
                 Approach / framework
               </div>
-              <div style={{ fontSize: 12, color: C.muted }}>Tap any node to explore its levers</div>
             </div>
-            <GrowthTree active={active} onPick={setActive} />
-            {/* Legend */}
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", paddingTop: 12, marginTop: 6, borderTop: `1px solid ${C.border}` }}>
-              <Legend color={C.primary} label="Organic — build it" />
-              <Legend color={C.navyMid} label="Inorganic — buy / partner" />
-              <Legend color={C.warning} label="Non-core — monetise assets" />
+            
+            <div style={{ minWidth: 1000, display: "flex", justifyContent: "center" }}>
+              <img src="/assets/growth-diagram.svg" alt="Growth Strategy Framework Diagram" style={{ width: "100%", height: "auto", display: "block" }} />
             </div>
+            
           </div>
-
-          {/* Detail panel */}
-          <DetailPanel id={active} onClose={() => setActive("growth")} />
         </div>
 
         {/* Two-up: preliminary questions + brownie points */}
