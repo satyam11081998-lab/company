@@ -1,47 +1,57 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import type { Block } from '@/lib/casebook/types';
 
 interface OnThisPageProps {
   blocks: Block[];
+  pageSlug?: string;
 }
 
-export function OnThisPage({ blocks }: OnThisPageProps) {
+const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+
+export function OnThisPage({ blocks, pageSlug }: OnThisPageProps) {
   const [activeId, setActiveId] = useState<string>('');
 
-  const headings = blocks.filter(
-    (b) => b.type === 'heading' || (b.type === 'caseSection' && b.label)
-  ) as Array<
-    | { type: 'heading'; level: number; text: string; anchor?: string }
-    | { type: 'caseSection'; label: string; title?: string }
-  >;
+  const toc = useMemo(() => {
+    const headings = blocks.filter(
+      (b) => b.type === 'heading' || (b.type === 'caseSection' && b.label)
+    ) as Array<
+      | { type: 'heading'; level: number; text: string; anchor?: string }
+      | { type: 'caseSection'; label: string; title?: string }
+    >;
 
-  // Normalize to extract id and text
-  const toc = headings.map((h, idx) => {
-    if (h.type === 'heading') {
-      return {
-        id: h.anchor || `heading-${idx}`,
-        text: h.text,
-        level: h.level
-      };
-    } else {
-      return {
-        id: `section-${h.label}`,
-        text: h.title || h.label.charAt(0).toUpperCase() + h.label.slice(1),
-        level: 2
-      };
+    const list = headings.map((h, idx) => {
+      if (h.type === 'heading') {
+        return {
+          id: h.anchor || slugify(h.text),
+          text: h.text,
+          level: h.level
+        };
+      } else {
+        return {
+          id: `section-${h.label}`,
+          text: h.title || h.label.charAt(0).toUpperCase() + h.label.slice(1),
+          level: 2
+        };
+      }
+    });
+
+    const hasKT = blocks.some((b) => b.type === 'keyTakeaways');
+    if (hasKT) {
+      list.unshift({ id: 'key-takeaways', text: 'Key Takeaways', level: 2 });
     }
-  });
 
-  const hasKT = blocks.some(b => b.type === 'keyTakeaways');
-  if (hasKT) {
-    toc.unshift({ id: 'key-takeaways', text: 'Key Takeaways', level: 2 });
-  }
+    return list;
+  }, [blocks]);
 
   useEffect(() => {
-    // Add ids to DOM elements if they don't have them yet (client-side mutation just in case)
-    // In a real app, BlockRenderer should apply these IDs perfectly.
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -50,19 +60,19 @@ export function OnThisPage({ blocks }: OnThisPageProps) {
           }
         });
       },
-      { rootMargin: '-20% 0px -60% 0px' }
+      { root: null, rootMargin: '-80px 0px -70% 0px' }
     );
 
-    const elements = toc.map((h) => document.getElementById(h.id)).filter(Boolean);
-    elements.forEach((el) => el && observer.observe(el));
+    const elements = toc.map((h) => document.getElementById(h.id)).filter(Boolean) as HTMLElement[];
+    elements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
-  }, [toc]);
+  }, [toc, pageSlug]);
 
   if (toc.length === 0) return null;
 
   return (
-    <div className="hidden lg:block sticky top-[80px] max-h-[calc(100vh-80px)] overflow-y-auto w-[180px] shrink-0 pr-4">
+    <div className="hidden lg:block sticky top-[80px] max-h-[calc(100vh-80px)] overflow-y-auto w-[220px] shrink-0 pr-0">
       <h4 className="text-label text-muted-foreground mb-4 uppercase tracking-widest">
         On this page
       </h4>

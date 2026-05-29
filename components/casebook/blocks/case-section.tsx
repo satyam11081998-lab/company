@@ -30,7 +30,7 @@ export function CaseSectionBlock({ label, title, blocks }: CaseSectionProps) {
   const Icon = config.icon;
 
   return (
-    <section className="my-10 relative">
+    <section id={`section-${label}`} className="my-10 relative scroll-mt-[80px]">
       <div className="flex items-center gap-3 mb-6 pb-2 border-b border-border">
         <Icon className={`w-6 h-6 ${config.colorClass}`} />
         <h2 className="text-h2 text-navy">{title || config.defaultTitle}</h2>

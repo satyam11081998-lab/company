@@ -7,6 +7,11 @@ export const newBlocksTest: Page = {
   kind: 'concept',
   blocks: [
     {
+      type: 'hook',
+      md: 'This is a **magazine-style** hook. It gives the reader a reason to *keep reading*. The most critical part of this test is the emphasize functionality.',
+      emphasize: 'emphasize functionality'
+    },
+    {
       type: 'dialogue',
       title: 'Opening Dialogue',
       turns: [

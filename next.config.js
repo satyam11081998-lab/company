@@ -19,5 +19,14 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/learn',
+        destination: '/learn/casebook',
+        permanent: true,
+      },
+    ];
+  },
 };
 module.exports = nextConfig;

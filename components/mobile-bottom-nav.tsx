@@ -23,7 +23,7 @@ export default function MobileBottomNav() {
     { href: '/home', icon: Home, label: 'Home' },
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/practice', icon: Brain, label: 'Practice' },
-    { href: '/learn', icon: FileText, label: 'Learn' },
+    { href: '/learn/casebook', icon: FileText, label: 'Learn' },
   ];
 
   return (

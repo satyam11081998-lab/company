@@ -10,8 +10,9 @@ export type CaseSectionLabel =
   | 'prompt' | 'clarifying' | 'structure' | 'analysis' | 'recommendation' | 'takeaway';
 
 export type Block =
+  | { type: 'hook'; md: InlineMd; emphasize?: string }
   | { type: 'prose'; md: InlineMd }
-  | { type: 'heading'; level: 2 | 3; text: string; anchor?: string }
+  | { type: 'heading'; level: 2 | 3; text: string; anchor?: string; emphasize?: string }
   | { type: 'callout'; variant: 'tip' | 'insight' | 'warning' | 'pitfall' | 'note'; title?: string; md: InlineMd }
   | { type: 'keyTakeaways'; title?: string; items: InlineMd[] }
   | { type: 'steps'; ordered: boolean; items: { title?: string; md: InlineMd }[] }

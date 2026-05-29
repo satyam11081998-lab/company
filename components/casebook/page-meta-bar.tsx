@@ -20,7 +20,7 @@ export function PageMetaBar({ meta, hasKeyTakeaways }: { meta: PageMeta, hasKeyT
           <span>{meta.readingTimeMin} min read</span>
           {hasKeyTakeaways && (
             <>
-              <span className="mx-1 text-muted-foreground/60">·</span>
+              <span className="mx-1 text-muted-foreground">·</span>
               <span className="text-muted-foreground">scan in 2 min &rarr;</span>
               <a href="#key-takeaways" className="text-primary hover:underline ml-1">Key Takeaways</a>
             </>

@@ -5,14 +5,15 @@ import { Sparkles } from 'lucide-react';
 interface KeyTakeawaysProps {
   title?: string;
   items: string[];
+  isHero?: boolean;
 }
 
-export function KeyTakeawaysBlock({ title = 'Key Takeaways', items }: KeyTakeawaysProps) {
+export function KeyTakeawaysBlock({ title = 'Key Takeaways', items, isHero }: KeyTakeawaysProps) {
   return (
-    <div className="ui-card p-5 border-primary/20 bg-primary/5">
+    <div className={`ui-card p-5 ${isHero ? 'border-border bg-card' : 'border-primary/20 bg-primary/5'}`}>
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-primary" />
-        <h3 className="text-strong text-primary">{title}</h3>
+        {!isHero && <Sparkles className="w-5 h-5 text-primary" />}
+        <h3 className={`text-strong ${isHero ? 'text-foreground' : 'text-primary'}`}>{title}</h3>
       </div>
       <ul className="space-y-3 m-0 p-0 list-none">
         {items.map((item, idx) => (

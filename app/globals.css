@@ -121,6 +121,7 @@
   html {
     font-size: 16px;
     background-color: hsl(var(--background)); /* fallback + overscroll area */
+    scroll-behavior: smooth;
   }
   body {
     background: transparent; /* GeoPattern component provides the tiled bg */
