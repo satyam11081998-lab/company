@@ -5,8 +5,7 @@ import React, { useState } from "react";
 
 /* ============================================================================
    MECE — Growth Strategy Framework
-   A single, self-contained framework page that amalgamates the IIM-A / B / C
-   growth casebooks into one superior, branded artifact.
+   A single, self-contained framework page for Growth Strategy.
 
    Design tokens mirror app/globals.css:
      primary  #C8102E  (cardinal red)   navy #0F1C33
@@ -670,8 +669,7 @@ export default function GrowthStrategyPage() {
             <p style={{ fontSize: 16, lineHeight: 1.6, color: C.fg, margin: 0 }}>
               When a company wants to grow, the interviewer expects you to align on the growth
               target, decompose every place that growth could come from, and recommend which
-              levers to pull. This tree is the amalgamation of the IIM-A, B and C casebooks —
-              nothing one school covers is missing.
+              levers to pull. This tree is a comprehensive structure for Growth Strategy.
             </p>
           </div>
         </div>

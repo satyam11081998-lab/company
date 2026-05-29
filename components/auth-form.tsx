@@ -99,7 +99,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@iim.example"
+            placeholder="you@example.com"
             className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
           />
         </div>

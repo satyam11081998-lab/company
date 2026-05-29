@@ -476,7 +476,7 @@ const d17: Domain = {
       stats: [
         'Delhi: 3.3 Crore | Mumbai: 2.1 Crore | Bengaluru: 1.4-1.5 Crore',
         'Kolkata: 1.55 Crore | Hyderabad: 1.1 Crore | Chennai: 1.2 Crore',
-        'Ahmedabad: 0.87 Crore | Surat: 0.81 Crore',
+        'Surat: 0.81 Crore',
       ],
     },
     {

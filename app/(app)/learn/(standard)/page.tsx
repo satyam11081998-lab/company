@@ -24,14 +24,37 @@ export default function LearnHome() {
         Learn the <span className="text-primary">frameworks</span>
       </h1>
       <p className="mt-3 max-w-2xl text-body text-foreground">
-        One casebook, distilled from the IIM-A, B and C consulting casebooks —
-        nothing one school covers is missing. Every framework is rebuilt as a
+        One casebook. Every framework is rebuilt as a
         visual, interactive page rather than a static PDF. Pick a domain to
         begin.
       </p>
 
+      {/* Flagship Casebook Card */}
+      <div className="mt-10 mb-8">
+        <Link href="/learn/casebook" className="block ui-card p-8 bg-gradient-to-br from-navy to-navy-mid text-white rounded-2xl hover:shadow-lg transition-all group border-none">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="max-w-xl">
+              <div className="flex gap-2 mb-3">
+                <span className="bg-primary px-2.5 py-0.5 rounded text-[11px] font-bold tracking-widest uppercase">New Release</span>
+                <span className="bg-white/10 px-2.5 py-0.5 rounded text-[11px] font-bold tracking-widest uppercase">The MECE Casebook</span>
+              </div>
+              <h2 className="text-h2 font-bold mb-2">The Ultimate MECE Casebook</h2>
+              <p className="text-body text-white/80">
+                End-to-end preparation for MBB interviews. Master the frameworks, practice the cases, and refine your guesstimates with our interactive reader.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <div className="flex items-center gap-2 font-semibold text-small bg-white/10 px-4 py-2.5 rounded-full group-hover:bg-white/20 transition-colors">
+                Start Reading <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
       {/* Domain grid */}
-      <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <h3 className="text-h3 text-navy mt-12 mb-5">Deep Dive Modules</h3>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         {CASEBOOK.map((domain) => (
           <div
             key={domain.slug}

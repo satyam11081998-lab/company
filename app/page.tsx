@@ -292,7 +292,7 @@ export default async function LandingPage() {
                   {[
                     ['Online MBA prep market size', 'Market Sizing', 'Medium', '78'],
                     ['EdTech profitability decline', 'Profitability', 'Hard', '—'],
-                    ['IIM canteen daily revenue', 'Guesstimate', 'Easy', '92'],
+                    ['College canteen daily revenue', 'Guesstimate', 'Easy', '92'],
                     ['B-school fee increase impact', 'Framework', 'Medium', '65'],
                   ].map(([title, type, diff, score]) => (
                     <tr key={title} className="hover:bg-muted/30 transition-colors cursor-pointer">
@@ -395,7 +395,7 @@ export default async function LandingPage() {
                 'Daily briefs on policy, economy, markets, and business affairs.',
                 'Structured for GD format — not just news summaries.',
                 'Argument starters and smart angles to differentiate yourself.',
-                'Covers topics likely to appear in IIM, FMS, XLRI, SP Jain, ISB GDs.',
+                'Covers topics likely to appear in top tier B-school GDs.',
               ].map(item => (
                 <li key={item} className="flex items-start gap-2.5 text-[14px] text-foreground">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />

@@ -50,11 +50,10 @@ export function LearnSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
             <BookOpen className="h-4 w-4" />
           </span>
-          <div className="leading-tight">
-            <div className="text-strong text-foreground">The MECE Casebook</div>
-            <div className="text-micro text-muted-foreground">
-              Merged from IIM A · B · C
-            </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+              The MECE Casebook
+            </h2>
           </div>
         </Link>
       </div>

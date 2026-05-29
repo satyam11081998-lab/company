@@ -7,7 +7,7 @@
 export interface Testimonial {
   id: string;
   name: string;
-  school: string;        // e.g. "IIM Lucknow"
+  school: string;
   placement: string;     // e.g. "Summer placed at Bain"
   quote: string;         // 2-4 lines
   avatar_url: string | null;
@@ -45,7 +45,7 @@ export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't4',
     name: 'Sneha Mukherjee',
-    school: 'IIM Calcutta',
+    school: '',
     placement: 'Summer placed at BCG',
     quote: "Career ladder is oddly motivating. Climbing from Day-0 Dreamer to MECE Believer felt like leveling up a game I actually wanted to play.",
     avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SnehaMukherjee',
@@ -69,7 +69,7 @@ export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't7',
     name: 'Arjun Banerjee',
-    school: 'IIM Indore',
+    school: '',
     placement: 'Summer placed at Kearney',
     quote: "Daily GD briefs gave me an unfair edge in group discussions. Showed up to GDs with actual data points while others gave generic takes.",
     avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ArjunBanerjee',

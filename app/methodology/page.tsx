@@ -136,9 +136,9 @@ export default async function MethodologyPage() {
                 title="McKinsey on Books (Pyramid Principle reference)"
                 url="https://www.mckinsey.com/featured-insights/mckinsey-on-books"
               />
-              <li className="pt-2 text-muted-foreground italic">
-                The rubrics and structures on MECE are heavily inspired by casebooks from the IIM Ahmedabad, IIM Bangalore, and IIM Calcutta placement prep guides.
-              </li>
+              <p className="text-body text-muted-foreground mt-4">
+                The rubrics and structures on MECE are custom designed for comprehensive preparation.
+              </p>
             </ul>
           </Card>
         </section>
@@ -146,8 +146,8 @@ export default async function MethodologyPage() {
         <section className="mt-14">
           <h2 className="text-2xl font-bold text-foreground">Important notes</h2>
           <Card className="mt-6 p-6 space-y-4 text-body leading-relaxed text-foreground/80">
-            <p>
-              <strong className="text-foreground">No official affiliation.</strong> This platform is an independent educational tool. We are not affiliated with, endorsed by, or connected to McKinsey, BCG, Bain, any IIM, FMS Delhi, or any specific firm or B-school referenced on the platform. Trademarks belong to their respective owners.
+            <p className="text-body text-muted-foreground mt-4">
+              <strong className="text-foreground">No official affiliation.</strong> This platform is an independent educational tool. We are not affiliated with, endorsed by, or connected to McKinsey, BCG, Bain, or any specific firm or B-school referenced on the platform. Trademarks belong to their respective owners.
             </p>
             <p>
               <strong className="text-foreground">Evaluation limitations.</strong> MECE&apos;s

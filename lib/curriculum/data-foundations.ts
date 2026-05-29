@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    Data: Domains D1–D6 — Consulting Foundations through Growth Strategy
    Auto-generated from consulting_platform_architecture.md and
    supplementary source documents.
@@ -621,7 +621,7 @@ Low in: Defence manufacturing (PSU dominance)
     lessons: [
       { id: 'D4.4.1', title: "The India Case Scenario", description: `**Case Prompt (as an MBB interviewer would deliver it):**
 
-"Our client is Surya Biscuits, a mid-sized Indian FMCG company headquartered in Ahmedabad. They manufacture glucose biscuits and cream biscuits across 8 SKUs, with annual revenue of approximately ₹1,800 crore. Their EBITDA margin has declined from 14% to 9% over the past two financial years. The CEO has called us in. Where would you start?"
+"Our client is Surya Biscuits, a mid-sized Indian FMCG company . They manufacture glucose biscuits and cream biscuits across 8 SKUs, with annual revenue of approximately ₹1,800 crore. Their EBITDA margin has declined from 14% to 9% over the past two financial years. The CEO has called us in. Where would you start?"
 
 ---` },
       { id: 'D4.4.2', title: "THE WEAK ANSWER", description: `**Candidate Response:**

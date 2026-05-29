@@ -1,8 +1,8 @@
 /* ============================================================================
    lib/casebook/index.ts
-   The MECE Casebook — a single merged index drawn from the IIM-A, IIM-B and
-   IIM-C consulting casebooks. The rule: whatever one school covers and another
-   misses, the merged index keeps. This is the spine of the /learn experience.
+   The MECE Casebook — a single merged index. The rule: whatever one framework
+   covers and another misses, the merged index keeps. This is the spine of the 
+   /learn experience.
 
    Each framework has a `status`:
      'live'    — full branded page built (e.g. growth-strategy, market-entry)

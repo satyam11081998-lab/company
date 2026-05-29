@@ -10,7 +10,7 @@ import GeoPattern from '@/components/geo-pattern';
 export const metadata: Metadata = {
   title: 'MECE — Placement interview prep for Indian MBA students',
   description: 'Cases, frameworks, GD briefs, and structured feedback for MBA & PGDM placement interviews — consulting, finance, marketing, product, ops.',
-  keywords: ['MBA placement', 'case interview', 'GD prep', 'IIM placements', 'FMS', 'XLRI', 'SP Jain', 'consulting prep', 'product manager interview'],
+  keywords: ['MBA placement', 'case interview', 'GD prep', 'consulting prep', 'product manager interview'],
 };
 
 export const viewport: Viewport = {
