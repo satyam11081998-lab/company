@@ -10,10 +10,14 @@ export function generateStaticParams() {
   // Add the root landing page slug
   params.push({ slug: [] });
   
+  if (process.env.NODE_ENV !== 'production') {
+    params.push({ slug: ['_test', 'new-blocks'] });
+  }
+  
   return params;
 }
 
-export const dynamicParams = false;
+export const dynamicParams = process.env.NODE_ENV !== 'production';
 
 interface PageProps {
   params: { slug?: string[] };

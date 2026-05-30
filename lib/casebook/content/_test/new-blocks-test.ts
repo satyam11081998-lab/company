@@ -89,11 +89,11 @@ export const newBlocksTest: Page = {
       ariaLabel: 'Test diagram with two boxes and a connector',
       maxWidth: 480,
       svg: `<svg viewBox="0 0 400 160" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-    <rect x="20" y="50" width="150" height="60" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="1.5"/>
-    <text x="95" y="85" text-anchor="middle" font-size="14" font-weight="600" fill="var(--foreground)">Revenue</text>
-    <rect x="230" y="50" width="150" height="60" rx="8" fill="var(--primary)" stroke="none"/>
+    <rect x="20" y="50" width="150" height="60" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border))" stroke-width="1.5"/>
+    <text x="95" y="85" text-anchor="middle" font-size="14" font-weight="600" fill="hsl(var(--foreground))">Revenue</text>
+    <rect x="230" y="50" width="150" height="60" rx="8" fill="hsl(var(--primary))" stroke="none"/>
     <text x="305" y="85" text-anchor="middle" font-size="14" font-weight="600" fill="#ffffff">Cost</text>
-    <line x1="170" y1="80" x2="230" y2="80" stroke="var(--border-strong)" stroke-width="2"/>
+    <line x1="170" y1="80" x2="230" y2="80" stroke="hsl(var(--border-strong))" stroke-width="2"/>
   </svg>`
     }
   ]

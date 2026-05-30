@@ -8,8 +8,16 @@ interface CasebookSvgProps {
 }
 
 export function CasebookSvg({ svg, caption, maxWidth = 720, ariaLabel }: CasebookSvgProps) {
-  // Authored SVGs must use var(--token) for colors (fills/strokes) to inherit light/dark mode themes cascade-wise.
-  // Note: The raw SVG string is trusted, first-party content only.
+  /**
+   * CasebookSvg renders trusted, first-party SVG markup authored in content files.
+   *
+   * COLOR CONVENTION (required for dark mode):
+   * This project's design tokens are HSL CHANNEL values (e.g. --primary: 356 84% 43%).
+   * Therefore ALL colors in authored SVG markup MUST be wrapped in hsl():
+   *   fill="hsl(var(--card))"   stroke="hsl(var(--border))"   fill="hsl(var(--primary))"
+   * Using bare var(--token) renders BLACK (invalid color). Pure #ffffff/#000000 are
+   * allowed only where a color must stay fixed across themes (e.g. white text on red).
+   */
   const resolvedMaxWidth = maxWidth === 0 ? '100%' : maxWidth;
 
   return (
