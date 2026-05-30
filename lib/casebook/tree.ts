@@ -9,9 +9,11 @@ export const CASEBOOK_TREE: NavNode[] = [
     children: [
       { title: 'What a case interview tests', kind: 'page', slug: 'getting-started/what-it-tests' },
       { title: 'The six case types at a glance', kind: 'page', slug: 'getting-started/six-case-types' },
+      { title: 'Navigating tricky & blended cases', kind: 'page', slug: 'getting-started/navigating-blended-cases' },
       { title: 'A repeatable solving method', kind: 'page', slug: 'getting-started/repeatable-method' },
-      { title: 'Math & communication under pressure', kind: 'page', slug: 'getting-started/math-under-pressure' },
-      { title: 'Common mistakes (dos & don\'ts)', kind: 'page', slug: 'getting-started/common-mistakes' },
+      { title: 'Math under pressure', kind: 'page', slug: 'getting-started/math-under-pressure' },
+      { title: 'Communication under pressure', kind: 'page', slug: 'getting-started/communication-under-pressure' },
+      { title: 'Your diagnostic & a 14-day plan', kind: 'page', slug: 'getting-started/diagnostic-and-plan' },
     ],
   },
   {

@@ -64,6 +64,7 @@ export interface PageMeta {
 export interface Page {
   slug: string;       // full path under /learn/casebook (no leading slash)
   title: string;
+  titleEmphasize?: string;
   subtitle?: string;
   kind: PageKind;
   meta?: PageMeta;

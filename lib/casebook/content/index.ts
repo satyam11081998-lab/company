@@ -5,6 +5,12 @@ import { regionalDairyCooperative } from './cases/profitability/regional-dairy-c
 import { evChargingPointsMetro } from './guesstimates/ev-charging-points-metro';
 import { newBlocksTest } from './_test/new-blocks-test';
 import { repeatableMethod } from './concepts/repeatable-method';
+import { whatItTests } from './concepts/what-it-tests';
+import { sixCaseTypes } from './concepts/six-case-types';
+import { navigatingBlendedCases } from './concepts/navigating-blended-cases';
+import { mathUnderPressure } from './concepts/math-under-pressure';
+import { communicationUnderPressure } from './concepts/communication-under-pressure';
+import { diagnosticAndPlan } from './concepts/diagnostic-and-plan';
 
 const SEED_PAGES: Record<string, Page> = {
   [repeatableMethod.slug]: repeatableMethod,
@@ -12,6 +18,12 @@ const SEED_PAGES: Record<string, Page> = {
   [profitabilityFramework.slug]: profitabilityFramework,
   [regionalDairyCooperative.slug]: regionalDairyCooperative,
   [evChargingPointsMetro.slug]: evChargingPointsMetro,
+  [whatItTests.slug]: whatItTests,
+  [sixCaseTypes.slug]: sixCaseTypes,
+  [navigatingBlendedCases.slug]: navigatingBlendedCases,
+  [mathUnderPressure.slug]: mathUnderPressure,
+  [communicationUnderPressure.slug]: communicationUnderPressure,
+  [diagnosticAndPlan.slug]: diagnosticAndPlan,
 };
 
 // Flatten tree to easily lookup nodes by slug
