@@ -17,6 +17,7 @@ export type Block =
   | { type: 'keyTakeaways'; title?: string; items: InlineMd[] }
   | { type: 'steps'; ordered: boolean; items: { title?: string; md: InlineMd }[] }
   | { type: 'diagram'; ref: string; caption?: string; maxWidth?: number }
+  | { type: 'svg'; svg: string; caption?: string; maxWidth?: number; ariaLabel?: string }
   | { type: 'table'; headers: string[]; rows: InlineMd[][]; caption?: string; firstColHeader?: boolean }
   | { type: 'mathBox'; title?: string; md: InlineMd }
   | { type: 'quote'; md: InlineMd; attribution?: string }

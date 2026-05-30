@@ -7,6 +7,7 @@ import { CalloutBlock } from './blocks/callout';
 import { KeyTakeawaysBlock } from './blocks/key-takeaways';
 import { StepsBlock } from './blocks/steps';
 import { DiagramFrameBlock } from './blocks/diagram-frame';
+import { CasebookSvg } from './blocks/casebook-svg';
 import { DataTableBlock } from './blocks/data-table';
 import { MathBoxBlock } from './blocks/math-box';
 import { QuoteBlock } from './blocks/quote';
@@ -70,6 +71,9 @@ export function BlockRenderer({ block, isHero }: { block: Block; isHero?: boolea
     
     case 'diagram':
       return <DiagramFrameBlock refId={block.ref} caption={block.caption} maxWidth={block.maxWidth} />;
+    
+    case 'svg':
+      return <CasebookSvg svg={block.svg} caption={block.caption} maxWidth={block.maxWidth} ariaLabel={block.ariaLabel} />;
     
     case 'table':
       return <DataTableBlock headers={block.headers} rows={block.rows} caption={block.caption} firstColHeader={block.firstColHeader} />;
