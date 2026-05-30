@@ -1,6 +1,7 @@
 import type { Page, NavNode } from '../types';
 import { CASEBOOK_TREE } from '../tree';
-import { profitabilityFramework } from './frameworks/profitability';
+import { profitability } from './frameworks/profitability';
+import { marketEntry } from './frameworks/market-entry';
 import { regionalDairyCooperative } from './cases/profitability/regional-dairy-cooperative';
 import { evChargingPointsMetro } from './guesstimates/ev-charging-points-metro';
 import { newBlocksTest } from './_test/new-blocks-test';
@@ -15,7 +16,8 @@ import { diagnosticAndPlan } from './concepts/diagnostic-and-plan';
 const SEED_PAGES: Record<string, Page> = {
   [repeatableMethod.slug]: repeatableMethod,
   [newBlocksTest.slug]: newBlocksTest,
-  [profitabilityFramework.slug]: profitabilityFramework,
+  [profitability.slug]: profitability,
+  [marketEntry.slug]: marketEntry,
   [regionalDairyCooperative.slug]: regionalDairyCooperative,
   [evChargingPointsMetro.slug]: evChargingPointsMetro,
   [whatItTests.slug]: whatItTests,
