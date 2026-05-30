@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Lock, FileText, CheckCircle2 } from 'lucide-react';
+import { Lock, FileText, CheckCircle2, ChevronRight } from 'lucide-react';
 import type { NavNode } from '@/lib/casebook/types';
 
 interface NavTreeItemProps {
@@ -38,14 +38,18 @@ export function NavTreeItem({ node, level }: NavTreeItemProps) {
     const diff = node.meta?.difficulty;
     const dots = diff === 'challenging' ? 3 : diff === 'moderate' ? 2 : diff === 'easy' ? 1 : 0;
 
-    return (
+    const hasChildren = node.children && node.children.length > 0;
+    const isChildActive = hasChildren && node.children!.some(child => child.slug && pathname.includes(child.slug));
+    const [isOpen, setIsOpen] = React.useState(isActive || isChildActive);
+
+    const linkContent = (
       <Link 
         href={href}
         className={`group flex items-center justify-between py-1.5 px-3 rounded-md transition-colors ${
           isActive 
             ? 'bg-primary/10 text-primary font-medium border-l-2 border-l-primary' 
             : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground border-l-2 border-l-transparent'
-        } ${level > 1 ? 'ml-3' : ''}`}
+        } ${level > 1 && !hasChildren ? 'ml-3' : ''} flex-1`}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           {isActive ? (
@@ -71,6 +75,31 @@ export function NavTreeItem({ node, level }: NavTreeItemProps) {
         </div>
       </Link>
     );
+
+    if (hasChildren) {
+      return (
+        <div className={`${level > 1 ? 'ml-3' : ''}`}>
+          <div className="flex items-center w-full">
+            <button 
+              onClick={(e) => { e.preventDefault(); setIsOpen(!isOpen); }}
+              className="p-1.5 mr-1 rounded-md hover:bg-muted/50 text-muted-foreground transition-colors shrink-0"
+            >
+              <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+            </button>
+            {linkContent}
+          </div>
+          {isOpen && (
+            <div className="space-y-0.5 mt-0.5">
+              {node.children!.map((child, i) => (
+                <NavTreeItem key={i} node={child} level={level + 1} />
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return linkContent;
   }
 
   return null;

@@ -26,8 +26,17 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: 'Profitability', kind: 'page', slug: 'core-frameworks/profitability', meta: { difficulty: 'easy' } },
       { title: 'Market Entry', kind: 'page', slug: 'core-frameworks/market-entry' },
       { title: 'Growth', kind: 'page', slug: 'core-frameworks/growth' },
+      { 
+        title: 'M&A and Private Equity', 
+        kind: 'page', 
+        slug: 'core-frameworks/m-and-a',
+        children: [
+          { title: 'Value & Synergies', kind: 'page', slug: 'core-frameworks/m-and-a/value-and-synergies' },
+          { title: 'Due Diligence', kind: 'page', slug: 'core-frameworks/m-and-a/due-diligence' },
+          { title: 'Private Equity', kind: 'page', slug: 'core-frameworks/m-and-a/private-equity' }
+        ]
+      },
       { title: 'Pricing', kind: 'page', slug: 'core-frameworks/pricing' },
-      { title: 'M&A / PE / Due Diligence', kind: 'page', slug: 'core-frameworks/ma-pe-dd' },
     ],
   },
   {

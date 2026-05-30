@@ -2,6 +2,11 @@ import type { Page, NavNode } from '../types';
 import { CASEBOOK_TREE } from '../tree';
 import { profitability } from './frameworks/profitability';
 import { marketEntry } from './frameworks/market-entry';
+import { growth } from './frameworks/growth';
+import { mergersAcquisitions } from './frameworks/m-and-a';
+import { valueAndSynergies } from './frameworks/m-and-a/value-and-synergies';
+import { dueDiligence } from './frameworks/m-and-a/due-diligence';
+import { privateEquity } from './frameworks/m-and-a/private-equity';
 import { regionalDairyCooperative } from './cases/profitability/regional-dairy-cooperative';
 import { evChargingPointsMetro } from './guesstimates/ev-charging-points-metro';
 import { newBlocksTest } from './_test/new-blocks-test';
@@ -18,6 +23,11 @@ const SEED_PAGES: Record<string, Page> = {
   [newBlocksTest.slug]: newBlocksTest,
   [profitability.slug]: profitability,
   [marketEntry.slug]: marketEntry,
+  [growth.slug]: growth,
+  [mergersAcquisitions.slug]: mergersAcquisitions,
+  [valueAndSynergies.slug]: valueAndSynergies,
+  [dueDiligence.slug]: dueDiligence,
+  [privateEquity.slug]: privateEquity,
   [regionalDairyCooperative.slug]: regionalDairyCooperative,
   [evChargingPointsMetro.slug]: evChargingPointsMetro,
   [whatItTests.slug]: whatItTests,
