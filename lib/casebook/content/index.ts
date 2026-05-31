@@ -4,6 +4,8 @@ import { profitability } from './frameworks/profitability';
 import { marketEntry } from './frameworks/market-entry';
 import { growth } from './frameworks/growth';
 import { mergersAcquisitions } from './frameworks/m-and-a';
+import { structuringFundamentals } from './frameworks/structuring-fundamentals';
+import { pricing } from './frameworks/pricing';
 import { valueAndSynergies } from './frameworks/m-and-a/value-and-synergies';
 import { dueDiligence } from './frameworks/m-and-a/due-diligence';
 import { privateEquity } from './frameworks/m-and-a/private-equity';
@@ -25,6 +27,8 @@ const SEED_PAGES: Record<string, Page> = {
   [marketEntry.slug]: marketEntry,
   [growth.slug]: growth,
   [mergersAcquisitions.slug]: mergersAcquisitions,
+  [structuringFundamentals.slug]: structuringFundamentals,
+  [pricing.slug]: pricing,
   [valueAndSynergies.slug]: valueAndSynergies,
   [dueDiligence.slug]: dueDiligence,
   [privateEquity.slug]: privateEquity,
