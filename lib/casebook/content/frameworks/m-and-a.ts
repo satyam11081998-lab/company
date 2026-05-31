@@ -2,7 +2,7 @@ import type { Page } from '@/lib/casebook/types';
 
 export const mergersAcquisitions: Page = {
   slug: 'core-frameworks/m-and-a',
-  title: 'M&A and Private Equity',
+  title: 'M&A',
   titleEmphasize: 'M&A',
   subtitle: 'Should this deal happen, and what is it worth? M&A cases test whether you can value a target, judge synergies honestly, and weigh the soft factors that sink most real deals. This is the overview; valuation, due diligence, and the private-equity lens each get their own page.',
   kind: 'framework',

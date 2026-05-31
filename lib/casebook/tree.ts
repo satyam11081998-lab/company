@@ -27,7 +27,7 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: 'Market Entry', kind: 'page', slug: 'core-frameworks/market-entry' },
       { title: 'Growth', kind: 'page', slug: 'core-frameworks/growth' },
       { 
-        title: 'M&A and Private Equity', 
+        title: 'M&A', 
         kind: 'page', 
         slug: 'core-frameworks/m-and-a',
         children: [

@@ -42,64 +42,59 @@ export function NavTreeItem({ node, level }: NavTreeItemProps) {
     const isChildActive = hasChildren && node.children!.some(child => child.slug && pathname.includes(child.slug));
     const [isOpen, setIsOpen] = React.useState(isActive || isChildActive);
 
-    const linkContent = (
-      <Link 
-        href={href}
-        className={`group flex items-center justify-between py-1.5 px-3 rounded-md transition-colors ${
-          isActive 
-            ? 'bg-primary/10 text-primary font-medium border-l-2 border-l-primary' 
-            : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground border-l-2 border-l-transparent'
-        } ${level > 1 && !hasChildren ? 'ml-3' : ''} flex-1`}
-      >
-        <div className="flex items-center gap-2 overflow-hidden">
-          {isActive ? (
-            <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-          ) : (
-            <FileText className="w-3.5 h-3.5 text-muted-foreground opacity-50 shrink-0" />
-          )}
-          <span className="text-[13px] truncate">{node.title}</span>
-        </div>
-        
-        <div className="flex items-center gap-1.5 shrink-0 pl-2">
-          {dots > 0 && (
-            <div className="flex gap-0.5" title={`Difficulty: ${diff}`}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <span 
-                  key={i} 
-                  className={`w-1.5 h-1.5 rounded-full ${i < dots ? 'bg-primary' : 'bg-muted'}`}
-                />
-              ))}
-            </div>
-          )}
-          {isLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
-        </div>
-      </Link>
-    );
-
-    if (hasChildren) {
-      return (
-        <div className={`${level > 1 ? 'ml-3' : ''}`}>
-          <div className="flex items-center w-full">
+    return (
+      <div className={`${level > 1 ? 'ml-3' : ''}`}>
+        <div className="relative flex items-center w-full">
+          {hasChildren && (
             <button 
               onClick={(e) => { e.preventDefault(); setIsOpen(!isOpen); }}
-              className="p-1.5 mr-1 rounded-md hover:bg-muted/50 text-muted-foreground transition-colors shrink-0"
+              className="absolute left-1.5 z-10 p-1 rounded-md hover:bg-muted/50 text-muted-foreground transition-colors"
             >
               <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
             </button>
-            {linkContent}
-          </div>
-          {isOpen && (
-            <div className="space-y-0.5 mt-0.5">
-              {node.children!.map((child, i) => (
-                <NavTreeItem key={i} node={child} level={level + 1} />
-              ))}
-            </div>
           )}
+          <Link 
+            href={href}
+            className={`group flex items-center justify-between py-1.5 pr-3 pl-[30px] rounded-md transition-colors ${
+              isActive 
+                ? 'bg-primary/10 text-primary font-medium border-l-2 border-l-primary' 
+                : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground border-l-2 border-l-transparent'
+            } flex-1 min-w-0`}
+          >
+            <div className="flex items-center gap-2 overflow-hidden">
+              {isActive ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+              ) : (
+                <FileText className="w-3.5 h-3.5 text-muted-foreground opacity-50 shrink-0" />
+              )}
+              <span className="text-[13px] truncate">{node.title}</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5 shrink-0 pl-2">
+              {dots > 0 && (
+                <div className="flex gap-0.5" title={`Difficulty: ${diff}`}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <span 
+                      key={i} 
+                      className={`w-1.5 h-1.5 rounded-full ${i < dots ? 'bg-primary' : 'bg-muted'}`}
+                    />
+                  ))}
+                </div>
+              )}
+              {isLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+            </div>
+          </Link>
         </div>
-      );
-    }
-
-    return linkContent;
+        
+        {hasChildren && isOpen && (
+          <div className="space-y-0.5 mt-0.5">
+            {node.children!.map((child, i) => (
+              <NavTreeItem key={i} node={child} level={level + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return null;
