@@ -13,55 +13,55 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
   const navySoftColor = isDarkBackground ? '#FFFFFF' : '#091E39';
   const navySymbolColor = isDarkBackground ? '#FFFFFF' : '#071A3A';
 
-  // Subtitle characters and their precise x-positions from the original SVG
+  // Subtitle characters and their precise x-positions from the new original SVG
   const subtitleChars = [
-    { char: 'M', x: 1131.35, fill: '#CA121E' },
-    { char: 'e', x: 1159.99 },
-    { char: 't', x: 1178.9 },
-    { char: 'h', x: 1188.64 },
-    { char: 'o', x: 1207.55 },
-    { char: 'd', x: 1226.45 },
-    { char: ' ', x: 1245.36 },
-    { char: 'f', x: 1255.1 },
-    { char: 'o', x: 1264.84 },
-    { char: 'r', x: 1283.74 },
-    { char: ' ', x: 1295.2 },
-    { char: 'E', x: 1304.94, fill: '#CA121E' },
-    { char: 'v', x: 1327.86 },
-    { char: 'a', x: 1345.05 },
-    { char: 'l', x: 1363.95 },
-    { char: 'u', x: 1371.4 },
-    { char: 'a', x: 1390.31 },
-    { char: 't', x: 1409.21 },
-    { char: 'i', x: 1418.95 },
-    { char: 'n', x: 1426.4 },
-    { char: 'g', x: 1445.31 },
-    { char: ' ', x: 1464.21 },
-    { char: 'C', x: 1473.95, fill: '#CA121E' },
-    { char: 'o', x: 1498.59 },
-    { char: 'r', x: 1517.49 },
-    { char: 'p', x: 1528.95 },
-    { char: 'o', x: 1547.86 },
-    { char: 'r', x: 1566.77 },
-    { char: 'a', x: 1578.22 },
-    { char: 't', x: 1597.13 },
-    { char: 'e', x: 1606.87 },
-    { char: ' ', x: 1625.78 },
-    { char: 'E', x: 1635.52, fill: '#CA121E' },
-    { char: 'x', x: 1658.43 },
-    { char: 'c', x: 1675.62 },
-    { char: 'e', x: 1692.81 },
-    { char: 'l', x: 1711.71 },
-    { char: 'l', x: 1719.16 },
-    { char: 'e', x: 1726.61 },
-    { char: 'n', x: 1745.52 },
-    { char: 'c', x: 1764.42 },
-    { char: 'e', x: 1781.61 },
+    { char: 'M', x: 1108.47, fill: '#CA121E' },
+    { char: 'e', x: 1146.86 },
+    { char: 't', x: 1172.07 },
+    { char: 'h', x: 1184.67 },
+    { char: 'o', x: 1209.88 },
+    { char: 'd', x: 1235.09 },
+    { char: ' ', x: 1260.3 },
+    { char: 'f', x: 1272.9 },
+    { char: 'o', x: 1285.5 },
+    { char: 'r', x: 1310.71 },
+    { char: ' ', x: 1326.18 },
+    { char: 'E', x: 1338.78, fill: '#CA121E' },
+    { char: 'v', x: 1369.15 },
+    { char: 'a', x: 1392.07 },
+    { char: 'l', x: 1417.27 },
+    { char: 'u', x: 1427.59 },
+    { char: 'a', x: 1452.8 },
+    { char: 't', x: 1478 },
+    { char: 'i', x: 1490.61 },
+    { char: 'n', x: 1500.92 },
+    { char: 'g', x: 1526.13 },
+    { char: ' ', x: 1551.34 },
+    { char: 'C', x: 1563.94, fill: '#CA121E' },
+    { char: 'o', x: 1597.17 },
+    { char: 'r', x: 1622.38 },
+    { char: 'p', x: 1637.85 },
+    { char: 'o', x: 1663.06 },
+    { char: 'r', x: 1688.26 },
+    { char: 'a', x: 1703.73 },
+    { char: 't', x: 1728.94 },
+    { char: 'e', x: 1741.55 },
+    { char: ' ', x: 1766.75 },
+    { char: 'E', x: 1779.36, fill: '#CA121E' },
+    { char: 'x', x: 1809.72 },
+    { char: 'c', x: 1832.64 },
+    { char: 'e', x: 1855.56 },
+    { char: 'l', x: 1880.76 },
+    { char: 'l', x: 1891.08 },
+    { char: 'e', x: 1901.39 },
+    { char: 'n', x: 1926.6 },
+    { char: 'c', x: 1951.81 },
+    { char: 'e', x: 1974.72 },
   ];
 
   return (
     <svg
-      viewBox="657 274 1429 470"
+      viewBox="657 274 1560 470"
       className={`h-[64.8px] w-auto flex-shrink-0 ${className}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -70,7 +70,7 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
         {/* Mask to create transparent cuts inside the triangle */}
         <mask id="logo-transparency-cuts">
           {/* Default visible area (everything white is kept) */}
-          <rect x="657" y="274" width="1429" height="470" fill="#FFFFFF" />
+          <rect x="657" y="274" width="1560" height="470" fill="#FFFFFF" />
           
           {/* Slices (everything black is cut out / made transparent) */}
           <path
@@ -86,17 +86,13 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
         </mask>
       </defs>
 
-      {/* Main Group with translation matching original SVG */}
       <g>
-        {/* Triangles Group using the transparency mask */}
         <g mask="url(#logo-transparency-cuts)">
-          {/* Red Left Triangle */}
           <path
             d="M826.5 341 996 638 657 638 826.5 341Z"
             fill="#CA121E"
             fillRule="evenodd"
           />
-          {/* Navy Right Triangle (adapts to background) */}
           <path
             d="M849.5 381 996 638 703 638 849.5 381Z"
             fill={navySymbolColor}
@@ -104,13 +100,24 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
           />
         </g>
 
+        {/* Vertical Separator Line */}
+        <path 
+          d="M1045.5 309.5 1045.5 677.308" 
+          stroke={navyColor} 
+          strokeWidth="4.58333" 
+          strokeLinejoin="round" 
+          strokeMiterlimit="10" 
+          fill="none" 
+          fillRule="evenodd"
+        />
+
         {/* MECE Text letters (converted from MS PUA symbols) */}
         <text
           fill={navyColor}
           fontFamily="SansSerif,SansSerif_MSFontService,sans-serif"
           fontWeight="700"
           fontSize="223"
-          x="1045.32"
+          x="1107.73"
           y="559"
         >
           M
@@ -120,7 +127,7 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
           fontFamily="SansSerif,SansSerif_MSFontService,sans-serif"
           fontWeight="700"
           fontSize="223"
-          x="1296.3"
+          x="1375.86"
           y="559"
         >
           E
@@ -130,7 +137,7 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
           fontFamily="SansSerif,SansSerif_MSFontService,sans-serif"
           fontWeight="700"
           fontSize="223"
-          x="1510.62"
+          x="1607.32"
           y="559"
         >
           C
@@ -140,7 +147,7 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
           fontFamily="SansSerif,SansSerif_MSFontService,sans-serif"
           fontWeight="700"
           fontSize="223"
-          x="1736.96"
+          x="1850.81"
           y="559"
         >
           E
@@ -153,39 +160,14 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
             fill={item.fill || navySoftColor}
             fontFamily="SansSerif,SansSerif_MSFontService,sans-serif"
             fontWeight="400"
-            fontSize="34"
+            fontSize="46"
             x={item.x}
-            y="628"
+            y="631"
           >
             {item.char}
           </text>
         ))}
-
-        {/* Horizontal flanking lines below the subtitle */}
-        {/* Left Line */}
-        <path
-          d="M1018.5 619.5 1101 619.5"
-          stroke={navySoftColor}
-          strokeWidth="5.27083"
-          strokeLinecap="square"
-          strokeLinejoin="round"
-          strokeMiterlimit="10"
-          fill="none"
-          fillRule="evenodd"
-        />
-        {/* Right Line */}
-        <path
-          d="M1843.5 619.5 1926 619.5"
-          stroke={navyColor}
-          strokeWidth="5.27083"
-          strokeLinecap="square"
-          strokeLinejoin="round"
-          strokeMiterlimit="10"
-          fill="none"
-          fillRule="evenodd"
-        />
       </g>
     </svg>
   );
 }
-
