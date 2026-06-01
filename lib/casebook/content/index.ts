@@ -7,6 +7,11 @@ import { mergersAcquisitions } from './frameworks/m-and-a';
 import { structuringFundamentals } from './frameworks/structuring-fundamentals';
 import { pricing } from './frameworks/pricing';
 import portersFiveForces from './toolkit/porters-five-forces';
+import swot from './toolkit/swot';
+import pestel from './toolkit/pestel';
+import fourPs from './toolkit/4-ps';
+import fiveCs from './toolkit/5-cs';
+import customerJourney from './toolkit/customer-journey';
 import { valueAndSynergies } from './frameworks/m-and-a/value-and-synergies';
 import { dueDiligence } from './frameworks/m-and-a/due-diligence';
 import { privateEquity } from './frameworks/m-and-a/private-equity';
@@ -31,6 +36,11 @@ const SEED_PAGES: Record<string, Page> = {
   [structuringFundamentals.slug]: structuringFundamentals,
   [pricing.slug]: pricing,
   [portersFiveForces.slug]: portersFiveForces,
+  [swot.slug]: swot,
+  [pestel.slug]: pestel,
+  [fourPs.slug]: fourPs,
+  [fiveCs.slug]: fiveCs,
+  [customerJourney.slug]: customerJourney,
   [valueAndSynergies.slug]: valueAndSynergies,
   [dueDiligence.slug]: dueDiligence,
   [privateEquity.slug]: privateEquity,

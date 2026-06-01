@@ -48,6 +48,7 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: 'SWOT', kind: 'page', slug: 'toolkit/swot' },
       { title: 'PESTEL', kind: 'page', slug: 'toolkit/pestel' },
       { title: '4 P\'s', kind: 'page', slug: 'toolkit/4-ps' },
+      { title: 'The 5 C\'s of Marketing', kind: 'page', slug: 'toolkit/5-cs' },
       { title: 'BCG Growth–Share Matrix', kind: 'page', slug: 'toolkit/bcg-matrix' },
       { title: 'Value Chain', kind: 'page', slug: 'toolkit/value-chain' },
       { title: 'Ansoff Matrix', kind: 'page', slug: 'toolkit/ansoff-matrix' },
