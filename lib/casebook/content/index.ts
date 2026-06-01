@@ -6,6 +6,7 @@ import { growth } from './frameworks/growth';
 import { mergersAcquisitions } from './frameworks/m-and-a';
 import { structuringFundamentals } from './frameworks/structuring-fundamentals';
 import { pricing } from './frameworks/pricing';
+import portersFiveForces from './toolkit/porters-five-forces';
 import { valueAndSynergies } from './frameworks/m-and-a/value-and-synergies';
 import { dueDiligence } from './frameworks/m-and-a/due-diligence';
 import { privateEquity } from './frameworks/m-and-a/private-equity';
@@ -29,6 +30,7 @@ const SEED_PAGES: Record<string, Page> = {
   [mergersAcquisitions.slug]: mergersAcquisitions,
   [structuringFundamentals.slug]: structuringFundamentals,
   [pricing.slug]: pricing,
+  [portersFiveForces.slug]: portersFiveForces,
   [valueAndSynergies.slug]: valueAndSynergies,
   [dueDiligence.slug]: dueDiligence,
   [privateEquity.slug]: privateEquity,
