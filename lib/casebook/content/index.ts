@@ -12,6 +12,10 @@ import pestel from './toolkit/pestel';
 import fourPs from './toolkit/4-ps';
 import fiveCs from './toolkit/5-cs';
 import customerJourney from './toolkit/customer-journey';
+import bcgMatrix from './toolkit/bcg-matrix';
+import valueChain from './toolkit/value-chain';
+import ansoffMatrix from './toolkit/ansoff-matrix';
+import mckinsey7s from './toolkit/mckinsey-7s';
 import { valueAndSynergies } from './frameworks/m-and-a/value-and-synergies';
 import { dueDiligence } from './frameworks/m-and-a/due-diligence';
 import { privateEquity } from './frameworks/m-and-a/private-equity';
@@ -41,6 +45,10 @@ const SEED_PAGES: Record<string, Page> = {
   [fourPs.slug]: fourPs,
   [fiveCs.slug]: fiveCs,
   [customerJourney.slug]: customerJourney,
+  [bcgMatrix.slug]: bcgMatrix,
+  [valueChain.slug]: valueChain,
+  [ansoffMatrix.slug]: ansoffMatrix,
+  [mckinsey7s.slug]: mckinsey7s,
   [valueAndSynergies.slug]: valueAndSynergies,
   [dueDiligence.slug]: dueDiligence,
   [privateEquity.slug]: privateEquity,
