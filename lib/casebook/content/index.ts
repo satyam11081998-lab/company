@@ -29,7 +29,15 @@ import { navigatingBlendedCases } from './concepts/navigating-blended-cases';
 import { mathUnderPressure } from './concepts/math-under-pressure';
 import { communicationUnderPressure } from './concepts/communication-under-pressure';
 import { diagnosticAndPlan } from './concepts/diagnostic-and-plan';
-
+import { stp } from './miscellaneous/misc-stp';
+import { foura } from './miscellaneous/misc-4-as';
+import { fivesenses } from './miscellaneous/misc-five-senses';
+import { vrio } from './miscellaneous/misc-vrio';
+import { moats } from './miscellaneous/misc-sustainable-advantage';
+import { amo } from './miscellaneous/misc-amo';
+import { fourm } from './miscellaneous/misc-4-ms';
+import { fourv } from './miscellaneous/misc-4-vs-data';
+import { tamsamsom } from './miscellaneous/misc-tam-sam-som';
 const SEED_PAGES: Record<string, Page> = {
   [repeatableMethod.slug]: repeatableMethod,
   [newBlocksTest.slug]: newBlocksTest,
@@ -60,6 +68,15 @@ const SEED_PAGES: Record<string, Page> = {
   [mathUnderPressure.slug]: mathUnderPressure,
   [communicationUnderPressure.slug]: communicationUnderPressure,
   [diagnosticAndPlan.slug]: diagnosticAndPlan,
+  [stp.slug]: stp,
+  [foura.slug]: foura,
+  [fivesenses.slug]: fivesenses,
+  [vrio.slug]: vrio,
+  [moats.slug]: moats,
+  [amo.slug]: amo,
+  [fourm.slug]: fourm,
+  [fourv.slug]: fourv,
+  [tamsamsom.slug]: tamsamsom,
 };
 
 // Flatten tree to easily lookup nodes by slug
