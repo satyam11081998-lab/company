@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, Compass, Layers, Wrench, Briefcase, Calculator, Building2 } from 'lucide-react';
+import { ChevronDown, Compass, Layers, Wrench, Briefcase, Calculator, Building2, Shapes } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { NavTreeItem } from './nav-tree-item';
 import type { NavNode } from '@/lib/casebook/types';
 
 const ICON_MAP: Record<string, React.FC<any>> = {
-  Compass, Layers, Wrench, Briefcase, Calculator, Building2
+  Compass, Layers, Wrench, Briefcase, Calculator, Building2, Shapes
 };
 
 interface NavTreeSectionProps {
