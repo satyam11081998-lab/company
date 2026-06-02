@@ -32,9 +32,9 @@ function NavTreeSection({ node, searchQuery }: NavTreeSectionProps) {
   return (
     <Collapsible open={openState} onOpenChange={setIsOpen} className="mb-2">
       <CollapsibleTrigger className="flex items-center justify-between w-full py-2 px-3 rounded-md hover:bg-muted/30 transition-colors group">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-hidden flex-1">
           {Icon && <Icon className="w-4 h-4 text-navy shrink-0" />}
-          <span className="font-semibold text-small text-navy">{node.title}</span>
+          <span className="font-semibold text-small text-navy whitespace-nowrap truncate">{node.title}</span>
         </div>
         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${openState ? 'rotate-180' : ''}`} />
       </CollapsibleTrigger>

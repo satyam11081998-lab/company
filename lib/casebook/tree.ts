@@ -40,7 +40,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'C · Miscellaneous Frameworks',
+    title: 'C · Misc. Frameworks',
     kind: 'section',
     icon: 'Shapes',
     children: [
