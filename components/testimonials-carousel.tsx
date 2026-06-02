@@ -44,10 +44,10 @@ export default function TestimonialsCarousel() {
               <blockquote className="text-body leading-relaxed text-foreground italic font-light mb-6 flex-grow">
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
-              <div className="flex flex-col items-center gap-3">
-                <Avatar className="h-12 w-12 border-2 border-border">
-                  {t.avatar_url && <AvatarImage src={t.avatar_url} alt={t.name} />}
-                  <AvatarFallback className="bg-navy text-navy-foreground text-sm font-semibold">
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-28 w-28 border-4 border-border shadow-sm">
+                  {t.avatar_url && <AvatarImage src={t.avatar_url} alt={t.name} className="object-cover" />}
+                  <AvatarFallback className="bg-navy text-navy-foreground text-xl font-semibold">
                     {t.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
