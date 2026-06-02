@@ -16,36 +16,36 @@ export default async function LandingPage() {
 
       {/* ── Nav ──────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+        <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
+          <div className="flex items-center gap-12">
             <Link href="/" className="flex items-center -ml-2">
-              <Logo variant="dark" className="scale-[0.65] origin-left -mr-[80px]" />
+              <Logo variant="dark" className="" />
             </Link>
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-8">
               {[['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
-                <Link key={href} href={href} className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
+                <Link key={href} href={href} className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
                   {label}
                 </Link>
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <ThemeToggle />
             {user ? (
               <Link href="/dashboard">
-                <button className="btn-primary text-[13px] py-2 px-5">
+                <button className="btn-primary text-[15px] py-2 px-6">
                   Open MECE
                 </button>
               </Link>
             ) : (
               <>
                 <Link href="/login">
-                  <button className="text-[13px] font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 transition-colors">
+                  <button className="text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors">
                     Login
                   </button>
                 </Link>
                 <Link href="/signup">
-                  <button className="btn-primary text-[13px] py-2 px-5">
+                  <button className="btn-primary text-[15px] py-2 px-6">
                     Get started
                   </button>
                 </Link>

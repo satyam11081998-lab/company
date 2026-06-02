@@ -25,12 +25,12 @@ export default function AppNav() {
 
   return (
     <header className="nav-bar sticky top-0 z-40">
-      <div className="container flex h-14 items-center justify-between">
+      <div className="container flex h-24 items-center justify-between">
 
         {/* Left: wordmark + nav links */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-12">
           <Link href={user ? '/dashboard' : '/'} className="flex items-center group -ml-2">
-            <Logo variant="light" className="scale-[0.7] origin-left -mr-[70px]" />
+            <Logo variant="light" className="" />
           </Link>
 
           {user && (
@@ -45,7 +45,7 @@ export default function AppNav() {
                 <Link
                   key={href}
                   href={href}
-                  className={`relative px-3 py-1 text-[13px] font-medium transition-colors rounded-sm ${
+                  className={`relative px-4 py-2 text-[17px] font-medium transition-colors rounded-sm ${
                     isActive(href)
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'
@@ -69,15 +69,15 @@ export default function AppNav() {
             <div className="hidden md:flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2 border-r border-navy-mid pr-3">
                 <div className="flex items-baseline gap-1">
-                  <span className="font-mono text-base font-medium text-primary tabular-nums">{user.points}</span>
-                  <span className="text-label text-navy-foreground/35">pts</span>
+                  <span className="font-mono text-[18.4px] font-medium text-primary tabular-nums">{user.points}</span>
+                  <span className="text-[13.8px] text-navy-foreground/35">pts</span>
                 </div>
                 {tier !== 'free' && <TierBadge tier={tier} size="xs" />}
               </div>
               <Link href="/profile" className="flex-shrink-0">
-                <Avatar className="h-7 w-7 rounded-sm border border-navy-mid cursor-pointer">
+                <Avatar className="h-8 w-8 rounded-full border border-navy-mid/30 shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer">
                   {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name || ''} />}
-                  <AvatarFallback className="rounded-sm bg-navy-mid text-navy-foreground text-base font-semibold">
+                  <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-[18.4px] font-semibold shadow-inner">
                     {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
@@ -85,7 +85,7 @@ export default function AppNav() {
               {tier !== 'pro' && (
                 <Link 
                   href="/upgrade" 
-                  className="hidden md:inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1 border border-primary/20 rounded-sm bg-primary/5"
+                  className="hidden md:inline-flex items-center gap-1 text-[13.8px] font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1 border border-primary/20 rounded-sm bg-primary/5"
                 >
                   <Sparkles className="h-3 w-3" />
                   Upgrade

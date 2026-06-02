@@ -40,7 +40,53 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'C · Toolkit',
+    title: 'C · Miscellaneous Frameworks',
+    kind: 'section',
+    icon: 'Shapes',
+    children: [
+      {
+        title: 'Marketing & Customer',
+        kind: 'group',
+        children: [
+          { title: 'STP', kind: 'page', slug: 'miscellaneous/stp' },
+          { title: 'The 4 A\'s', kind: 'page', slug: 'miscellaneous/4-as' },
+          { title: 'Five Senses', kind: 'page', slug: 'miscellaneous/five-senses' },
+        ],
+      },
+      {
+        title: 'Competitive Advantage',
+        kind: 'group',
+        children: [
+          { title: 'VRIO', kind: 'page', slug: 'miscellaneous/vrio' },
+          { title: 'Sustainable Advantage', kind: 'page', slug: 'miscellaneous/sustainable-advantage' },
+        ],
+      },
+      {
+        title: 'People & Operations',
+        kind: 'group',
+        children: [
+          { title: 'AMO', kind: 'page', slug: 'miscellaneous/amo' },
+          { title: 'The 4 M\'s', kind: 'page', slug: 'miscellaneous/4-ms' },
+        ],
+      },
+      {
+        title: 'Data',
+        kind: 'group',
+        children: [
+          { title: 'The 4 V\'s of Data', kind: 'page', slug: 'miscellaneous/4-vs-data' },
+        ],
+      },
+      {
+        title: 'Market Sizing',
+        kind: 'group',
+        children: [
+          { title: 'TAM, SAM & SOM', kind: 'page', slug: 'miscellaneous/tam-sam-som' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'D · Toolkit',
     kind: 'section',
     icon: 'Wrench',
     children: [
@@ -57,7 +103,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'D · Cases',
+    title: 'E · Cases',
     kind: 'section',
     icon: 'Briefcase',
     children: [
@@ -108,7 +154,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'E · Guesstimates',
+    title: 'F · Guesstimates',
     kind: 'section',
     icon: 'Calculator',
     children: [
@@ -117,55 +163,9 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'F · Industry Primers',
+    title: 'G · Industry Primers',
     kind: 'section',
     icon: 'Building2',
     children: Array.from({ length: 15 }).map((_, i) => ({ title: `Industry Primer ${i + 1}`, kind: 'page', slug: `industry-primers/primer-${i + 1}` })),
-  },
-  {
-    title: 'G · Miscellaneous Frameworks',
-    kind: 'section',
-    icon: 'Shapes',
-    children: [
-      {
-        title: 'Marketing & Customer',
-        kind: 'group',
-        children: [
-          { title: 'STP', kind: 'page', slug: 'miscellaneous/stp' },
-          { title: 'The 4 A\'s', kind: 'page', slug: 'miscellaneous/4-as' },
-          { title: 'Five Senses', kind: 'page', slug: 'miscellaneous/five-senses' },
-        ],
-      },
-      {
-        title: 'Competitive Advantage',
-        kind: 'group',
-        children: [
-          { title: 'VRIO', kind: 'page', slug: 'miscellaneous/vrio' },
-          { title: 'Sustainable Advantage', kind: 'page', slug: 'miscellaneous/sustainable-advantage' },
-        ],
-      },
-      {
-        title: 'People & Operations',
-        kind: 'group',
-        children: [
-          { title: 'AMO', kind: 'page', slug: 'miscellaneous/amo' },
-          { title: 'The 4 M\'s', kind: 'page', slug: 'miscellaneous/4-ms' },
-        ],
-      },
-      {
-        title: 'Data',
-        kind: 'group',
-        children: [
-          { title: 'The 4 V\'s of Data', kind: 'page', slug: 'miscellaneous/4-vs-data' },
-        ],
-      },
-      {
-        title: 'Market Sizing',
-        kind: 'group',
-        children: [
-          { title: 'TAM, SAM & SOM', kind: 'page', slug: 'miscellaneous/tam-sam-som' },
-        ],
-      },
-    ],
   },
 ];

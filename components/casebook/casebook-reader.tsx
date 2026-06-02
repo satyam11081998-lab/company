@@ -15,9 +15,9 @@ interface CasebookReaderProps {
 
 export function CasebookReader({ page }: CasebookReaderProps) {
   return (
-    <div className="w-full min-h-screen bg-background grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_220px] xl:pr-8">
+    <div className="w-full min-h-screen bg-background grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_220px] xl:pr-8 relative">
       {/* Left Sidebar: Navigation & Search */}
-      <aside className="border-r border-border bg-card/50 hidden lg:flex flex-col h-[calc(100vh-4rem)] sticky top-16">
+      <aside className="border-r border-border bg-card/50 hidden lg:flex flex-col h-[calc(100vh-6rem)] sticky top-24 overflow-y-auto">
         <CasebookSearch />
       </aside>
 
@@ -26,8 +26,8 @@ export function CasebookReader({ page }: CasebookReaderProps) {
         <article className="w-full max-w-[720px] xl:max-w-none ml-0 lg:ml-8 xl:ml-16 xl:mr-[88px]">
           <div className="flex items-center gap-4 mb-6">
             <Sheet>
-              <SheetTrigger className="lg:hidden p-2 -ml-2 rounded-md hover:bg-muted/50 text-muted-foreground transition-colors">
-                <Menu className="w-5 h-5" />
+              <SheetTrigger className="lg:hidden fixed bottom-24 right-6 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
+                <Menu className="w-6 h-6" />
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
                 <CasebookSearch />
