@@ -45,7 +45,7 @@ export function CasebookSvg({ svg, caption, maxWidth = 720, ariaLabel }: Caseboo
           }
         `}</style>
         <div
-          className="w-full h-auto animate-diagram flex items-center justify-center"
+          className="w-full h-auto animate-diagram flex items-center justify-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-w-full"
           {...(ariaLabel 
             ? { role: 'img', 'aria-label': ariaLabel } 
             : { 'aria-hidden': true }
