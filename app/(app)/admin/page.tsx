@@ -4,14 +4,14 @@ import { useState } from 'react';
 import SectionHeader from '@/components/section-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle } from 'lucide-react';
+import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { triggerNewsFetch, triggerCaseGeneration } from './actions';
 
 export default function AdminPage() {
   const [newsLoading, setNewsLoading] = useState(false);
   const [caseLoading, setCaseLoading] = useState(false);
   
-  const [log, setLog] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [log, setLog] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
 
   const handleNewsFetch = async () => {
     setNewsLoading(true);
@@ -19,7 +19,18 @@ export default function AdminPage() {
     const result = await triggerNewsFetch();
     
     if (result.success) {
-      setLog({ type: 'success', message: `News fetched! ${result.data.message || 'Success'}` });
+      // The backend reports status + details.saved; saved=0 means nothing landed in
+      // the DB even though the call "succeeded" — surface that as a warning, not success.
+      const saved = result.data?.details?.saved;
+      const status = result.data?.status;
+      if (status === 'warning' || saved === 0) {
+        setLog({
+          type: 'warning',
+          message: `News run completed but saved 0 headlines. ${result.data?.message || ''}`.trim(),
+        });
+      } else {
+        setLog({ type: 'success', message: `News fetched! ${result.data.message || 'Success'}` });
+      }
     } else {
       setLog({ type: 'error', message: result.error || 'Failed to fetch news' });
     }
@@ -100,12 +111,16 @@ export default function AdminPage() {
       {/* Log Output */}
       {log && (
         <div className={`p-4 rounded-lg border flex items-start gap-3 animate-slide-up ${
-          log.type === 'success' 
+          log.type === 'success'
             ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
+            : log.type === 'warning'
+            ? 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400'
             : 'bg-destructive/10 border-destructive/20 text-destructive'
         }`}>
           {log.type === 'success' ? (
             <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+          ) : log.type === 'warning' ? (
+            <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
           ) : (
             <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
           )}

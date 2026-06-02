@@ -36,10 +36,11 @@ export function DailyPicksStrip() {
         />
         <DailyPickTile
           icon={<Zap className="h-4 w-4" />}
-          label={daily?.guesstimate_code ? `GUESSTIMATE · ${daily.guesstimate_code.toUpperCase()}` : 'GUESSTIMATE'}
-          title={daily?.guesstimate_title || (daily?.guesstimate_code ? `Today's guesstimate: ${daily.guesstimate_code}` : 'Pick from the bank')}
-          href={daily?.guesstimate_code ? `/practice?tab=guesstimates&focus=${daily.guesstimate_code}` : '/practice?tab=guesstimates'}
-          cta={daily?.guesstimate_code ? "Solve today's guesstimate" : 'Browse guesstimates'}
+          label={daily?.guesstimate ? `GUESSTIMATE · ${daily.guesstimate.difficulty.toUpperCase()}` : 'GUESSTIMATE'}
+          title={daily?.guesstimate?.title || "Loading today's guesstimate…"}
+          difficultyDots={daily?.guesstimate?.difficulty === 'hard' ? 3 : daily?.guesstimate?.difficulty === 'medium' ? 2 : 1}
+          href={daily?.guesstimate ? `/cases/${daily.guesstimate.id}?daily=1` : '/practice?tab=guesstimates'}
+          cta={daily?.guesstimate ? "Solve today's guesstimate" : 'Browse guesstimates'}
           loading={loading}
         />
         <DailyPickTile

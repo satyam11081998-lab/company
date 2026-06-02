@@ -8,7 +8,14 @@ export interface DailyContentResponse {
     type: string;
     difficulty: string;
   } | null;
-  guesstimate_code: string | null;
+  // The daily guesstimate is now a real attemptable case (type='guesstimate').
+  guesstimate: {
+    id: string;
+    title: string;
+    type: string;
+    difficulty: string;
+  } | null;
+  guesstimate_code: string | null; // back-compat; carries the same id
   guesstimate_title?: string | null;
   brief: {
     id: string;
