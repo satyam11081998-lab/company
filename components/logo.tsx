@@ -62,7 +62,7 @@ export default function Logo({ className = "", variant = 'dark' }: LogoProps) {
   return (
     <svg
       viewBox="657 274 1560 470"
-      className={`h-[64.8px] w-auto flex-shrink-0 ${className}`}
+      className={`h-[97.2px] w-auto flex-shrink-0 ${className}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
