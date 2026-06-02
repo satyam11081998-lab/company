@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function LandingPage() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
 
@@ -31,8 +31,8 @@ export default async function LandingPage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {session?.user ? (
-              <Link href="/home">
+            {user ? (
+              <Link href="/dashboard">
                 <button className="btn-primary text-[13px] py-2 px-5">
                   Open MECE
                 </button>
@@ -73,9 +73,9 @@ export default async function LandingPage() {
               Cases, frameworks, and GD prep for every MBA aspirant — consulting, finance, marketing, product, ops. Scored across 6 dimensions. Ranked against every aspirant in India.
             </p>
             <div className="mt-7 flex items-center gap-3">
-              <Link href={session?.user ? "/home" : "/signup"}>
+              <Link href={user ? "/dashboard" : "/signup"}>
                 <button className="btn-primary">
-                  {session?.user ? "Open MECE" : "Start now"} <ArrowRight className="h-4 w-4" />
+                  {user ? "Open MECE" : "Start now"} <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <Link href="/methodology">

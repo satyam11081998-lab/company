@@ -29,14 +29,13 @@ export default function AppNav() {
 
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-8">
-          <Link href={user ? '/home' : '/'} className="flex items-center group -ml-2">
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center group -ml-2">
             <Logo variant="light" className="scale-[0.7] origin-left -mr-[70px]" />
           </Link>
 
           {user && (
             <nav className="hidden md:flex items-center gap-0.5">
               {[
-                { href: '/home',        label: 'Home' },
                 { href: '/dashboard',   label: 'Dashboard' },
                 { href: '/learn/casebook', label: 'Learn' },
                 { href: '/practice',    label: 'Practice' },

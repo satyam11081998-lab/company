@@ -8,9 +8,9 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (!session?.user) {
+  if (!user) {
     redirect('/login');
   }
 
@@ -18,14 +18,13 @@ export default async function AdminLayout({
   const { data: userData } = await supabase
     .from('users')
     .select('is_admin')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single();
 
   const is_admin = (userData as Partial<UserRow>)?.is_admin;
 
   if (!is_admin) {
-    // If not an admin, boot them to home
-    redirect('/home');
+    redirect('/dashboard');
   }
 
   return (

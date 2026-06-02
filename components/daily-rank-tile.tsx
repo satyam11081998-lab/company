@@ -70,7 +70,7 @@ export default function DailyRankTile() {
             You haven't attempted today's case.
           </p>
           <Link
-            href="/home"
+            href="/dashboard"
             className="mt-4 inline-flex items-center gap-1.5 text-small font-medium text-primary hover:underline"
           >
             Today's case is waiting

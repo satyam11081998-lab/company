@@ -14,20 +14,20 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) redirect('/login');
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) redirect('/login');
 
   const { data: userRow } = await supabase
     .from('users')
     .select('*')
-    .eq('id', session.user.id)
+    .eq('id', authUser.id)
     .maybeSingle();
 
   const fallbackUser: UserRow = {
-    id: session.user.id,
-    name: session.user.user_metadata?.full_name || null,
-    email: session.user.email || '',
-    avatar_url: session.user.user_metadata?.avatar_url || null,
+    id: authUser.id,
+    name: authUser.user_metadata?.full_name || null,
+    email: authUser.email || '',
+    avatar_url: authUser.user_metadata?.avatar_url || null,
     points: 0,
     created_at: new Date().toISOString(),
     subscription_tier: 'free',

@@ -11,7 +11,7 @@ import SectionHeader from '@/components/section-header';
 import DailyPickTile from '@/components/daily-pick-tile';
 import SubmissionHeatmap from '@/components/submission-heatmap';
 import SkillMasteryGrid from '@/components/skill-mastery-grid';
-import TestimonialsCarousel from '@/components/testimonials-carousel';
+
 import { Card } from '@/components/ui/card';
 
 import { fetchDailyToday, type DailyContentResponse } from '@/lib/api';
@@ -105,14 +105,7 @@ export default function HomeContent({ submissions }: Props) {
           </div>
         </section>
 
-        {/* Section 4: Testimonials */}
-        <section className="animate-slide-up" style={{ animationDelay: '160ms' }}>
-          <SectionHeader 
-            label="WHAT MBA ASPIRANTS SAY"
-            subtitle="From students who've used MECE in their placement journey"
-          />
-          <TestimonialsCarousel />
-        </section>
+
 
         {/* Section 5: Quick links */}
         <section className="animate-fade-in" style={{ animationDelay: '240ms' }}>

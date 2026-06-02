@@ -18,9 +18,9 @@ interface LeaderRow {
 
 export default async function LeaderboardPage() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) redirect('/login');
-  const authUser = session.user;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  const authUser = user;
 
   const [userRes, usersRes, subCountsRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),

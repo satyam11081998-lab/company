@@ -14,9 +14,9 @@ export const revalidate = 300;
 
 export default async function CaseDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) redirect('/login');
-  const authUser = session.user;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  const authUser = user;
 
   // Parallel fetches
   const [caseRes, attemptsRes, ratingRes, userRes] = await Promise.all([

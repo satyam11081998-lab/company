@@ -8,9 +8,9 @@ export const revalidate = 60;
 
 export default async function PracticePage() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) redirect('/login');
-  const authUser = session.user;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  const authUser = user;
 
   const [casesRes, attemptsRes] = await Promise.all([
     supabase.from('cases').select('*').eq('is_active', true).order('created_at', { ascending: false }),

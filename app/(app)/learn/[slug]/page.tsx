@@ -15,9 +15,9 @@ interface Props {
 
 export default async function DomainPage({ params }: Props) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) redirect('/login');
-  const authUser = session.user;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  const authUser = user;
 
   const domain = getDomainBySlug(params.slug);
   if (!domain) notFound();

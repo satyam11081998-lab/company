@@ -18,9 +18,9 @@ export const revalidate = false;
 /** Results page — shows score, breakdown bars, strengths, improvements. */
 export default async function ResultPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) redirect('/login');
-  const authUser = session.user;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  const authUser = user;
 
   const [submissionRes, userBadgesRes] = await Promise.all([
     supabase.from('submissions').select('*').eq('id', params.id).maybeSingle(),

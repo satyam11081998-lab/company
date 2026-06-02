@@ -20,7 +20,6 @@ export default function MobileBottomNav() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   const tabs = [
-    { href: '/home', icon: Home, label: 'Home' },
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/practice', icon: Brain, label: 'Practice' },
     { href: '/learn/casebook', icon: FileText, label: 'Learn' },

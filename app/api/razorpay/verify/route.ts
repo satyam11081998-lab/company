@@ -6,9 +6,9 @@ import { TIER_PRICES } from '@/lib/tier';
 export async function POST(req: Request) {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
     
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
           subscription_started_at: now.toISOString(),
           subscription_expires_at: expiresAt.toISOString(),
         })
-        .eq('id', session.user.id);
+        .eq('id', user.id);
         
       if (updateError) {
         console.error("Failed to update user tier in DB:", updateError);
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       const { error: paymentError } = await supabase
         .from('payments')
         .insert({
-          user_id: session.user.id,
+          user_id: user.id,
           razorpay_order_id,
           razorpay_payment_id,
           razorpay_signature,

@@ -355,3 +355,28 @@
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--border-strong)); border-radius: 8px; }
+/* ── Dashboard "alive" motion (append to app/globals.css) ──────────── */
+/* Ambient touches — only run when the user hasn't asked to reduce motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes soft-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.0); }
+    50%      { box-shadow: 0 0 0 4px hsl(var(--primary) / 0.10); }
+  }
+  @keyframes flame-flicker {
+    0%, 100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+    25%      { transform: scale(1.12) rotate(-4deg); opacity: .9; }
+    50%      { transform: scale(.96) rotate(3deg);  opacity: 1; }
+    75%      { transform: scale(1.08) rotate(-2deg); opacity: .95; }
+  }
+  .ambient-pulse { animation: soft-pulse 3.2s ease-in-out infinite; }
+  .ambient-flame { animation: flame-flicker 2.4s ease-in-out infinite; transform-origin: center bottom; }
+  .stagger > *:nth-child(7) { animation: slide-up 0.45s ease-out 480ms both; }
+  .stagger > *:nth-child(8) { animation: slide-up 0.45s ease-out 560ms both; }
+}
+
+/* Honour reduced-motion globally: neutralise the entry + ambient animations. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in, .animate-slide-up, .animate-float,
+  .ambient-pulse, .ambient-flame,
+  .stagger > * { animation: none !important; }
+}

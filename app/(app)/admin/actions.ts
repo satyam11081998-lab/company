@@ -8,13 +8,13 @@ import type { UserRow } from '@/lib/types';
  */
 async function requireAdmin() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) throw new Error("Unauthorized");
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
 
   const { data: userData } = await supabase
     .from('users')
     .select('is_admin')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single();
 
   if (!(userData as Partial<UserRow>)?.is_admin) {

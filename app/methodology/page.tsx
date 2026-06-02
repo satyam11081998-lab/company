@@ -8,11 +8,11 @@ import type { UserRow } from '@/lib/types';
 
 export default async function MethodologyPage() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   
   let userRow: UserRow | null = null;
-  if (session?.user) {
-    const { data } = await supabase.from('users').select('*').eq('id', session.user.id).maybeSingle();
+  if (user) {
+    const { data } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
     userRow = data as UserRow | null;
   }
 

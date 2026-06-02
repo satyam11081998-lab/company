@@ -1,67 +1,87 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { computeReadiness, type ReadinessSubmission } from '@/lib/readiness';
+import { nextAction, computeFreeQuota } from '@/lib/next-action';
+import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
+import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
-import type { UserRow, SubmissionRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) redirect('/login');
-  const authUser = session.user;
+  const supabase = createClient(); // real client is synchronous (Phase 1)
 
-  // Parallel fetches
-  const [userRes, recentSubsRes, benchmarkRes] = await Promise.all([
-    supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) redirect('/login');
+
+  // Parallel fetches for performance
+  const [userRes, rawSubsRes, attemptsRes, benchmarkRes] = await Promise.all([
+    supabase
+      .from('users')
+      .select('id, name, points, subscription_tier, streak_count, streak_last_date, created_at')
+      .eq('id', authUser.id)
+      .single<UserRow>(),
     supabase
       .from('submissions')
-      .select('*')
+      .select('id, user_id, case_id, answer_text, score, feedback_json, created_at, cases(type, difficulty)')
       .eq('user_id', authUser.id)
-      .order('created_at', { ascending: false })
-      .limit(40),
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('case_attempts')
+      .select('submission_id, is_first_attempt')
+      .eq('user_id', authUser.id),
     supabase
       .from('submissions')
       .select('feedback_json')
       .not('feedback_json', 'is', null)
-      .limit(100),
+      .limit(100)
   ]);
 
-  const userRow: UserRow = (userRes.data as UserRow | null) || {
-    id: authUser.id,
-    name: authUser.user_metadata?.full_name || null,
-    email: authUser.email || '',
-    avatar_url: null,
-    points: 0,
-    created_at: new Date().toISOString(),
-    subscription_tier: 'free',
-    subscription_started_at: null,
-    subscription_expires_at: null,
-    streak_count: 0,
-    streak_last_date: null,
-    is_admin: false,
-  };
-  const recentSubs = (recentSubsRes.data as SubmissionRow[] | null) || [];
+  const userRow = userRes.data;
+  const rawSubs = rawSubsRes.data;
+  const attempts = attemptsRes.data;
 
-  // O(1) rank computation
+  const firstByesSub = new Map<string, boolean>(
+    (attempts ?? []).map((a: any) => [a.submission_id, a.is_first_attempt])
+  );
+
+  const submissions: ReadinessSubmission[] = (rawSubs ?? []).map((s: any) => ({
+    id: s.id,
+    user_id: s.user_id,
+    case_id: s.case_id,
+    answer_text: s.answer_text,
+    score: s.score,
+    feedback_json: s.feedback_json,
+    created_at: s.created_at,
+    case_type: s.cases?.type ?? null,
+    case_difficulty: s.cases?.difficulty ?? null,
+    is_first_attempt: firstByesSub.get(s.id) ?? true,
+  }));
+
+  const tier = userRow?.subscription_tier ?? 'free';
+  const streak = userRow?.streak_count ?? 0;
+  const points = userRow?.points ?? 0;
+  const userName = (userRow?.name ?? authUser.email ?? 'there').split(' ')[0];
+
+  // --- peer comparison (O(1) rank, restored from the original dashboard) ---
   const [rankCountRes, totalCountRes] = await Promise.all([
-    supabase.from('users').select('id', { count: 'exact', head: true }).gt('points', userRow.points),
+    supabase.from('users').select('id', { count: 'exact', head: true }).gt('points', points),
     supabase.from('users').select('id', { count: 'exact', head: true }),
   ]);
   const rankNum = (rankCountRes.count ?? 0) + 1;
   const totalUsers = totalCountRes.count ?? 0;
-  const percentile = totalUsers > 1
-    ? Math.round(((totalUsers - rankNum) / (totalUsers - 1)) * 100)
-    : null;
+  const percentile = totalUsers > 1 ? Math.round(((totalUsers - rankNum) / (totalUsers - 1)) * 100) : null;
+  const scored = submissions.filter((s) => s.score != null);
+  const avgScore = scored.length ? Math.round(scored.reduce((a, s) => a + (s.score as number), 0) / scored.length) : null;
 
-  // Compute avg score
-  const scoredSubs = recentSubs.filter((s) => s.score !== null);
-  const avgScore = scoredSubs.length > 0
-    ? Math.round(scoredSubs.reduce((a, s) => a + (s.score || 0), 0) / scoredSubs.length)
-    : null;
+  // --- pure, verified pipeline ---
+  const readiness = computeReadiness({ submissions, streak });
+  const action = nextAction(readiness, tier);
+  const quota = computeFreeQuota(tier, submissions);
 
-  // Compute benchmark for radar
+  // Reconciled global cohort benchmark
   const benchmarkAgg: Record<string, { sum: number; count: number }> = {};
   (benchmarkRes.data || []).forEach((sub) => {
     const breakdown = (sub.feedback_json as { breakdown?: Record<string, number> })?.breakdown;
@@ -75,21 +95,32 @@ export default async function DashboardPage() {
       });
     }
   });
-  const benchmark: Record<string, number> = {};
+  
+  const benchmark: Partial<Record<ScoreDimension, number>> = {};
   Object.entries(benchmarkAgg).forEach(([dim, { sum, count }]) => {
-    benchmark[dim] = count > 0 ? Math.round(sum / count) : 0;
+    if (count > 0) benchmark[dim as ScoreDimension] = Math.round(sum / count);
   });
 
+  const trajectory = submissions
+    .filter((s) => s.score != null && (s.is_first_attempt ?? true))
+    .map((s) => s.score as number);
+
   return (
-    <div className="min-h-screen pb-10">
+    <div className="container max-w-6xl py-10">
       <DashboardClient
-        user={userRow}
-        submissions={recentSubs}
+        userName={userName}
+        points={points}
+        readiness={readiness}
+        action={action}
+        quota={quota}
+        benchmark={benchmark}
+        trajectory={trajectory}
+        submissions={submissions}
         rankNum={rankNum}
         totalUsers={totalUsers}
         percentile={percentile}
         avgScore={avgScore}
-        benchmark={benchmark}
+        streak={streak}
       />
     </div>
   );

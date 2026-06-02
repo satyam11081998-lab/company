@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
   // If logged in and on auth pages, push them into the app
   if (user && isAuthPage) {
     const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = '/home';
+    homeUrl.pathname = '/dashboard';
     homeUrl.search = '';
     return NextResponse.redirect(homeUrl);
   }

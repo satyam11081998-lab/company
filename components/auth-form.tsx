@@ -16,7 +16,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const nextPath = searchParams.get('next') || '/home';
+  const nextPath = searchParams.get('next') || '/dashboard';
 
   async function handleGoogleSignIn() {
     setIsLoading(true);

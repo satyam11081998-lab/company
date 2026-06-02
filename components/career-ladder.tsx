@@ -1,24 +1,17 @@
 import { Card } from '@/components/ui/card';
 import { Crown, Gem, Trophy, Award, Star, Sparkles, ArrowUp } from 'lucide-react';
 
-interface TierDef {
-  name: string;
-  threshold: number;
-  icon: React.ElementType;
-  tagline: string;
-}
+import { CAREER_TIERS, currentTier, nextTier, tierProgress, pointsToNextTier } from '@/lib/career-tiers';
 
-// Sorted highest → lowest internally for logic.
-// Display order is reversed in the render (lowest at bottom of visual).
-const TIERS: TierDef[] = [
-  { name: 'Summer Legend', threshold: 2000, icon: Crown, tagline: 'Top 1% of MECE users' },
-  { name: 'PPO Chaser',    threshold: 1000, icon: Gem, tagline: 'Deep prep, real results' },
-  { name: 'Fundae Machine',threshold: 500,  icon: Trophy, tagline: 'You know your frameworks' },
-  { name: 'Deck Polisher', threshold: 250,  icon: Award, tagline: 'Pixel-perfect slides at 2am' },
-  { name: 'MECE Believer', threshold: 100,  icon: Star, tagline: 'Uses MECE in casual conversation' },
-  { name: 'Casebook Collector', threshold: 50, icon: Sparkles, tagline: 'Downloaded 12 casebooks, read 1' },
-  { name: 'Day 0 Dreamer', threshold: 0,    icon: Sparkles, tagline: 'Just showed up. Bold move.' },
-];
+const ICONS: Record<string, React.ElementType> = {
+  'Summer Legend': Crown,
+  'PPO Chaser': Gem,
+  'Fundae Machine': Trophy,
+  'Deck Polisher': Award,
+  'MECE Believer': Star,
+  'Casebook Collector': Sparkles,
+  'Day 0 Dreamer': Sparkles,
+};
 
 interface Props {
   points: number;
@@ -30,18 +23,13 @@ interface Props {
  * Current tier highlighted with primary accent + progress bar to next.
  */
 export default function CareerLadder({ points }: Props) {
-  // Find current tier index in the TIERS array (high → low order)
-  const currentIdx = TIERS.findIndex((t) => points >= t.threshold);
-  const current = currentIdx >= 0 ? TIERS[currentIdx] : TIERS[TIERS.length - 1];
-  const nextTier = currentIdx > 0 ? TIERS[currentIdx - 1] : null;
-  
-  const ptsToNext = nextTier ? nextTier.threshold - points : 0;
-  const progressPct = nextTier
-    ? Math.round(((points - current.threshold) / (nextTier.threshold - current.threshold)) * 100)
-    : 100;
+  const current = currentTier(points);
+  const nxt = nextTier(points);
+  const ptsToNext = pointsToNextTier(points);
+  const progressPct = Math.round(tierProgress(points) * 100);
 
   // Highest at top (index 0), lowest at bottom
-  const displayed = TIERS;
+  const displayed = [...CAREER_TIERS].reverse();
 
   return (
     <Card className="p-4">
@@ -49,7 +37,7 @@ export default function CareerLadder({ points }: Props) {
         <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground">
           Career Ladder
         </h3>
-        {nextTier && (
+        {nxt && (
           <span className="text-small font-semibold text-primary">
             {ptsToNext} pts to go
           </span>
@@ -58,7 +46,7 @@ export default function CareerLadder({ points }: Props) {
 
       <div className="space-y-1.5">
         {displayed.map((tier) => {
-          const Icon = tier.icon;
+          const Icon = ICONS[tier.name] || Star;
           const isCurrent = tier.name === current.name;
           const isAchieved = points >= tier.threshold;
           const isLocked = !isAchieved;
@@ -66,12 +54,12 @@ export default function CareerLadder({ points }: Props) {
           return (
             <div key={tier.name}>
               {/* Progress bar BEFORE the current tier (toward next, which is physically above it in the DOM) */}
-              {isCurrent && nextTier && (
+              {isCurrent && nxt && (
                 <div className="mb-2 px-3">
                   <div className="flex items-center justify-between text-micro mb-1">
                     <span className="text-muted-foreground flex items-center gap-1">
                       <ArrowUp className="h-3 w-3" />
-                      Next: {nextTier.name}
+                      Next: {nxt.name}
                     </span>
                     <span className="text-primary font-semibold tabular-nums">{progressPct}%</span>
                   </div>

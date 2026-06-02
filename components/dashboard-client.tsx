@@ -1,285 +1,141 @@
 'use client';
-  
+// DELIVERABLE v2 — rewrite of components/dashboard-client.tsx.
+// Fixes the sparse v1 (full-width stacked cards): everything now sits in a dense 12-col grid
+// that FILLS the horizontal space, and the rank/percentile peer-comparison tiles that the
+// original dashboard had are RESTORED (v1 dropped them — that was the regression).
 import Link from 'next/link';
-import { ArrowRight, Target } from 'lucide-react';
+import { ArrowRight, Flame } from 'lucide-react';
 import SectionHeader from '@/components/section-header';
 import StatTile from '@/components/stat-tile';
 import CareerLadder from '@/components/career-ladder';
-import DimensionRadar from '@/components/dimension-radar';
-import ProgressChart from '@/components/progress-chart';
 import SubmissionHeatmap from '@/components/submission-heatmap';
 import { Card } from '@/components/ui/card';
-import type { UserRow, SubmissionRow } from '@/lib/types';
+import { ReadinessScore } from '@/components/dashboard/readiness-score';
+import { NextActionCard } from '@/components/dashboard/next-action-card';
+import { Trajectory } from '@/components/dashboard/trajectory';
+import { FreeQuotaMeter } from '@/components/dashboard/free-quota-meter';
+import { DimensionBullets } from '@/components/dashboard/dimension-bullets';
+import { CoverageMap } from '@/components/dashboard/coverage-map';
+import { DailyPicksStrip } from '@/components/dashboard/daily-picks-strip';
+import { cn } from '@/lib/utils';
+import { currentTier, pointsToNextTier } from '@/lib/career-tiers';
+import type { ReadinessResult, ReadinessSubmission } from '@/lib/readiness';
+import type { NextAction, FreeQuota } from '@/lib/next-action';
+import type { ScoreDimension } from '@/lib/constants';
 
-interface Props {
-  user: UserRow;
-  submissions: SubmissionRow[];
+export interface DashboardClientProps {
+  userName: string;
+  points: number;
+  readiness: ReadinessResult;
+  action: NextAction;
+  quota: FreeQuota;
+  benchmark?: Partial<Record<ScoreDimension, number>>;
+  trajectory: number[];
+  submissions: ReadinessSubmission[];
   rankNum: number;
   totalUsers: number;
   percentile: number | null;
   avgScore: number | null;
-  benchmark: Record<string, number>;
+  streak: number;
 }
 
-export default function DashboardClient({
-  user, submissions, rankNum, totalUsers, percentile, avgScore, benchmark,
-}: Props) {
-  const firstName = user.name?.split(' ')[0] || 'there';
-  const today = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).toUpperCase();
-
-  // Derive tier name for "Points" stat sublabel
-  const tierName = deriveTierName(user.points);
-  const nextTierPts = deriveNextTierPts(user.points);
-
-  // Use the latest scored submission's breakdown for the radar
-  const latestScored = submissions.find((s) => s.score !== null && s.feedback_json?.breakdown);
-  const latestBreakdown = latestScored?.feedback_json?.breakdown || {};
+export default function DashboardClient(props: DashboardClientProps) {
+  const { userName, points, readiness, action, quota, benchmark, trajectory, submissions,
+    rankNum, totalUsers, percentile, avgScore, streak } = props;
+  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  const tier = currentTier(points);
+  const toNext = pointsToNextTier(points);
+  const solved = submissions.filter((s) => s.score != null).length;
 
   return (
-    <>
+    <div className="container max-w-6xl py-8 md:py-10 space-y-8 stagger">
       {/* Hero */}
-      <div className="container max-w-6xl pt-6 md:pt-10 pb-2">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
-          <div>
-            <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
-              {today}
-            </p>
-            <h1 className="mt-2 text-h1 text-foreground">
-              Hey, {firstName}.
-            </h1>
-          </div>
-          <Link 
-            href="/home"
-            className="inline-flex items-center justify-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors flex-shrink-0 w-full sm:w-auto min-h-[44px]"
-          >
-            Start a case
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">{today}</p>
+          <h1 className="mt-1.5 text-h1 text-foreground">Hey, {userName}.</h1>
         </div>
-      </div>
-
-      <div className="container max-w-6xl pb-16 space-y-6 md:space-y-10 mt-6">
-        {/* TOP ROW: Stats & Activity */}
-        <section className="animate-slide-up">
-          <SectionHeader 
-            label="PERFORMANCE & ACTIVITY"
-            subtitle="Your platform standing and recent submissions"
-          />
-          <div className="grid lg:grid-cols-12 gap-4">
-            {/* 4 Stat Tiles (2x2 grid) */}
-            <div className="lg:col-span-5 grid grid-cols-2 gap-4">
-              <StatTile
-                label="Points"
-                value={user.points.toLocaleString('en-IN')}
-                sublabel={tierName}
-                dotColor="primary"
-              >
-                {/* Progress to next tier visual */}
-                {nextTierPts && (
-                  <div className="mt-2 flex flex-col gap-1.5">
-                    <div className="flex justify-between text-micro text-muted-foreground">
-                      <span>Progress to {nextTierPts}</span>
-                      <span className="font-mono font-medium">{Math.round((user.points / nextTierPts) * 100)}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: `${Math.round((user.points / nextTierPts) * 100)}%` }} />
-                    </div>
-                  </div>
-                )}
-              </StatTile>
-
-              <StatTile
-                label="Rank"
-                value={`#${rankNum}`}
-                sublabel={`of ${totalUsers} students`}
-                dotColor="navy"
-              >
-                {/* Context bar visual */}
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="flex flex-col gap-1 w-full">
-                    <div className="flex justify-between text-[10px] uppercase font-semibold text-muted-foreground/60">
-                      <span>#1</span>
-                      <span>#{(Math.ceil(totalUsers / 10) * 10) || 50}</span>
-                    </div>
-                    <div className="relative h-1.5 w-full bg-muted rounded-full">
-                      <div 
-                        className="absolute top-0 h-full w-2 bg-navy rounded-full transform -translate-x-1" 
-                        style={{ left: `${Math.max(5, Math.min(95, (rankNum / totalUsers) * 100))}%` }} 
-                      />
-                    </div>
-                  </div>
-                </div>
-              </StatTile>
-
-              <StatTile
-                label="Avg Score"
-                value={avgScore !== null ? avgScore.toString() : '—'}
-                valueSuffix={avgScore !== null ? '/100' : ''}
-                sublabel="per submission"
-                dotColor="warning"
-              >
-                {/* Mini 5-bar sparkline visual */}
-                <div className="mt-2 flex items-end gap-1 h-6">
-                  {submissions.slice(0, 5).reverse().map((sub, i) => {
-                    const score = sub.score || 0;
-                    const height = Math.max(10, score);
-                    return (
-                      <div 
-                        key={i} 
-                        className={`w-full rounded-sm transition-all duration-300 ${score >= 70 ? 'bg-success' : score >= 50 ? 'bg-warning' : 'bg-primary'}`}
-                        style={{ height: `${height}%`, opacity: 0.2 + (i * 0.2) }}
-                        title={`Score: ${score}`}
-                      />
-                    );
-                  })}
-                  {submissions.length === 0 && (
-                    <div className="w-full h-full flex items-center justify-center text-micro text-muted-foreground italic">No data</div>
-                  )}
-                </div>
-              </StatTile>
-
-              <StatTile
-                label="Percentile"
-                value={percentile !== null ? percentile.toString() : '—'}
-                valueSuffix={percentile !== null ? '%ile' : ''}
-                sublabel={percentile !== null ? "Top percentile band" : "Complete a case"}
-                dotColor="success"
-              >
-                {/* Distribution visual */}
-                {percentile !== null && (
-                  <div className="mt-2 flex flex-col gap-1 w-full">
-                    <div className="flex justify-between text-micro text-muted-foreground">
-                      <span>Bottom</span>
-                      <span className="text-success font-medium">Top {100 - percentile}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-gradient-to-r from-muted via-success/20 to-success rounded-full overflow-hidden relative">
-                      <div 
-                        className="absolute top-0 bottom-0 border-r-2 border-background bg-foreground" 
-                        style={{ left: 0, width: `${percentile}%` }} 
-                      />
-                    </div>
-                  </div>
-                )}
-              </StatTile>
-            </div>
-
-            {/* Heatmap */}
-            <div className="lg:col-span-3">
-              <SubmissionHeatmap submissions={submissions} weeks={4} title="Heatmap" />
-            </div>
-
-            {/* Recent Activity */}
-            <div className="lg:col-span-4 h-full">
-              <RecentSubmissionsTable submissions={submissions.slice(0, 5)} />
-            </div>
-          </div>
-        </section>
-
-        {/* BOTTOM ROW: Profile, Progress, Ladder */}
-        <section className="animate-slide-up" style={{ animationDelay: '60ms' }}>
-          <SectionHeader 
-            label="SKILL PROFILE & CAREER"
-            subtitle="Your strengths and progression"
-          />
-          <div className="grid lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-3">
-              <Card className="p-4 h-full flex flex-col">
-                <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground mb-2">Skill Profile</h3>
-                <div className="flex-1 flex items-center justify-center w-full">
-                  <DimensionRadar breakdown={latestBreakdown} benchmark={benchmark} />
-                </div>
-              </Card>
-            </div>
-            <div className="lg:col-span-6">
-              <ProgressChart submissions={submissions.slice(0, 12).reverse()} />
-            </div>
-            <div className="lg:col-span-3">
-              <CareerLadder points={user.points} />
-            </div>
-          </div>
-        </section>
-      </div>
-    </>
-  );
-}
-
-function deriveTierName(points: number): string {
-  if (points >= 2000) return 'Summer Legend';
-  if (points >= 1000) return 'PPO Chaser';
-  if (points >= 500)  return 'Fundae Machine';
-  if (points >= 250)  return 'Deck Polisher';
-  if (points >= 100)  return 'MECE Believer';
-  if (points >= 50)   return 'Casebook Collector';
-  return 'Day 0 Dreamer';
-}
-
-function deriveNextTierPts(points: number): number | null {
-  const thresholds = [50, 100, 250, 500, 1000, 2000];
-  for (const t of thresholds) {
-    if (points < t) return t;
-  }
-  return null;
-}
-
-function RecentSubmissionsTable({ submissions }: { submissions: SubmissionRow[] }) {
-  if (submissions.length === 0) {
-    return (
-      <Card className="p-8 text-center">
-        <Target className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
-        <p className="text-body text-foreground font-medium">No submissions yet</p>
-        <Link href="/home" className="mt-3 inline-block text-small text-primary font-medium hover:underline">
-          Start your first case →
+        <Link href="/home" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-body font-semibold text-primary-foreground hover:bg-primary-hover transition-colors min-h-[44px]">
+          Start a case <ArrowRight className="h-4 w-4" />
         </Link>
-      </Card>
-    );
-  }
+      </header>
 
-  return (
-    <Card className="p-4 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground">
-          Recent activity
-        </h3>
-        <Link href="/home" className="text-micro text-primary font-semibold hover:underline">View All →</Link>
-      </div>
-      <div className="overflow-x-auto table-scroll-mobile -mx-2 px-2">
-        <div className="divide-y divide-border min-w-[500px]">
-          {submissions.map((sub, idx) => (
-            <Link
-              key={sub.id}
-              href={`/results/${sub.id}`}
-              className="flex items-center gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-sm px-2 -mx-2"
-            >
-              <span className="text-micro font-mono text-muted-foreground tabular-nums w-6">
-                {String(idx + 1).padStart(2, '0')}
-              </span>
-              <span className={`text-small font-mono font-semibold tabular-nums w-12 ${scoreColor(sub.score)}`}>
-                {sub.score !== null ? sub.score : '—'}<span className="text-muted-foreground font-normal text-micro">/100</span>
-              </span>
-              <span className="text-small text-foreground flex-1 truncate">
-                {sub.answer_text.slice(0, 90).replace(/\s+/g, ' ')}
-                {sub.answer_text.length > 90 ? '…' : ''}
-              </span>
-              <span className="hidden sm:inline text-micro text-muted-foreground flex-shrink-0">
-                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-              </span>
-              <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-            </Link>
-          ))}
+      {/* DOING LAYER — today's picks, lifted from the old /home (first thing they see) */}
+      <DailyPicksStrip />
+
+      {/* ROW 1 — command + peer standing (fills width: 4 / 5 / 3) */}
+      <div className="grid gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-4"><ReadinessScore result={readiness} /></div>
+        <div className="lg:col-span-5"><NextActionCard action={action} /></div>
+        <div className="lg:col-span-3">
+          <Card className="flex h-full flex-col p-5">
+            <p className="text-label text-muted-foreground">WHERE YOU STAND</p>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-[34px] leading-none font-mono-data font-bold tabular-nums text-foreground">#{rankNum}</span>
+              <span className="text-small text-muted-foreground">of {totalUsers}</span>
+            </div>
+            {percentile != null ? (
+              <>
+                <p className="mt-1 text-small text-success font-medium">Top {Math.max(1, 100 - percentile)}% of aspirants</p>
+                <div className="relative mt-auto pt-4">
+                  <div className="h-1.5 rounded-full bg-muted" />
+                  <div className="absolute bottom-0 h-1.5 w-[3px] rounded bg-foreground" style={{ left: `calc(${percentile}% - 1px)` }} />
+                  <div className="mt-2 flex justify-between text-micro text-muted-foreground"><span>rest of India</span><span>you</span></div>
+                </div>
+              </>
+            ) : (
+              <p className="mt-1 text-small text-muted-foreground">Solve a case to get ranked.</p>
+            )}
+          </Card>
         </div>
       </div>
-    </Card>
-  );
-}
 
-function scoreColor(score: number | null): string {
-  if (score === null) return 'text-muted-foreground';
-  if (score >= 70) return 'text-success';
-  if (score >= 50) return 'text-warning';
-  return 'text-primary';
+      {/* ROW 2 — the numbers (4 tiles) */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatTile label="Avg Score" value={avgScore != null ? avgScore : '—'} valueSuffix={avgScore != null ? '/100' : ''} sublabel="per submission" dotColor="warning" />
+        <StatTile label="Day Streak" value={streak} sublabel={streak > 0 ? 'keep it alive' : 'start today'} dotColor="primary">
+          <div className="mt-auto flex items-center gap-1 pt-3 text-primary"><Flame className={cn("h-4 w-4", streak > 0 && "ambient-flame")} /><span className="text-small text-muted-foreground">{streak >= 3 ? 'on a roll' : 'building a habit'}</span></div>
+        </StatTile>
+        <StatTile label="Cases Solved" value={solved} sublabel="scored attempts" dotColor="success" />
+        <StatTile label="Points" value={points.toLocaleString('en-IN')} sublabel={tier.name} dotColor="navy">
+          {toNext > 0 && (
+            <div className="mt-auto pt-3">
+              <div className="flex justify-between text-micro text-muted-foreground"><span>to next tier</span><span className="font-mono-data">{toNext} pts</span></div>
+            </div>
+          )}
+        </StatTile>
+      </div>
+
+      {/* ROW 3 — skill profile (8) + trajectory (4) */}
+      {readiness.status === 'scored' && (
+        <section>
+          <SectionHeader label="SKILL PROFILE" subtitle="Your scores vs the cohort, by dimension" />
+          <div className="grid gap-5 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <Card className="p-6"><DimensionBullets dimensions={readiness.dimensions} benchmark={benchmark} /></Card>
+            </div>
+            <div className="lg:col-span-4"><Trajectory scores={trajectory} className="h-full" /></div>
+          </div>
+        </section>
+      )}
+
+      {/* ROW 4 — coverage (7) + convert/quota (5) */}
+      <section>
+        <SectionHeader label="COVERAGE" subtitle="Where you're tested — and where you're not" />
+        <div className="grid gap-5 lg:grid-cols-12">
+          <div className="lg:col-span-7"><CoverageMap cells={readiness.coverage} /></div>
+          <div className="lg:col-span-5"><FreeQuotaMeter quota={quota} /></div>
+        </div>
+      </section>
+
+      {/* ROW 5 — career (8) + activity heatmap (4) */}
+      <section>
+        <SectionHeader label="CAREER JOURNEY" subtitle="Points unlock the next tier" />
+        <div className="grid gap-5 lg:grid-cols-12">
+          <div className="lg:col-span-8"><CareerLadder points={points} /></div>
+          <div className="lg:col-span-4"><SubmissionHeatmap submissions={submissions} weeks={12} showStreak /></div>
+        </div>
+      </section>
+    </div>
+  );
 }
