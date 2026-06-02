@@ -15,10 +15,10 @@ export default async function LandingPage() {
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── Nav ──────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <Link href="/" className="flex items-center -ml-2">
+      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full overflow-hidden max-w-[100vw]">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 md:h-24 flex items-center justify-between">
+          <div className="flex items-center gap-4 md:gap-12 shrink-0">
+            <Link href="/" className="flex items-center -ml-2 shrink-0">
               <Logo variant="dark" className="" />
             </Link>
             <div className="hidden md:flex items-center gap-8">
@@ -29,23 +29,23 @@ export default async function LandingPage() {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <ThemeToggle />
             {user ? (
               <Link href="/dashboard">
-                <button className="btn-primary text-[15px] py-2 px-6">
+                <button className="btn-primary text-sm md:text-[15px] py-1.5 px-3 md:py-2 md:px-6 whitespace-nowrap">
                   Open MECE
                 </button>
               </Link>
             ) : (
               <>
-                <Link href="/login">
+                <Link href="/login" className="hidden sm:block">
                   <button className="text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors">
                     Login
                   </button>
                 </Link>
                 <Link href="/signup">
-                  <button className="btn-primary text-[15px] py-2 px-6">
+                  <button className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap">
                     Get started
                   </button>
                 </Link>

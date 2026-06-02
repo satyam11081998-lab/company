@@ -24,13 +24,13 @@ export default function AppNav() {
     pathname === href || pathname.startsWith(href + '/');
 
   return (
-    <header className="nav-bar sticky top-0 z-40">
-      <div className="container flex h-24 items-center justify-between">
+    <header className="nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]">
+      <div className="container flex h-16 md:h-24 items-center justify-between">
 
         {/* Left: wordmark + nav links */}
-        <div className="flex items-center gap-12">
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center group -ml-2">
-            <Logo variant="light" className="" />
+        <div className="flex items-center gap-4 md:gap-12">
+          <Link href="/" className="flex items-center">
+            <Logo className="text-navy" />
           </Link>
 
           {user && (
@@ -61,12 +61,12 @@ export default function AppNav() {
           )}
         </div>
 
-        {/* Right: points + avatar + theme + sign out */}
-        <div className="flex items-center gap-3">
+        {/* Right: points, avatar, theme toggle, sign out */}
+        <div className="flex items-center gap-3 md:gap-6">
           <ThemeToggle />
 
           {user ? (
-            <div className="hidden md:flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2 border-r border-navy-mid pr-3">
                 <div className="flex items-baseline gap-1">
                   <span className="font-mono text-[18.4px] font-medium text-primary tabular-nums">{user.points}</span>
@@ -74,13 +74,18 @@ export default function AppNav() {
                 </div>
                 {tier !== 'free' && <TierBadge tier={tier} size="xs" />}
               </div>
-              <Link href="/profile" className="flex-shrink-0">
-                <Avatar className="h-8 w-8 rounded-full border border-navy-mid/30 shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer">
+              <Link href="/profile" className="flex-shrink-0 relative inline-block">
+                <Avatar className={`h-8 w-8 md:h-10 md:w-10 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
                   {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name || ''} />}
-                  <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-[18.4px] font-semibold shadow-inner">
+                  <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-sm md:text-[18.4px] font-semibold shadow-inner">
                     {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
+                {tier === 'pro' && (
+                  <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-primary text-white text-[9px] font-bold px-1.5 py-[1px] rounded-full border border-background shadow-sm uppercase leading-none z-10 whitespace-nowrap">
+                    {tier}
+                  </span>
+                )}
               </Link>
               {tier !== 'pro' && (
                 <Link 
@@ -91,21 +96,23 @@ export default function AppNav() {
                   Upgrade
                 </Link>
               )}
-              <SignOutButton />
+              <div className="hidden md:block">
+                <SignOutButton />
+              </div>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-navy-foreground/60 hover:text-navy-foreground hover:bg-navy-mid h-8 text-base">
+                <Button variant="ghost" size="sm" className="hidden sm:inline-flex text-navy-foreground/60 hover:text-navy-foreground hover:bg-navy-mid h-8 text-base">
                   Login
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm" className="bg-primary text-white hover:bg-primary-hover h-8 text-base rounded-sm font-semibold">
-                  Sign up free
+                <Button size="sm" className="bg-primary text-white hover:bg-primary-hover h-8 text-sm md:text-base rounded-sm font-semibold">
+                  Sign up
                 </Button>
               </Link>
-            </>
+            </div>
           )}
         </div>
       </div>
