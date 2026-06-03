@@ -54,6 +54,29 @@ export const SCORE_DIMENSION_MAX: Record<string, number> = {
   creativity: 10,
   presence: 10,
 };
+
+// --- Guesstimate rubric (5 dimensions, each scored 1..5) ---
+// Mirrors backend services/guesstimate_backstop.py + lib/scoring/apply-backstop.ts.
+export const GUESSTIMATE_DIMENSIONS = [
+  'scoping',
+  'structure',
+  'segmentation',
+  'arithmetic',
+  'sanity',
+] as const;
+
+export type GuesstimateDimension = (typeof GUESSTIMATE_DIMENSIONS)[number];
+
+export const GUESSTIMATE_DIMENSION_LABELS: Record<string, string> = {
+  scoping: 'Scoping & Clarification',
+  structure: 'Structure (MECE tree)',
+  segmentation: 'Segmentation & Assumptions',
+  arithmetic: 'Arithmetic & Units',
+  sanity: 'Sanity Check',
+};
+// each guesstimate dimension is on a 1..5 scale
+export const GUESSTIMATE_DIMENSION_MAX = 5;
+
 export const MIN_ANSWER_CHARS = 200;
 
 /** Routes that are accessible without authentication. */

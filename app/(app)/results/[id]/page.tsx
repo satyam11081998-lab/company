@@ -9,6 +9,9 @@ import {
   SCORE_DIMENSIONS,
   SCORE_DIMENSION_LABELS,
   SCORE_DIMENSION_MAX,
+  GUESSTIMATE_DIMENSIONS,
+  GUESSTIMATE_DIMENSION_LABELS,
+  GUESSTIMATE_DIMENSION_MAX,
 } from '@/lib/constants';
 import type { SubmissionRow, BadgeRow } from '@/lib/types';
 import BadgePill from '@/components/badge-pill';
@@ -35,12 +38,32 @@ export default async function ResultPage({ params }: { params: { id: string } })
     strengths?: string[];
     improvements?: string[];
     summary?: string;
+    rubric?: string;
+    backstop?: {
+      findings?: Array<{ kind: string; label: string; message: string }>;
+      summary?: string;
+      notChecked?: string;
+      arithmeticOverridden?: boolean;
+    };
   };
   const breakdown = feedback.breakdown || {};
   const strengths = feedback.strengths || [];
   const improvements = feedback.improvements || [];
   const summary = feedback.summary || 'No summary available yet.';
+  const isGuesstimate = feedback.rubric === 'guesstimate';
+  const backstop = feedback.backstop;
   const newBadges = (userBadgesRes.data || []) as Array<{ id: string; badges: BadgeRow }>;
+
+  // The worked solution lives on the case (shown only after submitting).
+  let solution: string | null = null;
+  if (submission.case_id) {
+    const { data: caseRow } = await supabase
+      .from('cases')
+      .select('solution')
+      .eq('id', submission.case_id)
+      .maybeSingle();
+    solution = (caseRow as { solution?: string | null } | null)?.solution ?? null;
+  }
 
   return (
     <div className="min-h-screen bg-muted">
@@ -75,15 +98,16 @@ export default async function ResultPage({ params }: { params: { id: string } })
         <Card className="mt-6 p-6">
           <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">Breakdown</h2>
           <div className="mt-4 space-y-4">
-            {SCORE_DIMENSIONS.map((dim) => {
+            {(isGuesstimate ? GUESSTIMATE_DIMENSIONS : SCORE_DIMENSIONS).map((dim) => {
               const value = Number(breakdown[dim] ?? 0);
-              const max = SCORE_DIMENSION_MAX[dim] ?? 100;
+              const max = isGuesstimate ? GUESSTIMATE_DIMENSION_MAX : (SCORE_DIMENSION_MAX[dim] ?? 100);
+              const label = isGuesstimate ? GUESSTIMATE_DIMENSION_LABELS[dim] : SCORE_DIMENSION_LABELS[dim];
               const percentage = Math.max(0, Math.min(100, (value / max) * 100));
               return (
                 <div key={dim}>
                   <div className="flex items-center justify-between text-body">
                     <span className="font-medium text-foreground/80">
-                      {SCORE_DIMENSION_LABELS[dim]}
+                      {label}
                     </span>
                     <span className="font-semibold text-foreground">
                       {value}
@@ -101,6 +125,41 @@ export default async function ResultPage({ params }: { params: { id: string } })
             })}
           </div>
         </Card>
+
+        {/* Arithmetic backstop (guesstimates only) — deterministic recompute verdict */}
+        {isGuesstimate && backstop && (
+          <Card className="mt-6 p-6">
+            <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
+              Arithmetic check
+            </h2>
+            <p className="mt-3 text-body text-foreground/80">{backstop.summary}</p>
+            {backstop.findings && backstop.findings.length > 0 && (
+              <ul className="mt-4 space-y-3">
+                {backstop.findings.map((f, idx) => (
+                  <li key={idx} className="flex gap-2 text-body text-foreground/80">
+                    <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+                    <span>{f.message}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {backstop.notChecked && (
+              <p className="mt-4 text-small text-muted-foreground">{backstop.notChecked}</p>
+            )}
+          </Card>
+        )}
+
+        {/* Worked solution — revealed after submitting */}
+        {solution && (
+          <Card className="mt-6 p-6">
+            <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
+              Worked solution
+            </h2>
+            <p className="mt-3 whitespace-pre-line text-body leading-relaxed text-foreground/80">
+              {solution}
+            </p>
+          </Card>
+        )}
 
         {/* Strengths / Improvements */}
         <div className="mt-6 grid gap-6 md:grid-cols-2">
