@@ -66,14 +66,9 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
             <span>{DIFFICULTY_LABELS[caseRow.difficulty] || caseRow.difficulty}</span>
           </div>
           <h1 className="text-h2 text-foreground mb-4">{caseRow.title}</h1>
-          <p className="text-body text-foreground leading-relaxed whitespace-pre-wrap">
-            {caseRow.content}
-          </p>
-          {caseRow.hint && (
-            <div className="mt-6">
-              <HintToggle hint={caseRow.hint} />
-            </div>
-          )}
+          <div className="mt-6">
+            <HintToggle hint={caseRow.hint ? `${caseRow.content}\n\n---\n\n${caseRow.hint}` : caseRow.content} />
+          </div>
         </Card>
 
         {/* Previous attempts (always show if exists) */}
