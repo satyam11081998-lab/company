@@ -123,6 +123,11 @@ function normalize(rows: ReadinessSubmission[], now: Date): Scored[] {
   const out: Scored[] = [];
   for (const r of rows) {
     if (r.score == null) continue; // unscored / pending
+    // Guesstimates are scored on a SEPARATE 5-dim rubric and tracked in their own
+    // dashboard chart — they are fully excluded from the case readiness number,
+    // coverage grid, and 6-dim dimensions (owner decision, G3). Filtering here is the
+    // single chokepoint that keeps them out of mastery/coverage/consistency/robustness.
+    if (r.case_type === 'guesstimate') continue;
     const ageMs = now.getTime() - new Date(r.created_at).getTime();
     const ageDays = Math.max(0, ageMs / 86_400_000);
     out.push({

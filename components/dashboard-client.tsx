@@ -13,6 +13,8 @@ import { Card } from '@/components/ui/card';
 import { ReadinessScore } from '@/components/dashboard/readiness-score';
 import { NextActionCard } from '@/components/dashboard/next-action-card';
 import { Trajectory } from '@/components/dashboard/trajectory';
+import GuesstimateSkillsChart from '@/components/dashboard/guesstimate-skills-chart';
+import type { GuesstimateDimension } from '@/lib/constants';
 import { FreeQuotaMeter } from '@/components/dashboard/free-quota-meter';
 import { DimensionBullets } from '@/components/dashboard/dimension-bullets';
 import { CoverageMap } from '@/components/dashboard/coverage-map';
@@ -39,11 +41,14 @@ export interface DashboardClientProps {
   avgScore: number | null;
   streak: number;
   initialDaily?: DailyContentResponse | null;
+  guesstimateSkills?: Partial<Record<GuesstimateDimension, number>>;
+  guesstimateCount?: number;
 }
 
 export default function DashboardClient(props: DashboardClientProps) {
   const { userName, points, readiness, action, quota, benchmark, trajectory, submissions,
-    rankNum, totalUsers, percentile, avgScore, streak, initialDaily } = props;
+    rankNum, totalUsers, percentile, avgScore, streak, initialDaily,
+    guesstimateSkills, guesstimateCount } = props;
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
   const tier = currentTier(points);
   const toNext = pointsToNextTier(points);
@@ -120,6 +125,14 @@ export default function DashboardClient(props: DashboardClientProps) {
           </div>
         </section>
       )}
+
+      {/* ROW 3b — guesstimate skills (separate 5-dim rubric; always visible, own empty state) */}
+      <section>
+        <SectionHeader label="GUESSTIMATE SKILLS" subtitle="Your estimation skills, scored on the guesstimate rubric" />
+        <Card className="p-6">
+          <GuesstimateSkillsChart skills={guesstimateSkills} count={guesstimateCount} />
+        </Card>
+      </section>
 
       {/* ROW 4 — coverage (7) + convert/quota (5) */}
       <section>

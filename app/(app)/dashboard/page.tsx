@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { computeReadiness, type ReadinessSubmission } from '@/lib/readiness';
 import { nextAction, computeFreeQuota } from '@/lib/next-action';
 import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
+import { GUESSTIMATE_DIMENSIONS, type GuesstimateDimension } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
 import { getDailyTodayServerSide } from '@/lib/daily-server';
@@ -76,7 +77,7 @@ export default async function DashboardPage() {
   const rankNum = (rankCountRes.count ?? 0) + 1;
   const totalUsers = totalCountRes.count ?? 0;
   const percentile = totalUsers > 1 ? Math.round(((totalUsers - rankNum) / (totalUsers - 1)) * 100) : null;
-  const scored = submissions.filter((s) => s.score != null);
+  const scored = submissions.filter((s) => s.score != null && s.case_type !== 'guesstimate');
   const avgScore = scored.length ? Math.round(scored.reduce((a, s) => a + (s.score as number), 0) / scored.length) : null;
 
   // --- pure, verified pipeline ---
@@ -87,6 +88,9 @@ export default async function DashboardPage() {
   // Reconciled global cohort benchmark
   const benchmarkAgg: Record<string, { sum: number; count: number }> = {};
   (benchmarkRes.data || []).forEach((sub) => {
+    // Guesstimates use a different 5-dim rubric (1..5) — keep them out of the 6-dim
+    // case benchmark so their `structure` (1..5) doesn't pollute case `structure` (0..25).
+    if ((sub.feedback_json as { rubric?: string })?.rubric === 'guesstimate') return;
     const breakdown = (sub.feedback_json as { breakdown?: Record<string, number> })?.breakdown;
     if (breakdown) {
       Object.entries(breakdown).forEach(([dim, val]) => {
@@ -105,8 +109,31 @@ export default async function DashboardPage() {
   });
 
   const trajectory = submissions
-    .filter((s) => s.score != null && (s.is_first_attempt ?? true))
+    .filter((s) => s.score != null && (s.is_first_attempt ?? true) && s.case_type !== 'guesstimate')
     .map((s) => s.score as number);
+
+  // --- Guesstimate skills (separate 5-dim chart; guesstimates only) ---
+  const guesstimateSubs = submissions.filter(
+    (s) => s.case_type === 'guesstimate' && s.score != null
+  );
+  const gAgg: Record<string, { sum: number; count: number }> = {};
+  guesstimateSubs.forEach((s) => {
+    const bd = (s.feedback_json as { breakdown?: Record<string, number> })?.breakdown;
+    if (!bd) return;
+    GUESSTIMATE_DIMENSIONS.forEach((dim) => {
+      const v = bd[dim];
+      if (typeof v === 'number') {
+        if (!gAgg[dim]) gAgg[dim] = { sum: 0, count: 0 };
+        gAgg[dim].sum += v;
+        gAgg[dim].count++;
+      }
+    });
+  });
+  const guesstimateSkills: Partial<Record<GuesstimateDimension, number>> = {};
+  GUESSTIMATE_DIMENSIONS.forEach((dim) => {
+    if (gAgg[dim]?.count) guesstimateSkills[dim] = gAgg[dim].sum / gAgg[dim].count;
+  });
+  const guesstimateCount = guesstimateSubs.length;
 
   return (
     <div className="container max-w-6xl py-10">
@@ -125,6 +152,8 @@ export default async function DashboardPage() {
         avgScore={avgScore}
         streak={streak}
         initialDaily={dailyToday}
+        guesstimateSkills={guesstimateSkills}
+        guesstimateCount={guesstimateCount}
       />
     </div>
   );
