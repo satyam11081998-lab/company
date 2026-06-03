@@ -5,6 +5,7 @@ import { nextAction, computeFreeQuota } from '@/lib/next-action';
 import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
+import { getDailyTodayServerSide } from '@/lib/daily-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
   if (!authUser) redirect('/login');
 
   // Parallel fetches for performance
-  const [userRes, rawSubsRes, attemptsRes, benchmarkRes] = await Promise.all([
+  const [userRes, rawSubsRes, attemptsRes, benchmarkRes, dailyToday] = await Promise.all([
     supabase
       .from('users')
       .select('id, name, points, subscription_tier, streak_count, streak_last_date, created_at')
@@ -36,7 +37,9 @@ export default async function DashboardPage() {
       .from('submissions')
       .select('feedback_json')
       .not('feedback_json', 'is', null)
-      .limit(100)
+      .limit(100),
+    // Daily picks read straight from Supabase (instant; no Render round-trip)
+    getDailyTodayServerSide(),
   ]);
 
   const userRow = userRes.data;
@@ -121,6 +124,7 @@ export default async function DashboardPage() {
         percentile={percentile}
         avgScore={avgScore}
         streak={streak}
+        initialDaily={dailyToday}
       />
     </div>
   );

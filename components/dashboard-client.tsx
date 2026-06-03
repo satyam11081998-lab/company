@@ -22,6 +22,7 @@ import { currentTier, pointsToNextTier } from '@/lib/career-tiers';
 import type { ReadinessResult, ReadinessSubmission } from '@/lib/readiness';
 import type { NextAction, FreeQuota } from '@/lib/next-action';
 import type { ScoreDimension } from '@/lib/constants';
+import type { DailyContentResponse } from '@/lib/api';
 
 export interface DashboardClientProps {
   userName: string;
@@ -37,11 +38,12 @@ export interface DashboardClientProps {
   percentile: number | null;
   avgScore: number | null;
   streak: number;
+  initialDaily?: DailyContentResponse | null;
 }
 
 export default function DashboardClient(props: DashboardClientProps) {
   const { userName, points, readiness, action, quota, benchmark, trajectory, submissions,
-    rankNum, totalUsers, percentile, avgScore, streak } = props;
+    rankNum, totalUsers, percentile, avgScore, streak, initialDaily } = props;
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
   const tier = currentTier(points);
   const toNext = pointsToNextTier(points);
@@ -61,7 +63,7 @@ export default function DashboardClient(props: DashboardClientProps) {
       </header>
 
       {/* DOING LAYER — today's picks, lifted from the old /home (first thing they see) */}
-      <DailyPicksStrip />
+      <DailyPicksStrip initialDaily={initialDaily} />
 
       {/* ROW 1 — command + peer standing (fills width: 4 / 5 / 3) */}
       <div className="grid gap-5 lg:grid-cols-12">

@@ -1,25 +1,29 @@
 'use client';
 // DELIVERABLE — the "doing layer" lifted from /home into the merged dashboard.
-// Three daily picks (case / guesstimate / GD brief), client-fetched. Sits ABOVE the
-// analytics so the daily-return reason is the first thing a logged-in user sees.
-// Reuses the EXISTING DailyPickTile + fetchDailyToday — no new data layer.
+// Three daily picks (case / guesstimate / GD brief). Now seeded server-side via
+// initialDaily (read straight from Supabase in the dashboard page) so the tiles
+// paint INSTANTLY with the page — no client round-trip, no Render dependency.
+// Falls back to the client fetch only if rendered without initialDaily.
 import { useEffect, useState } from 'react';
 import { Target, Zap, MessageSquare } from 'lucide-react';
 import DailyPickTile from '@/components/daily-pick-tile';
 import SectionHeader from '@/components/section-header';
 import { fetchDailyToday, type DailyContentResponse } from '@/lib/api';
 
-export function DailyPicksStrip() {
-  const [daily, setDaily] = useState<DailyContentResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+export function DailyPicksStrip({ initialDaily }: { initialDaily?: DailyContentResponse | null }) {
+  const [daily, setDaily] = useState<DailyContentResponse | null>(initialDaily ?? null);
+  // If the server already provided the data, there is no loading state at all.
+  const [loading, setLoading] = useState(initialDaily === undefined);
 
   useEffect(() => {
+    // Server seeded us (data OR an explicit null result) → no client fetch needed.
+    if (initialDaily !== undefined) return;
     let mounted = true;
     fetchDailyToday()
       .then((d) => { if (mounted) { setDaily(d); setLoading(false); } })
       .catch(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
-  }, []);
+  }, [initialDaily]);
 
   return (
     <section>
