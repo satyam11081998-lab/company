@@ -163,7 +163,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
 
         {/* Strengths / Improvements */}
         <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <Card className="p-6 border-l-4 border-l-success">
+          <Card className="p-6">
             <h3 className="text-small font-semibold uppercase tracking-wide text-emerald-700">
               What you did well
             </h3>
@@ -180,7 +180,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
               )}
             </ul>
           </Card>
-          <Card className="p-6 border-l-4 border-l-primary">
+          <Card className="p-6">
             <h3 className="text-small font-semibold uppercase tracking-wide text-primary">
               Where you can improve
             </h3>

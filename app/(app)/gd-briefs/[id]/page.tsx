@@ -46,7 +46,7 @@ export default function BriefDetailPage() {
         {loading ? (
           <BriefSkeleton />
         ) : error ? (
-          <Card className="p-6 border-l-4 border-l-destructive">
+          <Card className="p-6">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
               <div>
@@ -68,7 +68,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
   return (
     <article className="space-y-6">
       {/* Header — headline title + source link */}
-      <Card className="overflow-hidden border-l-4 border-l-primary animate-slide-up">
+      <Card className="overflow-hidden animate-slide-up">
         {b.headline_thumbnail_url ? (
           <div className="relative aspect-[3/1] bg-navy overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -131,7 +131,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
 
       {/* Smart Angles */}
       {b.smart_angles.length > 0 ? (
-        <Card className="p-6 animate-slide-up border-l-4 border-l-primary" style={{ animationDelay: '180ms' }}>
+        <Card className="p-6 animate-slide-up" style={{ animationDelay: '180ms' }}>
           <SectionHeading icon={<Lightbulb className="h-4 w-4" />}>
             Smart angles
           </SectionHeading>
@@ -160,7 +160,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           </p>
           <ul className="mt-4 space-y-3">
             {b.data_points.map((dp, i) => (
-              <li key={i} className="rounded-md bg-muted p-3 text-body text-foreground/90 border-l-2 border-l-navy">
+              <li key={i} className="rounded-md bg-muted p-3 text-body text-foreground/90">
                 {dp}
               </li>
             ))}
@@ -170,7 +170,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
 
       {/* Opening Lines */}
       {b.opening_lines.length > 0 ? (
-        <Card className="p-6 animate-slide-up border-l-4 border-l-navy" style={{ animationDelay: '300ms' }}>
+        <Card className="p-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
           <SectionHeading icon={<Quote className="h-4 w-4" />}>
             Opening lines
           </SectionHeading>
@@ -209,7 +209,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
 
       {/* Closing Lines */}
       {b.closing_lines.length > 0 ? (
-        <Card className="p-6 animate-slide-up border-l-4 border-l-primary" style={{ animationDelay: '420ms' }}>
+        <Card className="p-6 animate-slide-up" style={{ animationDelay: '420ms' }}>
           <SectionHeading icon={<Quote className="h-4 w-4" />}>
             Closing lines
           </SectionHeading>
