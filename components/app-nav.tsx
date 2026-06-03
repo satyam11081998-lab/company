@@ -29,8 +29,8 @@ export default function AppNav() {
 
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-4 md:gap-12">
-          <Link href="/" className="flex items-center">
-            <Logo className="text-navy" />
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center group -ml-2">
+            <Logo variant="light" className="" />
           </Link>
 
           {user && (
