@@ -25,7 +25,7 @@ export default function AppNav() {
 
   return (
     <header className="nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]">
-      <div className="container flex h-16 md:h-24 items-center justify-between">
+      <div className="container flex h-14 md:h-20 items-center justify-between">
 
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-4 md:gap-12">
