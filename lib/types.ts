@@ -42,6 +42,8 @@ export interface CaseRow {
   hint: string | null;
   is_active: boolean;
   created_at: string;
+  solution?: string | null;
+  code?: string | null;
 }
 
 export interface FeedbackJson {
@@ -210,4 +212,4 @@ export interface CaseRatingAggregate {
   right_count: number;
   harder_count: number;
   perceived_difficulty: 'easier' | 'right' | 'harder' | null;
-}
+}

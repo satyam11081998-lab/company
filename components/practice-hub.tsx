@@ -16,7 +16,6 @@ interface PracticeHubProps {
 
 type TabType = 'all' | 'scored' | 'guesstimates' | 'studies';
 
-const ALL_GUESSTIMATES = ALL_DOMAINS.flatMap(d => d.guesstimates || []);
 const ALL_CASE_STUDIES = ALL_DOMAINS.flatMap(d => d.cases || []);
 
 export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHubProps) {
@@ -39,18 +38,24 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
 
   // Filtering
   const filteredScored = useMemo(() => {
-    return cases.filter(c => 
-      c.title.toLowerCase().includes(search.toLowerCase()) || 
-      c.type.toLowerCase().includes(search.toLowerCase())
+    // Scored tab = non-guesstimate cases (guesstimates have their own DB-driven tab below)
+    return cases.filter(c =>
+      c.type !== 'guesstimate' &&
+      (c.title.toLowerCase().includes(search.toLowerCase()) ||
+       c.type.toLowerCase().includes(search.toLowerCase()))
     );
   }, [cases, search]);
 
+  // Guesstimates are now real, attemptable `cases` rows (type='guesstimate') — the 69
+  // seeded curriculum guesstimates + any AI-generated dailies. Sourced from the DB so
+  // each links to /cases/{id} and shows ✓-attempted state, exactly like scored cases.
   const filteredGuesstimates = useMemo(() => {
-    return ALL_GUESSTIMATES.filter(g => 
-      g.title.toLowerCase().includes(search.toLowerCase()) || 
-      g.approach.toLowerCase().includes(search.toLowerCase())
+    return cases.filter(c =>
+      c.type === 'guesstimate' &&
+      (c.title.toLowerCase().includes(search.toLowerCase()) ||
+       (c.code ?? '').toLowerCase().includes(search.toLowerCase()))
     );
-  }, [search]);
+  }, [cases, search]);
 
   const filteredStudies = useMemo(() => {
     return ALL_CASE_STUDIES.filter(c => 
@@ -154,25 +159,27 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
             );
           }
           if (item._itemType === 'guesstimate') {
-            const g = item as any;
+            const g = item as CaseRow;
+            const attempted = attemptedCaseIds.includes(g.id);
             return (
-              <Card key={`guesstimate-${g.code}`} className="ui-card flex flex-col p-5 group hover:border-navy/50 transition-colors">
+              <Card key={`guesstimate-${g.id}`} className="ui-card flex flex-col p-5 group hover:border-navy/50 transition-colors">
                 <div className="flex justify-between items-start mb-3">
                   <span className="tag-navy px-2 py-1 rounded text-micro uppercase tracking-wide font-medium">
-                    Guesstimate
+                    Guesstimate{g.difficulty ? ` · ${g.difficulty}` : ''}
                   </span>
-                  <button title="View source methodology" className="text-muted-foreground hover:text-navy transition-colors">
-                    <ExternalLink className="h-4 w-4" />
-                  </button>
+                  {attempted && (
+                    <span className="inline-flex items-center gap-1 text-micro font-medium text-green-600">
+                      <Check className="h-3.5 w-3.5" /> Attempted
+                    </span>
+                  )}
                 </div>
                 <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-navy transition-colors">{g.title}</h3>
-                <div className="mb-4 flex-grow">
-                  <p className="text-body text-muted-foreground mb-2"><span className="font-medium text-foreground">Approach:</span> {g.approach}</p>
-                  <p className="text-small text-muted-foreground line-clamp-2">{g.keyDetail}</p>
-                </div>
+                <div className="mb-4 flex-grow" />
                 <div className="mt-auto pt-4 border-t flex justify-between items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t-navy/10">
-                   <span className="text-small font-medium text-navy truncate pr-4">{g.result}</span>
-                   <Link href={`/learn/guesstimates#${g.code}`} className="text-small font-medium text-navy hover:underline shrink-0">Walkthrough</Link>
+                  {g.code ? (
+                    <Link href={`/learn/guesstimates#${g.code}`} className="text-small font-medium text-muted-foreground hover:text-navy hover:underline shrink-0">Walkthrough</Link>
+                  ) : <span />}
+                  <Link href={`/cases/${g.id}`} className="text-small font-medium text-navy hover:underline shrink-0">{attempted ? 'Retry' : 'Solve'} &rarr;</Link>
                 </div>
               </Card>
             );
