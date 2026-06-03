@@ -136,6 +136,9 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                   </span>
                 </div>
                 <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">{c.title}</h3>
+                {c.type !== 'guesstimate' && (
+                  <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{c.content}</p>
+                )}
                 <div className="mt-auto pt-4 border-t flex justify-between items-center">
                    <div className="flex items-center gap-2">
                      <span className="text-small text-muted-foreground">Scored by MECE</span>
