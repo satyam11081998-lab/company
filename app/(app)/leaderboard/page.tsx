@@ -104,7 +104,7 @@ export default async function LeaderboardPage() {
                       </div>
                       <div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-border bg-muted overflow-hidden">
                         <Avatar className="w-full h-full">
-                          {top3[1].avatar_url && <AvatarImage src={top3[1].avatar_url} alt={getName(top3[1])} />}
+                          <AvatarImage src={top3[1].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[1].email || top3[1].id)}`} alt={getName(top3[1])} />
                           <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-800 text-white text-2xl font-bold w-full h-full flex items-center justify-center rounded-none">
                             {getInitial(top3[1])}
                           </AvatarFallback>
@@ -135,7 +135,7 @@ export default async function LeaderboardPage() {
                       }} />
                       <div className="w-20 h-20 md:w-32 md:h-32 rounded-full border-4 border-primary bg-muted overflow-hidden relative z-10">
                         <Avatar className="w-full h-full">
-                          {top3[0].avatar_url && <AvatarImage src={top3[0].avatar_url} alt={getName(top3[0])} />}
+                          <AvatarImage src={top3[0].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[0].email || top3[0].id)}`} alt={getName(top3[0])} />
                           <AvatarFallback className="bg-gradient-to-br from-primary to-primary-hover text-white text-3xl font-bold w-full h-full flex items-center justify-center rounded-none">
                             {getInitial(top3[0])}
                           </AvatarFallback>
@@ -162,7 +162,7 @@ export default async function LeaderboardPage() {
                       </div>
                       <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-4 border-border bg-muted overflow-hidden">
                         <Avatar className="w-full h-full">
-                          {top3[2].avatar_url && <AvatarImage src={top3[2].avatar_url} alt={getName(top3[2])} />}
+                          <AvatarImage src={top3[2].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[2].email || top3[2].id)}`} alt={getName(top3[2])} />
                           <AvatarFallback className="bg-gradient-to-br from-amber-500 to-amber-700 text-white text-xl font-bold w-full h-full flex items-center justify-center rounded-none">
                             {getInitial(top3[2])}
                           </AvatarFallback>
@@ -216,7 +216,7 @@ export default async function LeaderboardPage() {
                         #{rank}
                       </span>
                       <Avatar className="h-9 w-9 border border-border">
-                        {u.avatar_url && <AvatarImage src={u.avatar_url} alt={getName(u)} />}
+                        <AvatarImage src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.email || u.id)}`} alt={getName(u)} />
                         <AvatarFallback className="bg-navy text-navy-foreground text-sm font-semibold">
                           {getInitial(u)}
                         </AvatarFallback>

@@ -72,11 +72,10 @@ export default function AppNav() {
                   <span className="font-mono text-[18.4px] font-medium text-primary tabular-nums">{user.points}</span>
                   <span className="text-[13.8px] text-navy-foreground/35">pts</span>
                 </div>
-                {tier !== 'free' && <TierBadge tier={tier} size="xs" />}
               </div>
               <Link href="/profile" className="flex-shrink-0 relative inline-block">
                 <Avatar className={`h-8 w-8 md:h-10 md:w-10 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
-                  {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name || ''} />}
+                  <AvatarImage src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.id)}`} alt={user.name || ''} />
                   <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-sm md:text-[18.4px] font-semibold shadow-inner">
                     {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>

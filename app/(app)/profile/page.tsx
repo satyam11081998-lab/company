@@ -39,7 +39,7 @@ export default async function ProfilePage() {
       <main className="container max-w-5xl py-10">
         <Card className="flex flex-col items-center p-8 text-center border-l-4 border-l-navy">
           <Avatar className="h-20 w-20 border border-border">
-            {userRow.avatar_url && <AvatarImage src={userRow.avatar_url} alt={userRow.name || ''} />}
+            <AvatarImage src={userRow.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userRow.email || userRow.id)}`} alt={userRow.name || ''} />
             <AvatarFallback className="bg-navy text-navy-foreground text-2xl font-semibold">
               {userRow.name?.charAt(0).toUpperCase() || userRow.email.charAt(0).toUpperCase() || '?'}
             </AvatarFallback>
