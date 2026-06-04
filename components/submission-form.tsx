@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { MIN_ANSWER_CHARS } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 import DictationButton from '@/components/dictation-button';
+import CameraButton from '@/components/camera-button';
 
 /** Client form on /cases/[id] for submitting an answer to the scoring API. */
 export default function SubmissionForm({ userId, caseId }: { userId: string; caseId: string }) {
@@ -39,9 +40,10 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
     }
   }
 
-  function handleTranscriptionCompleted(transcribedText: string) {
-    // Append the new text with a space if there's already some content
-    setAnswer(prev => prev ? `${prev} ${transcribedText}` : transcribedText);
+  function handleInputExtracted(extractedText: string) {
+    // Append the new text with a double newline for image OCR, or space for dictation
+    // We'll just use a double newline to be safe so it separates paragraphs nicely
+    setAnswer(prev => prev ? `${prev}\n\n${extractedText}` : extractedText);
   }
 
   if (isSubmitting) {
@@ -65,9 +67,10 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
           required
         />
         
-        {/* Absolute positioning for the dictation button inside the textarea area */}
-        <div className="absolute bottom-4 right-4 z-10">
-          <DictationButton onTranscriptionCompleted={handleTranscriptionCompleted} />
+        {/* Input tools positioned inside the textarea area */}
+        <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2">
+          <CameraButton onExtractionCompleted={handleInputExtracted} />
+          <DictationButton onTranscriptionCompleted={handleInputExtracted} />
         </div>
       </div>
 

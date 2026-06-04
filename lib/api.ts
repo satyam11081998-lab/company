@@ -176,3 +176,21 @@ export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }
 
   return res.json();
 }
+
+/**
+ * Send a base64 encoded image to the backend for handwriting OCR.
+ */
+export async function extractTextFromImage(base64Image: string): Promise<{ text: string }> {
+  const res = await fetch(`${API_URL}/extract-text`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64_image: base64Image }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to extract text from image: ${errText}`);
+  }
+
+  return res.json();
+}
