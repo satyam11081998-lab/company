@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
+import { TIER_PRICES } from '@/lib/tier';
 
 export async function POST(req: Request) {
   try {
@@ -13,13 +14,11 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { tier } = body;
-    
-    let amount = 0;
-    if (tier === 'lite') amount = 19900; // 199 INR in paise
-    else if (tier === 'pro') amount = 49900; // 499 INR in paise
-    else {
+
+    if (tier !== 'lite' && tier !== 'pro') {
       return NextResponse.json({ error: 'Invalid tier specified' }, { status: 400 });
     }
+    const amount = TIER_PRICES[tier as 'lite' | 'pro'] * 100; // INR -> paise, single source of truth
 
     const instance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -29,7 +28,8 @@ export async function POST(req: Request) {
     const options = {
       amount,
       currency: "INR",
-      receipt: `rcpt_${Date.now()}_${user.id.substring(0, 5)}`
+      receipt: `rcpt_${Date.now()}_${user.id.substring(0, 5)}`,
+      notes: { tier, user_id: user.id },
     };
 
     const order = await instance.orders.create(options);

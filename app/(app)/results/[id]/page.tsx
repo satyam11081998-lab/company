@@ -200,7 +200,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
         </div>
 
         <div className="mt-8 flex justify-center">
-          <Link href="/cases">
+          <Link href="/practice?tab=scored">
             <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">Try another case</Button>
           </Link>
         </div>

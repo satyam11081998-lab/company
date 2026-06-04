@@ -73,9 +73,11 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
 
     if (pool.length === 0) return;
     const item = pool[Math.floor(Math.random() * pool.length)];
-    
-    // Simplistic random action: just alert or trigger click
-    alert(`Randomly selected: ${item.title}`);
+    if (item?.id) {
+      window.location.href = `/cases/${item.id}`;
+    } else if (item?.code) {
+      window.location.href = `/learn/practice-case-library#${item.code}`;
+    }
   };
 
   const allItems = useMemo(() => {
@@ -177,7 +179,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                 <div className="mb-4 flex-grow" />
                 <div className="mt-auto pt-4 border-t flex justify-between items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t-navy/10">
                   {g.code ? (
-                    <Link href={`/learn/guesstimates#${g.code}`} className="text-small font-medium text-muted-foreground hover:text-navy hover:underline shrink-0">Walkthrough</Link>
+                    <Link href={`/learn/guesstimates-market-sizing#${g.code}`} className="text-small font-medium text-muted-foreground hover:text-navy hover:underline shrink-0">Walkthrough</Link>
                   ) : <span />}
                   <Link href={`/cases/${g.id}`} className="text-small font-medium text-navy hover:underline shrink-0">{attempted ? 'Retry' : 'Solve'} &rarr;</Link>
                 </div>
@@ -200,7 +202,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                 <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{s.problem}</p>
                 <div className="mt-auto pt-4 border-t flex justify-between items-center">
                    <span className="text-small text-muted-foreground">{s.sector}</span>
-                   <Link href={`/learn/case-studies#${s.code}`} className="text-small font-medium text-foreground hover:underline">Read &rarr;</Link>
+                   <Link href={`/learn/practice-case-library#${s.code}`} className="text-small font-medium text-foreground hover:underline">Read &rarr;</Link>
                 </div>
               </Card>
             );

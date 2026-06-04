@@ -102,7 +102,7 @@ export function nextAction(
           ? `Do ${Math.max(r.subsNeeded - r.subsDone, needTypes)} more across ${needTypes} new case type${needTypes > 1 ? 's' : ''} to unlock your readiness score.`
           : `${r.subsNeeded - r.subsDone} more case${r.subsNeeded - r.subsDone > 1 ? 's' : ''} to unlock your readiness score.`,
       cta: 'Start a case',
-      href: '/practice?tab=cases',
+      href: '/practice?tab=scored',
       paywalled: false,
     };
   }
@@ -173,7 +173,7 @@ export function nextAction(
       label: "Keep your streak alive",
       reason: 'Coverage and dimensions look balanced — bank another rep to hold the line.',
       cta: 'Daily pick',
-      href: '/home',
+      href: '/practice?tab=scored',
       paywalled: false,
     };
   }

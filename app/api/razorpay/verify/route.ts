@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
 import { TIER_PRICES } from '@/lib/tier';
 
@@ -32,6 +33,33 @@ export async function POST(req: Request) {
       .digest('hex');
 
     if (expectedSignature === razorpay_signature) {
+      // The signature proves a payment happened but NOT which plan was paid for.
+      // Re-fetch the order and validate the amount against the claimed tier.
+      const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID!,
+        key_secret: process.env.RAZORPAY_KEY_SECRET!,
+      });
+      let order: any;
+      try {
+        order = await instance.orders.fetch(razorpay_order_id);
+      } catch {
+        return NextResponse.json({ error: 'Could not verify order with Razorpay' }, { status: 400 });
+      }
+      const expectedPaise = (TIER_PRICES as Record<string, number>)[tier] * 100;
+      if (Number(order.amount) !== expectedPaise) {
+        return NextResponse.json({ error: 'Paid amount does not match the selected plan' }, { status: 400 });
+      }
+      if (order.notes && order.notes.tier && order.notes.tier !== tier) {
+        return NextResponse.json({ error: 'Plan mismatch' }, { status: 400 });
+      }
+
+      // Replay guard — never process the same payment twice.
+      const { data: existingPay } = await supabase
+        .from('payments').select('id').eq('razorpay_payment_id', razorpay_payment_id).maybeSingle();
+      if (existingPay) {
+        return NextResponse.json({ success: true, alreadyProcessed: true });
+      }
+
       const now = new Date();
       const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
 

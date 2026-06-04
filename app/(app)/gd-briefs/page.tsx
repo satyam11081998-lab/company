@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { fetchHeadlines, generateBrief } from '@/lib/api';
 import type { NewsHeadline } from '@/lib/types';
-import { Newspaper, Sparkles, ArrowRight, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { Newspaper, Sparkles, ArrowRight, ExternalLink, Loader2, AlertCircle, Lock } from 'lucide-react';
+import { useUser } from '@/components/user-context';
+import { createClient } from '@/lib/supabase/client';
 
 export default function GdBriefsPage() {
   const router = useRouter();
@@ -14,9 +16,12 @@ export default function GdBriefsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const { hasTierAccess } = useUser();
+  const locked = !hasTierAccess('lite');
 
   useEffect(() => {
     let mounted = true;
+    if (locked) { setLoading(false); return; }
     fetchHeadlines()
       .then((data) => {
         if (!mounted) return;
@@ -29,12 +34,14 @@ export default function GdBriefsPage() {
         setLoading(false);
       });
     return () => { mounted = false; };
-  }, []);
+  }, [locked]);
 
   async function handleGenerate(headlineId: string) {
     setGeneratingId(headlineId);
     try {
-      await generateBrief(headlineId);
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      await generateBrief(headlineId, session?.access_token);
       router.push('/gd-briefs/' + headlineId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not generate brief');
@@ -44,6 +51,26 @@ export default function GdBriefsPage() {
 
   const star = headlines ? headlines.find((h) => h.is_star) || null : null;
   const regulars = headlines ? headlines.filter((h) => !h.is_star).slice(0, 9) : [];
+
+  if (locked) {
+    return (
+      <div className="min-h-screen bg-muted">
+        <main className="container max-w-3xl py-16">
+          <div className="bg-card rounded-xl border border-border shadow-sm p-10 text-center">
+            <Lock className="h-10 w-10 text-muted-foreground/60 mx-auto" />
+            <h1 className="mt-4 text-h2 text-foreground">GD Briefs is a Lite feature</h1>
+            <p className="mt-2 text-body text-muted-foreground max-w-md mx-auto">
+              Daily GD prep — sharp angles, likely questions, opening and closing lines on the day&apos;s biggest debates — is included with Lite and Pro.
+            </p>
+            <Link href="/upgrade" className="mt-6 inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors">
+              Upgrade to unlock GD Briefs
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted">

@@ -6,7 +6,8 @@ import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { fetchBrief } from '@/lib/api';
 import type { GeneratedBriefData } from '@/lib/types';
-import { ArrowLeft, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
+import { useUser } from '@/components/user-context';
 
 export default function BriefDetailPage() {
   const params = useParams();
@@ -15,9 +16,12 @@ export default function BriefDetailPage() {
   const [brief, setBrief] = useState<GeneratedBriefData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { hasTierAccess } = useUser();
+  const locked = !hasTierAccess('lite');
 
   useEffect(() => {
     let mounted = true;
+    if (locked) { setLoading(false); return; }
     fetchBrief(headlineId)
       .then((data) => {
         if (!mounted) return;
@@ -30,7 +34,27 @@ export default function BriefDetailPage() {
         setLoading(false);
       });
     return () => { mounted = false; };
-  }, [headlineId]);
+  }, [headlineId, locked]);
+
+  if (locked) {
+    return (
+      <div className="min-h-screen bg-muted">
+        <main className="container max-w-3xl py-16">
+          <Card className="p-10 text-center">
+            <Lock className="h-10 w-10 text-muted-foreground/60 mx-auto" />
+            <h1 className="mt-4 text-h2 text-foreground">GD Briefs is a Lite feature</h1>
+            <p className="mt-2 text-body text-muted-foreground max-w-md mx-auto">
+              Upgrade to Lite or Pro to read full GD briefs.
+            </p>
+            <Link href="/upgrade" className="mt-6 inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors">
+              Upgrade now
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted">

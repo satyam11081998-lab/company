@@ -6,7 +6,8 @@ import SubmissionForm from '@/components/submission-form';
 import HintToggle from '@/components/hint-toggle';
 import CaseAttemptHistory from '@/components/case-attempt-history';
 import CaseRatingPrompt from '@/components/case-rating-prompt';
-import type { CaseRow, SubmissionRow, CaseAttemptRow } from '@/lib/types';
+import type { CaseRow, SubmissionRow, CaseAttemptRow, UserRow } from '@/lib/types';
+import { getAttemptAccess } from '@/lib/access';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
 import { ArrowRight, Lock, Award } from 'lucide-react';
 
@@ -34,19 +35,31 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
       .eq('user_id', authUser.id)
       .eq('case_id', params.id)
       .maybeSingle(),
-    supabase.from('users').select('subscription_tier').eq('id', authUser.id).maybeSingle(),
+    supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
   ]);
 
   const caseRow = caseRes.data as CaseRow | null;
   if (!caseRow) notFound();
 
   const attempts = (attemptsRes.data || []) as Array<CaseAttemptRow & { submissions?: { score: number | null; feedback_json: unknown; answer_text: string; created_at: string } | null }>;
-  const userTier = (userRes.data as { subscription_tier?: string } | null)?.subscription_tier || 'free';
+  const fullUser = (userRes.data as UserRow | null);
   const userRating = (ratingRes.data as { rating: string } | null)?.rating || null;
 
   const hasAttempted = attempts.length > 0;
-  const canReattempt = userTier === 'lite' || userTier === 'pro';
-  const showForm = !hasAttempted || canReattempt;
+  const access = await getAttemptAccess(supabase, fullUser, { id: caseRow.id, type: caseRow.type });
+  const showForm = access.allowed;
+  const lockTitle =
+    access.reason === 'free-non-daily' ? 'This case is for Lite & Pro'
+    : access.reason === 'lite-quota' ? `You've used today's extra ${access.bucket === 'guesstimate' ? 'guesstimates' : 'cases'}`
+    : "You've already attempted this case";
+  const lockBody =
+    access.reason === 'free-non-daily' ? "Free covers today's daily case and guesstimate. Upgrade to Lite to practise the full bank — plus 2 extra cases and 2 extra guesstimates every day."
+    : access.reason === 'lite-quota' ? `Lite includes 2 extra ${access.bucket === 'guesstimate' ? 'guesstimates' : 'cases'} per day beyond the daily ones. Upgrade to Pro for unlimited practice.`
+    : 'Free tier allows one attempt per case. Upgrade to Lite or Pro for unlimited re-attempts.';
+  const lockCta =
+    access.reason === 'free-non-daily' ? 'Upgrade to Lite'
+    : access.reason === 'lite-quota' ? 'Upgrade to Pro'
+    : 'Upgrade for re-attempts';
 
   return (
     <div className="min-h-screen bg-muted">
@@ -108,16 +121,16 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
           <Card className="p-6 text-center bg-card">
             <Lock className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
             <h2 className="text-h3 text-foreground mb-2">
-              You've already attempted this case
+              {lockTitle}
             </h2>
             <p className="text-body text-muted-foreground mb-4 max-w-md mx-auto">
-              Free tier allows one attempt per case. Upgrade to Lite or Pro for unlimited re-attempts.
+              {lockBody}
             </p>
             <Link
               href="/upgrade"
               className="inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors"
             >
-              Upgrade for re-attempts
+              {lockCta}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Card>

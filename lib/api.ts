@@ -51,12 +51,14 @@ export async function submitCaseAnswer(payload: {
   user_id: string;
   case_id: string;
   answer_text: string;
+  token?: string;
 }): Promise<{ submission_id: string }>
 {
+  const { token, ...body } = payload;
   const res = await fetch(`${API_URL}/submit`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -93,10 +95,10 @@ export async function fetchHeadlines(): Promise<NewsHeadline[]> {
  * If a brief already exists, returns the cached one (no AI call, fast).
  * Otherwise triggers OpenAI generation (~5-10 seconds first time).
  */
-export async function generateBrief(headlineId: string): Promise<GeneratedBriefData> {
+export async function generateBrief(headlineId: string, token?: string): Promise<GeneratedBriefData> {
   const res = await fetch(`${API_URL}/news/briefs/${headlineId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');

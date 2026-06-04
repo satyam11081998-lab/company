@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { submitCaseAnswer } from '@/lib/api';
+import { createClient } from '@/lib/supabase/client';
 import { MIN_ANSWER_CHARS } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 
@@ -26,7 +27,9 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
     }
     setIsSubmitting(true);
     try {
-      const { submission_id } = await submitCaseAnswer({ user_id: userId, case_id: caseId, answer_text: answer });
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const { submission_id } = await submitCaseAnswer({ user_id: userId, case_id: caseId, answer_text: answer, token: session?.access_token });
       router.push(`/results/${submission_id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Submission failed';

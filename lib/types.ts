@@ -48,9 +48,11 @@ export interface CaseRow {
 
 export interface FeedbackJson {
   breakdown?: Record<string, number>;
-  did_well?: string[];
-  improve?: string[];
+  strengths?: string[];
+  improvements?: string[];
   summary?: string;
+  rubric?: string;
+  backstop?: Record<string, unknown>;
 }
 
 export interface SubmissionRow {

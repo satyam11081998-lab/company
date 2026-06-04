@@ -34,8 +34,8 @@ export default function Footer({ className = "" }: { className?: string }) {
             <ul className="space-y-3.5">
               <li><Link href="/methodology" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Our Methodology</Link></li>
               <li><Link href="/learn/frameworks-mental-models" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Frameworks</Link></li>
-              <li><Link href="/learn/case-studies" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Case Studies</Link></li>
-              <li><Link href="/learn/guesstimates" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Guesstimates Guide</Link></li>
+              <li><Link href="/learn/practice-case-library" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Case Studies</Link></li>
+              <li><Link href="/learn/guesstimates-market-sizing" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Guesstimates Guide</Link></li>
             </ul>
           </div>
 

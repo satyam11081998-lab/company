@@ -62,7 +62,7 @@ export default function DashboardClient(props: DashboardClientProps) {
           <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">{today}</p>
           <h1 className="mt-1.5 text-h1 text-foreground">Hey, {userName}.</h1>
         </div>
-        <Link href="/home" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-body font-semibold text-primary-foreground hover:bg-primary-hover transition-colors min-h-[44px]">
+        <Link href="/practice?tab=scored" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-body font-semibold text-primary-foreground hover:bg-primary-hover transition-colors min-h-[44px]">
           Start a case <ArrowRight className="h-4 w-4" />
         </Link>
       </header>

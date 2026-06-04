@@ -44,6 +44,9 @@ export const TIER_LIMITS = {
     learnExamplesPerDomain: 2, // first 2 examples visible
     newsScope: 'all' as const,
     practiceQuestionsPerDay: 3,
+    dailyExtraCases: 0,
+    dailyExtraGuesstimates: 0,
+    gdBriefs: false,
   },
   lite: {
     maxReattempts: Infinity,
@@ -52,6 +55,9 @@ export const TIER_LIMITS = {
     learnExamplesPerDomain: 2,
     newsScope: 'mba-relevant' as const,
     practiceQuestionsPerDay: Infinity,
+    dailyExtraCases: 2,
+    dailyExtraGuesstimates: 2,
+    gdBriefs: true,
   },
   pro: {
     maxReattempts: Infinity,
@@ -60,6 +66,9 @@ export const TIER_LIMITS = {
     learnExamplesPerDomain: 2,
     newsScope: 'mba-relevant' as const,
     practiceQuestionsPerDay: Infinity,
+    dailyExtraCases: Infinity,
+    dailyExtraGuesstimates: Infinity,
+    gdBriefs: true,
   },
 } as const;
 
