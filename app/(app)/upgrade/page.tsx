@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Script from "next/script";
-import { Check, X, Star, Zap, ShieldCheck, Sparkles, Minus } from "lucide-react";
+import { Check, Star, Zap, ShieldCheck, Sparkles, Minus } from "lucide-react";
 import { useUser } from "@/components/user-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -13,23 +13,6 @@ declare global {
     Razorpay: any;
   }
 }
-
-type Cell = boolean | string;
-
-// Single source of the Free/Lite/Pro comparison shown in the table below the cards.
-const COMPARISON: { label: string; free: Cell; lite: Cell; pro: Cell }[] = [
-  { label: "Full Learn & Casebook library", free: true, lite: true, pro: true },
-  { label: "Today's daily case (AI-scored)", free: true, lite: true, pro: true },
-  { label: "Today's daily guesstimate (AI-scored)", free: true, lite: true, pro: true },
-  { label: "Cross-India leaderboard & badges", free: true, lite: true, pro: true },
-  { label: "Extra practice cases from the bank", free: false, lite: "2 / day", pro: "Unlimited" },
-  { label: "Extra practice guesstimates", free: false, lite: "2 / day", pro: "Unlimited" },
-  { label: "Unlimited re-attempts", free: false, lite: true, pro: true },
-  { label: "GD Briefs (daily debate prep)", free: false, lite: true, pro: true },
-  { label: "Hints & model Q&A on cases", free: false, lite: "5 / case", pro: "Live AI" },
-  { label: "Bookmarks & personal cheat-sheet", free: false, lite: false, pro: true },
-  { label: "AI interviewer chatbot", free: false, lite: false, pro: true },
-];
 
 export default function UpgradePage() {
   const { user, tier, refresh } = useUser();
@@ -165,14 +148,16 @@ export default function UpgradePage() {
             </div>
             <div className="p-6 flex-1 flex flex-col justify-between gap-8">
               <ul className="space-y-3">
-                <FeatureItem text="Today's daily case & guesstimate" />
                 <FeatureItem text="Full Learn & Casebook library" />
+                <FeatureItem text="Today's daily case & guesstimate" />
                 <FeatureItem text="Leaderboard & badges" />
-                <FeatureItem muted text="No bank practice, re-attempts or GD briefs" cross />
+                <FeatureItem muted text="No extra bank practice" cross />
+                <FeatureItem muted text="No re-attempts or GD briefs" cross />
+                <FeatureItem muted text="No hints or AI features" cross />
               </ul>
               <button
                 disabled
-                className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center text-muted-foreground bg-muted/40 cursor-default"
+                className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center text-muted-foreground bg-muted/40 cursor-default mt-auto"
               >
                 {current === "free" ? "Your current plan" : "Included in your plan"}
               </button>
@@ -199,14 +184,16 @@ export default function UpgradePage() {
                   <ShieldCheck className="h-4 w-4 text-foreground/70 mt-0.5 flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Free</span>
                 </li>
-                <FeatureItem text="+2 cases & +2 guesstimates every day" />
+                <FeatureItem text="2 extra cases & guesstimates / day" />
                 <FeatureItem text="Unlimited re-attempts" />
                 <FeatureItem text="GD Briefs unlocked" />
+                <FeatureItem text="5 AI hints per case" />
+                <FeatureItem muted text="No bookmarks or cheat-sheet" cross />
               </ul>
               <button
                 onClick={() => handleUpgrade("lite")}
                 disabled={loading !== null || current === "lite" || current === "pro"}
-                className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50"
+                className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50 mt-auto"
               >
                 {current === "lite"
                   ? "Current Plan"
@@ -220,7 +207,7 @@ export default function UpgradePage() {
           </div>
 
           {/* Pro */}
-          <div className="ui-card flex flex-col h-full animate-slide-up relative border-primary" style={{ animationDelay: "180ms" }}>
+          <div className="ui-card flex flex-col h-full animate-slide-up relative border-primary shadow-[0_0_15px_rgba(200,16,46,0.1)]" style={{ animationDelay: "180ms" }}>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <span className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-primary-hover shadow-sm">
                 Recommended
@@ -238,53 +225,25 @@ export default function UpgradePage() {
                 <span className="text-xs text-muted-foreground">/mo</span>
               </div>
             </div>
-            <div className="p-6 flex-1 flex flex-col justify-between gap-8">
+            <div className="p-6 flex-1 flex flex-col justify-between gap-8 bg-primary/[0.01]">
               <ul className="space-y-3">
                 <li className="flex items-start gap-2.5">
                   <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
                 </li>
-                <FeatureItem text="Unlimited cases & guesstimates" />
+                <FeatureItem text="Unlimited practice bank" />
+                <FeatureItem text="Live AI hints & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
                 <FeatureItem text="AI interviewer chatbot" />
               </ul>
               <button
                 onClick={() => handleUpgrade("pro")}
                 disabled={loading !== null || current === "pro"}
-                className="w-full bg-primary text-white hover:bg-primary-hover h-10 text-sm font-semibold rounded-md flex items-center justify-center transition-colors shadow-sm disabled:opacity-50"
+                className="w-full bg-primary text-white hover:bg-primary-hover h-10 text-sm font-semibold rounded-md flex items-center justify-center transition-colors shadow-sm disabled:opacity-50 mt-auto"
               >
                 {current === "pro" ? "Current Plan" : loading === "pro" ? "Processing..." : "Upgrade to Pro"}
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Full comparison */}
-        <div className="ui-card overflow-hidden animate-slide-up" style={{ animationDelay: "220ms" }}>
-          <div className="p-5 border-b border-border">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Compare plans</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="py-3 px-5 text-xs font-semibold text-muted-foreground">Feature</th>
-                  <ColHead label="Free" active={current === "free"} />
-                  <ColHead label="Lite" active={current === "lite"} />
-                  <ColHead label="Pro" active={current === "pro"} />
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row, i) => (
-                  <tr key={i} className="border-b border-border/60 last:border-0">
-                    <td className="py-3 px-5 text-sm text-foreground/90">{row.label}</td>
-                    <CellTd v={row.free} active={current === "free"} />
-                    <CellTd v={row.lite} active={current === "lite"} />
-                    <CellTd v={row.pro} active={current === "pro"} />
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       </main>
@@ -297,29 +256,6 @@ function CurrentTag() {
     <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-success bg-success/10 px-2 py-0.5 rounded-full">
       Current
     </span>
-  );
-}
-
-function ColHead({ label, active }: { label: string; active?: boolean }) {
-  return (
-    <th className={`py-3 px-4 text-center text-sm font-bold ${active ? "text-primary" : "text-foreground"}`}>
-      {label}
-      {active && <span className="block text-[9px] font-semibold uppercase tracking-widest text-success">You</span>}
-    </th>
-  );
-}
-
-function CellTd({ v, active }: { v: Cell; active?: boolean }) {
-  return (
-    <td className={`py-3 px-4 text-center ${active ? "bg-primary/[0.03]" : ""}`}>
-      {v === true ? (
-        <Check className="h-4 w-4 text-success mx-auto" />
-      ) : v === false ? (
-        <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />
-      ) : (
-        <span className="text-xs font-semibold text-foreground">{v}</span>
-      )}
-    </td>
   );
 }
 
