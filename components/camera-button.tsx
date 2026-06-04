@@ -103,7 +103,6 @@ export default function CameraButton({ onExtractionCompleted, disabled }: Camera
       <input
         type="file"
         accept="image/*"
-        capture="environment" // Hints mobile devices to open the rear camera
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
