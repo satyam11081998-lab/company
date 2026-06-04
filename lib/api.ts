@@ -155,3 +155,24 @@ export async function fetchDailyLeaderboard(): Promise<DailyLeaderboardResponse>
   }
   return res.json();
 }
+
+/**
+ * Send an audio blob to the backend for Whisper transcription.
+ */
+export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }> {
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'recording.webm');
+
+  const res = await fetch(`${API_URL}/transcribe`, {
+    method: 'POST',
+    // Do NOT set Content-Type header when sending FormData, the browser will set it with the correct boundary
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to transcribe audio: ${errText}`);
+  }
+
+  return res.json();
+}

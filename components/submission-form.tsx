@@ -9,6 +9,7 @@ import { submitCaseAnswer } from '@/lib/api';
 import { createClient } from '@/lib/supabase/client';
 import { MIN_ANSWER_CHARS } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
+import DictationButton from '@/components/dictation-button';
 
 /** Client form on /cases/[id] for submitting an answer to the scoring API. */
 export default function SubmissionForm({ userId, caseId }: { userId: string; caseId: string }) {
@@ -38,6 +39,11 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
     }
   }
 
+  function handleTranscriptionCompleted(transcribedText: string) {
+    // Append the new text with a space if there's already some content
+    setAnswer(prev => prev ? `${prev} ${transcribedText}` : transcribedText);
+  }
+
   if (isSubmitting) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-primary/20 bg-accent p-12 text-center">
@@ -50,14 +56,22 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <Textarea
-        value={answer}
-        onChange={(e) => setAnswer(e.target.value)}
-        placeholder="Type out your structure, assumptions and final number. Aim for clear sub-bullets."
-        className="resize-none text-base leading-relaxed min-h-[250px] md:min-h-[350px]"
-        required
-      />
-      <div className="flex items-center justify-between">
+      <div className="relative">
+        <Textarea
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="Type out your structure, assumptions and final number. Aim for clear sub-bullets."
+          className="resize-none text-base leading-relaxed min-h-[250px] md:min-h-[350px] pb-16"
+          required
+        />
+        
+        {/* Absolute positioning for the dictation button inside the textarea area */}
+        <div className="absolute bottom-4 right-4 z-10">
+          <DictationButton onTranscriptionCompleted={handleTranscriptionCompleted} />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2">
         <span className={`text-base font-medium ${isValid ? 'text-emerald-700' : 'text-muted-foreground'}`}>
           {charCount} / {MIN_ANSWER_CHARS} characters minimum
         </span>
