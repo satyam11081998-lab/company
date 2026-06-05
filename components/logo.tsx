@@ -30,7 +30,7 @@ export default function Logo({ className = "", isLanding = false }: LogoProps) {
     <img 
       src="/logo-universal.png" 
       alt="MECE Logo" 
-      className={`h-10 md:h-[66px] w-auto flex-shrink-0 ${className}`} 
+      className={`h-20 md:h-[132px] w-auto flex-shrink-0 ${className}`} 
     />
   );
 }
