@@ -43,7 +43,7 @@ export default async function AppLayout({
   return (
     <UserProvider initialUser={user}>
       <AppNav />
-      <main className="min-h-[calc(100vh-64px)] flex flex-col relative w-full overflow-x-hidden max-w-[100vw]">
+      <main className="min-h-[calc(100vh-64px)] flex flex-col relative w-full overflow-x-clip max-w-[100vw]">
         <div className="flex-1 pb-10">
           {children}
         </div>
