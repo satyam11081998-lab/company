@@ -6,9 +6,9 @@ export default function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={`bg-navy border-t border-navy-mid/30 pt-10 pb-6 px-6 md:px-12 ${className}`}>
       <div className="max-w-7xl w-full mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-16 gap-10 md:gap-6 mb-10">
           {/* Brand Column */}
-          <div className="md:col-span-5 lg:col-span-4 flex flex-col items-start pr-0 md:pr-8">
+          <div className="md:col-span-7 lg:col-span-6 flex flex-col items-start pr-0 md:pr-8">
             <Link href="/" className="inline-block mb-8 mt-2 ml-4">
               <Logo className="scale-[2.2] origin-left" />
             </Link>
@@ -18,7 +18,7 @@ export default function Footer({ className = "" }: { className?: string }) {
           </div>
 
           {/* Product Column */}
-          <div className="md:col-span-2 lg:col-span-2 md:col-start-8">
+          <div className="md:col-span-3 lg:col-span-3 md:col-start-10 lg:col-start-10">
             <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Product</h4>
             <ul className="space-y-3.5">
               <li><Link href="/cases" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Practice Cases</Link></li>
@@ -29,7 +29,7 @@ export default function Footer({ className = "" }: { className?: string }) {
           </div>
 
           {/* Resources Column */}
-          <div className="md:col-span-2 lg:col-span-2">
+          <div className="md:col-span-3 lg:col-span-3">
             <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Resources</h4>
             <ul className="space-y-3.5">
               <li><Link href="/methodology" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Our Methodology</Link></li>

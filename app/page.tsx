@@ -17,17 +17,17 @@ export default async function LandingPage() {
       {/* ── Nav ──────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full overflow-hidden max-w-[100vw]">
         <div className="container flex h-14 md:h-16 items-center justify-between">
-          <div className="flex items-center shrink-0">
+          <div className="flex items-center gap-4 md:gap-12 shrink-0">
             <Link href="/" className="flex items-center -ml-2 shrink-0">
               <Logo isLanding={true} className="" />
             </Link>
-          </div>
-          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
-            {[['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
-              <Link key={href} href={href} className="text-[15px] font-medium text-primary hover:text-primary-hover transition-colors touch-target">
-                {label}
-              </Link>
-            ))}
+            <div className="hidden md:flex items-center gap-8">
+              {[['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
+                <Link key={href} href={href} className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
+                  {label}
+                </Link>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <ThemeToggle />
