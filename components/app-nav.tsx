@@ -25,7 +25,7 @@ export default function AppNav() {
 
   return (
     <header className="nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]">
-      <div className="container flex h-14 md:h-20 items-center justify-between">
+      <div className="container flex h-14 md:h-16 items-center justify-between">
 
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-4 md:gap-12">
@@ -69,14 +69,14 @@ export default function AppNav() {
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2 border-r border-navy-mid pr-3">
                 <div className="flex items-baseline gap-1">
-                  <span className="font-mono text-[18.4px] font-medium text-primary tabular-nums">{user.points}</span>
-                  <span className="text-[13.8px] text-navy-foreground/35">pts</span>
+                  <span className="font-mono text-base font-medium text-primary tabular-nums">{user.points}</span>
+                  <span className="text-xs text-navy-foreground/50">pts</span>
                 </div>
               </div>
               <Link href="/profile" className="flex-shrink-0 relative inline-block">
-                <Avatar className={`h-8 w-8 md:h-10 md:w-10 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
+                <Avatar className={`h-8 w-8 md:h-9 md:w-9 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
                   <AvatarImage src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.id)}`} alt={user.name || ''} />
-                  <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-sm md:text-[18.4px] font-semibold shadow-inner">
+                  <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-sm font-semibold shadow-inner">
                     {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
@@ -89,7 +89,7 @@ export default function AppNav() {
               {tier !== 'pro' && (
                 <Link 
                   href="/upgrade" 
-                  className="hidden md:inline-flex items-center gap-1 text-[13.8px] font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1 border border-primary/20 rounded-sm bg-primary/5"
+                  className="hidden md:inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1.5 border border-primary/20 rounded bg-primary/5"
                 >
                   <Sparkles className="h-3 w-3" />
                   Upgrade
