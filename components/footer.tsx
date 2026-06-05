@@ -1,24 +1,31 @@
 import React from 'react';
 import Link from 'next/link';
 import Logo from '@/components/logo';
+import { Twitter, Linkedin, Instagram, Mail } from 'lucide-react';
 
 export default function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={`bg-navy border-t border-navy-mid/30 pt-10 pb-6 px-6 md:px-12 ${className}`}>
-      <div className="max-w-5xl w-full md:w-[90%] mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+      <div className="max-w-7xl w-full mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 mb-10">
           {/* Brand Column */}
-          <div className="col-span-1 md:col-span-1 lg:col-span-1.5 flex flex-col items-start">
+          <div className="md:col-span-5 lg:col-span-4 flex flex-col items-start pr-0 md:pr-8">
             <Link href="/" className="inline-block mb-4">
               <Logo className="scale-110 origin-left" />
             </Link>
             <p className="text-sm text-navy-foreground/70 leading-relaxed max-w-sm mb-6">
               The premier platform for Indian MBA students to master consulting, finance, and product management interviews through structured, MECE-driven practice.
             </p>
+            <div className="flex items-center gap-5 text-navy-foreground/50">
+              <a href="#" className="hover:text-white transition-colors" aria-label="Twitter"><Twitter className="h-5 w-5" /></a>
+              <a href="#" className="hover:text-white transition-colors" aria-label="LinkedIn"><Linkedin className="h-5 w-5" /></a>
+              <a href="#" className="hover:text-white transition-colors" aria-label="Instagram"><Instagram className="h-5 w-5" /></a>
+              <a href="mailto:team@mece.in" className="hover:text-white transition-colors" aria-label="Email Support"><Mail className="h-5 w-5" /></a>
+            </div>
           </div>
 
           {/* Product Column */}
-          <div className="col-span-1">
+          <div className="md:col-span-2 lg:col-span-2 md:col-start-7">
             <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Product</h4>
             <ul className="space-y-3.5">
               <li><Link href="/cases" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Practice Cases</Link></li>
@@ -29,7 +36,7 @@ export default function Footer({ className = "" }: { className?: string }) {
           </div>
 
           {/* Resources Column */}
-          <div className="col-span-1">
+          <div className="md:col-span-2 lg:col-span-2">
             <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Resources</h4>
             <ul className="space-y-3.5">
               <li><Link href="/methodology" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Our Methodology</Link></li>
@@ -40,7 +47,7 @@ export default function Footer({ className = "" }: { className?: string }) {
           </div>
 
           {/* Legal Column */}
-          <div className="col-span-1">
+          <div className="md:col-span-3 lg:col-span-2">
             <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Company</h4>
             <ul className="space-y-3.5">
               <li><Link href="/about" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">About Us</Link></li>
@@ -54,7 +61,7 @@ export default function Footer({ className = "" }: { className?: string }) {
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-navy-mid/30 flex justify-center">
           <p className="text-xs text-navy-foreground/50">
-             {new Date().getFullYear()} MECE Prep. All rights reserved.
+             &copy; {new Date().getFullYear()} MECE Prep. All rights reserved.
           </p>
         </div>
       </div>

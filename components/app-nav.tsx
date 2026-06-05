@@ -74,9 +74,9 @@ export default function AppNav() {
                 </div>
               </div>
               <Link href="/profile" className="flex-shrink-0 relative inline-block">
-                <Avatar className={`h-8 w-8 md:h-9 md:w-9 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
+                <Avatar className={`h-7 w-7 md:h-7 md:w-7 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
                   <AvatarImage src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.id)}`} alt={user.name || ''} />
-                  <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-sm font-semibold shadow-inner">
+                  <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-xs font-semibold shadow-inner">
                     {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
