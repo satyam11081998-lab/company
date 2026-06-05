@@ -16,7 +16,7 @@ export default async function LandingPage() {
 
       {/* ── Nav ──────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full overflow-hidden max-w-[100vw]">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 md:h-20 flex items-center justify-between">
+        <div className="container flex h-14 md:h-16 items-center justify-between">
           <div className="flex items-center gap-4 md:gap-12 shrink-0">
             <Link href="/" className="flex items-center -ml-2 shrink-0">
               <Logo isLanding={true} className="" />
