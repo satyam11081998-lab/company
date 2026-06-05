@@ -65,6 +65,14 @@ export function ReadinessScore({ result }: { result: ReadinessResult }) {
         <div className="min-w-0">
           <p className="text-label text-muted-foreground">READINESS SCORE</p>
           <p className="text-h3 mt-0.5 animate-fade-in">{VERDICT_LABEL[result.verdict]}</p>
+          {/* n-pill: small honest indicator of how much data backs the score. The tooltip
+              explains that early scores lean on a prior and sharpen as more cases land. */}
+          <p
+            className="mt-1 inline-flex w-fit cursor-help items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-micro text-muted-foreground"
+            title="Your readiness score sharpens as you complete more cases. Early scores lean on a cohort prior so a single good attempt doesn't overstate your level."
+          >
+            Based on {result.subsDone} case{result.subsDone === 1 ? '' : 's'}
+          </p>
           <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-2">
             {comps.map((c, i) => <CompBar key={c.key} label={COMPONENT_LABEL[c.key]} v={c.v} delay={560 + i * 120} />)}
           </div>

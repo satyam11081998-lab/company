@@ -22,6 +22,7 @@ import {
   type Difficulty,
 } from './constants';
 import type { SubmissionRow } from './types';
+import { shrinkMean, shrinkDimensionEarned, DEFAULT_PRIOR_SCORE } from './shrinkage';
 
 // The engine's input: the real SubmissionRow PLUS the join-supplied fields that
 // page.tsx maps in from the `cases` + `case_attempts` joins. Keeping this here
@@ -74,8 +75,9 @@ export interface CoverageCell {
 export interface DimensionStat {
   dimension: ScoreDimension;
   max: number;
-  earned: number; // recency-weighted avg points earned (0..max)
-  ratio: number; // earned / max (0..1)
+  earned: number; // recency-weighted avg points earned, SHRUNKEN toward cohort/prior
+  ratio: number; // earned / max (0..1) — uses the shrunken `earned`
+  n: number; // number of scored submissions that contributed (for "n=" UI pill)
 }
 
 export interface ReadinessComponents {
@@ -147,7 +149,7 @@ function recencyWeight(ageDays: number): number {
   return Math.pow(0.5, ageDays / HALF_LIFE_DAYS);
 }
 
-function computeMastery(subs: Scored[]): number {
+function computeMastery(subs: Scored[], priorMastery: number): number {
   const first = subs.filter((s) => s.firstAttempt);
   const pool = first.length ? first : subs;
   let num = 0;
@@ -158,22 +160,36 @@ function computeMastery(subs: Scored[]): number {
     num += w * s.score;
     den += w;
   }
-  return den > 0 ? clamp(num / den) : 0;
+  if (den <= 0) return clamp(priorMastery);
+  const sampleMean = num / den;
+  // Shrink the user's recency-weighted mean toward the cohort/prior mean. With one
+  // submission the displayed mastery sits mostly on the prior; with many it sits
+  // mostly on the user's own data. See lib/shrinkage.ts.
+  return clamp(shrinkMean(sampleMean, pool.length, priorMastery));
 }
 
-function computeDimensions(subs: Scored[]): DimensionStat[] {
+function computeDimensions(
+  subs: Scored[],
+  benchmark?: Partial<Record<ScoreDimension, number>>,
+): DimensionStat[] {
   return SCORE_DIMENSIONS.map((dim) => {
     let num = 0;
     let den = 0;
+    let n = 0;
     for (const s of subs) {
       if (!s.breakdown || s.breakdown[dim] == null) continue;
       const w = recencyWeight(s.ageDays);
       num += w * s.breakdown[dim];
       den += w;
+      n += 1;
     }
     const max = SCORE_DIMENSION_MAX[dim];
-    const earned = den > 0 ? num / den : 0;
-    return { dimension: dim, max, earned, ratio: max > 0 ? earned / max : 0 };
+    const sampleEarned = den > 0 ? num / den : 0;
+    // Per-dim prior = cohort mean for that dimension if available; else the rubric's
+    // mid-band proxy (65% of max — same intent as DEFAULT_PRIOR_SCORE on a 0..100 scale).
+    const priorEarned = benchmark?.[dim] ?? (max * DEFAULT_PRIOR_SCORE) / 100;
+    const earned = shrinkDimensionEarned(sampleEarned, n, priorEarned);
+    return { dimension: dim, max, earned, ratio: max > 0 ? earned / max : 0, n };
   });
 }
 
@@ -231,6 +247,10 @@ export interface ReadinessInput {
   streak: number;
   now?: Date;
   weights?: ReadinessWeights;
+  /** Cohort mean score (0..100). Used as the prior for mastery shrinkage. */
+  priorMastery?: number;
+  /** Per-dimension cohort mean in raw points (matches SCORE_DIMENSION_MAX). */
+  benchmark?: Partial<Record<ScoreDimension, number>>;
 }
 
 function verdictFor(score: number): ReadinessVerdict {
@@ -244,6 +264,8 @@ function verdictFor(score: number): ReadinessVerdict {
 export function computeReadiness(input: ReadinessInput): ReadinessResult {
   const now = input.now ?? new Date();
   const weights = input.weights ?? DEFAULT_WEIGHTS;
+  const priorMastery = input.priorMastery ?? DEFAULT_PRIOR_SCORE;
+  const benchmark = input.benchmark;
   const subs = normalize(input.submissions, now);
 
   const distinctTypes = new Set(subs.map((s) => s.type).filter(Boolean));
@@ -261,7 +283,7 @@ export function computeReadiness(input: ReadinessInput): ReadinessResult {
       score: 0,
       verdict: 'early',
       components: { mastery: 0, coverage: 0, consistency: 0, robustness: 0 },
-      dimensions: computeDimensions(subs),
+      dimensions: computeDimensions(subs, benchmark),
       coverage: coverageCells,
       weakestDimension: null,
       stalestType: null,
@@ -270,11 +292,11 @@ export function computeReadiness(input: ReadinessInput): ReadinessResult {
     };
   }
 
-  const mastery = computeMastery(subs);
+  const mastery = computeMastery(subs, priorMastery);
   const coverage = computeCoverage(coverageCells);
   const consistency = computeConsistency(subs, input.streak);
   const { value: robustness, fragile } = computeRobustness(subs, mastery);
-  const dimensions = computeDimensions(subs);
+  const dimensions = computeDimensions(subs, benchmark);
 
   const composite =
     weights.mastery * mastery +

@@ -31,7 +31,17 @@ export function DimensionBullets({ dimensions, benchmark, className }: Props) {
         return (
           <div key={dim}>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-small text-muted-foreground truncate">{SCORE_DIMENSION_LABELS[dim]}</span>
+              <span className="flex min-w-0 items-center gap-1.5 truncate">
+                <span className="text-small text-muted-foreground truncate">{SCORE_DIMENSION_LABELS[dim]}</span>
+                {d.n > 0 && (
+                  <span
+                    className="shrink-0 cursor-help rounded-sm bg-muted px-1 py-0.5 text-[10px] text-muted-foreground"
+                    title="Number of scored submissions feeding this dimension. Early scores blend with the cohort average and sharpen as you complete more cases."
+                  >
+                    n={d.n}
+                  </span>
+                )}
+              </span>
               <span className="flex items-center gap-2">
                 <span className="text-small font-mono-data tabular-nums text-foreground">
                   {Math.round(d.earned)}/{d.max}
@@ -64,7 +74,7 @@ export function DimensionBullets({ dimensions, benchmark, className }: Props) {
       })}
       {benchmark && (
         <p className="text-micro text-muted-foreground sm:col-span-2">
-          Bar = your recency-weighted score · navy tick = cohort median · chip = your gap vs cohort
+          Bar = your shrunken-to-cohort score (so 1-case wins don't look elite) · n = scored attempts feeding it · navy tick = cohort median · chip = your gap vs cohort
         </p>
       )}
     </div>
