@@ -19,7 +19,7 @@ export default async function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-4 md:gap-12 shrink-0">
             <Link href="/" className="flex items-center -ml-2 shrink-0">
-              <Logo variant="dark" className="" />
+              <Logo isLanding={true} className="" />
             </Link>
             <div className="hidden md:flex items-center gap-8">
               {[['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
