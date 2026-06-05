@@ -5,12 +5,12 @@ import Logo from '@/components/logo';
 export default function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={`bg-navy border-t border-navy-mid/30 pt-16 pb-8 px-6 md:px-12 ${className}`}>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl w-[80%] mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8 mb-16">
           {/* Brand Column */}
           <div className="col-span-1 md:col-span-1 lg:col-span-1.5 flex flex-col items-start">
             <Link href="/" className="inline-block mb-6">
-              <Logo variant="light" className="scale-[0.8] origin-left" />
+              <Logo className="scale-[1.4] origin-left" />
             </Link>
             <p className="text-sm text-navy-foreground/70 leading-relaxed max-w-sm mb-6">
               The premier platform for Indian MBA students to master consulting, finance, and product management interviews through structured, MECE-driven practice.

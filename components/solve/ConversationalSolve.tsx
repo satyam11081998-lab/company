@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import DictationButton from '@/components/dictation-button';
 import { createClient } from '@/lib/supabase/client';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
 import {
@@ -335,6 +336,7 @@ export default function ConversationalSolve({ caseId }: Props) {
           submitting={submitting}
           onClose={() => setSubmitOpen(false)}
           onConfirm={handleSubmit}
+          onFileAttach={() => fileInputRef.current?.click()}
         />
       )}
     </div>
@@ -408,13 +410,14 @@ function MessageBubble({ message }: { message: AttemptMessage }) {
 }
 
 function SubmitDialog({
-  finalRec, setFinalRec, submitting, onClose, onConfirm,
+  finalRec, setFinalRec, submitting, onClose, onConfirm, onFileAttach
 }: {
   finalRec: string;
   setFinalRec: (v: string) => void;
   submitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onFileAttach: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center">
@@ -430,14 +433,29 @@ function SubmitDialog({
           placeholder="My recommendation is to… because (1)… (2)… (3)… Risks to watch: …"
           className="mt-3 min-h-[160px] resize-none text-base"
         />
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-small text-muted-foreground">{finalRec.trim().length} characters</p>
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose} disabled={submitting}>Cancel</Button>
-            <Button onClick={onConfirm} disabled={submitting || finalRec.trim().length < 20} className="bg-primary text-primary-foreground hover:bg-primary-hover">
-              {submitting ? (<><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Scoring…</>) : 'Submit session'}
-            </Button>
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <DictationButton
+              onTranscriptionCompleted={(text) => setFinalRec(finalRec ? finalRec + ' ' + text : text)}
+              disabled={submitting}
+            />
+            <button
+              type="button"
+              onClick={onFileAttach}
+              disabled={submitting}
+              title="Attach a file to your transcript before submitting"
+              className="flex items-center justify-center h-10 w-10 shrink-0 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+            >
+              <Paperclip className="h-5 w-5" />
+            </button>
           </div>
+          <p className="text-small text-muted-foreground">{finalRec.trim().length} characters</p>
+        </div>
+        <div className="mt-4 flex justify-end gap-2 border-t pt-4">
+          <Button variant="ghost" onClick={onClose} disabled={submitting}>Cancel</Button>
+          <Button onClick={onConfirm} disabled={submitting || finalRec.trim().length < 20} className="bg-primary text-primary-foreground hover:bg-primary-hover">
+            {submitting ? (<><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Scoring…</>) : 'Submit session'}
+          </Button>
         </div>
       </Card>
     </div>
