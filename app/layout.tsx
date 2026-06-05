@@ -8,10 +8,33 @@ import { ThemeProvider } from '@/components/theme-provider';
 import GeoPattern from '@/components/geo-pattern';
 import { Analytics } from "@vercel/analytics/next";
 
+const SITE_URL = 'https://mece.in';
+const SITE_TITLE = 'MECE — Placement interview prep for Indian MBA students';
+const SITE_DESC = 'Cases, frameworks, GD briefs, and structured feedback for MBA & PGDM placement interviews — consulting, finance, marketing, product, ops.';
+
 export const metadata: Metadata = {
-  title: 'MECE — Placement interview prep for Indian MBA students',
-  description: 'Cases, frameworks, GD briefs, and structured feedback for MBA & PGDM placement interviews — consulting, finance, marketing, product, ops.',
+  metadataBase: new URL(SITE_URL),
+  applicationName: 'MECE',
+  title: SITE_TITLE,
+  description: SITE_DESC,
   keywords: ['MBA placement', 'case interview', 'GD prep', 'consulting prep', 'product manager interview'],
+  alternates: { canonical: '/' },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: 'website',
+    url: SITE_URL,
+    siteName: 'MECE',
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    locale: 'en_IN',
+    images: [{ url: '/logo.png', alt: 'MECE' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: ['/logo.png'],
+  },
 };
 
 export const viewport: Viewport = {

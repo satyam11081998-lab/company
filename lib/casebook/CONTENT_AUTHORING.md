@@ -1,6 +1,6 @@
 # Content Authoring Guide: The Casebook
 
-This guide defines how new casebook pages are authored for the Consilio platform. All content is defined as statically typed TypeScript objects that conform to the `Page` interface in `lib/casebook/types.ts`.
+This guide defines how new casebook pages are authored for the MECE platform. All content is defined as statically typed TypeScript objects that conform to the `Page` interface in `lib/casebook/types.ts`.
 
 ## 1. File Structure & Registration
 

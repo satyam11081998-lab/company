@@ -1,4 +1,4 @@
--- Consilio seed data
+-- MECE seed data
 -- Run this against your Supabase project AFTER the tables are created.
 -- Safe to re-run (uses ON CONFLICT DO NOTHING on primary keys).
 
