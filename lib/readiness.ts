@@ -74,8 +74,9 @@ export interface CoverageCell {
 export interface DimensionStat {
   dimension: ScoreDimension;
   max: number;
-  earned: number; // recency-weighted avg points earned (0..max)
-  ratio: number; // earned / max (0..1)
+  earned: number; // recency-weighted avg points earned, SHRUNKEN toward cohort/prior
+  ratio: number; // earned / max (0..1) — uses the shrunken `earned`
+  n: number; // number of scored submissions that contributed (for "n=" UI pill)
 }
 
 export interface ReadinessComponents {
@@ -165,15 +166,17 @@ function computeDimensions(subs: Scored[]): DimensionStat[] {
   return SCORE_DIMENSIONS.map((dim) => {
     let num = 0;
     let den = 0;
+    let n = 0;
     for (const s of subs) {
       if (!s.breakdown || s.breakdown[dim] == null) continue;
       const w = recencyWeight(s.ageDays);
       num += w * s.breakdown[dim];
       den += w;
+      n += 1;
     }
     const max = SCORE_DIMENSION_MAX[dim];
     const earned = den > 0 ? num / den : 0;
-    return { dimension: dim, max, earned, ratio: max > 0 ? earned / max : 0 };
+    return { dimension: dim, max, earned, ratio: max > 0 ? earned / max : 0, n };
   });
 }
 

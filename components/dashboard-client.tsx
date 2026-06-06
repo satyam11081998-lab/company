@@ -4,7 +4,7 @@
 // that FILLS the horizontal space, and the rank/percentile peer-comparison tiles that the
 // original dashboard had are RESTORED (v1 dropped them — that was the regression).
 import Link from 'next/link';
-import { ArrowRight, Flame } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import SectionHeader from '@/components/section-header';
 import StatTile from '@/components/stat-tile';
 import CareerLadder from '@/components/career-ladder';
@@ -13,13 +13,15 @@ import { Card } from '@/components/ui/card';
 import { ReadinessScore } from '@/components/dashboard/readiness-score';
 import { NextActionCard } from '@/components/dashboard/next-action-card';
 import { Trajectory } from '@/components/dashboard/trajectory';
+import HeroStatsRow from '@/components/dashboard/hero-stats';
+import SkillTree from '@/components/dashboard/skill-tree';
+import { computeHeroStats, buildSkillTree, ANALYTICS_UNLOCK_N } from '@/lib/personal-stats';
 import GuesstimateSkillsChart from '@/components/dashboard/guesstimate-skills-chart';
 import type { GuesstimateDimension } from '@/lib/constants';
 import { FreeQuotaMeter } from '@/components/dashboard/free-quota-meter';
 import { DimensionBullets } from '@/components/dashboard/dimension-bullets';
 import { CoverageMap } from '@/components/dashboard/coverage-map';
 import { DailyPicksStrip } from '@/components/dashboard/daily-picks-strip';
-import { cn } from '@/lib/utils';
 import { currentTier, pointsToNextTier } from '@/lib/career-tiers';
 import type { ReadinessResult, ReadinessSubmission } from '@/lib/readiness';
 import type { NextAction, FreeQuota } from '@/lib/next-action';
@@ -53,6 +55,10 @@ export default function DashboardClient(props: DashboardClientProps) {
   const tier = currentTier(points);
   const toNext = pointsToNextTier(points);
   const solved = submissions.filter((s) => s.score != null).length;
+  // Personal-first stats (no average): Latest / Personal Best / Streak.
+  const hero = computeHeroStats(submissions, streak);
+  // Per-domain progression (replaces cohort-comparison framing for early users).
+  const skillNodes = buildSkillTree(submissions);
 
   return (
     <div className="container max-w-6xl py-8 md:py-10 space-y-8 stagger">
@@ -97,12 +103,19 @@ export default function DashboardClient(props: DashboardClientProps) {
         </div>
       </div>
 
-      {/* ROW 2 — the numbers (4 tiles) */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Avg Score" value={avgScore != null ? avgScore : '—'} valueSuffix={avgScore != null ? '/100' : ''} sublabel="per submission" dotColor="warning" />
-        <StatTile label="Day Streak" value={streak} sublabel={streak > 0 ? 'keep it alive' : 'start today'} dotColor="primary">
-          <div className="mt-auto flex items-center gap-1 pt-3 text-primary"><Flame className={cn("h-4 w-4", streak > 0 && "ambient-flame")} /><span className="text-small text-muted-foreground">{streak >= 3 ? 'on a roll' : 'building a habit'}</span></div>
-        </StatTile>
+      {/* ROW 2 — HERO STATS (Latest · Personal Best · Streak)
+           No "average score" anywhere -- avoids the small-sample unfairness
+           problem (one lucky 85 doesn't fake-elite a newbie; veteran's PB is
+           honest from day one). Pattern from Strava / Peloton / Apple Fitness. */}
+      <HeroStatsRow hero={hero} />
+
+      {/* ROW 2b — SKILL TREE (your 4 case domains, with status badges).
+           Replaces the cohort-comparison framing for early users; surfaces the
+           "what to do next" without using a numerical score. */}
+      <SkillTree nodes={skillNodes} />
+
+      {/* ROW 2c — small Points / Cases-solved row (still useful, but not the hero) */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
         <StatTile label="Cases Solved" value={solved} sublabel="scored attempts" dotColor="success" />
         <StatTile label="Points" value={points.toLocaleString('en-IN')} sublabel={tier.name} dotColor="navy">
           {toNext > 0 && (
@@ -113,17 +126,45 @@ export default function DashboardClient(props: DashboardClientProps) {
         </StatTile>
       </div>
 
-      {/* ROW 3 — skill profile (8) + trajectory (4) */}
-      {readiness.status === 'scored' && (
-        <section>
-          <SectionHeader label="SKILL PROFILE" subtitle="Your scores vs the cohort, by dimension" />
-          <div className="grid gap-5 lg:grid-cols-12">
-            <div className="lg:col-span-8">
-              <Card className="p-6"><DimensionBullets dimensions={readiness.dimensions} benchmark={benchmark} /></Card>
+      {/* === PROGRESSIVE DISCLOSURE ===
+           For the first N cases (ANALYTICS_UNLOCK_N) we hide the heavy
+           analytics on purpose -- the cohort comparison, dimension bullets,
+           trajectory and coverage map are all unfair at low n. Khan Academy /
+           Brilliant.org pattern. Below the gate the user sees a friendly
+           "your analytics unlock at N cases" tile. */}
+      {hero.caseCases < ANALYTICS_UNLOCK_N ? (
+        <Card className="border-dashed p-6 text-center">
+          <p className="text-label text-muted-foreground">YOUR ANALYTICS UNLOCK SOON</p>
+          <p className="mt-2 text-h3 text-foreground">
+            {ANALYTICS_UNLOCK_N - hero.caseCases} more case{(ANALYTICS_UNLOCK_N - hero.caseCases) === 1 ? '' : 's'} to go
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-small text-muted-foreground">
+            Cohort comparison, dimension scores, trajectory and coverage map all sharpen at {ANALYTICS_UNLOCK_N} cases. Until then your dashboard stays focused on personal bests and the domains to explore.
+          </p>
+          <div className="mt-4 inline-flex items-center gap-2">
+            <div className="h-2 w-48 overflow-hidden rounded-full bg-muted">
+              <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${(hero.caseCases / ANALYTICS_UNLOCK_N) * 100}%` }} />
             </div>
-            <div className="lg:col-span-4"><Trajectory scores={trajectory} className="h-full" /></div>
+            <span className="text-small font-mono-data tabular-nums text-muted-foreground">
+              {hero.caseCases} / {ANALYTICS_UNLOCK_N}
+            </span>
           </div>
-        </section>
+        </Card>
+      ) : (
+        <>
+          {/* ROW 3 — skill profile (8) + trajectory (4) */}
+          {readiness.status === 'scored' && (
+            <section>
+              <SectionHeader label="SKILL PROFILE" subtitle="Your scores vs the cohort, by dimension" />
+              <div className="grid gap-5 lg:grid-cols-12">
+                <div className="lg:col-span-8">
+                  <Card className="p-6"><DimensionBullets dimensions={readiness.dimensions} benchmark={benchmark} /></Card>
+                </div>
+                <div className="lg:col-span-4"><Trajectory scores={trajectory} className="h-full" /></div>
+              </div>
+            </section>
+          )}
+        </>
       )}
 
       {/* ROW 3b — guesstimate skills (separate 5-dim rubric; always visible, own empty state) */}
@@ -134,13 +175,21 @@ export default function DashboardClient(props: DashboardClientProps) {
         </Card>
       </section>
 
-      {/* ROW 4 — coverage (7) + convert/quota (5) */}
+      {/* ROW 4 — coverage (7) + convert/quota (5). Coverage gated; quota always shown. */}
       <section>
-        <SectionHeader label="COVERAGE" subtitle="Where you're tested — and where you're not" />
-        <div className="grid gap-5 lg:grid-cols-12">
-          <div className="lg:col-span-7"><CoverageMap cells={readiness.coverage} /></div>
-          <div className="lg:col-span-5"><FreeQuotaMeter quota={quota} /></div>
-        </div>
+        {hero.caseCases >= ANALYTICS_UNLOCK_N ? (
+          <>
+            <SectionHeader label="COVERAGE" subtitle="Where you're tested — and where you're not" />
+            <div className="grid gap-5 lg:grid-cols-12">
+              <div className="lg:col-span-7"><CoverageMap cells={readiness.coverage} /></div>
+              <div className="lg:col-span-5"><FreeQuotaMeter quota={quota} /></div>
+            </div>
+          </>
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-12">
+            <div className="lg:col-span-12"><FreeQuotaMeter quota={quota} /></div>
+          </div>
+        )}
       </section>
 
       {/* ROW 5 — career (8) + activity heatmap (4) */}

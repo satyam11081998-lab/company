@@ -80,10 +80,7 @@ export default async function DashboardPage() {
   const scored = submissions.filter((s) => s.score != null && s.case_type !== 'guesstimate');
   const avgScore = scored.length ? Math.round(scored.reduce((a, s) => a + (s.score as number), 0) / scored.length) : null;
 
-  // --- pure, verified pipeline ---
-  const readiness = computeReadiness({ submissions, streak });
-  const action = nextAction(readiness, tier);
-  const quota = computeFreeQuota(tier, submissions);
+  // --- (readiness/action/quota built below, after the benchmark) ---
 
   // Reconciled global cohort benchmark
   const benchmarkAgg: Record<string, { sum: number; count: number }> = {};
@@ -107,6 +104,11 @@ export default async function DashboardPage() {
   Object.entries(benchmarkAgg).forEach(([dim, { sum, count }]) => {
     if (count > 0) benchmark[dim as ScoreDimension] = Math.round(sum / count);
   });
+
+  // --- pure, verified pipeline ---
+  const readiness = computeReadiness({ submissions, streak });
+  const action = nextAction(readiness, tier);
+  const quota = computeFreeQuota(tier, submissions);
 
   const trajectory = submissions
     .filter((s) => s.score != null && (s.is_first_attempt ?? true) && s.case_type !== 'guesstimate')
