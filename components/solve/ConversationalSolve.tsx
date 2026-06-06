@@ -248,18 +248,31 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         
         <div className="p-5 flex-1 space-y-8">
           <div>
-            <div className="text-small leading-relaxed text-foreground whitespace-pre-wrap">
-              {caseDetail.content}
-            </div>
-            {caseDetail.hint && (
+            {caseDetail.type !== 'guesstimate' && (
+              <div className="text-small leading-relaxed text-foreground whitespace-pre-wrap">
+                {caseDetail.content}
+              </div>
+            )}
+            {(caseDetail.hint || caseDetail.type === 'guesstimate') && (
               <details className="group mt-4">
                 <summary className="cursor-pointer select-none text-small font-medium text-primary hover:underline">
                   <span className="group-open:hidden">Show hint</span>
                   <span className="hidden group-open:inline">Hide hint</span>
                 </summary>
-                <p className="mt-2 rounded bg-accent px-3 py-2 text-small leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                  {caseDetail.hint}
-                </p>
+                <div className="mt-2 rounded bg-accent px-3 py-2 text-small leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                  {caseDetail.type === 'guesstimate' && (
+                    <div className={caseDetail.hint ? "mb-3 pb-3 border-b border-border/50" : ""}>
+                      <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Framework / Context</span>
+                      {caseDetail.content}
+                    </div>
+                  )}
+                  {caseDetail.hint && (
+                    <div>
+                      {caseDetail.type === 'guesstimate' && <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Hint</span>}
+                      {caseDetail.hint}
+                    </div>
+                  )}
+                </div>
               </details>
             )}
           </div>
