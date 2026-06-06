@@ -69,7 +69,27 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
   const access = await getAttemptAccess(supabase, fullUser, { id: caseRow.id, type: caseRow.type });
   const hasAttempted = attempts.length > 0;
 
-  // If the user can't attempt right now, show the upgrade card instead of the workspace.
+  const historyPanel = hasAttempted ? (
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-3 text-small font-semibold uppercase tracking-widest text-muted-foreground">
+          Your previous attempts
+        </h3>
+        <CaseAttemptHistory attempts={attempts} />
+      </div>
+      <div>
+        <CaseRatingPrompt
+          caseId={caseRow.id}
+          userId={authUser.id}
+          existingRating={userRating as 'easier' | 'right' | 'harder' | null}
+          lastSubmissionId={attempts[0]?.submission_id || null}
+        />
+      </div>
+    </div>
+  ) : null;
+
+  let lockedOverlay = null;
+
   if (!access.allowed) {
     const lockTitle =
       access.reason === 'free-non-daily'
@@ -90,73 +110,34 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
         ? 'Upgrade to Pro'
         : 'Upgrade for re-attempts';
 
-    return (
-      <div className="min-h-screen bg-muted">
-        <main className="container max-w-4xl py-10">
-          <Link
-            href="/practice"
-            className="mb-4 inline-flex items-center gap-1 text-small text-muted-foreground hover:text-foreground"
-          >
-            ← Back to Practice
-          </Link>
-          {hasAttempted && (
-            <div className="mb-6">
-              <CaseAttemptHistory attempts={attempts} />
-            </div>
-          )}
-          <Card className="bg-card p-6 text-center">
-            <Lock className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-            <h2 className="text-h3 mb-2 text-foreground">{lockTitle}</h2>
-            <p className="mx-auto mb-4 max-w-md text-body text-muted-foreground">{lockBody}</p>
-            <Link
-              href="/upgrade"
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-body font-semibold text-white transition-colors hover:bg-primary-hover"
-            >
-              {lockCta}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Card>
-          {hasAttempted && (
-            <div className="mt-6">
-              <CaseRatingPrompt
-                caseId={caseRow.id}
-                userId={authUser.id}
-                existingRating={userRating as 'easier' | 'right' | 'harder' | null}
-                lastSubmissionId={attempts[0]?.submission_id || null}
-              />
-            </div>
-          )}
-        </main>
-      </div>
+    lockedOverlay = (
+      <Card className="bg-card p-6 text-center max-w-sm shadow-2xl border-primary/20">
+        <Lock className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+        <h2 className="text-h3 mb-2 text-foreground">{lockTitle}</h2>
+        <p className="mx-auto mb-5 max-w-md text-body text-muted-foreground">{lockBody}</p>
+        <Link
+          href="/upgrade"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-body font-semibold text-white transition-colors hover:bg-primary-hover shadow-sm"
+        >
+          {lockCta}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Card>
     );
   }
 
-  // Allowed path — render the conversational workspace as the primary surface.
-  // Prior attempts and the rating prompt sit below, accessible but secondary.
   return (
-    <div className="min-h-screen bg-background">
-      <ConversationalSolve caseId={caseRow.id} />
-
-      {hasAttempted && (
-        <section className="border-t bg-muted">
-          <div className="mx-auto max-w-3xl px-4 py-8">
-            <h3 className="text-small font-semibold uppercase tracking-widest text-muted-foreground">
-              Your previous attempts
-            </h3>
-            <div className="mt-3">
-              <CaseAttemptHistory attempts={attempts} />
-            </div>
-            <div className="mt-6">
-              <CaseRatingPrompt
-                caseId={caseRow.id}
-                userId={authUser.id}
-                existingRating={userRating as 'easier' | 'right' | 'harder' | null}
-                lastSubmissionId={attempts[0]?.submission_id || null}
-              />
-            </div>
-          </div>
-        </section>
-      )}
-    </div>
+    <ConversationalSolve 
+      caseId={caseRow.id} 
+      initialCase={{
+        title: caseRow.title,
+        content: caseRow.content,
+        type: caseRow.type,
+        difficulty: caseRow.difficulty,
+        hint: caseRow.hint,
+      }}
+      historyPanel={historyPanel}
+      lockedOverlay={lockedOverlay}
+    />
   );
 }

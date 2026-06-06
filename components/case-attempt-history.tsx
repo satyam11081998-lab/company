@@ -53,8 +53,8 @@ export default function CaseAttemptHistory({ attempts }: Props) {
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-micro font-mono text-muted-foreground tabular-nums">
-                    #{a.attempt_number}
+                  <span className="text-small font-semibold text-foreground tabular-nums">
+                    Attempt {a.attempt_number}
                   </span>
                   {a.is_first_attempt ? (
                     <span className="text-micro font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
@@ -83,9 +83,11 @@ export default function CaseAttemptHistory({ attempts }: Props) {
                   <p className="text-small text-muted-foreground mb-2 uppercase tracking-wider font-semibold mt-2">
                     Your answer
                   </p>
-                  <p className="text-small text-foreground whitespace-pre-wrap leading-relaxed mb-3">
-                    {a.submissions.answer_text}
-                  </p>
+                  <div className="max-h-[35vh] overflow-y-auto pr-2 mb-3">
+                    <p className="text-small text-foreground whitespace-pre-wrap leading-relaxed">
+                      {a.submissions.answer_text}
+                    </p>
+                  </div>
                   <Link
                     href={`/results/${a.submission_id}`}
                     className="inline-flex items-center gap-1 text-small font-medium text-primary hover:underline"

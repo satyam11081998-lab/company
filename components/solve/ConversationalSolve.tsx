@@ -41,6 +41,15 @@ import { transcribeAudio } from '@/lib/api';
 
 interface Props {
   caseId: string;
+  initialCase: {
+    title: string;
+    content: string;
+    type: string;
+    difficulty: string;
+    hint: string | null;
+  };
+  historyPanel?: React.ReactNode;
+  lockedOverlay?: React.ReactNode;
 }
 
 interface DraftAssistant {
@@ -49,12 +58,12 @@ interface DraftAssistant {
   text: string;
 }
 
-export default function ConversationalSolve({ caseId }: Props) {
+export default function ConversationalSolve({ caseId, initialCase, historyPanel, lockedOverlay }: Props) {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!lockedOverlay);
   const [attempt, setAttempt] = useState<AttemptSummary | null>(null);
-  const [caseDetail, setCaseDetail] = useState<AttemptDetail['case'] | null>(null);
+  const [caseDetail, setCaseDetail] = useState<AttemptDetail['case'] | typeof initialCase>(initialCase);
   const [messages, setMessages] = useState<AttemptMessage[]>([]);
   const [draftAssistant, setDraftAssistant] = useState<DraftAssistant | null>(null);
   const [composer, setComposer] = useState('');
@@ -72,6 +81,7 @@ export default function ConversationalSolve({ caseId }: Props) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (lockedOverlay) return; // Do not fetch or start attempt if locked
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
@@ -204,7 +214,7 @@ export default function ConversationalSolve({ caseId }: Props) {
     }
   }
 
-  if (loading || !attempt || !caseDetail) {
+  if (loading && !lockedOverlay) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -212,121 +222,178 @@ export default function ConversationalSolve({ caseId }: Props) {
     );
   }
 
-  const remaining = attempt.clarification_remaining;
-  const quotaExhausted = remaining <= 0;
+  const remaining = attempt?.clarification_remaining || 0;
+  const quotaExhausted = attempt ? remaining <= 0 : false;
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-background">
+    <div className="fixed top-14 md:top-16 left-0 right-0 bottom-0 flex flex-col lg:flex-row bg-background overflow-hidden z-30 shadow-2xl">
+      
       {/* --------------------------------------------------------- */}
-      {/* 1. FIXED header                                            */}
-      {/*    - prompt body is ALWAYS visible (not collapsed)        */}
-      {/*    - if the prompt is long, it scrolls inside its own     */}
-      {/*      max-height box so the composer below never moves     */}
-      {/*    - only the hint sits behind a Show hint toggle         */}
+      {/* 1. LEFT PANEL: Case Context & History                      */}
       {/* --------------------------------------------------------- */}
-      <header className="shrink-0 border-b bg-card">
-        <div className="mx-auto max-w-3xl px-4 py-3">
-          <Link href="/practice" className="mb-2 inline-flex items-center gap-1 text-micro text-muted-foreground hover:text-foreground">
+      <div className="flex w-full lg:w-[35%] xl:w-[30%] flex-col border-r bg-card h-[50dvh] lg:h-full overflow-y-auto">
+        <header className="shrink-0 border-b bg-card px-5 py-4">
+          <Link href="/practice" className="mb-3 inline-flex items-center gap-1 text-micro text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3 w-3" /> Practice
           </Link>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
-                <span>{CASE_TYPE_LABELS[caseDetail.type] || caseDetail.type}</span>
-                <span>·</span>
-                <span>{DIFFICULTY_LABELS[caseDetail.difficulty] || caseDetail.difficulty}</span>
-              </div>
-              <h1 className="mt-1 text-h4 font-semibold leading-tight text-foreground">
-                {caseDetail.title}
-              </h1>
-            </div>
-            <ClarificationCounter remaining={remaining} quota={attempt.clarification_quota} />
-            <Button size="sm" onClick={() => setSubmitOpen(true)} className="shrink-0 bg-primary text-primary-foreground hover:bg-primary-hover">
-              Submit
-            </Button>
+          <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+            <span>{CASE_TYPE_LABELS[caseDetail.type] || caseDetail.type}</span>
+            <span>·</span>
+            <span>{DIFFICULTY_LABELS[caseDetail.difficulty] || caseDetail.difficulty}</span>
           </div>
-
-          {/* Always-visible prompt body; caps at ~30vh and scrolls internally. */}
-          <div className="mt-3 max-h-[30vh] overflow-y-auto rounded-md border bg-muted/40 px-3 py-2 text-small leading-relaxed text-foreground whitespace-pre-wrap">
-            {caseDetail.content}
-          </div>
-
-          {/* Only the hint stays collapsed. */}
-          {caseDetail.hint && (
-            <details className="group mt-2">
-              <summary className="cursor-pointer select-none text-small font-medium text-primary hover:underline">
-                <span className="group-open:hidden">Show hint</span>
-                <span className="hidden group-open:inline">Hide hint</span>
-              </summary>
-              <p className="mt-2 rounded bg-accent px-3 py-2 text-small leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                {caseDetail.hint}
-              </p>
-            </details>
-          )}
-        </div>
-      </header>
-
-      {/* ------------------------- */}
-      {/* 2. Scrolling thread        */}
-      {/* ------------------------- */}
-      <div ref={threadRef} className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl space-y-3 px-4 py-6">
-          {messages.map((m) => (<MessageBubble key={m.id} message={m} />))}
-          {draftAssistant && draftAssistant.text && (
-            <div className="flex justify-start">
-              <div className="max-w-[85%]">
-                <p className="mb-1 text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</p>
-                <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-body text-foreground">
-                  {draftAssistant.text}
-                  <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-foreground/40 align-middle" />
-                </div>
-              </div>
+          <h1 className="mt-1 text-h4 font-semibold leading-tight text-foreground">
+            {caseDetail.title}
+          </h1>
+        </header>
+        
+        <div className="p-5 flex-1 space-y-8">
+          <div>
+            <div className="text-small leading-relaxed text-foreground whitespace-pre-wrap">
+              {caseDetail.content}
             </div>
-          )}
-          {sending && !draftAssistant?.text && (
-            <div className="flex justify-start">
-              <div className="max-w-[85%]">
-                <p className="mb-1 text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</p>
-                <div className="rounded-2xl bg-muted px-4 py-2 text-small text-muted-foreground">
-                  <Loader2 className="inline h-3 w-3 animate-spin" /> thinking…
-                </div>
-              </div>
+            {caseDetail.hint && (
+              <details className="group mt-4">
+                <summary className="cursor-pointer select-none text-small font-medium text-primary hover:underline">
+                  <span className="group-open:hidden">Show hint</span>
+                  <span className="hidden group-open:inline">Hide hint</span>
+                </summary>
+                <p className="mt-2 rounded bg-accent px-3 py-2 text-small leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                  {caseDetail.hint}
+                </p>
+              </details>
+            )}
+          </div>
+          
+          {historyPanel && (
+            <div className="pt-6 border-t">
+              {historyPanel}
             </div>
           )}
         </div>
       </div>
 
-      {/* ------------------------- */}
-      {/* 3. FIXED composer          */}
-      {/* ------------------------- */}
-      <div className="shrink-0 border-t bg-card">
-        <div className="mx-auto max-w-3xl px-3 py-3">
-          {quotaExhausted && (
-            <p className="mb-2 rounded bg-accent px-3 py-2 text-small text-foreground/80">
-              You&rsquo;ve used all your clarification questions. Keep working in the thread — notes,
-              calculations, and uploads still count. Hit <span className="font-semibold">Submit</span> when ready.
-            </p>
-          )}
-          <div className="flex items-end gap-2">
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="shrink-0 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Attach a file">
-              <Paperclip className="h-5 w-5" />
-            </button>
-            <input ref={fileInputRef} type="file" className="hidden" accept="image/*,application/pdf,.doc,.docx,.txt" onChange={handleFile} />
-            <Textarea
-              value={composer}
-              onChange={(e) => setComposer(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send('text'); } }}
-              placeholder={quotaExhausted ? 'Add notes, calculations, or assumptions…' : 'Ask a clarification, share your structure, or work through the math…'}
-              className="max-h-40 min-h-[44px] flex-1 resize-none rounded-2xl bg-muted text-base"
-            />
-            <button type="button" onClick={toggleMic} disabled={recording === 'transcribing'} className={`shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label="Voice input">
-              {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : recording === 'recording' ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </button>
-            <Button type="button" onClick={() => send('text')} disabled={!composer.trim() || sending} size="icon" className="shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover">
-              <Send className="h-4 w-4" />
-            </Button>
+      {/* --------------------------------------------------------- */}
+      {/* 2. RIGHT PANEL: Chat Window                                */}
+      {/* --------------------------------------------------------- */}
+      <div 
+        className="flex flex-1 flex-col relative h-[50dvh] lg:h-full bg-muted/20"
+        style={{
+          backgroundImage: 'radial-gradient(circle at center, hsl(var(--foreground)/0.03) 1.5px, transparent 1.5px)',
+          backgroundSize: '20px 20px'
+        }}
+      >
+        {/* Top bar for right panel */}
+        <div className="shrink-0 border-b bg-card/50 backdrop-blur-sm px-5 py-3 flex justify-between items-center z-10 shadow-sm">
+           <div className="text-small font-semibold text-foreground/80 flex items-center gap-2">
+             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+             Live Case Session
+           </div>
+           {!lockedOverlay && attempt && (
+             <div className="flex items-center gap-3">
+               <ClarificationCounter remaining={remaining} quota={attempt.clarification_quota} />
+               <Button size="sm" onClick={() => setSubmitOpen(true)} className="h-8 bg-primary text-primary-foreground hover:bg-primary-hover">
+                 Submit
+               </Button>
+             </div>
+           )}
+        </div>
+
+        {/* Chat Thread */}
+        <div ref={threadRef} className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 pb-32">
+          <div className="mx-auto max-w-3xl space-y-4">
+            {lockedOverlay ? (
+              <div className="space-y-4 opacity-40 blur-[2px] pointer-events-none select-none">
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-body">
+                    Welcome to the case interview. I'll be your interviewer today. Let me know when you're ready to begin structuring your thoughts.
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2 text-body">
+                    I'm ready. Can I take a minute to structure my approach?
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-body">
+                    Of course. Take your time. Let me know what you want to look at first.
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {messages.map((m) => (<MessageBubble key={m.id} message={m} />))}
+                {draftAssistant && draftAssistant.text && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%]">
+                      <p className="mb-1 text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</p>
+                      <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-body text-foreground">
+                        {draftAssistant.text}
+                        <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-foreground/40 align-middle" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {sending && !draftAssistant?.text && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%]">
+                      <p className="mb-1 text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</p>
+                      <div className="rounded-2xl bg-muted px-4 py-2 text-small text-muted-foreground">
+                        <Loader2 className="inline h-3 w-3 animate-spin" /> thinking…
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
+
+        {/* Locked Overlay Block */}
+        {lockedOverlay && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/5 backdrop-blur-[2px] p-4">
+             {lockedOverlay}
+          </div>
+        )}
+
+        {/* ------------------------- */}
+        {/* 3. Composer                */}
+        {/* ------------------------- */}
+        {!lockedOverlay && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 bg-gradient-to-t from-muted/50 via-muted/30 to-transparent">
+            <div className="mx-auto max-w-3xl">
+              {quotaExhausted && (
+                <p className="mb-3 rounded-lg border bg-card px-4 py-2 text-small text-foreground/80 shadow-sm text-center">
+                  You&rsquo;ve used all your clarification questions. Hit <span className="font-semibold text-primary cursor-pointer hover:underline" onClick={() => setSubmitOpen(true)}>Submit</span> when ready.
+                </p>
+              )}
+              
+              <div className="flex items-end gap-2 rounded-[24px] border bg-card p-1.5 pl-3 shadow-md focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="shrink-0 rounded-full p-2 mb-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Attach a file">
+                  <Paperclip className="h-5 w-5" />
+                </button>
+                <input ref={fileInputRef} type="file" className="hidden" accept="image/*,application/pdf,.doc,.docx,.txt" onChange={handleFile} />
+                
+                <textarea
+                  value={composer}
+                  onChange={(e) => setComposer(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send('text'); } }}
+                  placeholder={quotaExhausted ? 'Add notes or assumptions…' : 'Ask a clarification or share your structure…'}
+                  className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
+                  rows={1}
+                />
+                
+                <div className="flex items-center gap-1.5 pr-1 mb-0.5">
+                  <button type="button" onClick={toggleMic} disabled={recording === 'transcribing'} className={`shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700 animate-pulse' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label="Voice input">
+                    {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : recording === 'recording' ? <Square className="h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}
+                  </button>
+                  <Button type="button" onClick={() => send('text')} disabled={!composer.trim() || sending} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
+                    <Send className="h-4 w-4 ml-0.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {submitOpen && (
