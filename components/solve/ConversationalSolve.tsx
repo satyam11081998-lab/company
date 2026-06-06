@@ -427,9 +427,24 @@ function MessageBubble({ message }: { message: AttemptMessage }) {
   const isSystem = message.role === 'system';
 
   if (isSystem) {
+    let displayContent = message.content || '';
+    if (displayContent.toUpperCase().startsWith('CASE READY:')) {
+      const dotIndex = displayContent.indexOf('.');
+      if (dotIndex !== -1) {
+        displayContent = displayContent.slice(dotIndex + 1).trim();
+      }
+    }
+    
+    // Make it sentence case so it doesn't shout
+    if (displayContent) {
+      displayContent = displayContent.charAt(0).toUpperCase() + displayContent.slice(1).toLowerCase();
+    }
+
     return (
-      <div className="flex justify-center">
-        <p className="text-micro uppercase tracking-widest text-muted-foreground">{message.content}</p>
+      <div className="flex justify-center my-6">
+        <p className="text-micro font-medium text-muted-foreground bg-black/5 dark:bg-white/5 px-4 py-1.5 rounded-full shadow-sm text-center">
+          {displayContent}
+        </p>
       </div>
     );
   }
