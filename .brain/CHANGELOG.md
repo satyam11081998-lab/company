@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-06 — reconciliation-audit — Phase 1 verification
+Verified file presence and wiring for Guesstimate end-to-end (G1-G4), AI evaluation v2, Dashboard tiles, and Casebook misc frameworks. All confirmed present and flipped to BUILT.
+touches: .brain/LEDGER.md
+breaking: no   affects: none
+
 ## 2026-06-06 — reconciliation-audit — doc-vs-code sweep
 Verified file presence + wiring against the latest upload. Flipped a whole cluster from "pending/not-built" to **BUILT & LIVE**: §9.31 daily-content+admin+keep-alive, §9.32 news pipeline, §9.33 dashboard daily tiles, §9.28 interviewer+conversational solve, plus structured items — payments audit trail (Razorpay verify+webhook write `payments`), voice input (Whisper/transcribe), image input (vision/extract-text), rate limiting (attempts.py), analytics (@vercel/analytics), privacy+terms pages, and badge_awarder (wired, graceful — not a crash). Still genuinely open: `vercel.json` (region pin), refund-policy page, `users.streak_count` column write. See PROJECT_BRAIN_MERGED.md "2026-06-06 FULL RECONCILIATION AUDIT".
 touches: (status reconciliation only — no code change)
