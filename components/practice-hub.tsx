@@ -138,9 +138,16 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                   <span className={`tag-${getTopicColor(c.type)} px-2 py-1 rounded text-micro uppercase tracking-wide font-medium`}>
                     {c.type}
                   </span>
-                  <span className="text-micro font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
-                    {c.difficulty}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {attemptedCaseIds.includes(c.id) && (
+                      <span className="inline-flex items-center gap-1 text-micro font-bold text-success bg-success/15 px-2 py-1 rounded uppercase tracking-widest">
+                        <Check className="h-3 w-3" /> Attempted
+                      </span>
+                    )}
+                    <span className="text-micro font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                      {c.difficulty}
+                    </span>
+                  </div>
                 </div>
                 <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">{c.title}</h3>
                 {c.type !== 'guesstimate' && (
@@ -149,11 +156,6 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                 <div className="mt-auto pt-4 border-t flex justify-between items-center">
                    <div className="flex items-center gap-2">
                      <span className="text-small text-muted-foreground">Scored by MECE</span>
-                     {attemptedCaseIds.includes(c.id) && (
-                       <span className="inline-flex items-center gap-1 text-micro font-bold text-success bg-success/15 px-2 py-0.5 rounded uppercase tracking-widest">
-                         <Check className="h-3.5 w-3.5" /> Attempted
-                       </span>
-                     )}
                    </div>
                    <Link href={`/cases/${c.id}`} className="text-small font-medium text-primary hover:underline">Practice &rarr;</Link>
                 </div>
