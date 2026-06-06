@@ -20,20 +20,23 @@ interface Props {
 }
 
 export default function CaseAttemptHistory({ attempts }: Props) {
-  const [expanded, setExpanded] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('expanded_attempt');
-      if (saved !== null) return saved;
-    }
-    return null;
-  });
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const saved = sessionStorage.getItem('expanded_attempt');
+    if (saved !== null) {
+      setExpanded(saved);
+    }
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
       if (expanded) sessionStorage.setItem('expanded_attempt', expanded);
       else sessionStorage.removeItem('expanded_attempt');
     }
-  }, [expanded]);
+  }, [expanded, isMounted]);
 
   if (!attempts.length) return null;
 

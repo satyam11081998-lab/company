@@ -16,20 +16,22 @@ interface NavTreeSectionProps {
 }
 
 function NavTreeSection({ node, searchQuery }: NavTreeSectionProps) {
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('nav_tree_' + node.title);
-      if (saved !== null) return saved === 'true';
-    }
-    // Only "Getting Started" is open by default, unless otherwise forced
-    return node.title === 'Getting Started';
-  });
+  const [isOpen, setIsOpen] = useState(node.title === 'Getting Started');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const saved = sessionStorage.getItem('nav_tree_' + node.title);
+    if (saved !== null) {
+      setIsOpen(saved === 'true');
+    }
+    setIsMounted(true);
+  }, [node.title]);
+
+  useEffect(() => {
+    if (isMounted) {
       sessionStorage.setItem('nav_tree_' + node.title, String(isOpen));
     }
-  }, [isOpen, node.title]);
+  }, [isOpen, node.title, isMounted]);
 
   const Icon = node.icon ? ICON_MAP[node.icon] : null;
 
