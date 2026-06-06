@@ -215,3 +215,27 @@ export interface CaseRatingAggregate {
   harder_count: number;
   perceived_difficulty: 'easier' | 'right' | 'harder' | null;
 }
+
+export interface CheatSheetRow {
+  id: string;
+  user_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CheatSheetItemKind =
+  | 'data_point' | 'smart_angle' | 'counter_argument' | 'opening_line' | 'closing_line';
+
+export interface CheatSheetItemRow {
+  id: string;
+  sheet_id: string;
+  user_id: string;
+  source_headline_id: string | null;
+  source_topic: string;
+  source_kind: CheatSheetItemKind;
+  content: string;
+  note: string | null;
+  position: number;
+  created_at: string;
+}

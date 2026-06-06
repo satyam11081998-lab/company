@@ -8,6 +8,7 @@ import { fetchBrief } from '@/lib/api';
 import type { GeneratedBriefData } from '@/lib/types';
 import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
 import { useUser } from '@/components/user-context';
+import { AddToCheatSheetButton } from '@/components/cheat-sheet/add-to-cheat-sheet-button';
 
 export default function BriefDetailPage() {
   const params = useParams();
@@ -184,8 +185,13 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
           </p>
           <ul className="mt-4 space-y-3">
             {b.data_points.map((dp, i) => (
-              <li key={i} className="rounded-md bg-muted p-3 text-body text-foreground/90">
-                {dp}
+              <li key={i} className="rounded-md bg-muted p-3 text-body text-foreground/90 flex items-start justify-between gap-2">
+                <span>{dp}</span>
+                <AddToCheatSheetButton
+                  content={dp}
+                  sourceTopic={b.headline_title}
+                  sourceHeadlineId={b.headline_id}
+                />
               </li>
             ))}
           </ul>
