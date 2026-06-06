@@ -18,6 +18,7 @@ propose a new row via handoff but do not edit others' rows.
 | **Payments (Razorpay + audit trail)** | B | feat/payments | **BUILT** | `app/api/razorpay/{order,verify,webhook}/route.ts` | DB:`payments`/`users` |
 | **Rate limiting** | B | feat/backend | **BUILT** | `services/rate_limit.py`, `routes/attempts.py` | — |
 | **AI evaluation v2** | B | feat/eval | **BUILT** | `services/ai_scorer.py`, `services/interview_engine.py`, `prompts/*`, `routes/submit.py` | Scoring-contract (this feature DEFINES it) |
+| **GD Cheat Sheet (Pro)** | B | feat/cheatsheet | **BUILT** | `app/(app)/cheat-sheet/*`, `components/cheat-sheet/*`, `lib/cheatsheet.ts`, `app/api/cheatsheet/*`, `supabase/migrations/0003_cheat_sheet.sql` | DB:`users` (tier read), GD-briefs `data_points` shape (reader), Tier infra |
 
 ## Collision watch (features that touch the same surface)
 - **DB:`cases`** is touched by Dashboard, Guesstimate, and Daily-content → any
