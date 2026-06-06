@@ -150,8 +150,8 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                    <div className="flex items-center gap-2">
                      <span className="text-small text-muted-foreground">Scored by MECE</span>
                      {attemptedCaseIds.includes(c.id) && (
-                       <span className="inline-flex items-center gap-1 text-micro font-semibold text-success">
-                         <Check className="h-3 w-3" /> Attempted
+                       <span className="inline-flex items-center gap-1 text-micro font-bold text-success bg-success/15 px-2 py-0.5 rounded uppercase tracking-widest">
+                         <Check className="h-3.5 w-3.5" /> Attempted
                        </span>
                      )}
                    </div>
@@ -170,7 +170,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                     Guesstimate{g.difficulty ? ` · ${g.difficulty}` : ''}
                   </span>
                   {attempted && (
-                    <span className="inline-flex items-center gap-1 text-micro font-medium text-green-600">
+                    <span className="inline-flex items-center gap-1 text-micro font-bold text-success bg-success/15 px-2 py-0.5 rounded uppercase tracking-widest">
                       <Check className="h-3.5 w-3.5" /> Attempted
                     </span>
                   )}
