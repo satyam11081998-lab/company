@@ -105,13 +105,8 @@ export default async function DashboardPage() {
     if (count > 0) benchmark[dim as ScoreDimension] = Math.round(sum / count);
   });
 
-  // --- pure, verified pipeline (with cohort priors for small-sample shrinkage) ---
-  const readiness = computeReadiness({
-    submissions,
-    streak,
-    priorMastery: avgScore ?? undefined,
-    benchmark,
-  });
+  // --- pure, verified pipeline ---
+  const readiness = computeReadiness({ submissions, streak });
   const action = nextAction(readiness, tier);
   const quota = computeFreeQuota(tier, submissions);
 
