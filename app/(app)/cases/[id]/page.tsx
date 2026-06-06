@@ -86,7 +86,20 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
         />
       </div>
     </div>
-  ) : null;
+  ) : (
+    <div className="space-y-3">
+      <h3 className="text-small font-semibold uppercase tracking-widest text-muted-foreground">
+        Your previous attempts
+      </h3>
+      <div className="rounded-md border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
+        <p className="text-small text-muted-foreground">
+          You haven't attempted this case yet.
+          <br />
+          All your past solutions and scores will appear here.
+        </p>
+      </div>
+    </div>
+  );
 
   let lockedOverlay = null;
 
