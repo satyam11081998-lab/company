@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Compass, Layers, Wrench, Briefcase, Calculator, Building2, Shapes } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { NavTreeItem } from './nav-tree-item';
@@ -16,7 +16,21 @@ interface NavTreeSectionProps {
 }
 
 function NavTreeSection({ node, searchQuery }: NavTreeSectionProps) {
-  const [isOpen, setIsOpen] = useState(node.defaultOpen || false);
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('nav_tree_' + node.title);
+      if (saved !== null) return saved === 'true';
+    }
+    // Only "Getting Started" is open by default, unless otherwise forced
+    return node.title === 'Getting Started';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('nav_tree_' + node.title, String(isOpen));
+    }
+  }, [isOpen, node.title]);
+
   const Icon = node.icon ? ICON_MAP[node.icon] : null;
 
   // Simple search filter: if active, always open sections that contain matching items

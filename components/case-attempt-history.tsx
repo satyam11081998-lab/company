@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, ArrowRight, Trophy, Lock } from 'lucide-react';
@@ -20,7 +20,20 @@ interface Props {
 }
 
 export default function CaseAttemptHistory({ attempts }: Props) {
-  const [expanded, setExpanded] = useState<string | null>(attempts[0]?.id || null);
+  const [expanded, setExpanded] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('expanded_attempt');
+      if (saved !== null) return saved;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (expanded) sessionStorage.setItem('expanded_attempt', expanded);
+      else sessionStorage.removeItem('expanded_attempt');
+    }
+  }, [expanded]);
 
   if (!attempts.length) return null;
 
