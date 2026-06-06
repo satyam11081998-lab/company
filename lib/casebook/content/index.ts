@@ -21,6 +21,7 @@ import { dueDiligence } from './frameworks/m-and-a/due-diligence';
 import { privateEquity } from './frameworks/m-and-a/private-equity';
 import { regionalDairyCooperative } from './cases/profitability/regional-dairy-cooperative';
 import { evChargingPointsMetro } from './guesstimates/ev-charging-points-metro';
+import { painAndPromise } from './guesstimates/pain-and-promise';
 import { newBlocksTest } from './_test/new-blocks-test';
 import { repeatableMethod } from './concepts/repeatable-method';
 import { whatItTests } from './concepts/what-it-tests';
@@ -62,6 +63,7 @@ const SEED_PAGES: Record<string, Page> = {
   [privateEquity.slug]: privateEquity,
   [regionalDairyCooperative.slug]: regionalDairyCooperative,
   [evChargingPointsMetro.slug]: evChargingPointsMetro,
+  [painAndPromise.slug]: painAndPromise,
   [whatItTests.slug]: whatItTests,
   [sixCaseTypes.slug]: sixCaseTypes,
   [navigatingBlendedCases.slug]: navigatingBlendedCases,

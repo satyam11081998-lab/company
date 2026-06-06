@@ -17,7 +17,17 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'B · Core Frameworks',
+    title: 'B · Guesstimates',
+    kind: 'section',
+    icon: 'Calculator',
+    defaultOpen: true,
+    children: [
+      { title: 'The Pain & The Promise', kind: 'page', slug: 'guesstimates/pain-and-promise' },
+      { title: 'Public EV charging points in a metro', kind: 'page', slug: 'guesstimates/ev-charging-points-metro', meta: { difficulty: 'moderate' } },
+    ],
+  },
+  {
+    title: 'C · Core Frameworks',
     kind: 'section',
     icon: 'Layers',
     defaultOpen: true,
@@ -40,7 +50,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'C · Misc. Frameworks',
+    title: 'D · Misc. Frameworks',
     kind: 'section',
     icon: 'Shapes',
     children: [
@@ -86,7 +96,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'D · Toolkit',
+    title: 'E · Toolkit',
     kind: 'section',
     icon: 'Wrench',
     children: [
@@ -103,7 +113,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     ],
   },
   {
-    title: 'E · Cases',
+    title: 'F · Cases',
     kind: 'section',
     icon: 'Briefcase',
     children: [
@@ -151,15 +161,6 @@ export const CASEBOOK_TREE: NavNode[] = [
         kind: 'group',
         children: Array.from({ length: 5 }).map((_, i) => ({ title: `Signature Case ${i + 1}`, kind: 'page', slug: `cases/signature/case-${i + 1}` })),
       },
-    ],
-  },
-  {
-    title: 'F · Guesstimates',
-    kind: 'section',
-    icon: 'Calculator',
-    children: [
-      { title: 'Public EV charging points in a metro', kind: 'page', slug: 'guesstimates/ev-charging-points-metro', meta: { difficulty: 'moderate' } },
-      ...Array.from({ length: 9 }).map((_, i) => ({ title: `Guesstimate ${i + 2}`, kind: 'page', slug: `guesstimates/guesstimate-${i + 2}` } as NavNode)),
     ],
   },
   {
