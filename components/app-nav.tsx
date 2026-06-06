@@ -40,6 +40,7 @@ export default function AppNav() {
                 { href: '/learn/casebook', label: 'Learn' },
                 { href: '/practice',    label: 'Practice' },
                 { href: '/gd-briefs',   label: 'GD Briefs' },
+                { href: '/cheat-sheet', label: 'Cheat Sheet' },
                 { href: '/leaderboard', label: 'Leaderboard' },
               ].map(({ href, label }) => (
                 <Link
