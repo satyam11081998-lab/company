@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-07 — dashboard-focusplus — 7b8a2a7
+Focus+ redesign ported to live data: FocusHero, SkillConstellation (9 real nodes, oval-fixed HTML halo), recomposed dashboard-client; social proof dropped; §G3 guesstimate exclusion preserved. Route count 143->142 (main branch baseline was 142, no routes added or dropped).
+touches: components/dashboard/*, dashboard-client.tsx, dashboard/page.tsx, globals.css
+breaking: no   affects: none
+
 ## 2026-06-06 — gd-cheatsheet — d61c7c0
 Pro-only Cheat Sheet: "Add to cheat sheet" on GD-brief data points captures them to new per-user `cheat_sheets`/`cheat_sheet_items` (RLS, pro-gated at UI + /api/cheatsheet + INSERT policy); new /cheat-sheet page groups saved points by topic with per-item notes/delete. Frontend + Supabase only; wires the previously-unused TierGate.
 touches: supabase/migrations/0003_cheat_sheet.sql, lib/types.ts, lib/cheatsheet.ts, app/api/cheatsheet/{route,[itemId]/route}.ts, app/(app)/cheat-sheet/page.tsx, components/cheat-sheet/*, app/(app)/gd-briefs/[id]/page.tsx, components/app-nav.tsx
