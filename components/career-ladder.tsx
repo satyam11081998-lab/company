@@ -32,38 +32,37 @@ export default function CareerLadder({ points }: Props) {
   const displayed = [...CAREER_TIERS].reverse();
 
   return (
-    <Card className="p-4">
+    <div className="flex flex-col h-full bg-card rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-small font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
           Career Ladder
         </h3>
         {nxt && (
-          <span className="text-small font-semibold text-primary">
+          <span className="text-[12.5px] font-semibold text-primary">
             {ptsToNext} pts to go
           </span>
         )}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1 mt-auto">
         {displayed.map((tier) => {
           const Icon = ICONS[tier.name] || Star;
           const isCurrent = tier.name === current.name;
           const isAchieved = points >= tier.threshold;
-          const isLocked = !isAchieved;
 
           return (
             <div key={tier.name}>
               {/* Progress bar BEFORE the current tier (toward next, which is physically above it in the DOM) */}
               {isCurrent && nxt && (
                 <div className="mb-2 px-3">
-                  <div className="flex items-center justify-between text-micro mb-1">
+                  <div className="flex items-center justify-between text-[11px] mb-[3px]">
                     <span className="text-muted-foreground flex items-center gap-1">
-                      <ArrowUp className="h-3 w-3" />
+                      <ArrowUp className="h-[10px] w-[10px]" />
                       Next: {nxt.name}
                     </span>
                     <span className="text-primary font-semibold tabular-nums">{progressPct}%</span>
                   </div>
-                  <div className="h-1 bg-border rounded-full overflow-hidden">
+                  <div className="h-[4px] bg-border rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary transition-all"
                       style={{ width: `${progressPct}%` }}
@@ -73,7 +72,7 @@ export default function CareerLadder({ points }: Props) {
               )}
 
               <div
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all ${
+                className={`flex items-center gap-3 px-2.5 py-[8px] rounded-md transition-all ${
                   isCurrent
                     ? 'bg-primary/5 border-l-2 border-l-primary'
                     : isAchieved
@@ -82,7 +81,7 @@ export default function CareerLadder({ points }: Props) {
                 }`}
               >
                 <div
-                  className={`h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0 ${
+                  className={`h-6 w-6 rounded-md flex items-center justify-center flex-shrink-0 ${
                     isCurrent
                       ? 'bg-primary text-primary-foreground'
                       : isAchieved
@@ -90,22 +89,22 @@ export default function CareerLadder({ points }: Props) {
                       : 'bg-muted text-muted-foreground/60'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-3 w-3" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`text-small font-semibold ${
+                    className={`text-[12.5px] font-semibold leading-tight ${
                       isCurrent ? 'text-primary' : isAchieved ? 'text-foreground' : 'text-muted-foreground'
                     }`}
                   >
                     {tier.name}
                   </p>
-                  <p className="text-micro text-muted-foreground italic">
+                  <p className="text-[10.5px] text-muted-foreground italic truncate">
                     {tier.tagline}
                   </p>
                 </div>
                 <span
-                  className={`text-small font-mono tabular-nums ${
+                  className={`text-[11.5px] font-mono-data tabular-nums ${
                     isCurrent ? 'text-primary font-semibold' : 'text-muted-foreground'
                   }`}
                 >
@@ -116,6 +115,6 @@ export default function CareerLadder({ points }: Props) {
           );
         })}
       </div>
-    </Card>
+    </div>
   );
 }
