@@ -29,18 +29,18 @@ export function DimensionBullets({ dimensions, benchmark, className }: Props) {
         const benchPct = benchPts != null && d.max > 0 ? Math.min(100, (benchPts / d.max) * 100) : null;
         const delta = benchPts != null ? Math.round(d.earned - benchPts) : null;
         return (
-          <div key={dim}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-small text-muted-foreground truncate">{SCORE_DIMENSION_LABELS[dim]}</span>
+          <div key={dim} className="flex flex-col">
+            <div className="flex items-center justify-between mb-[6px]">
+              <span className="text-[12.5px] font-medium text-foreground truncate">{SCORE_DIMENSION_LABELS[dim]}</span>
               <span className="flex items-center gap-2">
-                <span className="text-small font-mono-data tabular-nums text-foreground">
+                <span className="text-[12.5px] font-mono-data tabular-nums text-foreground">
                   {Math.round(d.earned)}/{d.max}
                 </span>
                 {delta != null && (
                   <span
                     className={cn(
-                      'text-micro font-medium tabular-nums rounded-sm px-1.5 py-0.5',
-                      delta >= 0 ? 'text-success bg-success-soft' : 'text-warning bg-warning-soft'
+                      'text-[10.5px] font-semibold tabular-nums rounded px-1.5 py-[2px] leading-none',
+                      delta >= 0 ? 'text-success bg-success/10' : 'text-warning bg-warning/10'
                     )}
                   >
                     {delta >= 0 ? '+' : '−'}
@@ -49,12 +49,12 @@ export function DimensionBullets({ dimensions, benchmark, className }: Props) {
                 )}
               </span>
             </div>
-            <div className="relative h-2.5 rounded-full bg-muted">
+            <div className="relative h-[6px] rounded-full bg-muted overflow-hidden">
               <AnimatedFill pct={userPct} delay={120 + i * 90} />
               {benchPct != null && (
                 <div
-                  className="absolute -top-1 -bottom-1 w-[3px] rounded bg-foreground ring-1 ring-card"
-                  style={{ left: `calc(${benchPct}% - 1.5px)` }}
+                  className="absolute -top-[1px] -bottom-[1px] w-[2.5px] rounded-sm bg-navy"
+                  style={{ left: `calc(${benchPct}% - 1.25px)`, zIndex: 10 }}
                   title="cohort median"
                 />
               )}
@@ -63,8 +63,8 @@ export function DimensionBullets({ dimensions, benchmark, className }: Props) {
         );
       })}
       {benchmark && (
-        <p className="text-micro text-muted-foreground sm:col-span-2">
-          Bar = your recency-weighted score · navy tick = cohort median · chip = your gap vs cohort
+        <p className="text-[11.5px] text-muted-foreground sm:col-span-2 mt-1">
+          Bar = your recency-weighted score · navy tick = cohort median · chip = gap vs cohort
         </p>
       )}
     </div>

@@ -42,27 +42,27 @@ export function Trajectory({ scores, className }: Props) {
   const trendColor = trend > 0 ? 'text-success' : trend < 0 ? 'text-warning' : 'text-muted-foreground';
 
   return (
-    <div className={cn('rounded-xl border border-border bg-card p-6', className)}>
-      <div className="flex items-baseline justify-between">
-        <p className="text-label text-muted-foreground">TRAJECTORY</p>
+    <div className={cn('flex flex-col', className)}>
+      <div className="flex items-baseline justify-between mb-2">
+        <p className="text-label text-muted-foreground uppercase tracking-widest">Trajectory</p>
         {hasData && (
-          <span className={cn('inline-flex items-center gap-1 text-small', trendColor)}>
-            <TrendIcon className="h-4 w-4" aria-hidden />
+          <span className={cn('inline-flex items-center gap-1 text-[13px] font-medium', trendColor)}>
+            <TrendIcon className="h-3.5 w-3.5" aria-hidden />
             {trend > 0 ? '+' : ''}
             {trend} pts
           </span>
         )}
       </div>
       {hasData ? (
-        <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="recent score trend">
+        <svg viewBox={`0 0 ${W} ${H}`} className="mt-auto w-full" role="img" aria-label="recent score trend">
           <path d={path} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           pathLength={1} strokeDasharray={1} strokeDashoffset={mounted ? 0 : 1}
           style={{ transition: 'stroke-dashoffset 1.2s ease' }} />
         </svg>
       ) : (
-        <p className="text-small text-muted-foreground mt-3">A couple more cases and your trend appears here.</p>
+        <p className="text-[12.5px] text-muted-foreground mt-3">A couple more cases and your trend appears here.</p>
       )}
-      <p className="text-micro text-muted-foreground mt-2">Last {pts.length} scored cases · trailing average</p>
+      <p className="text-[11.5px] text-muted-foreground mt-3">Last {pts.length} scored cases · trailing average</p>
     </div>
   );
 }
