@@ -27,9 +27,7 @@ export function useIsMobile(breakpointPx = 768): boolean {
       mql.addEventListener('change', update);
       return () => mql.removeEventListener('change', update);
     } else {
-      // @ts-expect-error — legacy MediaQueryList API
       mql.addListener(update);
-      // @ts-expect-error — legacy MediaQueryList API
       return () => mql.removeListener(update);
     }
   }, [breakpointPx]);
