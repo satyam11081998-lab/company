@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { triggerNewsFetch, triggerCaseGeneration } from './actions';
+import { CaseEditor } from './case-editor';
 
 export default function AdminPage() {
   const [newsLoading, setNewsLoading] = useState(false);
@@ -129,6 +130,11 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Case Editor (Phase 4) */}
+      <div className="mt-8">
+        <CaseEditor />
+      </div>
     </div>
   );
 }

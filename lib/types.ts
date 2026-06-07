@@ -44,6 +44,19 @@ export interface CaseRow {
   created_at: string;
   solution?: string | null;
   code?: string | null;
+  skill_node?: string | null;
+  skill_cluster?: string | null;
+  interview_meta?: {
+    firm?: string;
+    round?: string;
+    est_minutes?: number;
+    points_reward?: number;
+  } | null;
+  mcq?: {
+    options: { label: string; value: string; is_correct: boolean }[];
+    explainer?: string;
+  } | null;
+  source_brief_id?: string | null;
 }
 
 export interface FeedbackJson {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Flame, Play, Arrow } from './icons';
 import { StreakExpiry, ProofRail, PeerProximity } from './fomo';
 
@@ -23,9 +24,15 @@ export interface UserVariant {
   tier: string;
   nextTier: string;
   toNext: number;
+  userState?: 'new' | 'mid' | 'power';
   trajectory: number[];
   weekCases: number;
   sessionMinutes: number;
+  heatmap?: import('@/lib/dashboard/heatmap').HeatmapData;
+  activityFeed?: import('@/lib/dashboard/recent').ActivityItem[];
+  growthDeltas?: import('@/lib/dashboard/growth-deltas').GrowthDelta[];
+  peerProximity?: import('@/lib/dashboard/peer-proximity').PeerProximityData;
+  proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData;
 }
 
 /* ─────────────── mock data ─────────────── */
@@ -233,8 +240,22 @@ export function StreakMonument({ u, big = true }: { u: UserVariant; big?: boolea
   );
 }
 
-export function HeroCase({ u }: { u: UserVariant }) {
+export function HeroCase({
+  u, proofRail, today
+}: {
+  u: UserVariant;
+  proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData;
+  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick']
+}) {
+  const router = useRouter();
   const newcomer = u.casesSolved < 5;
+
+  // Primary CTA target: today's daily case if we have one, else send the user
+  // to /practice so the button is never dead. /tour can be wired later for the
+  // newcomer flow; for now it also lands on /practice (the existing
+  // "browse and pick" experience).
+  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
+  const drillHref = '/practice';
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 24 }}>
       <div style={{ minWidth: 0 }}>
@@ -252,7 +273,7 @@ export function HeroCase({ u }: { u: UserVariant }) {
         <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(22px, 2.4vw, 30px)', lineHeight: 1.18, color: 'var(--ink)', maxWidth: 620 }}>
           {newcomer
             ? "Start with profitability. It's where most aspirants find their footing."
-            : TODAY.pick.title}
+            : today?.title || TODAY.pick.title}
         </h1>
         <p style={{ marginTop: 8, fontSize: 13, lineHeight: 1.55, color: 'var(--ink-2)', maxWidth: 540 }}>
           {newcomer ? (
@@ -266,27 +287,37 @@ export function HeroCase({ u }: { u: UserVariant }) {
           )}
         </p>
         <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <button className="btn primary pulse-soft" style={{ padding: '10px 18px', fontSize: 13, fontWeight: 600, borderRadius: 9 }}>
+          <button
+            type="button"
+            className="btn primary pulse-soft"
+            style={{ padding: '10px 18px', fontSize: 13, fontWeight: 600, borderRadius: 9 }}
+            onClick={() => router.push(primaryHref)}
+          >
             <Play className="ico-sm" /> Start the case
           </button>
-          <button className="btn ghost" style={{ color: 'var(--ink-2)', fontSize: 12.5 }}>
+          <button
+            type="button"
+            className="btn ghost"
+            style={{ color: 'var(--ink-2)', fontSize: 12.5 }}
+            onClick={() => router.push(drillHref)}
+          >
             {newcomer ? 'Tour first' : '10-min drill instead'}
           </button>
           <span style={{ marginLeft: 6 }}>
-            <ProofRail />
+            <ProofRail u={{ ...(u as any), proofRail }} />
           </span>
         </div>
         <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, fontSize: 11.5, color: 'var(--ink-3)' }}>
-            <b className="mono tnum" style={{ fontSize: 13, color: 'var(--ink)' }}>25</b> min
+            <b className="mono tnum" style={{ fontSize: 13, color: 'var(--ink)' }}>{today?.minutes || 25}</b> min
           </span>
           <span style={{ width: 1, height: 14, background: 'var(--line)' }} />
           <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, fontSize: 11.5, color: 'var(--ink-3)' }}>
-            <b className="mono tnum" style={{ fontSize: 13, color: 'var(--ink)' }}>+85</b> pts{' '}
-            <b style={{ color: 'var(--red)', marginLeft: 4 }}>+25 streak</b>
+            <b className="mono tnum" style={{ fontSize: 13, color: 'var(--ink)' }}>+{today?.pointsReward || 85}</b> pts{' '}
+            <b style={{ color: 'var(--red)', marginLeft: 4 }}>+{today?.streakBoost || 25} streak</b>
           </span>
           <span style={{ width: 1, height: 14, background: 'var(--line)' }} />
-          <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>BCG · partner round</span>
+          <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{today?.firm || 'BCG'} · {today?.round || 'partner round'}</span>
           <span style={{ marginLeft: 'auto' }}>
             <PeerProximity u={u} />
           </span>
@@ -297,7 +328,14 @@ export function HeroCase({ u }: { u: UserVariant }) {
   );
 }
 
-export function HeroStreak({ u }: { u: UserVariant }) {
+export function HeroStreak({
+  u, today
+}: {
+  u: UserVariant;
+  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick']
+}) {
+  const router = useRouter();
+  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 36, alignItems: 'center' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
@@ -319,14 +357,19 @@ export function HeroStreak({ u }: { u: UserVariant }) {
             <>You&apos;re <b>{u.bestStreak - u.streak} days</b> from your longest run. Tomorrow makes it real.</>
           )}
         </p>
-        <button className="btn primary pulse-soft" style={{ marginTop: 10, padding: '12px 20px', fontSize: 13.5, fontWeight: 600, borderRadius: 10 }}>
+        <button
+          type="button"
+          className="btn primary pulse-soft"
+          style={{ marginTop: 10, padding: '12px 20px', fontSize: 13.5, fontWeight: 600, borderRadius: 10 }}
+          onClick={() => router.push(primaryHref)}
+        >
           Keep it alive — start today&apos;s case <Arrow className="ico-sm" />
         </button>
       </div>
       <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
         <div className="eyebrow" style={{ marginBottom: 8 }}>TODAY&apos;S CASE</div>
-        <div className="serif" style={{ fontSize: 22, lineHeight: 1.2 }}>{TODAY.pick.title}</div>
-        <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>{TODAY.pick.domain} · {TODAY.pick.difficulty} · {TODAY.pick.time}</div>
+        <div className="serif" style={{ fontSize: 22, lineHeight: 1.2 }}>{today?.title || TODAY.pick.title}</div>
+        <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>{today?.cluster || TODAY.pick.domain} · {today?.difficulty || TODAY.pick.difficulty} · {today?.minutes || TODAY.pick.time}m</div>
         <div style={{ marginTop: 14, height: 1, background: 'var(--line)' }} />
         <div style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-3)' }}>
           <b style={{ color: 'var(--ink)' }}>Then:</b> 10-min sizing warm-up · 5-min review of yesterday
@@ -336,7 +379,15 @@ export function HeroStreak({ u }: { u: UserVariant }) {
   );
 }
 
-export function HeroReadiness({ u }: { u: UserVariant }) {
+export function HeroReadiness({
+  u,
+  today,
+}: {
+  u: UserVariant;
+  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick'];
+}) {
+  const router = useRouter();
+  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
   const ready = u.readiness ?? 0;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 36, alignItems: 'center' }}>
@@ -378,7 +429,12 @@ export function HeroReadiness({ u }: { u: UserVariant }) {
           )}
         </p>
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button className="btn primary" style={{ padding: '12px 20px', fontSize: 13.5, fontWeight: 600, borderRadius: 10 }}>
+          <button
+            type="button"
+            className="btn primary"
+            style={{ padding: '12px 20px', fontSize: 13.5, fontWeight: 600, borderRadius: 10 }}
+            onClick={() => router.push(primaryHref)}
+          >
             Start today&apos;s case <Arrow className="ico-sm" />
           </button>
           <button className="btn ghost" style={{ color: 'var(--ink-2)', fontSize: 13 }}>How is readiness calculated?</button>
@@ -388,15 +444,22 @@ export function HeroReadiness({ u }: { u: UserVariant }) {
   );
 }
 
-export function Hero({ u, variant }: { u: UserVariant; variant: 'case' | 'streak' | 'readiness' }) {
+export function Hero({ 
+  u, variant, proofRail, today 
+}: { 
+  u: UserVariant; 
+  variant: 'case' | 'streak' | 'readiness';
+  proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData;
+  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick'];
+}) {
   return (
     <HeroShell>
       {variant === 'streak' ? (
-        <HeroStreak u={u} />
+        <HeroStreak u={u} today={today} />
       ) : variant === 'readiness' ? (
-        <HeroReadiness u={u} />
+        <HeroReadiness u={u} today={today} />
       ) : (
-        <HeroCase u={u} />
+        <HeroCase u={u} proofRail={proofRail} today={today} />
       )}
     </HeroShell>
   );

@@ -1,0 +1,39 @@
+feat(dashboard): wire constellation to live data + perf + polish
+
+Constellation
+- skill-graph payload: per-node attempts/best, weakestCluster, activeEdges,
+  todayBossNodeId, clusterCaseCounts
+- Side panel: real attempts/best, recent attempts filtered by cluster,
+  cluster-empty state. Dropped hardcoded HDFC/ICICI mocks.
+- Header: explainer line, dynamic weakestCluster pill (replaces hardcoded M&A)
+- PeerOrbit dots ride user's real learning path; HotZone follows weakest cluster
+- Edge lines neutral grey, dotted-math grid background, CSS-circle orbit dots
+- Cluster→/learn/casebook routing; practice-hub accepts ?cluster filter
+- Backfill + 11 seed cases for previously-empty clusters (pri/ma/ops/soft)
+
+Hero / News / Guesstimate
+- Hero CTAs wired (router.push)
+- /api/news/[id]/to-case: HTTP→FastAPI (no child_process), service-role
+  fallback, surfaces real Postgres errors
+- /gd-briefs/[id]: GET→404→POST generate flow on first visit
+- Guesstimate card fully clickable to daily guesstimate
+
+Career ladder
+- 7→10 tiers, thresholds 100·n² (100,400,900,…,8100)
+- u.tier from currentTier(points) not VARIANTS mock
+- Auto-scroll current rung to centre (container-scoped, no page jump)
+- Subtle red wash + breathing halo on current row
+
+Performance
+- app/(app)/loading.tsx + dashboard/loading.tsx (branded skeletons)
+- React.cache for auth.getUser + users row (lib/supabase/auth-cached.ts)
+  → ~200–400ms shaved per navigation
+- Page width max-w-6xl→max-w-7xl, constellation minHeight 520→600
+
+Copy
+- Boss → Today's focus everywhere
+
+Schema
+- 0004_dashboard_skills.sql: skill_node/skill_cluster/interview_meta/mcq/
+  source_brief_id on cases; skill_nodes, skill_edges, dimension_snapshots
+- seed-skill-graph.sql + seed-cases-constellation.sql (both idempotent)

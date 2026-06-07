@@ -2,13 +2,58 @@
 
 import React from 'react';
 
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import type { DailyContentResponse } from '@/lib/api';
+
 /* ── Types ── */
 interface NewsCardProps {
   u: any;
+  brief?: DailyContentResponse['brief'];
 }
 
 /* ── NewsCard ── */
-export function NewsCard({ u }: NewsCardProps) {
+export function NewsCard({ u, brief }: NewsCardProps) {
+  const router = useRouter();
+  const [loading, setLoading] = React.useState(false);
+
+  const handleToCase = async () => {
+    if (!brief?.id) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/news/${brief.id}/to-case`, { method: 'POST' });
+
+      // Try to read the JSON body in both success and error paths so we can
+      // surface the real server-side reason (RLS violation, missing brief, etc.)
+      // instead of a generic "Failed to create case" toast.
+      let payload: { case_id?: string; error?: string } | null = null;
+      try {
+        payload = (await res.json()) as { case_id?: string; error?: string };
+      } catch {
+        // body wasn't JSON — keep payload null
+      }
+
+      if (res.status === 429) {
+        toast('Daily free tier quota exhausted.', {
+          action: { label: 'Upgrade', onClick: () => router.push('/pricing') },
+        });
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(payload?.error || `Failed (HTTP ${res.status})`);
+      }
+      if (payload?.case_id) {
+        router.push(`/cases/${payload.case_id}`);
+      } else {
+        throw new Error('No case_id in response');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Generation failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex' }}>
       <div style={{
@@ -38,14 +83,27 @@ export function NewsCard({ u }: NewsCardProps) {
           <span style={{ marginLeft: 'auto', fontSize: 10.5, color: 'var(--ink-4)' }}>4 min read</span>
         </div>
         <h3 className="serif" style={{ margin: 0, fontSize: 18, lineHeight: 1.25, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
-          BCG to acquire Quantis as climate consulting consolidates
+          {brief?.title || 'BCG to acquire Quantis as climate consulting consolidates'}
         </h3>
         <p style={{ margin: 0, fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.5 }}>
-          Why it matters for you: textbook M&amp;A synergy framing — you&apos;re attempting a profitability boss today, and consolidation cases like this <i>are</i> partner-round material.
+          Why it matters for you: textbook M&amp;A synergy framing — your profitability focus today maps directly onto cases like this <i>at</i> partner-round depth.
         </p>
         <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 14, paddingTop: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', borderBottom: '1.5px solid var(--ink)', paddingBottom: 1, cursor: 'pointer' }}>Read brief →</span>
-          <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>or <b style={{ color: 'var(--red)' }}>turn it into a 15-min case</b></span>
+          <span onClick={() => brief?.id && router.push(`/gd-briefs/${brief.id}`)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', borderBottom: '1.5px solid var(--ink)', paddingBottom: 1, cursor: 'pointer' }}>Read brief →</span>
+          <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
+            or{' '}
+            <button
+              onClick={handleToCase}
+              disabled={loading || !brief?.id}
+              style={{
+                background: 'none', border: 'none', padding: 0,
+                color: 'var(--red)', fontWeight: 700, cursor: (loading || !brief?.id) ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1, font: 'inherit'
+              }}
+            >
+              {loading ? 'generating...' : 'turn it into a 15-min case'}
+            </button>
+          </span>
         </div>
       </div>
     </div>

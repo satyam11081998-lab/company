@@ -28,6 +28,7 @@ export function ConsistencyCard({ u }: ConsistencyCardProps) {
   // Build 52 weeks of deterministic activity data (HackerRank-style year heatmap).
   const weeks = 52;
   const data = useMemo(() => {
+    if (u.heatmap && u.heatmap.weeks.length === weeks) return u.heatmap.weeks;
     const out: number[][] = [];
     let seed = 19;
     const rnd = () => (seed = (seed * 9301 + 49297) % 233280, seed / 233280);
@@ -56,12 +57,14 @@ export function ConsistencyCard({ u }: ConsistencyCardProps) {
     return out;
   }, [u.casesSolved]);
 
-  const totalCases = data.flat().filter((v) => v > 0).length;
-  const maxStreak = u.casesSolved > 100 ? 47 : u.casesSolved > 10 ? 21 : 2;
+  const totalCases = u.heatmap?.totalCases ?? data.flat().filter((v: number) => v > 0).length;
+  const maxStreak = u.heatmap?.maxStreak ?? (u.casesSolved > 100 ? 47 : u.casesSolved > 10 ? 21 : 2);
+  const weeklyCadence = u.heatmap?.weeklyCadence ?? (u.weekCases >= 9 ? 5.4 : 3.1);
+  const cohortCadence = u.heatmap?.cohortCadence ?? 2.8;
   const palette = ['#F1ECDD', '#F5C9CF', '#E37685', '#C8102E', '#8E0A20'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   // Month labels — approx position: month i lives near col (i / 12) * 52
-  const monthCols = months.map((m, i) => ({ label: m, col: Math.round(i * 52 / 12) }));
+  const monthCols = months.map((m: string, i: number) => ({ label: m, col: Math.round(i * 52 / 12) }));
 
   return (
     <div className="card" style={{ padding: 'var(--pad-card, 18px 20px)' }}>
@@ -83,7 +86,7 @@ export function ConsistencyCard({ u }: ConsistencyCardProps) {
       <div style={{ display: 'flex', gap: 6, overflow: 'hidden' }}>
         {/* Day-of-week labels */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2.5, fontSize: 9, color: 'var(--ink-4)', fontFamily: 'var(--ff-mono)', paddingTop: 16, marginRight: 2 }}>
-          {['','M','','W','','F',''].map((l, i) => (
+          {['','M','','W','','F',''].map((l: string, i: number) => (
             <div key={i} style={{ height: 10, lineHeight: '10px' }}>{l}</div>
           ))}
         </div>
@@ -91,15 +94,15 @@ export function ConsistencyCard({ u }: ConsistencyCardProps) {
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Month labels */}
           <div style={{ position: 'relative', height: 14, marginBottom: 2, fontSize: 9, color: 'var(--ink-4)', fontFamily: 'var(--ff-mono)' }}>
-            {monthCols.map((m, i) => (
+            {monthCols.map((m: any, i: number) => (
               <span key={i} style={{ position: 'absolute', left: `${(m.col / weeks) * 100}%`, top: 0 }}>{m.label}</span>
             ))}
           </div>
           {/* Weeks grid */}
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${weeks}, 1fr)`, gap: 2.5 }}>
-            {data.map((week, wi) => (
+            {data.map((week: number[], wi: number) => (
               <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                {week.map((v, di) => (
+                {week.map((v: number, di: number) => (
                   <div key={di} title={`Week ${wi+1} · ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][di]} · ${v} ${v === 1 ? 'case' : 'cases'}`}
                     style={{ aspectRatio: '1 / 1', width: '100%', borderRadius: 2, background: palette[v], cursor: 'pointer' }}/>
                 ))}
@@ -114,7 +117,7 @@ export function ConsistencyCard({ u }: ConsistencyCardProps) {
         <span>
           {u.casesSolved < 5
             ? <>Two days last week. Streak you&apos;re building starts <b style={{color:'var(--ink)'}}>today</b>.</>
-            : <>You show up <b style={{ color: 'var(--ink)' }}>{u.weekCases >= 9 ? '5.4' : '3.1'}</b> days / week · cohort 2.8</>
+            : <>You show up <b style={{ color: 'var(--ink)' }}>{weeklyCadence}</b> days / week · cohort {cohortCadence}</>
           }
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--ff-mono)', fontSize: 10 }}>

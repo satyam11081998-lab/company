@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
 import { computeReadiness, type ReadinessSubmission } from '@/lib/readiness';
 import { nextAction, computeFreeQuota } from '@/lib/next-action';
 import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
@@ -7,24 +8,36 @@ import { GUESSTIMATE_DIMENSIONS, type GuesstimateDimension } from '@/lib/constan
 import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
 import { getDailyTodayServerSide } from '@/lib/daily-server';
+import { getHeatmap } from '@/lib/dashboard/heatmap';
+import { getGrowthDeltas } from '@/lib/dashboard/growth-deltas';
+import { getActivityFeed as getRecent } from '@/lib/dashboard/recent';
+import { getCohortActivity } from '@/lib/dashboard/activity-feed';
+import { getPeerProximity } from '@/lib/dashboard/peer-proximity';
+import { getProofRail } from '@/lib/dashboard/proof-rail';
+import { getSkillGraph } from '@/lib/dashboard/skill-graph';
+import { getNodeOpenTargets } from '@/lib/dashboard/node-to-case';
+import { getTodayMeta } from '@/lib/dashboard/today-meta';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   const supabase = createClient(); // real client is synchronous (Phase 1)
 
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
+  // Cached: layout already called this — React.cache() returns the prior
+  // result with zero extra Supabase calls.
+  const authUser = await getCachedAuthUser();
   if (!authUser) redirect('/login');
 
-  // Parallel fetches for performance
-  const [userRes, rawSubsRes, attemptsRes, benchmarkRes, dailyToday] = await Promise.all([
-    supabase
-      .from('users')
-      .select('id, name, points, subscription_tier, streak_count, streak_last_date, created_at')
-      .eq('id', authUser.id)
-      .single<UserRow>(),
+  // Same — layout already fetched this. We still type-coerce locally.
+  const layoutUserRow = await getCachedUserRow(authUser.id);
+
+  // Fetch daily content first since other queries (proof rail) depend on it
+  const dailyToday = await getDailyTodayServerSide();
+
+  // Parallel fetches for performance. The users query is removed from this
+  // Promise.all — replaced by the cached layoutUserRow above. One fewer DB
+  // round-trip per dashboard render.
+  const [rawSubsRes, attemptsRes, benchmarkRes, heatmap, growthDeltas, activityFeed, peerProximity, cohortActivity, proofRail, skillGraph] = await Promise.all([
     supabase
       .from('submissions')
       .select('id, user_id, case_id, answer_text, score, feedback_json, created_at, cases(type, difficulty)')
@@ -39,11 +52,22 @@ export default async function DashboardPage() {
       .select('feedback_json')
       .not('feedback_json', 'is', null)
       .limit(100),
-    // Daily picks read straight from Supabase (instant; no Render round-trip)
-    getDailyTodayServerSide(),
+    getHeatmap(supabase, authUser.id),
+    getGrowthDeltas(supabase, authUser.id),
+    getRecent(supabase, authUser.id),
+    getPeerProximity(supabase, authUser.id),
+    getCohortActivity(supabase),
+    getProofRail(supabase, dailyToday.case?.id ?? null),
+    getSkillGraph(supabase, authUser.id),
   ]);
 
-  const userRow = userRes.data;
+  const [nodeTargets, todayMeta] = await Promise.all([
+    getNodeOpenTargets(supabase, authUser.id, skillGraph.nodes as any),
+    getTodayMeta(supabase, dailyToday.case?.id ?? null)
+  ]);
+
+  // userRow comes from the cached layout call, NOT a fresh query.
+  const userRow = layoutUserRow;
   const rawSubs = rawSubsRes.data;
   const attempts = attemptsRes.data;
 
@@ -137,8 +161,16 @@ export default async function DashboardPage() {
   });
   const guesstimateCount = guesstimateSubs.length;
 
+  // Width math: max-w-6xl (1152px) → max-w-7xl (1280px) is a 128px bump.
+  // Constellation map width = container - inner padding (72px) - side panel
+  // (320px). Old: 1152 - 72 - 320 = 760px wide × 520 minHeight → aspect 1.46.
+  // New: 1280 - 72 - 320 = 888px wide. To preserve the ~1.46 ratio we bumped
+  // the constellation's minHeight to 600 inside
+  // components/dashboard/constellation.tsx (888 / 600 ≈ 1.48). All other
+  // grids on the dashboard are fractional (1fr / 1.5fr) so they scale
+  // proportionally without further tuning.
   return (
-    <div className="container max-w-6xl py-10">
+    <div className="container max-w-7xl py-10">
       <DashboardClient
         userName={userName}
         points={points}
@@ -156,6 +188,15 @@ export default async function DashboardPage() {
         initialDaily={dailyToday}
         guesstimateSkills={guesstimateSkills}
         guesstimateCount={guesstimateCount}
+        heatmap={heatmap}
+        growthDeltas={growthDeltas}
+        activityFeed={activityFeed}
+        peerProximity={peerProximity}
+        cohortActivity={cohortActivity}
+        proofRail={proofRail}
+        skillGraph={skillGraph}
+        nodeTargets={nodeTargets}
+        todayMeta={todayMeta}
       />
     </div>
   );

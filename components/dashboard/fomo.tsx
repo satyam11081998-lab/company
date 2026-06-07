@@ -104,7 +104,7 @@ export const TAPE_EVENTS: TapeEvent[] = [
   { who: 'sneha.r', what: 'scored 92', where: 'on HDFC Life · Profitability', tone: 'red', t: 'just now' },
   { who: 'akhil_92', what: 'overtook 8 peers', where: '#142 → #134', tone: 'amber', t: '1m ago' },
   { who: 'pranav.k', what: 'unlocked Manager', where: '+1,580 pts', tone: 'green', t: '2m ago' },
-  { who: 'tara.m', what: 'started', where: "today's boss case", tone: 'navy', t: '2m ago' },
+  { who: 'tara.m', what: 'started', where: "today's focus", tone: 'navy', t: '2m ago' },
   { who: 'ishita_b', what: 'broke a 30-day streak', where: 'PB 88', tone: 'red', t: '3m ago' },
   { who: 'rohit.99', what: 'scored 88', where: 'Market Entry · Hard', tone: 'green', t: '4m ago' },
   { who: 'kavya.s', what: 'joined your cohort', where: 'IIM-A · 2026', tone: 'navy', t: '5m ago' },
@@ -120,7 +120,8 @@ function toneColor(tone: TapeEvent['tone']): string {
   }
 }
 
-export const LiveTape: React.FC = () => {
+export const LiveTape: React.FC<{ events?: TapeEvent[] }> = ({ events = TAPE_EVENTS }) => {
+  const displayEvents = events.length > 0 ? events : TAPE_EVENTS;
   return (
     <div style={{
       position: 'relative',
@@ -148,7 +149,7 @@ export const LiveTape: React.FC = () => {
         WebkitMaskImage: 'linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%)',
       }}>
         <div style={{ display: 'flex', gap: 36, whiteSpace: 'nowrap', animation: 'tape-scroll 50s linear infinite', willChange: 'transform' }}>
-          {[...TAPE_EVENTS, ...TAPE_EVENTS, ...TAPE_EVENTS].map((e, i) => (
+          {[...displayEvents, ...displayEvents, ...displayEvents].map((e, i) => (
             <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontFamily: 'var(--ff-mono)' }}>
               <span style={{
                 width: 6, height: 6, borderRadius: 999, flex: 'none',
@@ -172,22 +173,39 @@ interface PeerProximityProps {
   u: {
     casesSolved: number;
     streak: number;
+    peerProximity?: import('@/lib/dashboard/peer-proximity').PeerProximityData;
   };
 }
 
 export const PeerProximity: React.FC<PeerProximityProps> = ({ u }) => {
-  if (u.casesSolved < 5) {
+  const data = u.peerProximity;
+  
+  if (u.casesSolved < 5 || !data?.competitor) {
+    const aspirants = data?.newAspirantsThisWeek ?? 1247;
     return (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-3)' }}>
         <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--green)' }} />
-        <b style={{ color: 'var(--ink)' }}>1,247 new aspirants</b> joined this week. You&apos;re on day {u.streak}.
+        <b style={{ color: 'var(--ink)' }}>{aspirants.toLocaleString()} new aspirants</b> joined this week. You&apos;re on day {u.streak}.
       </div>
     );
   }
+
+  const c = data.competitor;
+  // Real ETA from the lib: prefer hours when < 24h (matches the original mock
+  // copy "passes you in 8h"); fall back to days. Use `dailyGainRate` literal
+  // — earlier rendering said "fast" and discarded the real number.
+  const eta =
+    c.etaHours == null
+      ? 'soon'
+      : c.etaHours < 24
+        ? `${c.etaHours}h`
+        : `${Math.round(c.etaHours / 24)}d`;
+
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-3)' }}>
       <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--amber)', animation: 'pulse-soft 2s ease-in-out infinite' }} />
-      <b style={{ color: 'var(--ink)' }}>sneha.r</b> is 80 pts behind you, gaining <b style={{ color: 'var(--amber)' }}>240/day</b>. She passes you in 8h if you skip today.
+      <b style={{ color: 'var(--ink)' }}>{c.name}</b> is {c.ptsBehind} pts behind you, gaining{' '}
+      <b style={{ color: 'var(--amber)' }}>{c.dailyGainRate}/day</b>. They pass you in {eta} if you skip today.
     </div>
   );
 };
@@ -199,7 +217,7 @@ export const BossCountdown: React.FC = () => {
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 999, background: 'linear-gradient(90deg, rgba(200,16,46,0.10), rgba(200,16,46,0.04))', border: '1px solid rgba(200,16,46,0.22)' }}>
       <Bolt style={{ width: 12, height: 12, color: 'var(--red)' }} />
-      <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--red)', textTransform: 'uppercase' }}>Boss resets in</span>
+      <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--red)', textTransform: 'uppercase' }}>Focus resets in</span>
       <span className="mono tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{hh}h {mm}m</span>
     </div>
   );
@@ -219,23 +237,63 @@ interface PeerOrbitProps {
   nodes: PeerOrbitNode[];
 }
 
+// Renders as absolutely-positioned DIVs (not SVG circles) because the parent
+// constellation SVG uses `preserveAspectRatio="none"`, which stretches SVG
+// shapes — SVG circles render as ellipses in that container. Divs with
+// border-radius:50% stay perfectly round regardless of aspect.
+//
+// IMPORTANT: this component must be rendered inside the map's relatively-
+// positioned wrapper (a sibling of the edges SVG), NOT inside the SVG.
 export const PeerOrbit: React.FC<PeerOrbitProps> = ({ edges, nodes }) => {
-  const pick = edges.slice(0, 6);
+  const pick = edges
+    .slice(0, 6)
+    .map(([a, b], i) => {
+      const na = nodes.find((n) => n.id === a);
+      const nb = nodes.find((n) => n.id === b);
+      if (!na || !nb) return null;
+      return { i, na, nb, dur: 4 + (i % 3) * 2 };
+    })
+    .filter(Boolean) as Array<{ i: number; na: PeerOrbitNode; nb: PeerOrbitNode; dur: number }>;
+
+  // Generate one keyframe per edge that interpolates left/top between the
+  // two endpoint percentages. Inline so the names are stable per edge index
+  // and we don't need a CSS-in-JS runtime.
+  const keyframes = pick
+    .map(
+      ({ i, na, nb }) => `
+@keyframes po-${i} {
+  0%   { left: ${na.x}%; top: ${na.y}%; opacity: 0; }
+  15%  { opacity: 0.95; }
+  85%  { opacity: 0.95; }
+  100% { left: ${nb.x}%; top: ${nb.y}%; opacity: 0; }
+}`,
+    )
+    .join('\n');
+
   return (
     <>
-      {pick.map(([a, b], i) => {
-        const na = nodes.find((n) => n.id === a);
-        const nb = nodes.find((n) => n.id === b);
-        if (!na || !nb) return null;
-        const dur = 4 + (i % 3) * 2; // 4,6,8s
-        return (
-          <circle key={`p-${i}`} r="0.55" fill="#C8102E" opacity="0.85" vectorEffect="non-scaling-stroke">
-            <animateMotion dur={`${dur}s`} repeatCount="indefinite"
-              path={`M${na.x},${na.y} L${nb.x},${nb.y}`} />
-            <animate attributeName="opacity" dur={`${dur}s`} values="0;0.9;0.9;0" keyTimes="0;0.15;0.85;1" repeatCount="indefinite" />
-          </circle>
-        );
-      })}
+      <style>{keyframes}</style>
+      {pick.map(({ i, dur }) => (
+        <div
+          key={`po-${i}`}
+          style={{
+            position: 'absolute',
+            // 4×4 px dot centered on the coordinate via negative margins —
+            // owner directive: "very very small" + "proper circle".
+            width: 4,
+            height: 4,
+            marginLeft: -2,
+            marginTop: -2,
+            borderRadius: '50%',
+            background: '#C8102E',
+            boxShadow: '0 0 4px rgba(200,16,46,0.6)',
+            pointerEvents: 'none',
+            willChange: 'left, top, opacity',
+            animation: `po-${i} ${dur}s linear infinite`,
+            zIndex: 2,
+          }}
+        />
+      ))}
     </>
   );
 };
@@ -313,9 +371,12 @@ interface UnlockTeaserProps {
 }
 
 export const UnlockTeaser: React.FC<UnlockTeaserProps> = ({ count = 3 }) => {
+  // Moved from bottom-left to TOP-LEFT (top: 14) to stop overlapping the
+  // Operations cluster ("Throughput" / "Bottleneck" labels) and the legend.
+  // Owner directive 2026-06-07: text overlapping → fix.
   return (
     <div style={{
-      position: 'absolute', left: 14, bottom: 56, zIndex: 5,
+      position: 'absolute', left: 14, top: 14, zIndex: 5,
       display: 'inline-flex', alignItems: 'center', gap: 8,
       padding: '6px 12px', borderRadius: 999,
       background: 'var(--card)', border: '1px solid var(--line)',
@@ -333,17 +394,21 @@ export const UnlockTeaser: React.FC<UnlockTeaserProps> = ({ count = 3 }) => {
 const PROOF_AVATARS = ['#C8102E', '#0F1C33', '#1F7A3A', '#B8770D'] as const;
 const PROOF_INITIALS = ['SR', 'AK', 'PK', 'TM'] as const;
 
-export const ProofRail: React.FC = () => {
+export const ProofRail: React.FC<{ u?: { proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData } }> = ({ u }) => {
+  const data = u?.proofRail;
+  const avatars = data?.initials ?? PROOF_INITIALS;
+  const total = data?.totalStartedToday ?? 23;
+  
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, color: 'var(--ink-3)' }}>
       <div style={{ display: 'flex' }}>
-        {PROOF_AVATARS.map((c, i) => (
-          <div key={i} style={{ width: 20, height: 20, borderRadius: 999, background: c, border: '2px solid var(--card)', marginLeft: i ? -8 : 0, color: 'white', fontSize: 9, display: 'grid', placeItems: 'center', fontWeight: 700, fontFamily: 'var(--ff-mono)' }}>
-            {PROOF_INITIALS[i]}
+        {avatars.map((initials, i) => (
+          <div key={i} style={{ width: 20, height: 20, borderRadius: 999, background: PROOF_AVATARS[i % PROOF_AVATARS.length], border: '2px solid var(--card)', marginLeft: i ? -8 : 0, color: 'white', fontSize: 9, display: 'grid', placeItems: 'center', fontWeight: 700, fontFamily: 'var(--ff-mono)' }}>
+            {initials}
           </div>
         ))}
       </div>
-      <span><b style={{ color: 'var(--ink)' }}>23 peers</b> in your cohort started this case today</span>
+      <span><b style={{ color: 'var(--ink)' }}>{total} peers</b> in your cohort started this case today</span>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Check, ChevR } from './icons';
 
 /* ── Types ── */
@@ -15,19 +15,7 @@ interface InlineStatProps {
   sub: string;
 }
 
-/* ── TIERS ── */
-const TIERS = [
-  'Senior Partner',
-  'Partner',
-  'Director',
-  'Principal',
-  'Sr. Manager',
-  'Manager',
-  'Senior Analyst',
-  'Analyst',
-  'Junior Analyst',
-  'Associate',
-];
+import { CAREER_TIERS } from '../../lib/career-tiers';
 
 /* ── InlineStat ── */
 export function InlineStat({ label, value, sub }: InlineStatProps) {
@@ -77,7 +65,7 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
   const pbY = hasData ? H - (u.best - min) / range * (H - 20) - 10 : H;
   const gain = hasData ? traj[traj.length - 1] - traj[0] : 0;
 
-  const growth = u.casesSolved < 5
+  const growth = u.growthDeltas && u.growthDeltas.length > 0 ? u.growthDeltas : (u.casesSolved < 5
     ? [
         { l: 'Foundations',   v: 48, d: +12, c: 'var(--green)' },
         { l: 'Profitability', v: 30, d: +8,  c: 'var(--red)' },
@@ -87,21 +75,52 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
         { l: 'Pricing',       v: 58, d: +7, c: 'var(--green)' },
         { l: 'Profitability', v: 82, d: +4, c: 'var(--red)' },
         { l: 'Operations',    v: 41, d: +3, c: 'var(--ink-3)' },
-      ];
+      ]);
 
   const cols = [show.session, show.progress, show.growth].filter(Boolean).length;
   const template = cols === 3 ? '1.05fr 1.25fr 1fr' : cols === 2 ? '1fr 1fr' : '1fr';
 
-  const tierIdx = Math.max(0, TIERS.findIndex((t) => t === u.tier));
+  const reversedTiers = [...CAREER_TIERS].reverse();
+  const tierIdx = Math.max(0, reversedTiers.findIndex((t) => t.name === u.tier));
 
+  // Auto-centre the "you are here" rung on mount AND whenever the tier name
+  // changes. IMPORTANT: we set `container.scrollTop` directly instead of
+  // calling `target.scrollIntoView()`. scrollIntoView walks the ancestor
+  // chain and scrolls EVERY overflowed parent (including the page itself),
+  // which made the whole dashboard jump on load. scrollTop on the ladder's
+  // own masked container scrolls only that container.
+  const ladderScrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const container = ladderScrollRef.current;
+    if (!container) return;
+
+    const centreCurrent = () => {
+      const target = container.querySelector<HTMLElement>('[data-current]');
+      if (!target) return;
+      // offsetTop of the target row, relative to the masked container.
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const offsetInContainer =
+        targetRect.top - containerRect.top + container.scrollTop;
+      const centered =
+        offsetInContainer - container.clientHeight / 2 + target.clientHeight / 2;
+      container.scrollTop = Math.max(0, centered);
+    };
+
+    // Two passes — first paint + one frame later — so the masked container
+    // has settled into its final height before we measure.
+    const id1 = requestAnimationFrame(centreCurrent);
+    const id2 = window.setTimeout(centreCurrent, 120);
+    return () => {
+      cancelAnimationFrame(id1);
+      clearTimeout(id2);
+    };
+  }, [u.tier]);
+
+  // Keep the legacy callback ref around so any external prop that wired into
+  // it doesn't crash; unused after the useEffect-based approach above.
   const scrollRef = useCallback((el: HTMLDivElement | null) => {
-    if (el && !el.dataset.scrolled) {
-      el.dataset.scrolled = '1';
-      setTimeout(() => {
-        const target = el.querySelector('[data-current]') as HTMLElement | null;
-        if (target) el.scrollTop = target.offsetTop - el.clientHeight / 2 + target.clientHeight / 2;
-      }, 50);
-    }
+    ladderScrollRef.current = el;
   }, []);
 
   return (
@@ -144,19 +163,45 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
               <div style={{ position: 'relative', padding: '20px 0' }}>
                 {/* continuous vertical line, centered through circles */}
                 <div style={{ position: 'absolute', left: 11, top: -20, bottom: -20, width: 1.5, background: 'var(--line-2)' }}/>
-                {TIERS.map((tname, i) => {
+                {reversedTiers.map((tier, i) => {
+                  const tname = tier.name;
                   const isPast = i > tierIdx;
                   const isCurrent = i === tierIdx;
                   const isNext = i === tierIdx - 1;
                   return (
                     <div key={tname} {...(isCurrent ? { 'data-current': '1' } : {})}
-                      style={{ display: 'grid', gridTemplateColumns: '24px 1fr auto', columnGap: 12, alignItems: 'center', padding: '9px 0', position: 'relative' }}>
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '24px 1fr auto',
+                        columnGap: 12,
+                        alignItems: 'center',
+                        padding: isCurrent ? '11px 8px' : '9px 0',
+                        margin: isCurrent ? '0 -8px' : 0,
+                        position: 'relative',
+                        // Subtle red wash + soft red border behind the active
+                        // rung so it reads as "you are here" without any
+                        // scrolling needed. Pairs with the animated halo on
+                        // the dot itself (tier-here-pulse keyframe).
+                        background: isCurrent ? 'rgba(200,16,46,0.06)' : 'transparent',
+                        borderRadius: isCurrent ? 8 : 0,
+                        boxShadow: isCurrent
+                          ? 'inset 0 0 0 1px rgba(200,16,46,0.18)'
+                          : undefined,
+                      }}>
                       <div style={{ display: 'grid', placeItems: 'center', width: 24, height: 24 }}>
                         <span style={{
                           width: 14, height: 14, borderRadius: 999,
                           background: isPast || isCurrent ? 'var(--red)' : 'var(--card)',
                           border: isCurrent ? '2px solid var(--card)' : isPast ? 'none' : '2px solid var(--line-2)',
-                          boxShadow: isCurrent ? '0 0 0 2px var(--red)' : 'none',
+                          // "You are here" — concentric ring + breathing halo
+                          // via tier-here-pulse keyframe in globals.css.
+                          // Falls back to static for past/upcoming tiers.
+                          boxShadow: isCurrent
+                            ? undefined
+                            : isPast
+                              ? '0 0 0 1px var(--red)'
+                              : 'none',
+                          animation: isCurrent ? 'tier-here-pulse 2.2s ease-in-out infinite' : undefined,
                           display: 'grid', placeItems: 'center', color: 'white'
                         }}>
                           {isPast && <Check style={{ width: 8, height: 8 }}/>}
@@ -250,7 +295,7 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
             <span style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>rolling 30d</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-            {growth.map((r, i) =>
+            {growth.map((r: any, i: number) =>
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 4, alignItems: 'baseline' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>{r.l}</span>

@@ -12,14 +12,21 @@ export interface CareerTier {
   tagline: string;
 }
 
+// Thresholds follow `100 * n²` for n = 0..9. Owner directive (2026-06-07):
+// stretch the ladder so progression is meaningfully exponential and ten rungs
+// cover real prep effort, not toy point counts.
+// 0, 100, 400, 900, 1600, 2500, 3600, 4900, 6400, 8100.
 export const CAREER_TIERS: CareerTier[] = [
-  { threshold: 0, name: 'Day 0 Dreamer', tagline: 'Just showed up. Bold move.' },
-  { threshold: 50, name: 'Casebook Collector', tagline: 'Downloaded 12 casebooks, read 1' },
-  { threshold: 100, name: 'MECE Believer', tagline: 'Uses MECE in casual conversation' },
-  { threshold: 250, name: 'Deck Polisher', tagline: 'Pixel-perfect slides at 2am' },
-  { threshold: 500, name: 'Fundae Machine', tagline: 'You know your frameworks' },
-  { threshold: 1000, name: 'PPO Chaser', tagline: 'Deep prep, real results' },
-  { threshold: 2000, name: 'Summer Legend', tagline: 'Top 1% of MECE users' },
+  { threshold: 0,    name: 'Day 0 Dreamer',       tagline: 'Just showed up. Bold move.' },
+  { threshold: 100,  name: 'Casebook Collector',  tagline: 'Downloaded 12 casebooks, read 1' },
+  { threshold: 400,  name: 'MECE Believer',       tagline: 'Uses MECE in casual conversation' },
+  { threshold: 900,  name: 'Deck Polisher',       tagline: 'Pixel-perfect slides at 2am' },
+  { threshold: 1600, name: 'Fundae Machine',      tagline: 'You know your frameworks' },
+  { threshold: 2500, name: 'PPO Chaser',          tagline: 'Deep prep, real results' },
+  { threshold: 3600, name: 'Summer Legend',       tagline: 'Top 1% of MECE users' },
+  { threshold: 4900, name: 'Shortlist Maker',     tagline: 'CVs glow in the dark' },
+  { threshold: 6400, name: 'Final Round Regular', tagline: 'They know you by name' },
+  { threshold: 8100, name: 'Day 1 Hero',          tagline: 'Partner material' },
 ];
 
 export function currentTier(points: number): CareerTier {

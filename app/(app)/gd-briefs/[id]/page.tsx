@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
-import { fetchBrief } from '@/lib/api';
+import { fetchBrief, generateBrief } from '@/lib/api';
 import type { GeneratedBriefData } from '@/lib/types';
 import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
 import { useUser } from '@/components/user-context';
@@ -23,17 +23,48 @@ export default function BriefDetailPage() {
   useEffect(() => {
     let mounted = true;
     if (locked) { setLoading(false); return; }
-    fetchBrief(headlineId)
-      .then((data) => {
-        if (!mounted) return;
-        setBrief(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        setError(err.message || 'Could not load brief');
-        setLoading(false);
-      });
+
+    // Two-step fetch: try the cached GET first (fast), and if the backend
+    // returns 404 because no brief has been generated yet, transparently
+    // trigger generation via POST. This was previously showing
+    // "Could not load brief — brief not generated yet" on first visit.
+    const load = async () => {
+      try {
+        const cached = await fetchBrief(headlineId);
+        if (mounted) {
+          setBrief(cached);
+          setLoading(false);
+        }
+        return;
+      } catch (err: any) {
+        const msg = String(err?.message || '');
+        const is404 = msg.includes('(404)') || msg.toLowerCase().includes('not generated');
+        if (!is404) {
+          if (mounted) {
+            setError(msg || 'Could not load brief');
+            setLoading(false);
+          }
+          return;
+        }
+      }
+
+      // First-visit path — generate then render. Generation is a slower
+      // OpenAI call (~5-10s); we keep the loading skeleton up until it returns.
+      try {
+        const fresh = await generateBrief(headlineId);
+        if (mounted) {
+          setBrief(fresh);
+          setLoading(false);
+        }
+      } catch (genErr: any) {
+        if (mounted) {
+          setError(genErr?.message || 'Could not generate brief');
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
     return () => { mounted = false; };
   }, [headlineId, locked]);
 
