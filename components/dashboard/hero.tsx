@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Flame, Play, Arrow } from './icons';
 import { StreakExpiry, ProofRail, PeerProximity } from './fomo';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 /* ─────────────── types ─────────────── */
 
@@ -207,9 +208,22 @@ export function HeroShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StreakMonument({ u, big = true }: { u: UserVariant; big?: boolean }) {
+export function StreakMonument({ u, big = true, stacked = false }: { u: UserVariant; big?: boolean; stacked?: boolean }) {
+  // `stacked` = mobile mode. Drop the left-border separator, swap left padding
+  // for top padding, and align to the start so the monument reads like a row
+  // below the hero text instead of a side cell.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 8px 0 20px', borderLeft: big ? '1px solid var(--line)' : 'none' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      padding: stacked ? '12px 0 0 0' : '0 8px 0 20px',
+      borderLeft: stacked ? 'none' : (big ? '1px solid var(--line)' : 'none'),
+      borderTop: stacked ? '1px solid var(--line)' : 'none',
+      marginTop: stacked ? 12 : 0,
+    }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Flame className="flame" style={{ width: 16, height: 16, color: 'var(--red)' }} />
         <span className="eyebrow">Streak</span>
@@ -248,6 +262,7 @@ export function HeroCase({
   today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick']
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const newcomer = u.casesSolved < 5;
 
   // Primary CTA target: today's daily case if we have one, else send the user
@@ -257,7 +272,13 @@ export function HeroCase({
   const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
   const drillHref = '/practice';
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 24 }}>
+    <div style={{
+      // Stack on mobile so the streak monument sits beneath the hero text
+      // (with a top-border separator) instead of squeezing into a side cell.
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : '1fr auto',
+      gap: isMobile ? 0 : 24,
+    }}>
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
           <span className="chip red" style={{ fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', fontSize: 10 }}>
@@ -323,7 +344,7 @@ export function HeroCase({
           </span>
         </div>
       </div>
-      <StreakMonument u={u} big />
+      <StreakMonument u={u} big={!isMobile} stacked={isMobile} />
     </div>
   );
 }
@@ -335,9 +356,15 @@ export function HeroStreak({
   today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick']
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 36, alignItems: 'center' }}>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+      gap: isMobile ? 16 : 36,
+      alignItems: 'center',
+    }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Flame className="flame" style={{ width: 22, height: 22, color: 'var(--red)' }} />
@@ -387,10 +414,17 @@ export function HeroReadiness({
   today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick'];
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
   const ready = u.readiness ?? 0;
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 36, alignItems: 'center' }}>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
+      gap: isMobile ? 16 : 36,
+      alignItems: 'center',
+      justifyItems: isMobile ? 'center' : 'start',
+    }}>
       <div style={{ position: 'relative' }}>
         <Ring value={ready} size={200} thick={14}>
           <span className="serif" style={{ fontSize: 64, lineHeight: 0.9 }}>{u.readiness ?? '—'}</span>

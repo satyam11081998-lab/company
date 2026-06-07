@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Check, Bolt, Lock, Arrow, Play } from './icons';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import {
   BossCountdown,
   PeerOrbit,
@@ -159,6 +160,7 @@ interface ConstellationSectionProps {
 
 export function ConstellationSection({ u, filter, userState, skillGraph, nodeTargets, recentFeed }: ConstellationSectionProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [hover, setHover] = useState<string | null>(null);
   const [selected, setSelected] = useState<string>(() =>
     userState === 'new' ? 'c1' : userState === 'power' ? 'm1' : 'p4'
@@ -309,8 +311,14 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
           map area is now ~888px wide × 600px tall ≈ 1.48 aspect, matching
           the original ~1.46. Node coordinates are percentages so they
           re-flow correctly. Side panel stays at 320px (text-density bound,
-          shouldn't stretch). */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', minHeight: 600 }}>
+          shouldn't stretch).
+          On mobile: stack — map on top (shorter, fits viewport), side panel
+          below as a regular vertical card. */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 320px',
+        minHeight: isMobile ? 'auto' : 600,
+      }}>
         {/* MAP */}
         <div
           style={{
@@ -318,6 +326,10 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
             background:
               'radial-gradient(circle at 50% 50%, #FFFFFF 0%, var(--bg) 60%, var(--bg-2) 100%)',
             overflow: 'hidden',
+            // On mobile the parent grid stacks, so the map needs its own
+            // height. 420px keeps the 22-node layout legible without the
+            // user having to scroll horizontally.
+            height: isMobile ? 420 : undefined,
           }}
         >
           {/* Background math grid — tight Cartesian dot pattern at low

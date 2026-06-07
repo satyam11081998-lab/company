@@ -8,7 +8,7 @@ ask first.
 
 ---
 
-## C1 · DB schema — `cases` table   (v3, 2026-06-02)
+## C1 · DB schema — `cases` table   (v4, 2026-06-08)
 Source of truth: `supabase/migrations/0001_baseline_schema.sql`,
 `0002_conversational_attempts.sql`, `add-code-column.sql`, mirrored in `lib/types.ts`.
 - Most-shared table in the app. Read/written by: practice-hub, daily generator, guesstimate seed, submit, dashboard.
@@ -16,6 +16,10 @@ Source of truth: `supabase/migrations/0001_baseline_schema.sql`,
   GOTCHA: `ON CONFLICT (code)` requires a FULL unique index — a partial index
   (`where code is not null`) makes Postgres throw `42P10` (§9.36).
 - Multiple NULL `code`s allowed → generated/daily cases keep `code` NULL; coded guesstimates are unique/idempotent.
+- v4 added nullable `skill_node text`, `skill_cluster text`, `interview_meta jsonb`,
+  `mcq jsonb`, `source_brief_id uuid → news_headlines(id)`. All readers must
+  treat as nullable. New tables: `skill_nodes`, `skill_edges` (read-only
+  taxonomy, public read RLS), `dimension_snapshots` (per-user, auth.uid()=user_id).
 - **Rule:** column adds are additive + `IF NOT EXISTS`. Any add = bump version + announce. Affects: Dashboard, Guesstimate, Daily-content.
 
 ## C2 · Scoring return contract   (v2, 2026-06-02)

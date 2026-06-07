@@ -22,6 +22,7 @@ import type { PeerProximityData } from '@/lib/dashboard/peer-proximity';
 import type { ProofRailData } from '@/lib/dashboard/proof-rail';
 import type { SkillGraphData } from '@/lib/dashboard/skill-graph';
 import { currentTier, nextTier as careerNextTier, pointsToNextTier } from '@/lib/career-tiers';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 export interface DashboardClientProps {
   userName: string;
@@ -118,8 +119,22 @@ export default function DashboardClient(props: DashboardClientProps) {
     ? 'readiness'
     : 'case';
 
+  // Mobile layout switch. Below 768px every grid stacks to a single column
+  // and outer padding tightens so the page doesn't waste edge space on a
+  // phone. Inline styles can't respond to CSS media queries, so we read the
+  // viewport once via useIsMobile and pick the template.
+  const isMobile = useIsMobile();
+
   return (
-    <div className="dash density-balanced" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--gap-section, 20px)', padding: '24px 36px' }}>
+    <div
+      className="dash density-balanced"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: isMobile ? 14 : 'var(--gap-section, 20px)',
+        padding: isMobile ? '14px 12px' : '24px 36px',
+      }}
+    >
       {/* HERO SECTION */}
       <Hero
         u={u}
@@ -129,7 +144,13 @@ export default function DashboardClient(props: DashboardClientProps) {
       />
 
       {/* NEWS + GUESSTIMATE */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 'var(--gap-grid, 16px)' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr',
+          gap: isMobile ? 12 : 'var(--gap-grid, 16px)',
+        }}
+      >
         <NewsCard u={u} brief={props.initialDaily?.brief || undefined} />
         <GuesstimateCard u={u} daily={props.initialDaily?.guesstimate || undefined} />
       </div>
@@ -154,7 +175,14 @@ export default function DashboardClient(props: DashboardClientProps) {
       <CommandPanel u={u} show={{ session: true, progress: true, growth: true }} />
 
       {/* CONSISTENCY + RECENT */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--gap-grid, 20px)', alignItems: 'start' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: isMobile ? 12 : 'var(--gap-grid, 20px)',
+          alignItems: 'start',
+        }}
+      >
         <ConsistencyCard u={u} />
         <RecentCard u={u} />
       </div>

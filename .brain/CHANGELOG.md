@@ -11,6 +11,21 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-08 — dashboard-wire — 3304ecf
+Constellation wired to live data (per-node mastery, real recent attempts,
+data-driven dots + halo, cluster routing, backfilled cases, 11 seed cases for
+empty clusters). Hero/News/Guesstimate buttons functional. Career ladder
+extended to 10 exponential tiers with auto-scroll + breathing halo. Loading
+skeletons + cached auth = ~200–400ms shaved per nav. Boss→Today's focus.
+touches: lib/dashboard/*, lib/career-tiers.ts, lib/supabase/auth-cached.ts,
+app/(app)/dashboard/*, app/(app)/layout.tsx, app/(app)/gd-briefs/[id]/page.tsx,
+app/(app)/loading.tsx, app/api/news/[briefId]/to-case/route.ts,
+components/dashboard/*, components/dashboard-client.tsx,
+components/practice-hub.tsx, app/globals.css,
+supabase/migrations/0004_dashboard_skills.sql,
+supabase/seed-skill-graph.sql, supabase/seed-cases-constellation.sql
+breaking: yes — C1 cases (v3 → v4)   affects: Dashboard, Guesstimate, Daily-content, Casebook
+
 ## 2026-06-07 — dashboard-focusplus — 7b8a2a7
 Focus+ redesign ported to live data: FocusHero, SkillConstellation (9 real nodes, oval-fixed HTML halo), recomposed dashboard-client; social proof dropped; §G3 guesstimate exclusion preserved. Route count 143->142 (main branch baseline was 142, no routes added or dropped).
 touches: components/dashboard/*, dashboard-client.tsx, dashboard/page.tsx, globals.css
