@@ -47,3 +47,18 @@ Source of truth: `lib/casebook/types.ts`; consumed by `components/casebook/caseb
 ## C5 · Curriculum data   (v1)
 - `lib/curriculum/data-advanced.ts` → `d11Guesstimates` (69 entries, shape `{code:'G-01'..'G-69', title, approach, keyDetail?, result}`) is the authoritative static guesstimate source the seed reads.
 - **Rule:** changing the shape or the codes affects the guesstimate seed + the `/learn/guesstimates` walkthrough links. Affects: Guesstimate.
+
+## C6 · DB schema — `users` table   (v1, 2026-06-08)
+Source of truth: `supabase/migrations/0005_user_onboarding.sql`, mirrored in `lib/types.ts`.
+- Read/written by: app layout, dashboard, profile, onboarding API, college-email verify.
+- v1 establishes onboarding fields as nullable additive columns:
+  `full_name`, `college_id uuid → colleges(id)`, `college_other`, `batch_year`,
+  `placement_focus check ('summer'|'final'|'both')`, `college_email`,
+  `college_email_verified_at`, `onboarding_completed_at`, `linkedin_url`,
+  `referral_source`, `weekly_hours_target`, `goal_text`, `avatar_uploaded_at`.
+- New tables: `colleges` (taxonomy, public read), `college_email_verifications`
+  (token storage, RLS = owner only). Storage bucket `avatars` with owner-write,
+  public-read policies.
+- **Rule:** column adds are additive + `IF NOT EXISTS`. Any add = bump version
+  + announce. Affects: Onboarding, Profile, Dashboard (auth-cached.ts reader),
+  future GD-cohort feature.

@@ -11,10 +11,27 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
-## 2026-06-08 — onboarding-profile — 8cbdb69
-Mobile responsiveness for dashboard tiles + dark mode parity and brand red restoration. New full-page onboarding flow with college data seed (IIMs + top MBA/eng) and profile page rebuild. Identity card, college email verification flow (Supabase SMTP), avatars storage bucket. Layout redirect to /onboarding for incomplete profiles.
-touches: app/(app)/layout.tsx, app/(app)/profile/page.tsx, app/(app)/onboarding/page.tsx, components/dashboard/*, components/onboarding/*, components/profile/*, hooks/use-is-mobile.tsx, app/api/college-email/*, app/api/onboarding/*, supabase/migrations/0005_user_onboarding.sql
-breaking: no   affects: none
+## 2026-06-08 — dashboard-mobile-darkmode + onboarding-profile — 8cbdb69
+Dashboard: mobile-responsive (useIsMobile hook + stacked grids in
+dashboard-client/hero/constellation/command-panel/consistency-card/news-card),
+dark-mode parity (--card-hex / --map-center / --hero-grad-*, --cluster-*
+palette flipped per theme), cardinal red restored to #C8102E in both modes
+(.dark --red / --primary / --cluster-prof previously drifted to salmon).
+New feature: user onboarding (single-scroll form: name, college combobox
+with 'Other', batch year, placement focus, optional analytics fields) +
+forced redirect via (app)/layout, profile page rebuild with avatar upload
+(Supabase Storage), college email verification flow (Supabase
+admin.generateLink + SHA-256 token, 24h expiry).
+touches: hooks/use-is-mobile.tsx, components/dashboard/*,
+components/dashboard-client.tsx, components/onboarding/onboarding-form.tsx,
+components/profile/profile-client.tsx, app/globals.css,
+app/(app)/onboarding/page.tsx, app/(app)/profile/page.tsx,
+app/(app)/layout.tsx, lib/supabase/middleware.ts, lib/types.ts,
+lib/types-onboarding.ts, app/api/onboarding/complete/route.ts,
+app/api/college-email/{send,verify}/route.ts,
+supabase/migrations/0005_user_onboarding.sql
+breaking: yes — C6 users schema (new). Additive only; existing readers unaffected.
+affects: Dashboard, Profile, future GD-cohort feature
 
 ## 2026-06-08 — dashboard-wire — 3304ecf
 Constellation wired to live data (per-node mastery, real recent attempts,
