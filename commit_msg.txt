@@ -1,39 +1,55 @@
-feat(dashboard): wire constellation to live data + perf + polish
+feat(dashboard+onboarding): mobile responsive + dark-mode parity + onboarding/profile/college-verify
 
-Constellation
-- skill-graph payload: per-node attempts/best, weakestCluster, activeEdges,
-  todayBossNodeId, clusterCaseCounts
-- Side panel: real attempts/best, recent attempts filtered by cluster,
-  cluster-empty state. Dropped hardcoded HDFC/ICICI mocks.
-- Header: explainer line, dynamic weakestCluster pill (replaces hardcoded M&A)
-- PeerOrbit dots ride user's real learning path; HotZone follows weakest cluster
-- Edge lines neutral grey, dotted-math grid background, CSS-circle orbit dots
-- Cluster→/learn/casebook routing; practice-hub accepts ?cluster filter
-- Backfill + 11 seed cases for previously-empty clusters (pri/ma/ops/soft)
+Mobile responsiveness
+- hooks/use-is-mobile.tsx — viewport hook (<768px)
+- dashboard-client stacks News+Guesstimate / Consistency+Recent on mobile,
+  reduces padding 24/36 → 14/12
+- Hero stacks HeroCase / HeroStreak / HeroReadiness vertically
+- StreakMonument flips left-border to top-border in stacked mode
+- Constellation: map+side-panel stack, map fixed 420px height on mobile
+- Command panel: 3 cols → 1 col, dividers flip horizontal
+- Consistency heatmap: horizontal scroll with momentum + edge-fade mask
+- News card: image rail (160px wide) → top strip (72px tall)
 
-Hero / News / Guesstimate
-- Hero CTAs wired (router.push)
-- /api/news/[id]/to-case: HTTP→FastAPI (no child_process), service-role
-  fallback, surfaces real Postgres errors
-- /gd-briefs/[id]: GET→404→POST generate flow on first visit
-- Guesstimate card fully clickable to daily guesstimate
+Dark mode
+- HeroShell gradient: hardcoded #FAF9F6/#F3EFE5 → var(--hero-grad-{1,2})
+- Constellation map spotlight: #FFFFFF → var(--map-center)
+- --card-hex added (var(--card) was HSL → invalid in inline styles)
+- Swept inline 'var(--card)' → 'var(--card-hex)' across 5 components
+- Cluster colors via vars (--cluster-prof/size/pri/ent/ma/ops/soft) so
+  navy + dark greys flip to readable variants on dark bg
 
-Career ladder
-- 7→10 tiers, thresholds 100·n² (100,400,900,…,8100)
-- u.tier from currentTier(points) not VARIANTS mock
-- Auto-scroll current rung to centre (container-scoped, no page jump)
-- Subtle red wash + breathing halo on current row
+Brand red restoration
+- .dark --red was #E04060 (salmon) → forced to #C8102E (cardinal)
+- .dark --primary 356 74% 55% → 356 84% 43% (cardinal red, no hue shift)
+- --cluster-prof in dark from #FF5C77 → #C8102E
+- Added --red-rgb 200,16,46 in both modes for rgba() consistency
 
-Performance
-- app/(app)/loading.tsx + dashboard/loading.tsx (branded skeletons)
-- React.cache for auth.getUser + users row (lib/supabase/auth-cached.ts)
-  → ~200–400ms shaved per navigation
-- Page width max-w-6xl→max-w-7xl, constellation minHeight 520→600
+Onboarding flow
+- supabase/migrations/0005_user_onboarding.sql: user columns
+  (full_name, college_id FK, college_other, batch_year, placement_focus,
+  college_email + verified_at, onboarding_completed_at, linkedin_url,
+  referral_source, weekly_hours_target, goal_text, avatar_uploaded_at)
+- colleges table seeded with all 20 IIMs + ~60 top MBA/eng colleges
+- college_email_verifications table + RLS
+- avatars Storage bucket + owner-write/public-read policies
+- lib/types-onboarding.ts: form types, college rows, validators
+- /onboarding page + components/onboarding/onboarding-form.tsx
+  (single-scroll, red required indicators, scroll-into-view on miss)
+- /api/onboarding/complete: server-side re-validate + persist
+- (app)/layout.tsx: if !onboarding_completed_at, redirect /onboarding
+- middleware adds x-pathname header for the layout gate
 
-Copy
-- Boss → Today's focus everywhere
+Profile rebuild
+- /profile page + components/profile/profile-client.tsx
+- Identity card (avatar upload to Supabase Storage), college, points
+- College email verify section (send / verified state)
+- Editable form mirroring onboarding fields
+- Badges + 20 recent submissions
 
-Schema
-- 0004_dashboard_skills.sql: skill_node/skill_cluster/interview_meta/mcq/
-  source_brief_id on cases; skill_nodes, skill_edges, dimension_snapshots
-- seed-skill-graph.sql + seed-cases-constellation.sql (both idempotent)
+College email verification
+- /api/college-email/send: SHA-256 token, 24h expiry, calls
+  supabase.auth.admin.generateLink → email via Supabase SMTP
+- /api/college-email/verify: token-hash match, marks verified, redirects
+  to /profile?college=verified
+- lib/types.ts UserRow extended with all new nullable columns

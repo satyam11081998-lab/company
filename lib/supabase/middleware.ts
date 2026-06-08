@@ -49,5 +49,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(homeUrl);
   }
 
+  // Surface the current pathname as an internal header so the (app) layout
+  // (which runs after middleware) can read it via next/headers and run the
+  // onboarding-gate redirect without re-parsing the URL.
+  supabaseResponse.headers.set('x-pathname', pathname);
   return supabaseResponse;
 }

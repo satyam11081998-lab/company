@@ -81,7 +81,8 @@
     --ink-4:        #8C8A82;
     --line:         #E6E2D8;
     --line-2:       #D4CFC1;
-    --red:          #C8102E;
+    --red:          #C8102E;             /* Cardinal red — THE brand color, never deviate */
+    --red-rgb:      200, 16, 46;         /* For rgba(...) helpers */
     --red-soft:     #FBEEF0;
     --red-deep:     #8E0A20;
     --green:        #1F7A3A;
@@ -91,6 +92,24 @@
     --ff-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     --ff-serif: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --ff-mono: 'SF Mono', 'Fira Mono', ui-monospace, monospace;
+
+    /* Inline-style aliases for things that need to flip with theme but can't
+       use `hsl(var(--x))` syntax inside React inline styles. Hex only. */
+    --card-hex:     #FFFFFF;             /* dashboard card surface */
+    --map-center:   #FFFFFF;             /* constellation radial spotlight */
+    --hero-grad-1:  #FAF9F6;             /* hero card top */
+    --hero-grad-2:  #F3EFE5;             /* hero card bottom */
+
+    /* Constellation cluster palette — needs theme-aware variants because the
+       light-mode navy (#0F1C33) and dark greys (#444 / #5C5A52) become
+       invisible on a dark page. Same hue, brighter in dark mode. */
+    --cluster-prof: #C8102E;             /* Profitability — red */
+    --cluster-size: #0F1C33;             /* Market Sizing — navy */
+    --cluster-pri:  #1F7A3A;             /* Pricing — green */
+    --cluster-ent:  #B8770D;             /* Market Entry — amber */
+    --cluster-ma:   #7A4FA8;             /* M&A — purple */
+    --cluster-ops:  #5C5A52;             /* Operations — grey */
+    --cluster-soft: #444444;             /* Foundations — neutral */
   }
 
   .dark {
@@ -107,9 +126,13 @@
     --navy-mid:       214 35% 28%;
     --navy-soft:      214 25% 45%;
 
-    --primary:        356 74% 55%;
+    /* Cardinal red is brand-authentic — DO NOT shift the hue in dark mode.
+       Prior values (356 74% 55%) read as salmon/coral and made the dashboard
+       look like a different brand than the rest of the app. Owner directive
+       2026-06-08: brand red is #C8102E (= hsl 356 84% 43%) everywhere. */
+    --primary:        356 84% 43%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover:  356 74% 47%;
+    --primary-hover:  356 84% 36%;
     --primary-light:  356 50% 12%;
 
     --secondary:      214 30% 16%;
@@ -143,13 +166,36 @@
     --ink-4:        #5E5C56;
     --line:         #2A3040;
     --line-2:       #3A4258;
-    --red:          #E04060;
+    /* Same cardinal red as light mode — brand authenticity over contrast
+       tuning. The card surface uses --card-hex (#1A2233) so cardinal red
+       on slate stays legible without drifting to salmon. */
+    --red:          #C8102E;
+    --red-rgb:      200, 16, 46;
     --red-soft:     #2A1520;
-    --red-deep:     #C8102E;
+    --red-deep:     #8E0A20;
     --green:        #3DAA5C;
     --green-soft:   #152A1C;
     --amber:        #D4960F;
     --amber-soft:   #2A2210;
+
+    /* Dark equivalents of the hex aliases. Hero gradient stays subtle —
+       slightly lighter than the page background so the card reads as a
+       distinct surface, with the red decorative glow on top. */
+    --card-hex:     #1A2233;
+    --map-center:   #232E45;             /* lighter center for the constellation spotlight */
+    --hero-grad-1:  #1A2233;
+    --hero-grad-2:  #131A26;
+
+    /* Brighter cluster palette — same hues, hoisted in lightness so they
+       read against dark bg without losing brand identity. Profitability
+       stays at cardinal red to honor the brand. */
+    --cluster-prof: #C8102E;             /* Cardinal red — brand authentic */
+    --cluster-size: #6BA3FF;             /* navy → sky blue */
+    --cluster-pri:  #4ED27F;             /* green — brighter */
+    --cluster-ent:  #F5B453;             /* amber — softer/lighter */
+    --cluster-ma:   #B68EE0;             /* purple — lifted */
+    --cluster-ops:  #9CA0A8;             /* grey → mid grey */
+    --cluster-soft: #B0B4BD;             /* neutral lighter */
   }
 }
 

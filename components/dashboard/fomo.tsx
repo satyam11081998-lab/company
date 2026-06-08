@@ -379,7 +379,7 @@ export const UnlockTeaser: React.FC<UnlockTeaserProps> = ({ count = 3 }) => {
       position: 'absolute', left: 14, top: 14, zIndex: 5,
       display: 'inline-flex', alignItems: 'center', gap: 8,
       padding: '6px 12px', borderRadius: 999,
-      background: 'var(--card)', border: '1px solid var(--line)',
+      background: 'var(--card-hex)', border: '1px solid var(--line)',
       fontSize: 11, color: 'var(--ink-2)',
       boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
     }}>

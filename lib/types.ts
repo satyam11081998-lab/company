@@ -17,6 +17,21 @@ export interface UserRow {
   subscription_expires_at: string | null;
   streak_count: number;
   streak_last_date: string | null;
+  // Onboarding + profile (migration 0005, 2026-06-08). All nullable so
+  // existing readers don't break before the user has run through onboarding.
+  full_name?: string | null;
+  college_id?: string | null;
+  college_other?: string | null;
+  batch_year?: number | null;
+  placement_focus?: 'summer' | 'final' | 'both' | null;
+  college_email?: string | null;
+  college_email_verified_at?: string | null;
+  onboarding_completed_at?: string | null;
+  linkedin_url?: string | null;
+  referral_source?: string | null;
+  weekly_hours_target?: number | null;
+  goal_text?: string | null;
+  avatar_uploaded_at?: string | null;
 }
 
 export interface PaymentRow {

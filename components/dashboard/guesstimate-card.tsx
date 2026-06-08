@@ -86,7 +86,7 @@ export function GuesstimateCard({ u, daily }: GuesstimateCardProps) {
               fontSize: 12,
               fontWeight: 600,
               fontFamily: 'var(--ff-mono)',
-              background: 'var(--card)',
+              background: 'var(--card-hex)',
               color: 'var(--ink)',
               borderColor: 'var(--line-2)',
               justifyContent: 'center',

@@ -5,6 +5,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { DailyContentResponse } from '@/lib/api';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 /* ── Types ── */
 interface NewsCardProps {
@@ -15,6 +16,7 @@ interface NewsCardProps {
 /* ── NewsCard ── */
 export function NewsCard({ u, brief }: NewsCardProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = React.useState(false);
 
   const handleToCase = async () => {
@@ -55,11 +57,23 @@ export function NewsCard({ u, brief }: NewsCardProps) {
   };
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex' }}>
+    <div className="card" style={{
+      padding: 0,
+      overflow: 'hidden',
+      display: 'flex',
+      // Stack image strip ON TOP on mobile so the text isn't squeezed into a
+      // tiny right column. Desktop keeps the side-by-side layout.
+      flexDirection: isMobile ? 'column' : 'row',
+    }}>
       <div style={{
-        width: 160, flex: 'none', position: 'relative',
+        // Mobile: full-width thin strip across the top (~72px tall).
+        // Desktop: 160px-wide left rail at full card height.
+        width: isMobile ? '100%' : 160,
+        height: isMobile ? 72 : 'auto',
+        flex: 'none',
+        position: 'relative',
         background: 'linear-gradient(135deg, #0F1C33 0%, #1E2F4F 60%, #2E4675 100%)',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}>
         <svg viewBox="0 0 160 160" width="100%" height="100%" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
           <defs>

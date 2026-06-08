@@ -77,14 +77,18 @@ export const EDGES: Edge[] = [
   ['e2', 'o1'], ['o1', 'o2'],
 ];
 
+// Cluster colors via CSS variables so they flip with theme. Hardcoded hex
+// (especially navy + dark greys) became invisible on dark bg — the variables
+// resolve to the bright dark-mode palette in .dark and the original brand
+// palette in light mode. Definitions live in globals.css.
 export const CLUSTERS: Record<string, ClusterInfo> = {
-  prof: { name: 'Profitability', color: '#C8102E' },
-  size: { name: 'Market Sizing', color: '#0F1C33' },
-  pri: { name: 'Pricing', color: '#1F7A3A' },
-  ent: { name: 'Market Entry', color: '#B8770D' },
-  ma: { name: 'M&A', color: '#7A4FA8' },
-  ops: { name: 'Operations', color: '#5C5A52' },
-  soft: { name: 'Foundations', color: '#444' },
+  prof: { name: 'Profitability', color: 'var(--cluster-prof)' },
+  size: { name: 'Market Sizing', color: 'var(--cluster-size)' },
+  pri:  { name: 'Pricing',        color: 'var(--cluster-pri)' },
+  ent:  { name: 'Market Entry',   color: 'var(--cluster-ent)' },
+  ma:   { name: 'M&A',            color: 'var(--cluster-ma)' },
+  ops:  { name: 'Operations',     color: 'var(--cluster-ops)' },
+  soft: { name: 'Foundations',    color: 'var(--cluster-soft)' },
 };
 
 // Map a constellation cluster to a real casebook page slug.
@@ -323,8 +327,11 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
         <div
           style={{
             position: 'relative',
+            // Theme-aware spotlight. Was hardcoded #FFFFFF at center → a
+            // glowing white circle in dark mode. var(--map-center) is white
+            // in light, slate-blue in dark.
             background:
-              'radial-gradient(circle at 50% 50%, #FFFFFF 0%, var(--bg) 60%, var(--bg-2) 100%)',
+              'radial-gradient(circle at 50% 50%, var(--map-center) 0%, var(--bg) 60%, var(--bg-2) 100%)',
             overflow: 'hidden',
             // On mobile the parent grid stacks, so the map needs its own
             // height. 420px keeps the 22-node layout legible without the
@@ -571,7 +578,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
               gap: 14,
               fontSize: 10.5,
               color: 'var(--ink-3)',
-              background: 'var(--card)',
+              background: 'var(--card-hex)',
               padding: '6px 12px',
               borderRadius: 8,
               border: '1px solid var(--line)',
@@ -592,7 +599,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
         <div
           style={{
             borderLeft: '1px solid var(--line)',
-            background: 'var(--card)',
+            background: 'var(--card-hex)',
             padding: '22px 22px',
             display: 'flex',
             flexDirection: 'column',

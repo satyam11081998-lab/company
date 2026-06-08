@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Check, ChevR } from './icons';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 /* ── Types ── */
 interface CommandPanelProps {
@@ -77,8 +78,18 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
         { l: 'Operations',    v: 41, d: +3, c: 'var(--ink-3)' },
       ]);
 
+  const isMobile = useIsMobile();
   const cols = [show.session, show.progress, show.growth].filter(Boolean).length;
-  const template = cols === 3 ? '1.05fr 1.25fr 1fr' : cols === 2 ? '1fr 1fr' : '1fr';
+  // On mobile collapse to a single column regardless of how many sub-panels
+  // are visible — 3 narrow columns on a phone are unreadable. Each panel
+  // becomes a full-width section stacked vertically.
+  const template = isMobile
+    ? '1fr'
+    : cols === 3
+      ? '1.05fr 1.25fr 1fr'
+      : cols === 2
+        ? '1fr 1fr'
+        : '1fr';
 
   const reversedTiers = [...CAREER_TIERS].reverse();
   const tierIdx = Math.max(0, reversedTiers.findIndex((t) => t.name === u.tier));
@@ -136,11 +147,17 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
         </span>
       </div>
 
-      {/* Three-column body */}
+      {/* Three-column body (stacks on mobile via template = '1fr') */}
       <div style={{ display: 'grid', gridTemplateColumns: template, alignItems: 'stretch' }}>
         {/* ── Career Ladder ── */}
         {show.session &&
-        <div style={{ padding: '20px 22px', borderRight: cols > 1 ? '1px solid var(--line)' : 'none', display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0 }}>
+        <div style={{
+          padding: isMobile ? '16px 16px' : '20px 22px',
+          // On mobile the column divider becomes a row divider underneath.
+          borderRight: !isMobile && cols > 1 ? '1px solid var(--line)' : 'none',
+          borderBottom: isMobile && cols > 1 ? '1px solid var(--line)' : 'none',
+          display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0,
+        }}>
           <div className="between">
             <span className="eyebrow" style={{ color: 'var(--red)' }}>Career ladder</span>
             <span className="chip" style={{ background: 'rgba(15,28,51,0.06)', color: 'var(--navy)', borderColor: 'transparent', fontSize: 10 }}>{u.tier}</span>
@@ -227,7 +244,12 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
 
         {/* ── Trajectory (graph dominant) ── */}
         {show.progress &&
-        <div style={{ padding: '20px 22px', borderRight: cols > 1 && show.growth ? '1px solid var(--line)' : 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{
+          padding: isMobile ? '16px 16px' : '20px 22px',
+          borderRight: !isMobile && cols > 1 && show.growth ? '1px solid var(--line)' : 'none',
+          borderBottom: isMobile && show.growth ? '1px solid var(--line)' : 'none',
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
           <div className="between" style={{ alignItems: 'flex-start' }}>
             <div>
               <span className="eyebrow" style={{ color: 'var(--red)' }}>Trajectory</span>
@@ -289,7 +311,7 @@ export function CommandPanel({ u, show }: CommandPanelProps) {
 
         {/* ── Growth ── */}
         {show.growth &&
-        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ padding: isMobile ? '16px 16px' : '20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="between">
             <span className="eyebrow" style={{ color: 'var(--red)' }}>Momentum</span>
             <span style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>rolling 30d</span>

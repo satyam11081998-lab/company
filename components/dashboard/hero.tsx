@@ -195,7 +195,10 @@ export function HeroShell({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
       position: 'relative',
-      background: 'linear-gradient(180deg, #FAF9F6 0%, #F3EFE5 100%)',
+      // Theme-aware — was hardcoded #FAF9F6 → #F3EFE5 (light cream), which
+      // left light text invisible on a light card in dark mode. The two
+      // CSS vars are defined in globals.css and flip per theme.
+      background: 'linear-gradient(180deg, var(--hero-grad-1) 0%, var(--hero-grad-2) 100%)',
       borderRadius: 14,
       padding: 'var(--hero-pad, 22px 28px)',
       overflow: 'hidden',
@@ -393,7 +396,7 @@ export function HeroStreak({
           Keep it alive — start today&apos;s case <Arrow className="ico-sm" />
         </button>
       </div>
-      <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
+      <div style={{ background: 'var(--card-hex)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
         <div className="eyebrow" style={{ marginBottom: 8 }}>TODAY&apos;S CASE</div>
         <div className="serif" style={{ fontSize: 22, lineHeight: 1.2 }}>{today?.title || TODAY.pick.title}</div>
         <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>{today?.cluster || TODAY.pick.domain} · {today?.difficulty || TODAY.pick.difficulty} · {today?.minutes || TODAY.pick.time}m</div>

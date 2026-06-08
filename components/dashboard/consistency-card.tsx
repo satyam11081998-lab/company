@@ -82,16 +82,33 @@ export function ConsistencyCard({ u }: ConsistencyCardProps) {
         </div>
       </div>
 
-      {/* Calendar */}
-      <div style={{ display: 'flex', gap: 6, overflow: 'hidden' }}>
+      {/* Calendar — horizontally scrollable on mobile. 52 columns × ~10px =
+          ~520px wide; a phone is 360-400px wide, so we'd otherwise shrink
+          each cell to a sub-pixel ribbon. Wrapping in an overflow-x:auto
+          div + giving the inner grid a min-width keeps cells legible and
+          lets the user swipe through the year. Momentum scrolling on iOS
+          via -webkit-overflow-scrolling. */}
+      <div style={{
+        display: 'flex',
+        gap: 6,
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        // Subtle fade at the right edge so the user gets a "more to the
+        // right" affordance on mobile without an explicit scrollbar.
+        maskImage: 'linear-gradient(to right, black 0, black calc(100% - 16px), transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, black 0, black calc(100% - 16px), transparent 100%)',
+      }}>
         {/* Day-of-week labels */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2.5, fontSize: 9, color: 'var(--ink-4)', fontFamily: 'var(--ff-mono)', paddingTop: 16, marginRight: 2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2.5, fontSize: 9, color: 'var(--ink-4)', fontFamily: 'var(--ff-mono)', paddingTop: 16, marginRight: 2, flex: 'none' }}>
           {['','M','','W','','F',''].map((l: string, i: number) => (
             <div key={i} style={{ height: 10, lineHeight: '10px' }}>{l}</div>
           ))}
         </div>
-        {/* Grid + month labels above */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Grid + month labels above. min-width forces the 52 cols to a
+            legible size on mobile (~10px per week × 52 = 520px) so the
+            container overflows and scrolls instead of squishing cells. */}
+        <div style={{ flex: 1, minWidth: 520 }}>
           {/* Month labels */}
           <div style={{ position: 'relative', height: 14, marginBottom: 2, fontSize: 9, color: 'var(--ink-4)', fontFamily: 'var(--ff-mono)' }}>
             {monthCols.map((m: any, i: number) => (
