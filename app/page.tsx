@@ -121,9 +121,9 @@ export default async function LandingPage() {
                 </div>
                 {/* Score bars */}
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Score breakdown</p>
-                {[['Structure', 82, 'bg-primary'], ['Quantitative', 65, 'bg-amber-400'], ['Synthesis', 78, 'bg-emerald-500'], ['Judgment', 55, 'bg-primary/60']].map(([dim, pct, color]) => (
+                {[['Structure', 82, 'bg-primary'], ['Quantitative', 65, 'bg-warning'], ['Synthesis', 78, 'bg-success'], ['Business Judgment', 55, 'bg-primary/60']].map(([dim, pct, color]) => (
                   <div key={dim as string} className="flex items-center gap-2.5 mb-2">
-                    <span className="text-[12px] text-muted-foreground w-20 flex-shrink-0">{dim as string}</span>
+                    <span className="text-[12px] text-muted-foreground w-20 flex-shrink-0 whitespace-nowrap overflow-hidden text-ellipsis">{dim as string}</span>
                     <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                       <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
                     </div>
@@ -213,9 +213,9 @@ export default async function LandingPage() {
                       ['Structure', 21, 25, 'Strong', 'tag-green'],
                       ['Quantitative', 13, 20, 'Develop', 'tag-amber'],
                       ['Synthesis', 17, 20, 'Good', 'tag-green'],
-                      ['Judgment', 12, 15, 'Good', 'tag-green'],
+                      ['Business Judgment', 12, 15, 'Good', 'tag-green'],
                       ['Creativity', 8, 10, 'Strong', 'tag-green'],
-                      ['Tone', 7, 10, 'Strong', 'tag-green'],
+                      ['Professional Tone', 7, 10, 'Strong', 'tag-green'],
                     ].map(([dim, score, max, rating, tagClass]) => (
                       <tr key={dim as string}>
                         <td className="text-[13px] font-medium text-foreground">{dim as string}</td>

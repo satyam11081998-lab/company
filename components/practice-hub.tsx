@@ -27,24 +27,18 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    if (focusDomain) {
-      console.warn(`Focus param '?focus=${focusDomain}' ignored: practice-hub doesn't support domain filtering for cases yet. Will wire this after DB migration is fully wired.`);
-    }
-  }, [focusDomain]);
-
   // Reset page when search or tab changes
   useMemo(() => { setPage(1); }, [search, activeTab]);
 
   // Filtering
   const filteredScored = useMemo(() => {
     // Scored tab = non-guesstimate cases (guesstimates have their own DB-driven tab below)
-    return cases.filter(c =>
-      c.type !== 'guesstimate' &&
-      (c.title.toLowerCase().includes(search.toLowerCase()) ||
-       c.type.toLowerCase().includes(search.toLowerCase()))
-    );
-  }, [cases, search]);
+    return cases.filter(c => {
+      if (c.type === 'guesstimate') return false;
+      if (focusDomain && c.type !== focusDomain) return false;
+      return c.title.toLowerCase().includes(search.toLowerCase()) || c.type.toLowerCase().includes(search.toLowerCase());
+    });
+  }, [cases, search, focusDomain]);
 
   // Guesstimates are now real, attemptable `cases` rows (type='guesstimate') — the 69
   // seeded curriculum guesstimates + any AI-generated dailies. Sourced from the DB so
@@ -58,11 +52,11 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
   }, [cases, search]);
 
   const filteredStudies = useMemo(() => {
-    return ALL_CASE_STUDIES.filter(c => 
-      c.title.toLowerCase().includes(search.toLowerCase()) || 
-      c.sector.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search]);
+    return ALL_CASE_STUDIES.filter(c => {
+      if (focusDomain && c.sector !== focusDomain) return false;
+      return c.title.toLowerCase().includes(search.toLowerCase()) || c.sector.toLowerCase().includes(search.toLowerCase());
+    });
+  }, [search, focusDomain]);
 
   const handleRandomize = () => {
     let pool: any[] = [];

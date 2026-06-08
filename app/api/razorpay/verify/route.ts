@@ -32,7 +32,10 @@ export async function POST(req: Request) {
       .update(bodyText.toString())
       .digest('hex');
 
-    if (expectedSignature === razorpay_signature) {
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    const signatureBuffer = Buffer.from(razorpay_signature, 'hex');
+
+    if (expectedBuffer.length === signatureBuffer.length && crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
       // The signature proves a payment happened but NOT which plan was paid for.
       // Re-fetch the order and validate the amount against the claimed tier.
       const instance = new Razorpay({

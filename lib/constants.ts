@@ -87,6 +87,12 @@ export const PUBLIC_ROUTES: string[] = [
   '/forgot-password',
   '/reset-password',
   '/auth/callback',
+  '/methodology',
+  '/about',
+  '/privacy',
+  '/terms',
+  '/refund',
+  '/learn',
 ];
 
 /** Auth pages — if logged in, user gets redirected away from these. */

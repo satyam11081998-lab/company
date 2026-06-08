@@ -49,6 +49,7 @@ export default function Footer({ className = "" }: { className?: string }) {
                 <li><a href="mailto:team@mece.in" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Contact Support</a></li>
                 <li><Link href="/privacy" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/refund" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Refund Policy</Link></li>
               </ul>
             </div>
           </div>

@@ -3,6 +3,8 @@ import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
 import { TIER_PRICES } from '@/lib/tier';
 
+const rateLimit = new Map<string, number>();
+
 export async function POST(req: Request) {
   try {
     const supabase = createClient();
@@ -11,6 +13,13 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const now = Date.now();
+    const lastRequest = rateLimit.get(user.id);
+    if (lastRequest && now - lastRequest < 5000) { // 5 seconds debounce
+      return NextResponse.json({ error: 'Too many requests, please wait' }, { status: 429 });
+    }
+    rateLimit.set(user.id, now);
 
     const body = await req.json();
     const { tier } = body;

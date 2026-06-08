@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   title: SITE_TITLE,
   description: SITE_DESC,
   keywords: ['MBA placement', 'case interview', 'GD prep', 'consulting prep', 'product manager interview'],
-  alternates: { canonical: '/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
@@ -27,13 +26,13 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESC,
     locale: 'en_IN',
-    images: [{ url: '/logo.png', alt: 'MECE' }],
+    images: [{ url: '/og-card.png', alt: 'MECE', width: 1200, height: 630 }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: SITE_TITLE,
     description: SITE_DESC,
-    images: ['/logo.png'],
+    images: ['/og-card.png'],
   },
 };
 
@@ -46,13 +45,30 @@ export const viewport: Viewport = {
 
 /** Root HTML layout — GeoPattern is fixed behind everything, cards cover it naturally */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "MECE",
+    "url": SITE_URL,
+    "logo": `${SITE_URL}/logo.png`,
+    "description": SITE_DESC
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} min-h-screen text-foreground antialiased font-sans overflow-x-hidden`}>
+      <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      </head>
+      <body className={`${inter.variable} font-sans text-foreground bg-background antialiased min-h-screen relative selection:bg-primary/20 selection:text-primary`}>
         <ThemeProvider>
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground">
+            Skip to content
+          </a>
           {/* Fixed diagonal parallelogram pattern — same as Medusa template */}
           <GeoPattern />
-          {children}
+          <main id="main-content">
+            {children}
+          </main>
           <Toaster />
           <Analytics />
         </ThemeProvider>
