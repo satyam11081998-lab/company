@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-08 — onboarding-profile — 8cbdb69
+Mobile responsiveness for dashboard tiles + dark mode parity and brand red restoration. New full-page onboarding flow with college data seed (IIMs + top MBA/eng) and profile page rebuild. Identity card, college email verification flow (Supabase SMTP), avatars storage bucket. Layout redirect to /onboarding for incomplete profiles.
+touches: app/(app)/layout.tsx, app/(app)/profile/page.tsx, app/(app)/onboarding/page.tsx, components/dashboard/*, components/onboarding/*, components/profile/*, hooks/use-is-mobile.tsx, app/api/college-email/*, app/api/onboarding/*, supabase/migrations/0005_user_onboarding.sql
+breaking: no   affects: none
+
 ## 2026-06-08 — dashboard-wire — 3304ecf
 Constellation wired to live data (per-node mastery, real recent attempts,
 data-driven dots + halo, cluster routing, backfilled cases, 11 seed cases for
