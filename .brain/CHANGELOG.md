@@ -11,6 +11,15 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-08 — industry-primers — (in tree, build-gate pending)
+New Learn → Industry Primers section; first primer "Aviation" (No. 21) shipped as a
+self-contained, fact-checked static page embedded via /primers/aviation. Data verified
+& restated (SAF 1% by 2027/intl-first, Indian-carrier intl share ~45%, order book ~1,600,
+Air India Group ~27% post-Vistara merger, market ~$26B/~12% CAGR, Bharatiya Vayuyan
+Adhiniyam 2024). New routes + static asset only; no contract change.
+touches: public/primers/**, app/(app)/learn/industry-primers/**, lib/primers/*
+breaking: no   affects: none
+
 ## 2026-06-08 — dashboard-mobile-darkmode + onboarding-profile — 8cbdb69
 Dashboard: mobile-responsive (useIsMobile hook + stacked grids in
 dashboard-client/hero/constellation/command-panel/consistency-card/news-card),

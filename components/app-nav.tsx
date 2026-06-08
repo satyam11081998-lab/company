@@ -38,6 +38,7 @@ export default function AppNav() {
               {[
                 { href: '/dashboard',   label: 'Dashboard' },
                 { href: '/learn/casebook', label: 'Learn' },
+                { href: '/learn/industry-primers', label: 'Industry Primers' },
                 { href: '/practice',    label: 'Practice' },
                 { href: '/gd-briefs',   label: 'GD Briefs' },
                 { href: '/cheat-sheet', label: 'Cheat Sheet' },
