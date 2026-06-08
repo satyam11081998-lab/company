@@ -11,6 +11,15 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-09 — industry-primers — Cement primer added (No. 22)
+Second Industry Primer "Cement" (No. 22) shipped as a fact-checked static page at
+/primers/cement, registered in lib/primers/index.ts. Data verified & restated
+(industry size $143B→~$27B; GST 28%→18% now law (Sep 2025); top-5 share ~60%; global
+capacity >8%; India Cements/Kesoram now under UltraTech; "Top-4 75%"→Top-20 ~70% output).
+Additive — registry entry + static asset only; no route/nav/contract change.
+touches: public/primers/cement/**, lib/primers/index.ts
+breaking: no   affects: none
+
 ## 2026-06-08 — industry-primers — (in tree, build-gate pending)
 New Learn → Industry Primers section; first primer "Aviation" (No. 21) shipped as a
 self-contained, fact-checked static page embedded via /primers/aviation. Data verified

@@ -12,5 +12,11 @@ export const PRIMERS: Primer[] = [
     title: 'The Aviation Industry',
     no: 21,
     sector: 'Aviation',
+  },
+  {
+    slug: 'cement',
+    title: 'The Cement Industry',
+    no: 22,
+    sector: 'Materials',
   }
 ];
