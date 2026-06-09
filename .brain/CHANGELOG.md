@@ -11,6 +11,9 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-09 — onboarding-503-fix — move onboarding gate from (app) layout (fragile headers() path read -> redirect loop -> 503) into middleware (reliable pathname)
+breaking: no
+
 ## 2026-06-09 — leaderboard-rebuild — 3 live views (All-India / Daily / Cohort) + FOMO standing card + LinkedIn share
 touches: lib/dashboard/leaderboards.ts (new), leaderboard page + client
 breaking: no
