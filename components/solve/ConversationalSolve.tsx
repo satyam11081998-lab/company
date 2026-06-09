@@ -250,7 +250,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           <div>
             {caseDetail.type !== 'guesstimate' && (
               <div className="text-small leading-relaxed text-foreground whitespace-pre-wrap">
-                {caseDetail.content}
+                {renderWithBold(caseDetail.content)}
               </div>
             )}
             {(caseDetail.hint || caseDetail.type === 'guesstimate') && (
@@ -263,13 +263,13 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                   {caseDetail.type === 'guesstimate' && (
                     <div className={caseDetail.hint ? "mb-3 pb-3 border-b border-border/50" : ""}>
                       <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Framework / Context</span>
-                      {caseDetail.content}
+                      {renderWithBold(caseDetail.content)}
                     </div>
                   )}
                   {caseDetail.hint && (
                     <div>
                       {caseDetail.type === 'guesstimate' && <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Hint</span>}
-                      {caseDetail.hint}
+                      {renderWithBold(caseDetail.hint)}
                     </div>
                   )}
                 </div>
@@ -432,6 +432,21 @@ function ClarificationCounter({ remaining, quota }: { remaining: number; quota: 
     >
       Questions remaining: {remaining}
     </div>
+  );
+}
+
+function renderWithBold(text: string) {
+  if (!text) return null;
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+          return <strong key={index}>{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      })}
+    </>
   );
 }
 
