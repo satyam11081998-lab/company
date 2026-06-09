@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trophy, Medal, Star } from 'lucide-react';
@@ -11,7 +12,6 @@ export const revalidate = 30;
 interface LeaderRow {
   id: string;
   name: string | null;
-  email: string;
   avatar_url: string | null;
   points: number;
 }
@@ -22,10 +22,15 @@ export default async function LeaderboardPage() {
   if (!user) redirect('/login');
   const authUser = user;
 
+  // Cross-user reads (leaderboard list + per-user submission counts) run via
+  // the service role: users/submissions are owner-scoped under RLS, so the
+  // cookie client would only return the current user. We deliberately select
+  // NO email here — only public display fields reach the client.
+  const svc = createServiceClient();
   const [userRes, usersRes, subCountsRes] = await Promise.all([
     supabase.from('users').select('*').eq('id', authUser.id).maybeSingle(),
-    supabase.from('users').select('id, name, email, avatar_url, points').order('points', { ascending: false }).limit(50),
-    supabase.from('submissions').select('user_id'),
+    svc.from('users').select('id, name, avatar_url, points').order('points', { ascending: false }).limit(50),
+    svc.from('submissions').select('user_id'),
   ]);
 
   const userRow = userRes.data as UserRow | null;
@@ -39,8 +44,8 @@ export default async function LeaderboardPage() {
   const top3 = users.slice(0, 3);
   const rest = users.slice(3);
 
-  const getName = (u: LeaderRow) => u.name || u.email.split('@')[0];
-  const getInitial = (u: LeaderRow) => (u.name || u.email).charAt(0).toUpperCase();
+  const getName = (u: LeaderRow) => u.name || 'Aspirant';
+  const getInitial = (u: LeaderRow) => (u.name || 'A').charAt(0).toUpperCase();
 
   return (
     <div className="min-h-screen bg-muted">
@@ -104,7 +109,7 @@ export default async function LeaderboardPage() {
                       </div>
                       <div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-border bg-muted overflow-hidden">
                         <Avatar className="w-full h-full">
-                          <AvatarImage src={top3[1].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[1].email || top3[1].id)}`} alt={getName(top3[1])} />
+                          <AvatarImage src={top3[1].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[1].id)}`} alt={getName(top3[1])} />
                           <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-800 text-white text-2xl font-bold w-full h-full flex items-center justify-center rounded-none">
                             {getInitial(top3[1])}
                           </AvatarFallback>
@@ -135,7 +140,7 @@ export default async function LeaderboardPage() {
                       }} />
                       <div className="w-20 h-20 md:w-32 md:h-32 rounded-full border-4 border-primary bg-muted overflow-hidden relative z-10">
                         <Avatar className="w-full h-full">
-                          <AvatarImage src={top3[0].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[0].email || top3[0].id)}`} alt={getName(top3[0])} />
+                          <AvatarImage src={top3[0].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[0].id)}`} alt={getName(top3[0])} />
                           <AvatarFallback className="bg-gradient-to-br from-primary to-primary-hover text-white text-3xl font-bold w-full h-full flex items-center justify-center rounded-none">
                             {getInitial(top3[0])}
                           </AvatarFallback>
@@ -162,7 +167,7 @@ export default async function LeaderboardPage() {
                       </div>
                       <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-4 border-border bg-muted overflow-hidden">
                         <Avatar className="w-full h-full">
-                          <AvatarImage src={top3[2].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[2].email || top3[2].id)}`} alt={getName(top3[2])} />
+                          <AvatarImage src={top3[2].avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(top3[2].id)}`} alt={getName(top3[2])} />
                           <AvatarFallback className="bg-gradient-to-br from-amber-500 to-amber-700 text-white text-xl font-bold w-full h-full flex items-center justify-center rounded-none">
                             {getInitial(top3[2])}
                           </AvatarFallback>
@@ -216,7 +221,7 @@ export default async function LeaderboardPage() {
                         #{rank}
                       </span>
                       <Avatar className="h-9 w-9 border border-border">
-                        <AvatarImage src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.email || u.id)}`} alt={getName(u)} />
+                        <AvatarImage src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.id)}`} alt={getName(u)} />
                         <AvatarFallback className="bg-navy text-navy-foreground text-sm font-semibold">
                           {getInitial(u)}
                         </AvatarFallback>

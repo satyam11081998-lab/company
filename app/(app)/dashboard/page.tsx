@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { redirect } from 'next/navigation';
 import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
 import { computeReadiness, type ReadinessSubmission } from '@/lib/readiness';
@@ -22,6 +23,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   const supabase = createClient(); // real client is synchronous (Phase 1)
+  // Service-role client for cross-user aggregates (cohort benchmark, peer
+  // proximity, proof rail, global rank). users/submissions are owner-scoped
+  // under RLS, so the cookie client cannot read other users' rows. These run
+  // server-side only and never expose raw rows/PII to the client.
+  const svc = createServiceClient();
 
   // Cached: layout already called this — React.cache() returns the prior
   // result with zero extra Supabase calls.
@@ -47,7 +53,7 @@ export default async function DashboardPage() {
       .from('case_attempts')
       .select('submission_id, is_first_attempt')
       .eq('user_id', authUser.id),
-    supabase
+    svc
       .from('submissions')
       .select('feedback_json')
       .not('feedback_json', 'is', null)
@@ -55,15 +61,15 @@ export default async function DashboardPage() {
     getHeatmap(supabase, authUser.id),
     getGrowthDeltas(supabase, authUser.id),
     getRecent(supabase, authUser.id),
-    getPeerProximity(supabase, authUser.id),
-    getCohortActivity(supabase),
-    getProofRail(supabase, dailyToday.case?.id ?? null),
+    getPeerProximity(svc, authUser.id),
+    getCohortActivity(svc),
+    getProofRail(svc, dailyToday.case?.id ?? null),
     getSkillGraph(supabase, authUser.id),
   ]);
 
   const [nodeTargets, todayMeta] = await Promise.all([
     getNodeOpenTargets(supabase, authUser.id, skillGraph.nodes as any),
-    getTodayMeta(supabase, dailyToday.case?.id ?? null)
+    getTodayMeta(svc, dailyToday.case?.id ?? null)
   ]);
 
   // userRow comes from the cached layout call, NOT a fresh query.
@@ -95,8 +101,8 @@ export default async function DashboardPage() {
 
   // --- peer comparison (O(1) rank, restored from the original dashboard) ---
   const [rankCountRes, totalCountRes] = await Promise.all([
-    supabase.from('users').select('id', { count: 'exact', head: true }).gt('points', points),
-    supabase.from('users').select('id', { count: 'exact', head: true }),
+    svc.from('users').select('id', { count: 'exact', head: true }).gt('points', points),
+    svc.from('users').select('id', { count: 'exact', head: true }),
   ]);
   const rankNum = (rankCountRes.count ?? 0) + 1;
   const totalUsers = totalCountRes.count ?? 0;
