@@ -27,8 +27,8 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  // Reset page when search or tab changes
-  useMemo(() => { setPage(1); }, [search, activeTab]);
+  // Reset page when search or tab changes (side effect → useEffect, not useMemo)
+  useEffect(() => { setPage(1); }, [search, activeTab]);
 
   // Filtering
   const filteredScored = useMemo(() => {
