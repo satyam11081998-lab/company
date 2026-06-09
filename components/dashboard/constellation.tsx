@@ -9,7 +9,6 @@ import {
   BossCountdown,
   PeerOrbit,
   HotZone,
-  PremiumGhostStrip,
   UnlockTeaser,
 } from './fomo';
 
@@ -347,7 +346,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
           <svg
             width="100%"
             height="100%"
-            style={{ position: 'absolute', inset: 0, opacity: 0.32 }}
+            style={{ position: 'absolute', inset: 0, opacity: 0.48 }}
             aria-hidden="true"
           >
             <defs>
@@ -399,7 +398,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
                   y2={nb.y}
                   stroke="var(--ink-4)"
                   strokeWidth={lit ? 1.2 : 1}
-                  opacity={dim ? 0.1 : lit ? 0.35 : 0.22}
+                  opacity={dim ? 0.18 : lit ? 0.62 : 0.42}
                   strokeDasharray={lit ? undefined : '3 4'}
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
@@ -439,7 +438,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
                   textTransform: 'uppercase',
                   fontWeight: 600,
                   color: c.color,
-                  opacity: dim ? 0.25 : 0.6,
+                  opacity: dim ? 0.35 : 0.92,
                   whiteSpace: 'nowrap',
                   pointerEvents: 'none',
                 }}
@@ -500,7 +499,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
                   display: 'grid',
                   placeItems: 'center',
                   color: n.s === 'done' ? 'white' : c.color,
-                  opacity: dim ? 0.25 : isLocked ? 0.45 : 1,
+                  opacity: dim ? 0.4 : isLocked ? 0.7 : 1,
                   cursor: isLocked ? 'not-allowed' : 'pointer',
                   transition: 'all .25s',
                 }}
@@ -592,7 +591,6 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
 
           {/* FOMO overlays */}
           <UnlockTeaser count={counts.next || 3} />
-          <PremiumGhostStrip />
         </div>
 
         {/* Side panel */}
@@ -669,7 +667,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
                 if (selNode.s === 'next') {
                   return 'Unlocks once you clear one parent skill.';
                 }
-                return 'Locked. Clear the prerequisites to unlock — or click anyway to browse cases in this cluster.';
+                return 'Locked. Clear an earlier skill in this path to unlock this case. You can still read the brief below.';
               })()}
             </p>
           </div>
@@ -785,28 +783,46 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
 
           {selNode && (
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button
-                className="btn primary"
-                style={{
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-                onClick={() => {
-                  // Always navigate to a real target — node-to-case guarantees
-                  // a fallback /practice URL even for locked / un-tagged nodes,
-                  // so the CTA is never dead. Owner directive 2026-06-07.
-                  const target = nodeTargets?.get(selNode.id);
-                  const href = target?.href && target.href !== '#'
-                    ? target.href
-                    : '/practice';
-                  router.push(href);
-                }}
-              >
-                <span>{nodeTargets?.get(selNode.id)?.resumeHint || (selNode?.boss ? "Start today's focus" : 'Start a case here')}</span>
-                <Play style={{ width: 12, height: 12, fill: 'currentColor' }} />
-              </button>
+              {selNode.s === 'locked' ? (
+                // A locked node is LOCKED — no attemptable case. The visual lock
+                // now matches the behaviour (previously the CTA started a case
+                // anyway). The user can still read the brief to learn the skill.
+                <button
+                  className="btn"
+                  disabled
+                  style={{
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
+                  }}
+                >
+                  <span>Locked · clear an earlier skill first</span>
+                  <Lock style={{ width: 12, height: 12 }} />
+                </button>
+              ) : (
+                <button
+                  className="btn primary"
+                  style={{
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                  onClick={() => {
+                    const target = nodeTargets?.get(selNode.id);
+                    const href = target?.href && target.href !== '#'
+                      ? target.href
+                      : '/practice';
+                    router.push(href);
+                  }}
+                >
+                  <span>{nodeTargets?.get(selNode.id)?.resumeHint || (selNode?.boss ? "Start today's focus" : 'Start a case here')}</span>
+                  <Play style={{ width: 12, height: 12, fill: 'currentColor' }} />
+                </button>
+              )}
               <button
                 className="btn"
                 style={{ justifyContent: 'center', fontSize: 12.5 }}

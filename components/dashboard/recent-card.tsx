@@ -32,15 +32,9 @@ const RECENT_LIMIT = 3;
 
 /* ── RecentCard ── */
 export function RecentCard({ u }: RecentCardProps) {
-  const cases: RecentItem[] = (u.activityFeed && u.activityFeed.length > 0
-    ? u.activityFeed
-    : u.casesSolved < 5
-      ? RECENT.slice(0, u.casesSolved).map((c: RecentItem, i: number) => ({
-          ...c,
-          when: i === 0 ? 'Yesterday' : i === 1 ? '2d ago' : '3d ago',
-        }))
-      : RECENT
-  ).slice(0, RECENT_LIMIT);
+  // Real recent submissions only — no mock fallback. When there are none, the
+  // empty-state below renders honestly instead of fabricated rows.
+  const cases: RecentItem[] = (u.activityFeed ?? []).slice(0, RECENT_LIMIT);
 
   // Each row links to the submission's results page so the user can re-read
   // their scored answer + feedback (the existing /results/[submission_id]

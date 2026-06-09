@@ -399,7 +399,7 @@ const PROOF_AVATARS = ['#C8102E', '#0F1C33', '#1F7A3A', '#B8770D'] as const;
 
 export const ProofRail: React.FC<{ u?: { proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData } }> = ({ u }) => {
   const data = u?.proofRail;
-  const avatars = data?.initials ?? [];
+  const names = data?.names ?? [];
   const total = data?.totalStartedToday ?? 0;
 
   // Honest empty state — no fabricated avatars or counts.
@@ -412,18 +412,45 @@ export const ProofRail: React.FC<{ u?: { proofRail?: import('@/lib/dashboard/pro
     );
   }
 
+  const extra = total - names.length;
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, color: 'var(--ink-3)' }}>
-      {avatars.length > 0 && (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: 'var(--ink-3)', flexWrap: 'wrap' }}>
+      {/* Overlapping pills with real FIRST names (small) — same stacked look, readable. */}
+      {names.length > 0 && (
         <div style={{ display: 'flex' }}>
-          {avatars.map((initials, i) => (
-            <div key={i} style={{ width: 20, height: 20, borderRadius: 999, background: PROOF_AVATARS[i % PROOF_AVATARS.length], border: '2px solid var(--card)', marginLeft: i ? -8 : 0, color: 'white', fontSize: 9, display: 'grid', placeItems: 'center', fontWeight: 700, fontFamily: 'var(--ff-mono)' }}>
-              {initials}
+          {names.map((name, i) => (
+            <div
+              key={i}
+              title={name}
+              style={{
+                height: 20,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 9px',
+                borderRadius: 999,
+                background: PROOF_AVATARS[i % PROOF_AVATARS.length],
+                border: '2px solid var(--card)',
+                marginLeft: i ? -8 : 0,
+                color: 'white',
+                fontSize: 10,
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.12)',
+                position: 'relative',
+                zIndex: i, // later pills sit on top so each name stays readable
+              }}
+            >
+              {name}
             </div>
           ))}
         </div>
       )}
-      <span><b style={{ color: 'var(--ink)' }}>{total} {total === 1 ? 'peer' : 'peers'}</b> started today&apos;s case</span>
+      <span>
+        {extra > 0
+          ? <><b style={{ color: 'var(--ink)' }}>+{extra}</b> more started today&apos;s case</>
+          : <><b style={{ color: 'var(--ink)' }}>{total}</b> started today&apos;s case</>}
+      </span>
     </div>
   );
 };
