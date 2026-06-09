@@ -11,6 +11,20 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-09 — qa-loggedin-phase1 — users RLS + service-role leaderboard/dashboard reads
+touches: 0006_rls.sql, leaderboard, dashboard
+breaking: data-access policy (announce); deploy code before SQL — affects: leaderboard/dashboard
+
+## 2026-06-09 — qa-loggedin-phase2 — GD-brief/headlines Lite+ gate + results IDOR filter
+touches: routes/news.py, lib/api.ts, gd-briefs pages, results/[id]
+breaking: news GET now needs Lite JWT (frontend updated)
+
+## 2026-06-09 — qa-loggedin-phase3 — onboarding x-pathname-on-request, free clarifications=0, college-email throttle+domain, lite bookmarks=0, API_URL guard
+breaking: no
+
+## 2026-06-09 — qa-loggedin-phase4 — block inactive cases, useEffect page-reset, eslintrc
+breaking: no
+
 ## 2026-06-09 — industry-primers — FMCG primer added (No. 23)
 Third Industry Primer "FMCG" (No. 23) shipped as a fact-checked static page at /primers/fmcg,
 registered in lib/primers/index.ts. Data verified & restated (FY2030 size $1,288B→~$643B;
