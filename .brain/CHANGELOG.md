@@ -11,6 +11,9 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-09 — dashboard-polish — real constellation locks (no attempt on locked nodes), removed decorative PRO ghost strip, Recent card real-only (no mock), proof rail shows first names, constellation contrast boost
+breaking: no
+
 ## 2026-06-09 — onboarding-503-fix — move onboarding gate from (app) layout (fragile headers() path read -> redirect loop -> 503) into middleware (reliable pathname)
 breaking: no
 
