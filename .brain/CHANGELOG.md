@@ -11,6 +11,15 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-09 — industry-primers — FMCG primer added (No. 23)
+Third Industry Primer "FMCG" (No. 23) shipped as a fact-checked static page at /primers/fmcg,
+registered in lib/primers/index.ts. Data verified & restated (FY2030 size $1,288B→~$643B;
+CAGR ~28%→~17%; internet users 780M→~1.0Bn; GDP ~3.5%→~3%; urban share 65%→~62%; "81% domestic /
+1.3% global" flagged as unverified). Additive — registry entry + static asset only; no
+route/nav/contract change.
+touches: public/primers/fmcg/**, lib/primers/index.ts
+breaking: no   affects: none
+
 ## 2026-06-09 — industry-primers — Cement primer added (No. 22)
 Second Industry Primer "Cement" (No. 22) shipped as a fact-checked static page at
 /primers/cement, registered in lib/primers/index.ts. Data verified & restated
