@@ -11,6 +11,13 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-09 — leaderboard-rebuild — 3 live views (All-India / Daily / Cohort) + FOMO standing card + LinkedIn share
+touches: lib/dashboard/leaderboards.ts (new), leaderboard page + client
+breaking: no
+
+## 2026-06-09 — dashboard-fomo-real — peer-proximity / proof-rail / guesstimate-card now use live data, honest empty states
+breaking: no
+
 ## 2026-06-09 — qa-loggedin-phase1 — users RLS + service-role leaderboard/dashboard reads
 touches: 0006_rls.sql, leaderboard, dashboard
 breaking: data-access policy (announce); deploy code before SQL — affects: leaderboard/dashboard
