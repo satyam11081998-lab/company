@@ -56,6 +56,35 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(homeUrl);
   }
 
+  // ── Onboarding gate ──────────────────────────────────────────────────
+  // Runs HERE, in middleware, because `pathname` is 100% reliable on the
+  // request. The previous gate lived in the (app) layout and read the path
+  // via headers() — that proved unreliable on Vercel and caused an infinite
+  // redirect loop → 503 blank page for not-yet-onboarded users. We skip API
+  // and auth routes (they must not be redirected to an HTML page).
+  if (user && !isPublic && !pathname.startsWith('/api') && !pathname.startsWith('/auth')) {
+    const onOnboarding = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
+    const { data: profile } = await supabase
+      .from('users')
+      .select('onboarding_completed_at')
+      .eq('id', user.id)
+      .maybeSingle();
+    const onboarded = !!profile?.onboarding_completed_at;
+
+    if (!onboarded && !onOnboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/onboarding';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+    if (onboarded && onOnboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Surface the current pathname as an internal header so the (app) layout
   // (which runs after middleware) can read it via next/headers and run the
   // onboarding-gate redirect without re-parsing the URL.

@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import AppNav from '@/components/app-nav';
 import { UserProvider } from '@/components/user-context';
 import MobileBottomNav from '@/components/mobile-bottom-nav';
@@ -22,24 +21,10 @@ export default async function AppLayout({
 
   const userRow = await getCachedUserRow(authUser.id);
 
-  // Onboarding gate (owner directive 2026-06-08): users who haven't completed
-  // onboarding can only see /onboarding. Everything else inside (app) bounces
-  // them back to finish set-up. The header is set by next.js middleware as a
-  // by-product of routing; the safer read is via headers() which gives us
-  // the request pathname during SSR.
-  const hdrs = headers();
-  const pathname =
-    hdrs.get('x-invoke-path') ??
-    hdrs.get('x-pathname') ??
-    hdrs.get('next-url') ??
-    '';
-  const onboarding = userRow?.onboarding_completed_at;
-  if (!onboarding && !pathname.startsWith('/onboarding')) {
-    redirect('/onboarding');
-  }
-  if (onboarding && pathname.startsWith('/onboarding')) {
-    redirect('/dashboard');
-  }
+  // NOTE: the onboarding redirect now lives in middleware (lib/supabase/
+  // middleware.ts), where the request pathname is reliable. Doing it here via
+  // headers() was unreliable on Vercel and caused a redirect loop → 503 blank
+  // page for not-yet-onboarded users. Do NOT re-add a path-based redirect here.
 
   const fallbackUser: UserRow = {
     id: authUser.id,
