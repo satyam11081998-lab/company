@@ -4,6 +4,9 @@
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
+  console.error('[MECE] NEXT_PUBLIC_API_URL is not set in production; backend calls will fail.');
+}
 
 export interface AttemptSummary {
   attempt_id: string;

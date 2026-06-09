@@ -40,6 +40,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
     }
 
+    // Domain guard: only academic domains may receive a verification link.
+    // Stops this endpoint from being used to spam arbitrary inboxes via our
+    // sending reputation. (.ac.in / .edu / .edu.in / .ac.* cover Indian + intl.)
+    const domain = email.toLowerCase().split('@')[1] || '';
+    const isAcademic = /(^|\.)(ac|edu)\.[a-z.]+$/.test(domain) || domain.endsWith('.edu');
+    if (!isAcademic) {
+      return NextResponse.json(
+        { error: 'Please use your official college email (e.g. an .ac.in or .edu address).' },
+        { status: 400 },
+      );
+    }
+
+    // Throttle: one verification email per user per 60s (persistent, so it
+    // holds across serverless instances unlike an in-memory limiter).
+    const sixtySecAgo = new Date(Date.now() - 60 * 1000).toISOString();
+    const { count: recentCount } = await supabase
+      .from('college_email_verifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', sixtySecAgo);
+    if ((recentCount ?? 0) > 0) {
+      return NextResponse.json(
+        { error: 'A verification email was just sent — please wait a minute before retrying.' },
+        { status: 429 },
+      );
+    }
+
     // Don't allow re-sending if already verified for this user with this email.
     const { data: existing } = await supabase
       .from('users')

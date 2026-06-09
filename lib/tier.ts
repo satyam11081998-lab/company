@@ -51,7 +51,7 @@ export const TIER_LIMITS = {
   lite: {
     maxReattempts: Infinity,
     maxHintQuestions: 5,       // 5 canned Q&A per case
-    maxBookmarks: 50,
+    maxBookmarks: 0,           // bookmarks/cheat-sheet are Pro-only (matches pricing page)
     learnExamplesPerDomain: 2,
     newsScope: 'mba-relevant' as const,
     practiceQuestionsPerDay: Infinity,
