@@ -98,7 +98,7 @@ export function GuesstimateCard({ u, daily }: GuesstimateCardProps) {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2, fontSize: 11, color: 'var(--ink-3)' }}>
         <span>
-          <b style={{ color: 'var(--ink)' }}>312 peers</b> tried this morning · <b style={{ color: 'var(--green)' }}>61%</b> got it
+          <b style={{ color: 'var(--ink)' }}>60-second</b> mental-math warm-up · sharpen your estimation reflex
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: 'var(--amber)', fontWeight: 500 }}>
           {hasDaily ? 'attempt now →' : 'streak +1'}

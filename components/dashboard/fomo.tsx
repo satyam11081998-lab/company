@@ -181,11 +181,15 @@ export const PeerProximity: React.FC<PeerProximityProps> = ({ u }) => {
   const data = u.peerProximity;
   
   if (u.casesSolved < 5 || !data?.competitor) {
-    const aspirants = data?.newAspirantsThisWeek ?? 1247;
+    const aspirants = data?.newAspirantsThisWeek ?? 0;
     return (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-3)' }}>
         <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--green)' }} />
-        <b style={{ color: 'var(--ink)' }}>{aspirants.toLocaleString()} new aspirants</b> joined this week. You&apos;re on day {u.streak}.
+        {aspirants > 0 ? (
+          <span><b style={{ color: 'var(--ink)' }}>{aspirants.toLocaleString()} new aspirant{aspirants === 1 ? '' : 's'}</b> joined this week. You&apos;re on day {u.streak}.</span>
+        ) : (
+          <span>You&apos;re on day {u.streak} — solve today&apos;s case to climb the board.</span>
+        )}
       </div>
     );
   }
@@ -392,23 +396,34 @@ export const UnlockTeaser: React.FC<UnlockTeaserProps> = ({ count = 3 }) => {
 /* ── ProofRail — tiny social proof under the hero CTA ──────────────── */
 
 const PROOF_AVATARS = ['#C8102E', '#0F1C33', '#1F7A3A', '#B8770D'] as const;
-const PROOF_INITIALS = ['SR', 'AK', 'PK', 'TM'] as const;
 
 export const ProofRail: React.FC<{ u?: { proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData } }> = ({ u }) => {
   const data = u?.proofRail;
-  const avatars = data?.initials ?? PROOF_INITIALS;
-  const total = data?.totalStartedToday ?? 23;
-  
+  const avatars = data?.initials ?? [];
+  const total = data?.totalStartedToday ?? 0;
+
+  // Honest empty state — no fabricated avatars or counts.
+  if (total === 0) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--ink-3)' }}>
+        <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--green)' }} />
+        <span>Be the first to solve today&apos;s case.</span>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, color: 'var(--ink-3)' }}>
-      <div style={{ display: 'flex' }}>
-        {avatars.map((initials, i) => (
-          <div key={i} style={{ width: 20, height: 20, borderRadius: 999, background: PROOF_AVATARS[i % PROOF_AVATARS.length], border: '2px solid var(--card)', marginLeft: i ? -8 : 0, color: 'white', fontSize: 9, display: 'grid', placeItems: 'center', fontWeight: 700, fontFamily: 'var(--ff-mono)' }}>
-            {initials}
-          </div>
-        ))}
-      </div>
-      <span><b style={{ color: 'var(--ink)' }}>{total} peers</b> in your cohort started this case today</span>
+      {avatars.length > 0 && (
+        <div style={{ display: 'flex' }}>
+          {avatars.map((initials, i) => (
+            <div key={i} style={{ width: 20, height: 20, borderRadius: 999, background: PROOF_AVATARS[i % PROOF_AVATARS.length], border: '2px solid var(--card)', marginLeft: i ? -8 : 0, color: 'white', fontSize: 9, display: 'grid', placeItems: 'center', fontWeight: 700, fontFamily: 'var(--ff-mono)' }}>
+              {initials}
+            </div>
+          ))}
+        </div>
+      )}
+      <span><b style={{ color: 'var(--ink)' }}>{total} {total === 1 ? 'peer' : 'peers'}</b> started today&apos;s case</span>
     </div>
   );
 };
