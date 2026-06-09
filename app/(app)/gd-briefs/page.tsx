@@ -22,17 +22,20 @@ export default function GdBriefsPage() {
   useEffect(() => {
     let mounted = true;
     if (locked) { setLoading(false); return; }
-    fetchHeadlines()
-      .then((data) => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        const data = await fetchHeadlines(session?.access_token);
         if (!mounted) return;
         setHeadlines(data);
         setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!mounted) return;
-        setError(err.message || 'Could not load headlines');
+        setError(err instanceof Error ? err.message : 'Could not load headlines');
         setLoading(false);
-      });
+      }
+    })();
     return () => { mounted = false; };
   }, [locked]);
 

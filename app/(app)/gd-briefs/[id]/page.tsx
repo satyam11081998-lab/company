@@ -9,6 +9,7 @@ import type { GeneratedBriefData } from '@/lib/types';
 import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
 import { useUser } from '@/components/user-context';
 import { AddToCheatSheetButton } from '@/components/cheat-sheet/add-to-cheat-sheet-button';
+import { createClient } from '@/lib/supabase/client';
 
 export default function BriefDetailPage() {
   const params = useParams();
@@ -29,8 +30,11 @@ export default function BriefDetailPage() {
     // trigger generation via POST. This was previously showing
     // "Could not load brief — brief not generated yet" on first visit.
     const load = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
       try {
-        const cached = await fetchBrief(headlineId);
+        const cached = await fetchBrief(headlineId, token);
         if (mounted) {
           setBrief(cached);
           setLoading(false);
@@ -51,7 +55,7 @@ export default function BriefDetailPage() {
       // First-visit path — generate then render. Generation is a slower
       // OpenAI call (~5-10s); we keep the loading skeleton up until it returns.
       try {
-        const fresh = await generateBrief(headlineId);
+        const fresh = await generateBrief(headlineId, token);
         if (mounted) {
           setBrief(fresh);
           setLoading(false);

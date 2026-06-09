@@ -26,7 +26,9 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const authUser = user;
 
   const [submissionRes, userBadgesRes] = await Promise.all([
-    supabase.from('submissions').select('*').eq('id', params.id).maybeSingle(),
+    // Ownership filter (defense-in-depth alongside RLS): a user may only ever
+    // read their OWN submission — prevents IDOR via a guessed/!shared id.
+    supabase.from('submissions').select('*').eq('id', params.id).eq('user_id', authUser.id).maybeSingle(),
     supabase.from('user_badges').select('*, badges(*)').eq('trigger_submission_id', params.id),
   ]);
   const submission = submissionRes.data as SubmissionRow | null;
