@@ -86,6 +86,20 @@ export const PRIMERS: Primer[] = [
       { label: 'SIPRI — Arms Transfers',          url: 'https://www.sipri.org/databases/armstransfers' },
     ],
   },
+  {
+    slug: 'industry-primers/ecommerce',
+    folder: 'ecommerce',
+    no: 5,
+    title: 'E-Commerce',
+    sector: 'Internet & Retail',
+    sources: [
+      { label: 'IBEF — E-Commerce',               url: 'https://www.ibef.org/industry/ecommerce' },
+      { label: 'Bain & Co — How India Shops Online', url: 'https://www.bain.com/insights/how-india-shops-online-2026/' },
+      { label: 'ONDC',                            url: 'https://ondc.org' },
+      { label: 'Invest India — Retail & E-Comm',  url: 'https://www.investindia.gov.in/sector/retail-e-commerce' },
+      { label: 'Statista — India E-Commerce',     url: 'https://www.statista.com/markets/413/topic/457/e-commerce/' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

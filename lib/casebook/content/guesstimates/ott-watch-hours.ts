@@ -8,30 +8,50 @@ export const ottWatchHours: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['time-budget', 'digital'] },
   blocks: [
     { type: 'prose', md: 'Estimate total hours of OTT video (streaming platforms, not YouTube/reels) watched in India per day. Time-based guesstimates have a built-in sanity anchor no other type has: **nobody has more than 24 hours**, and screen time competes with work, sleep, and other media.' },
-    { type: 'svg', maxWidth: 640, ariaLabel: 'Time budget estimation with viewer base segmented by engagement and hours per day each, anchored against total leisure time', caption: 'Segment viewers by engagement; sanity-check the result against India\'s total leisure-hours budget.', svg: `<svg viewBox="0 0 640 260" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+    { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from smartphone base to OTT weekly actives, segmented into binger, regular and occasional bands with hours each, summed and bounded by the national leisure-time budget', caption: 'Base → viewer funnel → engagement bands → sum — then the 24-hour constraint bounds the answer from above.', svg: `<svg viewBox="0 0 720 530" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="otng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
-  <rect x="195" y="14" width="250" height="42" rx="11" fill="url(#otng)"/>
-  <text x="320" y="33" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">~250M OTT VIEWERS (weekly active)</text>
-  <text x="320" y="49" text-anchor="middle" font-size="9" fill="#b9c4d6">paid + ad-supported + shared accounts</text>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#otng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">OTT HOURS / DAY · INDIA</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">streaming platforms, not YouTube/reels</text>
+  <path d="M360 60 L360 78" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="40" y="86" width="180" height="88" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-    <text x="130" y="107" font-size="10" font-weight="700" fill="hsl(var(--primary))">BINGERS · 15%</text>
-    <text x="130" y="124" font-size="9" fill="hsl(var(--muted-foreground))">~2.5 hrs/day</text>
-    <text x="130" y="140" font-size="9" fill="hsl(var(--muted-foreground))">night-time serial watchers</text>
-    <text x="130" y="160" font-size="10" font-weight="700" fill="hsl(var(--foreground))">37M × 2.5 ≈ 95M hrs</text>
-    <rect x="240" y="86" width="180" height="88" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-    <text x="330" y="107" font-size="10" font-weight="700" fill="hsl(var(--foreground))">REGULARS · 35%</text>
-    <text x="330" y="124" font-size="9" fill="hsl(var(--muted-foreground))">~1 hr/day</text>
-    <text x="330" y="140" font-size="9" fill="hsl(var(--muted-foreground))">an episode an evening</text>
-    <text x="330" y="160" font-size="10" font-weight="700" fill="hsl(var(--foreground))">88M × 1 ≈ 88M hrs</text>
-    <rect x="440" y="86" width="180" height="88" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-    <text x="530" y="107" font-size="10" font-weight="700" fill="hsl(var(--foreground))">OCCASIONAL · 50%</text>
-    <text x="530" y="124" font-size="9" fill="hsl(var(--muted-foreground))">~0.25 hr/day average</text>
-    <text x="530" y="140" font-size="9" fill="hsl(var(--muted-foreground))">weekend movie viewers</text>
-    <text x="530" y="160" font-size="10" font-weight="700" fill="hsl(var(--foreground))">125M × 0.25 ≈ 31M hrs</text>
+    <rect x="210" y="80" width="300" height="42" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="360" y="97" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">VIEWER BASE: 750M smartphones → ~33% OTT weekly-active</text>
+    <text x="360" y="113" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">≈ 250M viewers (subs shared ~2.5×, + ad tiers)</text>
   </g>
-  <rect x="160" y="196" width="320" height="40" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-  <text x="320" y="221" text-anchor="middle" font-size="11" font-weight="700" fill="hsl(var(--primary))">≈ 21–22 CRORE HOURS / DAY</text>
+  <path d="M360 122 L360 138 M125 138 L595 138 M125 138 L125 154 M360 138 L360 154 M595 138 L595 154" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="156" width="190" height="110" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="125" y="176" font-size="10" font-weight="700" fill="hsl(var(--primary))">BINGERS · 15% = 37M</text>
+    <text x="125" y="194" font-size="8.5" fill="hsl(var(--muted-foreground))">night serial-watchers · weekend</text>
+    <text x="125" y="208" font-size="8.5" fill="hsl(var(--muted-foreground))">marathons · ~17 hrs/week</text>
+    <text x="125" y="226" font-size="9" font-weight="600" fill="hsl(var(--foreground))">~2.5 hrs/day</text>
+    <text x="125" y="248" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ 95M hrs · 44%</text>
+    <rect x="265" y="156" width="190" height="110" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="360" y="176" font-size="10" font-weight="700" fill="hsl(var(--foreground))">REGULARS · 35% = 88M</text>
+    <text x="360" y="194" font-size="8.5" fill="hsl(var(--muted-foreground))">an episode an evening ·</text>
+    <text x="360" y="208" font-size="8.5" fill="hsl(var(--muted-foreground))">commute viewing · ~7 hrs/week</text>
+    <text x="360" y="226" font-size="9" font-weight="600" fill="hsl(var(--foreground))">~1 hr/day</text>
+    <text x="360" y="248" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">≈ 88M hrs · 41%</text>
+    <rect x="500" y="156" width="190" height="110" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="595" y="176" font-size="10" font-weight="700" fill="hsl(var(--foreground))">OCCASIONAL · 50% = 125M</text>
+    <text x="595" y="194" font-size="8.5" fill="hsl(var(--muted-foreground))">weekend movie + cricket-event</text>
+    <text x="595" y="208" font-size="8.5" fill="hsl(var(--muted-foreground))">spikes · ~2 hrs/week</text>
+    <text x="595" y="226" font-size="9" font-weight="600" fill="hsl(var(--foreground))">~0.25 hr/day</text>
+    <text x="595" y="248" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">≈ 31M hrs · 15%</text>
+  </g>
+  <path d="M125 266 L125 288 M360 266 L360 288 M595 266 L595 288 M125 288 L595 288 M360 288 L360 304" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="190" y="306" width="340" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="325" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">≈ 215M ≈ 21–22 CRORE HOURS / DAY</text>
+  <text x="360" y="342" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">bingers: 15% of viewers, 44% of watch time</text>
+  <path d="M360 350 L360 366" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="140" y="368" width="440" height="66" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="360" y="388" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">THE 24-HOUR BOUND (the differentiator)</text>
+    <text x="360" y="405" font-size="8.5" fill="hsl(var(--muted-foreground))">~1B adults × ~4 leisure hrs = 4B leisure-hours/day nationally</text>
+    <text x="360" y="421" font-size="8.5" fill="hsl(var(--muted-foreground))">OTT at 215M ≈ 5% of national leisure — plausible next to TV (~3.5 hrs in TV homes) and social media</text>
+  </g>
+  <text x="360" y="478" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Had the build produced 2B hours, that's half of India's free time — impossible, recompute. Time estimates carry a built-in ceiling.</text>
 </svg>` },
     { type: 'steps', ordered: true, items: [
       { title: 'Viewer base', md: '~750M smartphone users → OTT weekly-actives ≈ **250M** (subscriptions are shared; ad-supported tiers widen the base).' },
