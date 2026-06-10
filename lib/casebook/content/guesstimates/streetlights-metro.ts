@@ -8,27 +8,55 @@ export const streetlightsMetro: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['geometry', 'infrastructure'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of streetlights in a 600-km² metro of 10 million people. The road network is the skeleton: estimate **road-length per km²**, then divide by pole spacing. Geometry beats demographics here.' },
-    { type: 'svg', maxWidth: 640, ariaLabel: 'Estimation from city area through road density to total road length divided by pole spacing', caption: 'Area → road density → road-km → ÷ spacing. Both sides of major roads get poles — don\'t halve what should double.', svg: `<svg viewBox="0 0 640 250" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+    { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier geometry tree: city area through derived road density to road length, split into arterial both-sides and local one-side lighting with different pole spacing, plus parks and junctions, summed with per-capita check', caption: 'Area → derived road density → road mix with per-type spacing → sum + extras → per-capita check. Geometry, not demographics.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="slng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#slng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">STREETLIGHTS · 600 km² METRO</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">road geometry does the estimating</text>
+  <path d="M360 60 L360 78" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="30" y="26" width="180" height="74" rx="10" fill="url(#slng)"/>
-    <text x="120" y="50" font-size="10" font-weight="700" fill="#ffffff">ROAD LENGTH</text>
-    <text x="120" y="67" font-size="9" fill="#b9c4d6">600 km² × ~12 km of road</text>
-    <text x="120" y="81" font-size="9" fill="#b9c4d6">per km² ≈ 7,000 road-km</text>
-    <rect x="250" y="26" width="170" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-    <text x="335" y="50" font-size="10" font-weight="700" fill="hsl(var(--foreground))">ROAD MIX</text>
-    <text x="335" y="67" font-size="9" fill="hsl(var(--muted-foreground))">15% arterial (both sides) ·</text>
-    <text x="335" y="81" font-size="9" fill="hsl(var(--muted-foreground))">85% local lanes (one side)</text>
-    <rect x="460" y="26" width="160" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-    <text x="540" y="50" font-size="10" font-weight="700" fill="hsl(var(--primary))">POLE SPACING</text>
-    <text x="540" y="67" font-size="9" fill="hsl(var(--muted-foreground))">arterial ~30m ·</text>
-    <text x="540" y="81" font-size="9" fill="hsl(var(--muted-foreground))">local ~40m</text>
+    <rect x="210" y="80" width="300" height="56" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="360" y="99" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">ROAD DENSITY — DERIVE IT, DO NOT QUOTE IT</text>
+    <text x="360" y="115" font-size="8.5" fill="hsl(var(--muted-foreground))">a 1-km² grid with blocks every ~150m holds ~13 km of road</text>
+    <text x="360" y="129" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">600 km² × ~12 km/km² ≈ 7,000 road-km</text>
   </g>
-  <path d="M210 63 L246 63 M420 63 L456 63" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <path d="M335 100 L335 128 M540 100 L540 128 M335 128 L540 128 M437 128 L437 150" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
-  <rect x="287" y="154" width="300" height="40" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-  <text x="437" y="179" text-anchor="middle" font-size="11" font-weight="700" fill="hsl(var(--primary))">≈ 2.2–2.5 LAKH STREETLIGHTS</text>
-  <text x="320" y="222" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Per-capita check: ~2.3L ÷ 10M ≈ one light per 43 people — Indian metros report 1 per 40–60 ✓</text>
+  <path d="M360 136 L360 152 M125 152 L595 152 M125 152 L125 168 M360 152 L360 168 M595 152 L595 168" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="170" width="190" height="104" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.3"/>
+    <text x="125" y="190" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">ARTERIAL · 15%</text>
+    <text x="125" y="207" font-size="8.5" fill="hsl(var(--muted-foreground))">1,050 km · wide, fast roads</text>
+    <text x="125" y="221" font-size="8.5" fill="hsl(var(--muted-foreground))">lit BOTH sides · ~30 m spacing</text>
+    <text x="125" y="235" font-size="8.5" fill="hsl(var(--muted-foreground))">1,050 ÷ 0.03 × 2</text>
+    <text x="125" y="257" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ 70,000 poles</text>
+    <rect x="265" y="170" width="190" height="104" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="360" y="190" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LOCAL STREETS · 85%</text>
+    <text x="360" y="207" font-size="8.5" fill="hsl(var(--muted-foreground))">5,950 km · residential lanes</text>
+    <text x="360" y="221" font-size="8.5" fill="hsl(var(--muted-foreground))">lit ONE side · ~40 m spacing</text>
+    <text x="360" y="235" font-size="8.5" fill="hsl(var(--muted-foreground))">5,950 ÷ 0.04</text>
+    <text x="360" y="257" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">≈ 149,000 poles</text>
+    <rect x="500" y="170" width="190" height="104" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="595" y="190" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">NON-ROAD LIGHTING</text>
+    <text x="595" y="207" font-size="8.5" fill="hsl(var(--muted-foreground))">parks, junctions (high-mast),</text>
+    <text x="595" y="221" font-size="8.5" fill="hsl(var(--muted-foreground))">flyovers, bus stands,</text>
+    <text x="595" y="235" font-size="8.5" fill="hsl(var(--muted-foreground))">market squares</text>
+    <text x="595" y="257" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">≈ +10,000</text>
+  </g>
+  <path d="M125 274 L125 296 M360 274 L360 296 M595 274 L595 296 M125 296 L595 296 M360 296 L360 312" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="190" y="314" width="340" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="333" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">≈ 2.3 LAKH STREETLIGHTS</text>
+  <text x="360" y="350" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">70k + 149k + 10k</text>
+  <path d="M360 358 L360 374 M185 374 L535 374 M185 374 L185 390 M535 374 L535 390" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="65" y="392" width="240" height="60" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="185" y="412" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">CHECK 1 · PER CAPITA</text>
+    <text x="185" y="429" font-size="8.5" fill="hsl(var(--muted-foreground))">2.3L ÷ 10M ≈ 1 light per 43 people</text>
+    <text x="185" y="443" font-size="8.5" fill="hsl(var(--muted-foreground))">metros report 1 per 40–60 ✓</text>
+    <rect x="415" y="392" width="240" height="60" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="535" y="412" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">CHECK 2 · POWER BILL</text>
+    <text x="535" y="429" font-size="8.5" fill="hsl(var(--muted-foreground))">2.3L × ~100W LED × 11 hrs ≈ 250 MWh/night</text>
+    <text x="535" y="443" font-size="8.5" fill="hsl(var(--muted-foreground))">≈ ₹60–70 cr/yr — sane municipal line item ✓</text>
+  </g>
+  <text x="360" y="496" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Deriving the road-density anchor from block geometry, live, is exactly what this genre tests.</text>
 </svg>` },
     { type: 'steps', ordered: true, items: [
       { title: 'Road length', md: 'Dense urban grids carry ~10–15 km of road per km² → 600 × 12 ≈ **7,000 road-km**.' },
