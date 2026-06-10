@@ -24,36 +24,49 @@ export const cementSouthernTarget: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 700, ariaLabel: 'Due diligence triage matrix mapping four findings by severity and fixability into reprice, condition, or noise outcomes', caption: 'Triage every finding on two axes: how bad, and what can a contract do about it.', svg: `<svg viewBox="0 0 700 330" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="cdcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="cdng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="215" y="12" width="270" height="40" rx="11" fill="url(#cdng)" filter="url(#cdcs)"/>
-  <text x="350" y="37" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">SEVERITY × FIXABILITY TRIAGE</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Due diligence triage matrix of four findings, a quantification tier converting the power gap to about 190 crore off the price and the utilization story to 200 crore of air, and a reprice verdict bar from 3,400 to about 3,000 crore', caption: 'The triage, then the arithmetic — two findings convert to ~₹400 cr of price, one becomes a condition, one an escrow.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="cdng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#cdng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">SEVERITY × FIXABILITY TRIAGE</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">₹3,400 cr ≈ $100/tonne vs $110–130 replacement — which findings move the price?</text>
   <g text-anchor="middle">
-    <rect x="55" y="75" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.75" filter="url(#cdcs)"/>
-    <text x="195" y="97" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">① LIMESTONE LEASE — THESIS RISK</text>
-    <text x="195" y="116" font-size="9" fill="hsl(var(--muted-foreground))">no limestone = no plant; auction risk is real</text>
-    <text x="195" y="131" font-size="9" fill="hsl(var(--muted-foreground))">not fixable by indemnity — value walks away</text>
-    <text x="195" y="153" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ CONDITION PRECEDENT or restructure</text>
-    <rect x="365" y="75" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#cdcs)"/>
-    <text x="505" y="97" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">② UTILIZATION STORY — VALUATION AIR</text>
-    <text x="505" y="116" font-size="9" fill="hsl(var(--muted-foreground))">management 7–8% vs market 4–5% growth:</text>
-    <text x="505" y="131" font-size="9" fill="hsl(var(--muted-foreground))">rebuild model at 4.5%; the 80% path vanishes</text>
-    <text x="505" y="153" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ REPRICE (model, not promises)</text>
-    <rect x="55" y="195" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#cdcs)"/>
-    <text x="195" y="217" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">③ POWER CONTRACT — QUANTIFIABLE</text>
-    <text x="195" y="236" font-size="9" fill="hsl(var(--muted-foreground))">known expiry, known tariff gap →</text>
-    <text x="195" y="251" font-size="9" fill="hsl(var(--muted-foreground))">a clean EBITDA adjustment, nothing more</text>
-    <text x="195" y="273" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ REPRICE (≈ −₹65 cr EBITDA/yr)</text>
-    <rect x="365" y="195" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#cdcs)"/>
-    <text x="505" y="217" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">④ LITIGATION — CONTRACTABLE</text>
-    <text x="505" y="236" font-size="9" fill="hsl(var(--muted-foreground))">bounded (₹90 cr worst case), insurable or</text>
-    <text x="505" y="251" font-size="9" fill="hsl(var(--muted-foreground))">indemnifiable via escrow from seller proceeds</text>
-    <text x="505" y="273" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ INDEMNITY + ESCROW (not a price item)</text>
+    <rect x="50" y="84" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="190" y="106" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">① LIMESTONE LEASE — THESIS RISK</text>
+    <text x="190" y="125" font-size="8.5" fill="hsl(var(--muted-foreground))">lease expires in 7 yrs; state auctions, not renews</text>
+    <text x="190" y="139" font-size="8.5" fill="hsl(var(--muted-foreground))">not fixable by indemnity — value walks away</text>
+    <text x="190" y="162" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ CONDITION PRECEDENT or 25% escrow</text>
+    <rect x="390" y="84" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="530" y="106" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">② UTILIZATION STORY — VALUATION AIR</text>
+    <text x="530" y="125" font-size="8.5" fill="hsl(var(--muted-foreground))">management 7–8% vs analysts 4–5% growth:</text>
+    <text x="530" y="139" font-size="8.5" fill="hsl(var(--muted-foreground))">rebuild at 4.5%; the 80% path vanishes</text>
+    <text x="530" y="162" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ REPRICE (model, not promises)</text>
+    <rect x="50" y="204" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="190" y="226" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">③ POWER CONTRACT — QUANTIFIABLE</text>
+    <text x="190" y="245" font-size="8.5" fill="hsl(var(--muted-foreground))">below-market captive PPA, 60% of power,</text>
+    <text x="190" y="259" font-size="8.5" fill="hsl(var(--muted-foreground))">expires month 14 · gap ₹1.8/unit</text>
+    <text x="190" y="282" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ REPRICE (clean EBITDA adjustment)</text>
+    <rect x="390" y="204" width="280" height="100" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="530" y="226" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">④ LITIGATION — CONTRACTABLE</text>
+    <text x="530" y="245" font-size="8.5" fill="hsl(var(--muted-foreground))">bounded: ₹90 cr worst case, ₹15 cr provisioned —</text>
+    <text x="530" y="259" font-size="8.5" fill="hsl(var(--muted-foreground))">insurable or escrowed from seller proceeds</text>
+    <text x="530" y="282" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">→ INDEMNITY + ESCROW (not a price item)</text>
   </g>
-  <text x="350" y="318" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Rule: model what's quantifiable, contract what's bounded, condition what's existential — and never pay for management's growth slide.</text>
+  <path d="M360 306 L360 314 M215 314 L505 314 M215 314 L215 328 M505 314 L505 328" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="330" width="240" height="64" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="215" y="348" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">③ POWER, QUANTIFIED</text>
+    <text x="215" y="364" font-size="8.5" fill="hsl(var(--muted-foreground))">2.5 MT × 80 units × 60% = 120M × ₹1.8 ≈ ₹22 cr/yr</text>
+    <text x="215" y="384" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">× ~9× ≈ ₹190–200 cr off</text>
+    <rect x="385" y="330" width="240" height="64" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="348" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">② UTILIZATION, QUANTIFIED</text>
+    <text x="505" y="364" font-size="8.5" fill="hsl(var(--muted-foreground))">at 4.5%: ~70% not 80% → ₹55–60 cr less yr-3 EBITDA</text>
+    <text x="505" y="384" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹200+ cr of air</text>
+  </g>
+  <path d="M215 394 L215 410 M505 394 L505 410 M215 410 L505 410 M360 410 L360 424" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="426" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="445" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">REPRICE ₹3,400 → ~₹3,000 CR ≈ $88/TONNE</text>
+  <text x="360" y="462" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">limestone = condition precedent or 25% escrow · litigation = indemnity + ₹90 cr escrow · share gain = buyer upside, unpaid-for</text>
+  <text x="360" y="500" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Model what is quantifiable, contract what is bounded, condition what is existential — and never pay the seller for value only the buyer can create.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

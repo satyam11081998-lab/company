@@ -22,48 +22,60 @@ export const multiplexMarginSqueeze: Page = {
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'Decompose profit per visitor. A multiplex earns through three streams per admission — ticket, food & beverage (F&B), and advertising — and carries a largely fixed cost base. Volume is up, so chase the per-visitor economics first.' },
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Issue tree decomposing multiplex profit into revenue per visitor across ticket, food and beverage, and advertising, and cost per visitor across fixed and variable', caption: 'The case-specific tree — profit per visitor, not total profit, because volume is already known to be up.', svg: `<svg viewBox="0 0 720 400" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="mmcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="mmng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-    <linearGradient id="mmcg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(var(--card))"/><stop offset="1" stop-color="hsl(var(--background))"/></linearGradient>
-  </defs>
-  <rect x="240" y="18" width="240" height="50" rx="12" fill="url(#mmng)" filter="url(#mmcs)"/>
-  <text x="360" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">PROFIT = VISITORS ×</text>
-  <text x="360" y="56" text-anchor="middle" font-size="11" fill="#b9c4d6">(revenue/visitor − cost/visitor)</text>
-  <path d="M360 68 L360 84 M180 84 L540 84 M180 84 L180 100 M540 84 L540 100" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <rect x="60" y="102" width="240" height="44" rx="10" fill="url(#mmcg)" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#mmcs)"/>
-  <text x="180" y="121" text-anchor="middle" font-size="12" font-weight="700" fill="hsl(var(--foreground))">REVENUE / VISITOR</text>
-  <text x="180" y="137" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">the suspect — admissions grew, profit didn't</text>
-  <rect x="420" y="102" width="240" height="44" rx="10" fill="url(#mmcg)" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#mmcs)"/>
-  <text x="540" y="121" text-anchor="middle" font-size="12" font-weight="700" fill="hsl(var(--foreground))">COST / VISITOR</text>
-  <text x="540" y="137" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">mostly fixed — should FALL as volume rises</text>
-  <path d="M180 146 L180 162 M70 162 L290 162 M70 162 L70 178 M180 162 L180 178 M290 162 L290 178" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-  <rect x="20" y="180" width="100" height="56" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-  <text x="70" y="201" text-anchor="middle" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">TICKET</text>
-  <text x="70" y="216" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">ATP · discounting</text>
-  <text x="70" y="228" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">· channel fees</text>
-  <rect x="130" y="180" width="100" height="56" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-  <text x="180" y="201" text-anchor="middle" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">F&amp;B</text>
-  <text x="180" y="216" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">attach rate ·</text>
-  <text x="180" y="228" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">spend per buyer</text>
-  <rect x="240" y="180" width="100" height="56" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-  <text x="290" y="201" text-anchor="middle" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">AD / OTHER</text>
-  <text x="290" y="216" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">on-screen ads ·</text>
-  <text x="290" y="228" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">convenience fees</text>
-  <path d="M540 146 L540 162 M460 162 L620 162 M460 162 L460 178 M620 162 L620 178" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-  <rect x="410" y="180" width="100" height="56" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-  <text x="460" y="201" text-anchor="middle" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">FIXED</text>
-  <text x="460" y="216" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">rent · payroll ·</text>
-  <text x="460" y="228" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">energy base</text>
-  <rect x="570" y="180" width="100" height="56" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-  <text x="620" y="201" text-anchor="middle" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">VARIABLE</text>
-  <text x="620" y="216" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">F&amp;B COGS ·</text>
-  <text x="620" y="228" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">distributor share</text>
-  <rect x="120" y="270" width="480" height="48" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="290" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">HYPOTHESIS: TICKET AND F&amp;B PER-VISITOR ECONOMICS ERODED</text>
-  <text x="360" y="307" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">volume growth that is *bought* with discounts shows up exactly like this</text>
-  <text x="360" y="360" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Lead with the highlighted branches; park advertising and fixed cost unless the data points there.</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree decomposing multiplex profit per visitor: ticket price 240 to 205 rupees, food and beverage attach 55 to 44 percent, cost per visitor unchanged, with contribution bridge row from 304 to 256 rupees and bought-volume verdict bar', caption: 'The full per-visitor tree — every branch carries its number. The contribution bridge ₹304 → ₹256 is the case in one row.', svg: `<svg viewBox="0 0 720 490" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="mmng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#mmng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">PROFIT = VISITORS × (REV − COST)/VISITOR</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">admissions +12%, profit −18% — chase per-visitor economics</text>
+  <path d="M360 60 L360 70 M242 70 L595 70 M242 70 L242 80 M595 70 L595 80" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <g text-anchor="middle">
+    <rect x="112" y="82" width="260" height="42" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="242" y="99" font-size="10" font-weight="700" fill="hsl(var(--primary))">REVENUE / VISITOR — the suspect</text>
+    <text x="242" y="115" font-size="8.5" fill="hsl(var(--muted-foreground))">admissions grew, profit did not</text>
+    <rect x="465" y="82" width="260" height="42" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="595" y="99" font-size="10" font-weight="700" fill="hsl(var(--foreground))">COST / VISITOR</text>
+    <text x="595" y="115" font-size="8.5" fill="hsl(var(--muted-foreground))">mostly fixed — should fall as volume rises</text>
+  </g>
+  <path d="M242 124 L242 138 M125 138 L360 138 M125 138 L125 152 M360 138 L360 152 M595 124 L595 152" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="125" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">TICKET (the bigger wound)</text>
+    <text x="125" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">45% of tickets via app vouchers:</text>
+    <text x="125" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">₹70-off, 60% client-funded</text>
+    <text x="125" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">= ₹42 discount per voucher seat</text>
+    <text x="125" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">₹240 → ₹205 (−₹35)</text>
+    <text x="125" y="256" font-size="8" fill="hsl(var(--muted-foreground))">~2.5× the F&amp;B effect</text>
+    <rect x="265" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">F&amp;B ATTACH</text>
+    <text x="360" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">spend/buyer flat at ₹180,</text>
+    <text x="360" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">65% gross margin — drop is</text>
+    <text x="360" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">concentrated in voucher buyers</text>
+    <text x="360" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">55% → 44% (−₹13)</text>
+    <text x="360" y="256" font-size="8" fill="hsl(var(--muted-foreground))">deal-seekers, not movie-goers</text>
+    <rect x="500" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="595" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">COST / VISITOR</text>
+    <text x="595" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">rent · payroll · energy base</text>
+    <text x="595" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">+ F&amp;B COGS · distributor share</text>
+    <text x="595" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">same 40 screens both years</text>
+    <text x="595" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">unchanged ✓</text>
+    <text x="595" y="256" font-size="8" fill="hsl(var(--muted-foreground))">branch eliminated</text>
+  </g>
+  <path d="M125 264 L125 282 M360 264 L360 282 M595 264 L595 282 M125 282 L595 282 M215 282 L215 298 M505 282 L505 298" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="300" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="215" y="320" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LAST YEAR</text>
+    <text x="215" y="338" font-size="10" font-weight="700" fill="hsl(var(--foreground))">₹240 + 0.55×₹180×65% ≈ ₹304</text>
+    <text x="215" y="352" font-size="8.5" fill="hsl(var(--muted-foreground))">contribution per visitor</text>
+    <rect x="385" y="300" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="320" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">THIS YEAR</text>
+    <text x="505" y="338" font-size="10" font-weight="700" fill="hsl(var(--primary))">₹205 + 0.44×₹180×65% ≈ ₹256</text>
+    <text x="505" y="352" font-size="8.5" fill="hsl(var(--muted-foreground))">−16% per visitor</text>
+  </g>
+  <path d="M215 358 L215 376 M505 358 L505 376 M215 376 L505 376 M360 376 L360 390" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="170" y="392" width="380" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="411" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">VOLUME +₹31 &lt; PRICE/MIX −₹48 — GROWTH WAS BOUGHT</text>
+  <text x="360" y="428" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">cap vouchers to empty slots · fund F&amp;B bundles instead · KPI = contribution/visitor</text>
+  <text x="360" y="468" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">The vouchers converted a high-margin audience into a subsidized one. Volume rose; quality of volume collapsed.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

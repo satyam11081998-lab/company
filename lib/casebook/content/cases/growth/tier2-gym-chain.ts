@@ -19,34 +19,59 @@ export const tier2GymChain: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Comparison of owned versus franchise growth models on capital, speed, profit per location, and brand control, leading to a hybrid recommendation', caption: 'The two models compared on what actually decides: capital, speed, quality control, and per-location profit.', svg: `<svg viewBox="0 0 720 360" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="ggcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="ggng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="250" y="14" width="220" height="44" rx="12" fill="url(#ggng)" filter="url(#ggcs)"/>
-  <text x="360" y="34" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">200 GYMS, ₹100 CR</text>
-  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">what mix of owned and franchised gets there?</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree comparing owned and franchised gym models, a five-year hybrid arithmetic row of 70 owned times 80 lakh plus 130 franchised times 22 lakh equals about 85 crore EBITDA, a capital envelope row of 87 crore capex plus 13 crore support organization, and a hybrid verdict bar', caption: 'Both models priced per location, then the hybrid arithmetic — 70 × ₹80L + 130 × ₹22L ≈ ₹85 cr, inside the ₹100 cr envelope.', svg: `<svg viewBox="0 0 720 510" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="ggng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#ggng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">200 GYMS, ₹100 CR</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">₹100 cr ÷ ₹2.5 cr = only ~40 more owned — the target forces a mix</text>
+  <path d="M360 60 L360 70 M215 70 L505 70 M215 70 L215 82 M505 70 L505 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="60" y="80" width="280" height="160" rx="12" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#ggcs)"/>
-    <text x="200" y="103" font-size="11" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">OWNED</text>
-    <text x="200" y="125" font-size="9.5" fill="hsl(var(--muted-foreground))">₹2.5 cr capex · 18-mo ramp</text>
-    <text x="200" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">₹80 lakh EBITDA at maturity</text>
-    <text x="200" y="159" font-size="9.5" fill="hsl(var(--muted-foreground))">full quality control</text>
-    <text x="200" y="183" font-size="10" font-weight="700" fill="hsl(var(--primary))">capital-capped: ~40 more</text>
-    <text x="200" y="200" font-size="9" fill="hsl(var(--muted-foreground))">ROIC ≈ 32% mature, but slow to 200</text>
-    <rect x="380" y="80" width="280" height="160" rx="12" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#ggcs)"/>
-    <text x="520" y="103" font-size="11" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">FRANCHISED</text>
-    <text x="520" y="125" font-size="9.5" fill="hsl(var(--muted-foreground))">franchisee funds capex</text>
-    <text x="520" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">₹25 lakh fee + 7% royalty ≈ ₹22 lakh/yr</text>
-    <text x="520" y="159" font-size="9.5" fill="hsl(var(--muted-foreground))">quality risk · franchisee selection</text>
-    <text x="520" y="183" font-size="10" font-weight="700" fill="hsl(var(--primary))">capital-light: speed unlimited-ish</text>
-    <text x="520" y="200" font-size="9" fill="hsl(var(--muted-foreground))">~27% of owned profit, ~0 capital</text>
+    <rect x="95" y="84" width="240" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="215" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">OWNED</text>
+    <text x="215" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">₹2.5 cr capex · 18-mo ramp ·</text>
+    <text x="215" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">₹80L EBITDA mature · ROIC ~32% ·</text>
+    <text x="215" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">full quality control</text>
+    <text x="215" y="171" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">capital-capped: ~40 more</text>
+    <text x="215" y="186" font-size="8" fill="hsl(var(--muted-foreground))">75 total — misses 200 by 125</text>
+    <rect x="385" y="84" width="240" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="505" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FRANCHISED</text>
+    <text x="505" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">franchisee funds capex ·</text>
+    <text x="505" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">₹25L fee + 7% royalty ≈ ₹22L/yr ·</text>
+    <text x="505" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">quality risk, selection risk</text>
+    <text x="505" y="171" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">~27% of owned profit, ~0 capital</text>
+    <text x="505" y="186" font-size="8" fill="hsl(var(--muted-foreground))">speed unlimited-ish — brand exposed</text>
   </g>
-  <rect x="120" y="265" width="480" height="48" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="285" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">HYBRID: OWN THE FLAGSHIPS, FRANCHISE THE FOOTPRINT</text>
-  <text x="360" y="302" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">owned anchors per city protect the brand; franchises buy reach with other people’s capital</text>
-  <text x="360" y="340" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">The debate dissolves once each model is priced per location: they solve different problems.</text>
+  <path d="M215 194 L215 210 M505 194 L505 210 M135 210 L585 210 M135 210 L135 226 M360 210 L360 226 M585 210 L585 226" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="228" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="135" y="246" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">OWNED ENGINE</text>
+    <text x="135" y="262" font-size="8.5" fill="hsl(var(--muted-foreground))">70 gyms (35 + 35 new) × ₹80L</text>
+    <text x="135" y="278" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">= ₹56 cr EBITDA</text>
+    <rect x="255" y="228" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="246" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FRANCHISE ENGINE</text>
+    <text x="360" y="262" font-size="8.5" fill="hsl(var(--muted-foreground))">130 gyms × ₹22L royalty + fees</text>
+    <text x="360" y="278" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹29 cr EBITDA</text>
+    <rect x="480" y="228" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="585" y="246" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">YEAR-5 RUN-RATE</text>
+    <text x="585" y="262" font-size="8.5" fill="hsl(var(--muted-foreground))">vs ~₹31 cr today</text>
+    <text x="585" y="278" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹85 cr EBITDA</text>
+  </g>
+  <path d="M135 286 L135 302 M360 286 L360 302 M585 286 L585 302 M135 302 L585 302 M215 302 L215 318 M505 302 L505 318" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="320" width="240" height="58" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="215" y="338" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">CAPEX ENVELOPE</text>
+    <text x="215" y="354" font-size="8.5" fill="hsl(var(--muted-foreground))">35 new owned × ₹2.5 cr</text>
+    <text x="215" y="370" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">= ₹87 cr</text>
+    <rect x="385" y="320" width="240" height="58" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="338" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">SUPPORT ORG — the forgotten line</text>
+    <text x="505" y="354" font-size="8.5" fill="hsl(var(--muted-foreground))">trainer academy · audits · procurement</text>
+    <text x="505" y="370" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">₹13 cr spare funds it</text>
+  </g>
+  <path d="M215 378 L215 394 M505 378 L505 394 M215 394 L505 394 M360 394 L360 408" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="150" y="410" width="420" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="429" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">HYBRID 70 / 130 — 200 GYMS INSIDE THE ₹100 CR ENVELOPE</text>
+  <text x="360" y="446" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">anchor every city with an owned gym before franchising it · two-strike buy-back audits</text>
+  <text x="360" y="484" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">The debate dissolves once each model is priced per location — and a profitable franchisee is the only durable quality-control system.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

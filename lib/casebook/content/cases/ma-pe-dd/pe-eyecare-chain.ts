@@ -19,46 +19,69 @@ export const peEyecareChain: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 700, ariaLabel: 'Private equity returns bridge from required exit equity back to required EBITDA, with three value-creation levers and key risks', caption: 'Reverse-engineer the requirement first; only then ask if the asset can meet it.', svg: `<svg viewBox="0 0 700 350" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="pecs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="peng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier private equity tree: returns bridge from 403 crore equity in to 1,210 crore target implying 98 crore exit EBITDA, a 15.4 percent required CAGR bar, three value-creation levers with sub-numbers, a levers-sum row straddling the bar, and a no-margin-of-safety verdict', caption: 'The requirement reverse-engineered, then the levers — they sum to ₹95–105 cr against a ₹98 cr bar. "Barely clears" is the finding.', svg: `<svg viewBox="0 0 720 575" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="peng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#peng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">CAN THIS DELIVER 3× IN 5 YEARS?</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">entry 14× · 40% debt · exit 14× — reverse-engineer the requirement first</text>
+  <path d="M360 60 L360 70 M125 70 L595 70 M125 70 L125 82 M360 70 L360 82 M595 70 L595 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="40" y="20" width="185" height="64" rx="10" fill="url(#peng)" filter="url(#pecs)"/>
-    <text x="132" y="44" font-size="10" font-weight="700" fill="#ffffff">EQUITY IN ≈ ₹403 CR</text>
-    <text x="132" y="62" font-size="9" fill="#b9c4d6">60% of 14 × ₹48 cr EV</text>
-    <rect x="258" y="20" width="185" height="64" rx="10" fill="url(#peng)" filter="url(#pecs)"/>
-    <text x="350" y="44" font-size="10" font-weight="700" fill="#ffffff">3× TARGET ≈ ₹1,210 CR</text>
-    <text x="350" y="62" font-size="9" fill="#b9c4d6">equity value at exit, year 5</text>
-    <rect x="476" y="20" width="185" height="64" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.75" filter="url(#pecs)"/>
-    <text x="568" y="44" font-size="10" font-weight="700" fill="hsl(var(--primary))">EXIT EBITDA ≈ ₹98 CR</text>
-    <text x="568" y="62" font-size="9" fill="hsl(var(--muted-foreground))">(1,210 + residual debt) ÷ 14</text>
+    <rect x="30" y="82" width="190" height="72" rx="9" fill="url(#peng)"/>
+    <text x="125" y="104" font-size="9.5" font-weight="700" fill="#ffffff">EQUITY IN</text>
+    <text x="125" y="126" font-size="10.5" font-weight="700" fill="#ffffff">≈ ₹403 cr</text>
+    <text x="125" y="142" font-size="8" fill="#b9c4d6">60% of 14 × ₹48 cr EV</text>
+    <rect x="265" y="82" width="190" height="72" rx="9" fill="url(#peng)"/>
+    <text x="360" y="104" font-size="9.5" font-weight="700" fill="#ffffff">3× TARGET, YEAR 5</text>
+    <text x="360" y="126" font-size="10.5" font-weight="700" fill="#ffffff">≈ ₹1,210 cr out</text>
+    <text x="360" y="142" font-size="8" fill="#b9c4d6">3 × 403 equity value at exit</text>
+    <rect x="500" y="82" width="190" height="72" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="595" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">EXIT EBITDA NEEDED</text>
+    <text x="595" y="126" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹98 cr</text>
+    <text x="595" y="142" font-size="8" fill="hsl(var(--muted-foreground))">(1,210 + ₹160 cr residual debt) ÷ 14</text>
   </g>
-  <path d="M350 84 L350 110" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <rect x="150" y="112" width="400" height="40" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="350" y="137" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.03em" fill="hsl(var(--primary))">REQUIRED: ₹48 CR → ₹98 CR = 15.4% EBITDA CAGR</text>
-  <path d="M180 152 L180 176 M350 152 L350 176 M520 152 L520 176" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <path d="M125 154 L125 168 M360 154 L360 168 M595 154 L595 168 M125 168 L595 168 M360 168 L360 180" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="185" y="182" width="350" height="40" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+  <text x="360" y="207" text-anchor="middle" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">REQUIRED: ₹48 → ₹98 CR = 15.4% EBITDA CAGR</text>
+  <path d="M360 222 L360 234 M125 234 L595 234 M125 234 L125 246 M360 234 L360 246 M595 234 L595 246" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
   <g text-anchor="middle">
-    <rect x="80" y="178" width="200" height="84" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#pecs)"/>
-    <text x="180" y="199" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">SAME-CENTRE GROWTH</text>
-    <text x="180" y="217" font-size="9" fill="hsl(var(--muted-foreground))">surgeries/centre · payor mix</text>
-    <text x="180" y="231" font-size="9" fill="hsl(var(--muted-foreground))">(cash vs insurance) · optical retail</text>
-    <text x="180" y="249" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">~8–10%/yr</text>
-    <rect x="250" y="178" width="200" height="84" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#pecs)" transform="translate(0,0)"/>
-    <rect x="250" y="178" width="200" height="84" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-    <text x="350" y="199" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">NEW CENTRES</text>
-    <text x="350" y="217" font-size="9" fill="hsl(var(--muted-foreground))">18 → 30 hub-and-spoke ·</text>
-    <text x="350" y="231" font-size="9" fill="hsl(var(--muted-foreground))">tier-2 cataract demand · 24-mo ramp</text>
-    <text x="350" y="249" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">+₹25–30 cr EBITDA by yr 5</text>
-    <rect x="420" y="178" width="200" height="84" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-    <text x="520" y="199" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">MARGIN WORK</text>
-    <text x="520" y="217" font-size="9" fill="hsl(var(--muted-foreground))">procurement (IOL lenses) · central</text>
-    <text x="520" y="231" font-size="9" fill="hsl(var(--muted-foreground))">diagnostics · theatre utilization</text>
-    <text x="520" y="249" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">+150–250 bps</text>
+    <rect x="30" y="248" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="125" y="268" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">SAME-CENTRE GROWTH</text>
+    <text x="125" y="285" font-size="8.5" fill="hsl(var(--muted-foreground))">surgeries/centre · payor mix</text>
+    <text x="125" y="299" font-size="8.5" fill="hsl(var(--muted-foreground))">(cash vs insurance) ·</text>
+    <text x="125" y="313" font-size="8.5" fill="hsl(var(--muted-foreground))">optical retail attach</text>
+    <text x="125" y="335" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">~8–10%/yr</text>
+    <text x="125" y="350" font-size="8" fill="hsl(var(--muted-foreground))">vs 15% historic top-line</text>
+    <rect x="265" y="248" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="360" y="268" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">NEW CENTRES</text>
+    <text x="360" y="285" font-size="8.5" fill="hsl(var(--muted-foreground))">18 → 30, hub-and-spoke ·</text>
+    <text x="360" y="299" font-size="8.5" fill="hsl(var(--muted-foreground))">tier-2 cataract demand ·</text>
+    <text x="360" y="313" font-size="8.5" fill="hsl(var(--muted-foreground))">24-month ramp each</text>
+    <text x="360" y="335" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">+₹25–30 cr by yr 5</text>
+    <text x="360" y="350" font-size="8" fill="hsl(var(--muted-foreground))">12 centres × ramp curve</text>
+    <rect x="500" y="248" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="595" y="268" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">MARGIN WORK</text>
+    <text x="595" y="285" font-size="8.5" fill="hsl(var(--muted-foreground))">IOL lens procurement ·</text>
+    <text x="595" y="299" font-size="8.5" fill="hsl(var(--muted-foreground))">central diagnostics ·</text>
+    <text x="595" y="313" font-size="8.5" fill="hsl(var(--muted-foreground))">theatre utilization</text>
+    <text x="595" y="335" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">+150–250 bps</text>
+    <text x="595" y="350" font-size="8" fill="hsl(var(--muted-foreground))">on 20% EBITDA margin today</text>
   </g>
-  <text x="350" y="300" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Risks that break the plan: surgeon attrition (the real asset walks out at night), insurance price caps, multiple compression at exit.</text>
-  <text x="350" y="320" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">The three levers must sum to 15.4% CAGR with room to spare — underwrite the gap, not the hope.</text>
+  <path d="M125 358 L125 376 M360 358 L360 376 M595 358 L595 376 M125 376 L595 376 M215 376 L215 392 M505 376 L505 392" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="394" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="215" y="412" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LEVERS SUM</text>
+    <text x="215" y="428" font-size="8.5" fill="hsl(var(--muted-foreground))">organic + 12 centres + margin gains</text>
+    <text x="215" y="444" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">₹95–105 cr — straddles the bar</text>
+    <rect x="385" y="394" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="412" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">THE PROBLEM</text>
+    <text x="505" y="428" font-size="8.5" fill="hsl(var(--muted-foreground))">15.4% required vs 15% historic growth</text>
+    <text x="505" y="444" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">no margin of safety</text>
+  </g>
+  <path d="M215 452 L215 468 M505 452 L505 468 M215 468 L505 468 M360 468 L360 480" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="150" y="482" width="420" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="501" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">RE-PRICE TO 12–12.5× OR ADD A LEVER — NOT AT 14×</text>
+  <text x="360" y="518" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">buy-and-build at 7–8× arbitrages to 14× (+0.4×) · stress exit at 12×: below 2.2× = pass</text>
+  <text x="360" y="552" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">The real asset walks out at night — 25–30 senior surgeons. Underwrite the gap, not the hope.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

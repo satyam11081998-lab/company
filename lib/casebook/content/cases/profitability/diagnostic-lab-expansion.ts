@@ -19,31 +19,64 @@ export const diagnosticLabExpansion: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Tree comparing retail and B2B segment economics and central operations strain for a diagnostics chain', caption: 'Three places an expansion breaks: the new segment\'s economics, the distance costs, and the centre\'s capacity.', svg: `<svg viewBox="0 0 720 330" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="dlcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="dlng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="240" y="16" width="240" height="46" rx="12" fill="url(#dlng)" filter="url(#dlcs)"/>
-  <text x="360" y="36" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">WHY DID EBITDA HALVE?</text>
-  <text x="360" y="52" text-anchor="middle" font-size="9.5" fill="#b9c4d6">while revenue grew 60%</text>
-  <path d="M360 62 L360 80 M120 80 L600 80 M120 80 L120 96 M360 80 L360 96 M600 80 L600 96" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <rect x="20" y="98" width="200" height="64" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#dlcs)"/>
-  <text x="120" y="118" text-anchor="middle" font-size="11" font-weight="700" fill="hsl(var(--primary))">SEGMENT MIX</text>
-  <text x="120" y="134" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">retail vs B2B realization</text>
-  <text x="120" y="148" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">per test · payment terms</text>
-  <rect x="260" y="98" width="200" height="64" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#dlcs)"/>
-  <text x="360" y="118" text-anchor="middle" font-size="11" font-weight="700" fill="hsl(var(--primary))">DISTANCE COSTS</text>
-  <text x="360" y="134" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">sample logistics · cold chain</text>
-  <text x="360" y="148" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">re-tests from transit damage</text>
-  <rect x="500" y="98" width="200" height="64" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#dlcs)"/>
-  <text x="600" y="118" text-anchor="middle" font-size="11" font-weight="700" fill="hsl(var(--foreground))">CENTRAL LAB STRAIN</text>
-  <text x="600" y="134" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">capacity · night-shift premium</text>
-  <text x="600" y="148" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">TAT misses → penalties</text>
-  <rect x="120" y="210" width="480" height="46" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="229" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">TEST EACH BRANCH WITH ONE NUMBER PER CENTRE COHORT</text>
-  <text x="360" y="246" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">contribution per test: old-retail vs new-retail vs B2B</text>
-  <text x="360" y="295" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Operating leverage assumes the new volume resembles the old volume. Here it doesn't.</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree explaining halved EBITDA: segment mix with retail 520 rupees at 38 percent versus B2B 290 rupees at 12 percent now 55 percent of volume, distance costs and central lab strain, contribution bridge row from 38 to 24 to 21 percent, and a re-cut B2B verdict bar', caption: 'The rebuilt tree — mix does the damage (38% → 24%), frictions finish it (→ ~21%). On 1.6× revenue, the bridge closes exactly.', svg: `<svg viewBox="0 0 720 490" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="dlng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#dlng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">WHY DID EBITDA HALVE?</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">revenue +60%, centres 40 → 85 — the leverage that never arrived</text>
+  <path d="M360 60 L360 70 M125 70 L595 70 M125 70 L125 82 M360 70 L360 82 M595 70 L595 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <g text-anchor="middle">
+    <rect x="30" y="84" width="190" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="125" y="108" font-size="10" font-weight="700" fill="hsl(var(--primary))">SEGMENT MIX — the wound</text>
+    <rect x="265" y="84" width="190" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="360" y="108" font-size="10" font-weight="700" fill="hsl(var(--foreground))">DISTANCE COSTS</text>
+    <rect x="500" y="84" width="190" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="595" y="108" font-size="10" font-weight="700" fill="hsl(var(--foreground))">LAB STRAIN + CASH</text>
+  </g>
+  <path d="M125 124 L125 152 M360 124 L360 152 M595 124 L595 152" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="125" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">RETAIL vs B2B</text>
+    <text x="125" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">retail ₹520/test @ 38% contribution</text>
+    <text x="125" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">B2B ₹290/test @ 12% after logistics</text>
+    <text x="125" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">B2B now 55% of volume</text>
+    <text x="125" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">−14 pts blended</text>
+    <text x="125" y="256" font-size="8" fill="hsl(var(--muted-foreground))">mix alone does most of the damage</text>
+    <rect x="265" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="360" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LOGISTICS + RE-TESTS</text>
+    <text x="360" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">cold chain from small cities,</text>
+    <text x="360" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">transit damage → re-tests;</text>
+    <text x="360" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">binds beyond ~300 km</text>
+    <text x="360" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">−3 pts*</text>
+    <text x="360" y="256" font-size="8" fill="hsl(var(--muted-foreground))">*combined with night premium</text>
+    <rect x="500" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="595" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">STRAIN + WORKING CAPITAL</text>
+    <text x="595" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">night shift at +25% wage premium</text>
+    <text x="595" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">to hold TAT promises;</text>
+    <text x="595" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">B2B pays in 90+ days</text>
+    <text x="595" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">90+ day DSO</text>
+    <text x="595" y="256" font-size="8" fill="hsl(var(--muted-foreground))">funding hospitals, at 1.6× revenue</text>
+  </g>
+  <path d="M125 264 L125 282 M360 264 L360 282 M595 264 L595 282 M125 282 L595 282 M135 282 L135 298 M360 282 L360 298 M585 282 L585 298" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="300" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="135" y="318" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">BEFORE</text>
+    <text x="135" y="334" font-size="8.5" fill="hsl(var(--muted-foreground))">100% retail × 38%</text>
+    <text x="135" y="350" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">38% blended</text>
+    <rect x="255" y="300" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="318" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">MIX EFFECT</text>
+    <text x="360" y="334" font-size="8.5" fill="hsl(var(--muted-foreground))">45%×38% + 55%×12% = 17.1 + 6.6</text>
+    <text x="360" y="350" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">→ ~24%</text>
+    <rect x="480" y="300" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="585" y="318" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">+ FRICTIONS</text>
+    <text x="585" y="334" font-size="8.5" fill="hsl(var(--muted-foreground))">night premium + re-tests ≈ −3 pts</text>
+    <text x="585" y="350" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">→ ~21%</text>
+  </g>
+  <path d="M135 358 L135 372 M360 358 L360 372 M585 358 L585 372 M135 372 L585 372 M360 372 L360 386" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="388" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="407" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">~21% ON 1.6× REVENUE — EBITDA HALVES. BRIDGE CLOSED ✓</text>
+  <text x="360" y="424" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">re-price/exit sub-variable B2B · batch B2B into daytime slack · 45-day terms · third regional lab</text>
+  <text x="360" y="462" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Operating leverage assumes the new volume resembles the old. This expansion changed segment, geography, and payment terms at once.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

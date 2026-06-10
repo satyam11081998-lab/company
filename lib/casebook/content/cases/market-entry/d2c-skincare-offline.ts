@@ -19,45 +19,58 @@ export const d2cSkincareOffline: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Channel entry structure comparing contribution economics of online versus three offline formats and sequencing them', caption: 'Compare channels on contribution per unit, then sequence by fit with the brand\'s current strength.', svg: `<svg viewBox="0 0 720 350" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="d2cs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="d2ng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="235" y="14" width="250" height="44" rx="12" fill="url(#d2ng)" filter="url(#d2cs)"/>
-  <text x="360" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">WHICH SHELF, IN WHAT ORDER?</text>
-  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">judge every channel on contribution/unit + brand fit</text>
-  <path d="M360 58 L360 76 M120 76 L600 76 M120 76 L120 92 M280 76 L280 92 M440 76 L440 92 M600 76 L600 92" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier channel entry tree: four offline formats each with trade take and phase, a contribution math row comparing online at 280 rupees after CAC with beauty retail at 270 rupees, and a sequencing verdict bar', caption: 'Four formats, each with its own P&L and phase — and the contribution row showing why a ₹280 vs ₹270 dead heat still decides the case.', svg: `<svg viewBox="0 0 720 425" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="d2ng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#d2ng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">WHICH SHELF, IN WHAT ORDER?</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">₹220 cr, 85% online · CAC doubled — judge every shelf on contribution/unit</text>
+  <path d="M360 60 L360 70 M115 70 L605 70 M115 70 L115 80 M278 70 L278 80 M442 70 L442 80 M605 70 L605 80" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="40" y="94" width="160" height="92" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#d2cs)"/>
-    <text x="120" y="113" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--primary))">BEAUTY RETAIL CHAINS</text>
-    <text x="120" y="130" font-size="9" fill="hsl(var(--muted-foreground))">assisted selling · right</text>
-    <text x="120" y="143" font-size="9" fill="hsl(var(--muted-foreground))">audience · ~40% trade take</text>
-    <text x="120" y="160" font-size="9" font-weight="600" fill="hsl(var(--foreground))">fit: HIGH · reach: medium</text>
-    <text x="120" y="175" font-size="8.5" fill="hsl(var(--muted-foreground))">phase 1</text>
-    <rect x="200" y="94" width="160" height="92" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#d2cs)"/>
-    <text x="280" y="113" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">MODERN TRADE</text>
-    <text x="280" y="130" font-size="9" fill="hsl(var(--muted-foreground))">supermarkets · listing fees</text>
-    <text x="280" y="143" font-size="9" fill="hsl(var(--muted-foreground))">· planogram wars · ~42% take</text>
-    <text x="280" y="160" font-size="9" font-weight="600" fill="hsl(var(--foreground))">fit: MED · reach: high</text>
-    <text x="280" y="175" font-size="8.5" fill="hsl(var(--muted-foreground))">phase 2</text>
-    <rect x="360" y="94" width="160" height="92" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#d2cs)"/>
-    <text x="440" y="113" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">GENERAL TRADE</text>
-    <text x="440" y="130" font-size="9" fill="hsl(var(--muted-foreground))">10M+ kiranas · needs distributor</text>
-    <text x="440" y="143" font-size="9" fill="hsl(var(--muted-foreground))">network · no brand support</text>
-    <text x="440" y="160" font-size="9" font-weight="600" fill="hsl(var(--foreground))">fit: LOW today · reach: vast</text>
-    <text x="440" y="175" font-size="8.5" fill="hsl(var(--muted-foreground))">phase 3 / selective SKUs</text>
-    <rect x="520" y="94" width="160" height="92" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#d2cs)"/>
-    <text x="600" y="113" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">OWN STORES / KIOSKS</text>
-    <text x="600" y="130" font-size="9" fill="hsl(var(--muted-foreground))">full margin · full capex</text>
-    <text x="600" y="143" font-size="9" fill="hsl(var(--muted-foreground))">· brand theatre · slow scale</text>
-    <text x="600" y="160" font-size="9" font-weight="600" fill="hsl(var(--foreground))">fit: flagship only</text>
-    <text x="600" y="175" font-size="8.5" fill="hsl(var(--muted-foreground))">2–3 cities max</text>
+    <rect x="35" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="115" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--primary))">BEAUTY CHAINS</text>
+    <text x="115" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">assisted selling · the online</text>
+    <text x="115" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">audience already shops here</text>
+    <text x="115" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">~40% trade take</text>
+    <text x="115" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">PHASE 1 · 10 cities</text>
+    <text x="115" y="186" font-size="8" fill="hsl(var(--muted-foreground))">6 hero SKUs, &gt;2 units/store/day</text>
+    <rect x="198" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="278" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">MODERN TRADE</text>
+    <text x="278" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">supermarkets · listing fees ·</text>
+    <text x="278" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">planogram wars</text>
+    <text x="278" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">~42% trade take</text>
+    <text x="278" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">PHASE 2</text>
+    <text x="278" y="186" font-size="8" fill="hsl(var(--muted-foreground))">offline-only pack sizes vs price wars</text>
+    <rect x="362" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="442" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">GENERAL TRADE</text>
+    <text x="442" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">10M+ kiranas · needs distributor</text>
+    <text x="442" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">network · zero brand support;</text>
+    <text x="442" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">awareness near-zero beyond 18–35</text>
+    <text x="442" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">PHASE 3 · selective</text>
+    <text x="442" y="186" font-size="8" fill="hsl(var(--muted-foreground))">needs fame the brand lacks yet</text>
+    <rect x="525" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="605" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">OWN STORES</text>
+    <text x="605" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">full margin · full capex ·</text>
+    <text x="605" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">brand theatre · slow scale</text>
+    <text x="605" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">flagship economics only</text>
+    <text x="605" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">2–3 cities max</text>
+    <text x="605" y="186" font-size="8" fill="hsl(var(--muted-foreground))">theatre, not distribution</text>
   </g>
-  <rect x="130" y="225" width="460" height="46" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="244" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">SEQUENCE = WHERE THE EXISTING AUDIENCE ALREADY SHOPS</text>
-  <text x="360" y="261" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">beauty chains convert the brand's online fame; kiranas need fame the brand doesn't have yet</text>
-  <text x="360" y="310" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Offline isn't one channel — each format has its own P&L, gatekeeper, and failure mode.</text>
+  <path d="M115 202 L115 220 M278 202 L278 220 M442 202 L442 220 M605 202 L605 220 M115 220 L605 220 M215 220 L215 236 M505 220 L505 236" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="238" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="215" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">ONLINE · NEW CUSTOMER</text>
+    <text x="215" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">70% × ₹900 = ₹630 − ₹350 CAC</text>
+    <text x="215" y="288" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">≈ ₹280 — and shrinking</text>
+    <rect x="385" y="238" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">BEAUTY RETAIL · PER SALE</text>
+    <text x="505" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">₹540 to company − ₹270 COGS, no CAC</text>
+    <text x="505" y="288" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹270 — and stable</text>
+  </g>
+  <path d="M215 296 L215 312 M505 296 L505 312 M215 312 L505 312 M360 312 L360 326" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="328" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="347" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">ENTER NOW: BEAUTY CHAINS → MODERN TRADE → SELECT GT</text>
+  <text x="360" y="364" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">₹280 vs ₹270 is a tie; the CAC trajectory breaks it — enter from strength, not desperation</text>
+  <text x="360" y="402" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Offline is not one channel — each format has its own P&amp;L, gatekeeper, and failure mode. Working capital, not demand, kills D2C entries.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

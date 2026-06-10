@@ -115,6 +115,21 @@ export const PRIMERS: Primer[] = [
       { label: 'UGC',                             url: 'https://www.ugc.gov.in' },
     ],
   },
+  {
+    slug: 'industry-primers/ev',
+    folder: 'ev',
+    no: 7,
+    title: 'Electric Vehicles',
+    sector: 'Mobility & Clean-tech',
+    sources: [
+      { label: 'IBEF — Electric Vehicle',         url: 'https://www.ibef.org/industry/electric-vehicle' },
+      { label: 'NITI Aayog — E-Mobility',         url: 'https://www.niti.gov.in/e-mobility' },
+      { label: 'Ministry of Heavy Industries (PM E-DRIVE)', url: 'https://heavyindustries.gov.in' },
+      { label: 'FADA — Vehicle Retail Data',      url: 'https://fada.in/fada-vehicle-registration-data.php' },
+      { label: 'EV Reporter',                     url: 'https://evreporter.com' },
+      { label: 'Vahan Dashboard',                 url: 'https://vahan.parivahan.gov.in/vahan4dashboard/' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

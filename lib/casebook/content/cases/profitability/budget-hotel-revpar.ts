@@ -21,33 +21,60 @@ export const budgetHotelRevpar: Page = {
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'The structure splits cost growth into price effects (wages, utilities tariffs) and volume/pattern effects (how demand distributes across days). The unlock is recognizing that **occupancy variance**, not occupancy level, drives staffing and utility costs.' },
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Tree splitting a hotel cost increase into input price effects and demand pattern effects, with demand pattern broken into weekday spike and weekend trough', caption: 'Same average occupancy, different week shape — the pattern branch is where this case hides.', svg: `<svg viewBox="0 0 720 350" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="bhcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="bhng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="250" y="16" width="220" height="46" rx="12" fill="url(#bhng)" filter="url(#bhcs)"/>
-  <text x="360" y="36" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">WHY DID COST RISE 9%?</text>
-  <text x="360" y="52" text-anchor="middle" font-size="9.5" fill="#b9c4d6">with flat revenue and flat occupancy</text>
-  <path d="M360 62 L360 80 M190 80 L530 80 M190 80 L190 96 M530 80 L530 96" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <rect x="80" y="98" width="220" height="48" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#bhcs)"/>
-  <text x="190" y="118" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--foreground))">INPUT PRICES</text>
-  <text x="190" y="135" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">wages · utilities tariffs · supplies</text>
-  <rect x="420" y="98" width="220" height="48" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#bhcs)"/>
-  <text x="530" y="118" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">DEMAND PATTERN</text>
-  <text x="530" y="135" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">same average · different shape</text>
-  <path d="M530 146 L530 162 M420 162 L640 162 M420 162 L420 178 M640 162 L640 178" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-  <rect x="345" y="180" width="150" height="58" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-  <text x="420" y="200" text-anchor="middle" font-size="10" font-weight="700" fill="hsl(var(--foreground))">WEEKDAY SPIKE</text>
-  <text x="420" y="215" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">95%+ occupancy Tue–Thu →</text>
-  <text x="420" y="227" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">contract staff · walked guests</text>
-  <rect x="565" y="180" width="150" height="58" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-  <text x="640" y="200" text-anchor="middle" font-size="10" font-weight="700" fill="hsl(var(--foreground))">WEEKEND TROUGH</text>
-  <text x="640" y="215" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">35% occupancy Fri–Sun →</text>
-  <text x="640" y="227" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">fixed staff idle · energy floor</text>
-  <rect x="120" y="270" width="480" height="46" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="289" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">INSIGHT: COST FOLLOWS PEAK DEMAND, REVENUE FOLLOWS AVERAGE DEMAND</text>
-  <text x="360" y="306" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">a hotel staffed for Tuesday's 95% earns Saturday's 35%</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree splitting a 9 percent hotel cost rise into input prices and demand pattern, with weekday occupancy re-sorting from 78 to 94 percent and weekend from 62 to 38 percent, a two-lever sizing row of 55 and 24 lakh per week, and a 41 crore verdict bar', caption: 'Same ~70% average, completely re-sorted week — 78/62 became 94/38. The two-lever row sizes the way back.', svg: `<svg viewBox="0 0 720 490" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="bhng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#bhng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">WHY DID COST RISE 9%?</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">rate flat · occupancy flat (~70% avg) — interrogate the shape, not the level</text>
+  <path d="M360 60 L360 70 M125 70 L477 70 M125 70 L125 82 M477 70 L477 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <g text-anchor="middle">
+    <rect x="30" y="84" width="190" height="42" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="125" y="101" font-size="10" font-weight="700" fill="hsl(var(--foreground))">INPUT PRICES</text>
+    <text x="125" y="117" font-size="8.5" fill="hsl(var(--muted-foreground))">wages · tariffs · supplies</text>
+    <rect x="347" y="84" width="260" height="42" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="477" y="101" font-size="10" font-weight="700" fill="hsl(var(--primary))">DEMAND PATTERN — the unlock</text>
+    <text x="477" y="117" font-size="8.5" fill="hsl(var(--muted-foreground))">same average, different week shape</text>
+  </g>
+  <path d="M125 126 L125 152 M477 126 L477 138 M360 138 L595 138 M360 138 L360 152 M595 138 L595 152" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="125" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">PRICE DRIFT</text>
+    <text x="125" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">no step-change found</text>
+    <text x="125" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">that explains 9% —</text>
+    <text x="125" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">the hunt moves right</text>
+    <text x="125" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">secondary</text>
+    <text x="125" y="256" font-size="8" fill="hsl(var(--muted-foreground))">park unless data returns here</text>
+    <rect x="265" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">WEEKDAY · TUE–THU</text>
+    <text x="360" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">corporate travel recovered:</text>
+    <text x="360" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">contract housekeeping, overtime,</text>
+    <text x="360" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">walking overbooked guests</text>
+    <text x="360" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">78% → 94%</text>
+    <text x="360" y="256" font-size="8" fill="hsl(var(--muted-foreground))">selling out at a flat rate = underpriced</text>
+    <rect x="500" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="595" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">WEEKEND · FRI–SUN</text>
+    <text x="595" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">leisure moved to amenity-rich</text>
+    <text x="595" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">rivals; fixed staffing + energy</text>
+    <text x="595" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">floor still fully loaded</text>
+    <text x="595" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">62% → 38%</text>
+    <text x="595" y="256" font-size="8" fill="hsl(var(--muted-foreground))">a third of rooms carry the cost base</text>
+  </g>
+  <path d="M125 264 L125 282 M360 264 L360 282 M595 264 L595 282 M125 282 L595 282 M215 282 L215 298 M505 282 L505 298" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="300" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="215" y="318" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LEVER 1 · PRICE THE PEAK</text>
+    <text x="215" y="334" font-size="8.5" fill="hsl(var(--muted-foreground))">60 × 70 rooms × 3 nights × 94% × ₹300</text>
+    <text x="215" y="350" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹55L / week</text>
+    <rect x="385" y="300" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="318" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LEVER 2 · DE-COST THE TROUGH</text>
+    <text x="505" y="334" font-size="8.5" fill="hsl(var(--muted-foreground))">flexible rosters + floor shutdown ≈ ₹40k/hotel</text>
+    <text x="505" y="350" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹24L / week</text>
+  </g>
+  <path d="M215 358 L215 376 M505 358 L505 376 M215 376 L505 376 M360 376 L360 390" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="170" y="392" width="380" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="411" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹41 CR / YEAR — REVERSES THE 15% DECLINE</text>
+  <text x="360" y="428" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">dynamic weekday pricing · cost-side weekends · product-fit segments, not 30% discounts</text>
+  <text x="360" y="468" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Cost is built for the peak; revenue is earned on the average. A hotel staffed for Tuesday at 94% earns Saturday at 38%.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

@@ -19,42 +19,58 @@ export const saasPayrollSea: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Country screen matrix for Southeast Asian payroll SaaS entry with three evaluation axes and entry route options', caption: 'One country, done deeply — the screen and the route are the whole case.', svg: `<svg viewBox="0 0 720 370" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="spcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="spng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="250" y="14" width="220" height="44" rx="12" fill="url(#spng)" filter="url(#spcs)"/>
-  <text x="360" y="34" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">WHICH COUNTRY, WHICH ROUTE?</text>
-  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">$5M · 2 years · one bet</text>
-  <path d="M360 58 L360 74 M150 74 L570 74 M150 74 L150 90 M360 74 L360 90 M570 74 L570 90" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree screening four Southeast Asian countries with their data — Indonesia 1.2 million SMEs but complex, Philippines 350 thousand SMEs English-friendly whitespace, Vietnam informal, Singapore saturated — then route economics comparing build-first and partner-first budgets, and a Philippines partner-first verdict bar', caption: 'The screen rebuilt with the data in every node — fit-to-budget picks the Philippines, and the budget math picks the route.', svg: `<svg viewBox="0 0 720 425" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="spng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#spng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">WHICH COUNTRY, WHICH ROUTE?</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">$5M · 2 years · one bet — screen on fit-to-budget, not headline TAM</text>
+  <path d="M360 60 L360 70 M115 70 L605 70 M115 70 L115 80 M278 70 L278 80 M442 70 L442 80 M605 70 L605 80" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="50" y="92" width="200" height="76" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#spcs)"/>
-    <text x="150" y="111" font-size="9" font-weight="700" letter-spacing="0.07em" fill="hsl(var(--primary))">DEMAND &amp; WTP</text>
-    <text x="150" y="128" font-size="9.5" fill="hsl(var(--muted-foreground))"># SMEs with &gt;20 staff</text>
-    <text x="150" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">· digitization of payroll</text>
-    <text x="150" y="156" font-size="9.5" fill="hsl(var(--muted-foreground))">· achievable ACV vs India</text>
-    <rect x="260" y="92" width="200" height="76" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#spcs)"/>
-    <text x="360" y="111" font-size="9" font-weight="700" letter-spacing="0.07em" fill="hsl(var(--primary))">REGULATORY BUILD COST</text>
-    <text x="360" y="128" font-size="9.5" fill="hsl(var(--muted-foreground))">statutory complexity ·</text>
-    <text x="360" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">language · change velocity</text>
-    <text x="360" y="156" font-size="9.5" fill="hsl(var(--muted-foreground))">(cost now, MOAT later)</text>
-    <rect x="470" y="92" width="200" height="76" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#spcs)"/>
-    <text x="570" y="111" font-size="9" font-weight="700" letter-spacing="0.07em" fill="hsl(var(--primary))">WHITESPACE</text>
-    <text x="570" y="128" font-size="9.5" fill="hsl(var(--muted-foreground))">incumbent strength ·</text>
-    <text x="570" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">global players' coverage ·</text>
-    <text x="570" y="156" font-size="9.5" fill="hsl(var(--muted-foreground))">local-champion risk</text>
+    <rect x="35" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="115" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">INDONESIA</text>
+    <text x="115" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">1.2M target SMEs, low</text>
+    <text x="115" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">penetration — but Bahasa-only,</text>
+    <text x="115" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">fast rules, 2 funded champions</text>
+    <text x="115" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">biggest ✗</text>
+    <text x="115" y="186" font-size="8" fill="hsl(var(--muted-foreground))">every factor multiplies cost</text>
+    <rect x="198" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="278" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--primary))">PHILIPPINES</text>
+    <text x="278" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">350K SMEs · English-friendly ·</text>
+    <text x="278" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">US-style payroll culture ·</text>
+    <text x="278" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">no dominant SME player</text>
+    <text x="278" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">$280M TAM ✓</text>
+    <text x="278" y="186" font-size="8" fill="hsl(var(--muted-foreground))">350K × $800 ACV — fits the $5M</text>
+    <rect x="362" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="442" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">VIETNAM</text>
+    <text x="442" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">500K SMEs, moderate rules —</text>
+    <text x="442" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">but payroll deeply informal;</text>
+    <text x="442" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">the sale is formalization itself</text>
+    <text x="442" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">different business ✗</text>
+    <text x="442" y="186" font-size="8" fill="hsl(var(--muted-foreground))">slower than software sales</text>
+    <rect x="525" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="605" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">SINGAPORE</text>
+    <text x="605" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">high ACV — but small,</text>
+    <text x="605" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">saturated, every global</text>
+    <text x="605" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">player already present</text>
+    <text x="605" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">a flag, not a market ✗</text>
+    <text x="605" y="186" font-size="8" fill="hsl(var(--muted-foreground))">prestige ≠ second engine</text>
   </g>
-  <path d="M360 168 L360 192" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <rect x="80" y="196" width="560" height="98" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="218" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">ENTRY ROUTE — THE LOCALIZATION BURDEN DECIDES</text>
-  <text x="110" y="241" font-size="10" font-weight="600" fill="hsl(var(--foreground))">Build:</text>
-  <text x="160" y="241" font-size="10" fill="hsl(var(--muted-foreground))">12–18 months of statutory engine work before first rupee — burns most of the $5M</text>
-  <text x="110" y="261" font-size="10" font-weight="600" fill="hsl(var(--foreground))">Partner:</text>
-  <text x="172" y="261" font-size="10" fill="hsl(var(--muted-foreground))">white-label a local compliance engine; faster, splits margin, dependency risk</text>
-  <text x="110" y="281" font-size="10" font-weight="600" fill="hsl(var(--foreground))">Acquire:</text>
-  <text x="172" y="281" font-size="10" fill="hsl(var(--muted-foreground))">buy a small local payroll player for its rules engine + book; $2–4M for a sub-scale asset</text>
-  <text x="360" y="330" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">In compliance software, the localization moat cuts both ways: expensive to enter, defensible once in.</text>
+  <path d="M115 202 L115 220 M278 202 L278 220 M442 202 L442 220 M605 202 L605 220 M115 220 L605 220 M215 220 L215 236 M505 220 L505 236" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="238" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="215" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">BUILD-FIRST</text>
+    <text x="215" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">$2.5M engine (18 mo) + $1.5M GTM</text>
+    <text x="215" y="288" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">first revenue ~month 20 ✗</text>
+    <rect x="385" y="238" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">PARTNER-FIRST</text>
+    <text x="505" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">$0.4M integration + $1.8M GTM → 400 × $800</text>
+    <text x="505" y="288" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">$320K ARR by month 12 ✓</text>
+  </g>
+  <path d="M215 296 L215 312 M505 296 L505 312 M215 312 L505 312 M360 312 L360 326" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="328" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="347" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">PHILIPPINES, PARTNER-FIRST — BUY THE MOAT ON PROOF</text>
+  <text x="360" y="364" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">reserve $2.5M for the buy-or-build call · kill criteria: &lt;250 logos or &lt;70% retention at month 15</text>
+  <text x="360" y="402" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">The localization moat cuts both ways: expensive to enter, defensible once in. The biggest market is the costliest place to learn you were wrong.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

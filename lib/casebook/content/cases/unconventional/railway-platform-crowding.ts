@@ -19,42 +19,54 @@ export const railwayPlatformCrowding: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 700, ariaLabel: 'Crowding decomposed into person-minutes per area: fewer people, fewer minutes each, better distribution across space and time, with levers under each', caption: 'Density = people × dwell time ÷ (area × spread). Area is fixed; the other three are the case.', svg: `<svg viewBox="0 0 700 340" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="rpcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="rpng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="215" y="14" width="270" height="46" rx="12" fill="url(#rpng)" filter="url(#rpcs)"/>
-  <text x="350" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">PEAK DENSITY = P × T ÷ (A × S)</text>
-  <text x="350" y="51" text-anchor="middle" font-size="9" fill="#b9c4d6">people × dwell ÷ (area × spread) — area is frozen</text>
-  <path d="M350 60 L350 78 M130 78 L570 78 M130 78 L130 94 M350 78 L350 94 M570 78 L570 94" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree decomposing platform density into people, dwell time and spread levers with numbers, an airport-gate math tier cutting 7.9 lakh person-minutes to 2.2 lakh for minus 70 percent, and a phased rollout verdict bar', caption: 'Density = P × T ÷ (A × S), with the math tier under the dominant lever — 7.9L person-minutes become 2.2L.', svg: `<svg viewBox="0 0 720 440" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="rpng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#rpng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">PEAK DENSITY = P × T ÷ (A × S)</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">people × dwell ÷ (area × spread) — area is frozen for five years</text>
+  <path d="M360 60 L360 70 M125 70 L595 70 M125 70 L125 82 M360 70 L360 82 M595 70 L595 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="30" y="96" width="200" height="120" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#rpcs)"/>
-    <text x="130" y="117" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">P · FEWER PEOPLE</text>
-    <text x="130" y="136" font-size="9" fill="hsl(var(--muted-foreground))">platform tickets: price peak ×5</text>
-    <text x="130" y="151" font-size="9" fill="hsl(var(--muted-foreground))">or suspend at peak (18% of crowd)</text>
-    <text x="130" y="166" font-size="9" fill="hsl(var(--muted-foreground))">· vendor restocking windows</text>
-    <text x="130" y="181" font-size="9" fill="hsl(var(--muted-foreground))">shifted off-peak (12%)</text>
-    <text x="130" y="201" font-size="9" font-weight="700" fill="hsl(var(--foreground))">addressable: ~25–30% of bodies</text>
-    <rect x="250" y="96" width="200" height="120" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#rpcs)"/>
-    <text x="350" y="117" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">T · LESS DWELL TIME</text>
-    <text x="350" y="136" font-size="9" fill="hsl(var(--muted-foreground))">long-distance: hold passengers in</text>
-    <text x="350" y="151" font-size="9" fill="hsl(var(--muted-foreground))">off-platform waiting halls; admit to</text>
-    <text x="350" y="166" font-size="9" fill="hsl(var(--muted-foreground))">platform when train is berthed</text>
-    <text x="350" y="181" font-size="9" fill="hsl(var(--muted-foreground))">(airport-gate model) · live coach display</text>
-    <text x="350" y="201" font-size="9" font-weight="700" fill="hsl(var(--foreground))">cuts 60-min dwell to ~15 min</text>
-    <rect x="470" y="96" width="200" height="120" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#rpcs)"/>
-    <text x="570" y="117" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">S · BETTER SPREAD</text>
-    <text x="570" y="136" font-size="9" fill="hsl(var(--muted-foreground))">re-time 3–4 long-distance departures</text>
-    <text x="570" y="151" font-size="9" fill="hsl(var(--muted-foreground))">out of the 8–9 am band · re-assign</text>
-    <text x="570" y="166" font-size="9" fill="hsl(var(--muted-foreground))">suburban lines to under-used platforms</text>
-    <text x="570" y="181" font-size="9" fill="hsl(var(--muted-foreground))">· one-way circulation on foot bridges</text>
-    <text x="570" y="201" font-size="9" font-weight="700" fill="hsl(var(--foreground))">flattens the 8:15–8:45 spike</text>
+    <rect x="30" y="84" width="190" height="130" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="125" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">P · FEWER PEOPLE</text>
+    <text x="125" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">platform tickets: ×5 price or</text>
+    <text x="125" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">suspend at peak (18% of crowd) ·</text>
+    <text x="125" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">vendor restocking windows</text>
+    <text x="125" y="163" font-size="8.5" fill="hsl(var(--muted-foreground))">moved off-peak (12%)</text>
+    <text x="125" y="186" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">~25–30% of bodies</text>
+    <text x="125" y="201" font-size="8" fill="hsl(var(--muted-foreground))">a fifth of the crowd is not travelling</text>
+    <rect x="265" y="84" width="190" height="130" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">T · LESS DWELL — dominant</text>
+    <text x="360" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">long-distance arrive 45–70 min</text>
+    <text x="360" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">early; hold in waiting halls, admit</text>
+    <text x="360" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">when berthed (airport-gate model)</text>
+    <text x="360" y="163" font-size="8.5" fill="hsl(var(--muted-foreground))">· live coach displays + SMS gates</text>
+    <text x="360" y="186" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">60 → ~15 min dwell</text>
+    <text x="360" y="201" font-size="8" fill="hsl(var(--muted-foreground))">halls exist — unattractive, unenforced</text>
+    <rect x="500" y="84" width="190" height="130" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="595" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">S · BETTER SPREAD</text>
+    <text x="595" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">re-time 3–4 long-distance</text>
+    <text x="595" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">departures out of 8–9 am ·</text>
+    <text x="595" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">re-assign suburban platforms ·</text>
+    <text x="595" y="163" font-size="8.5" fill="hsl(var(--muted-foreground))">one-way footbridge circulation</text>
+    <text x="595" y="186" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">flattens 8:15–8:45</text>
+    <text x="595" y="201" font-size="8" fill="hsl(var(--muted-foreground))">the spike, not the average</text>
   </g>
-  <rect x="140" y="248" width="420" height="44" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="350" y="266" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">PRIORITIZE BY: DENSITY REDUCED ÷ COST ÷ TIME-TO-IMPLEMENT</text>
-  <text x="350" y="283" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">the waiting-hall (T) lever dominates: one passenger-hour saved = one body-hour off the platform</text>
-  <text x="350" y="322" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">No new platforms needed — the terminus has spare *time and space*, just in the wrong places.</text>
+  <path d="M125 214 L125 232 M360 214 L360 232 M595 214 L595 232 M125 232 L595 232 M215 232 L215 246 M505 232 L505 246" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="248" width="240" height="64" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="215" y="266" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">TODAY · PEAK BAND</text>
+    <text x="215" y="282" font-size="8.5" fill="hsl(var(--muted-foreground))">12 trains × 1,200 pax × 55 min early</text>
+    <text x="215" y="302" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">≈ 7.9L person-minutes</text>
+    <rect x="385" y="248" width="240" height="64" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="266" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">AIRPORT-GATE MODEL</text>
+    <text x="505" y="282" font-size="8.5" fill="hsl(var(--muted-foreground))">12 × 1,200 × 15 min ≈ 2.2L → −5.8L</text>
+    <text x="505" y="302" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">−70% of long-distance load</text>
+  </g>
+  <path d="M215 312 L215 328 M505 312 L505 328 M215 328 L505 328 M360 328 L360 342" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="150" y="344" width="420" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="363" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">PHASE 1 GATE MODEL → 2 PLATFORM TICKETS → 3 RE-TIMING</text>
+  <text x="360" y="380" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">months 1–3 / 2–6 / 6–12 · target person-minutes/m² on a CCTV counting dashboard, not anecdotes</text>
+  <text x="360" y="418" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Most "capacity" crises are flow problems — the terminus has spare time and space, just in the wrong places.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

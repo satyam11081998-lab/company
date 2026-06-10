@@ -19,40 +19,59 @@ export const intercityBusDynamic: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 700, ariaLabel: 'Two-sided pricing opportunity: peak underpricing with waitlist evidence and off-peak utilization, with three execution risks below', caption: 'Both ends leak revenue — but they need opposite price moves, and the risks live in execution, not math.', svg: `<svg viewBox="0 0 700 330" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="ibcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="ibng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="235" y="14" width="230" height="42" rx="11" fill="url(#ibng)" filter="url(#ibcs)"/>
-  <text x="350" y="40" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">TWO LEAKS, OPPOSITE FIXES</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree: peak underpricing and off-peak empty berths, stepped-curve math averaging 1,830 rupees for plus 46,400 per bus week, off-peak fill math netting plus 16,000, three execution risks, and a verdict bar of 62,000 per bus per week or 39 crore annually', caption: 'Two leaks, opposite fixes — and the math tier under each. The honest part is subtracting the ₹6k dilution.', svg: `<svg viewBox="0 0 720 495" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="ibng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#ibng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">TWO LEAKS, OPPOSITE FIXES</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">100% + waitlist on Fridays · 55% on Tuesdays — both ends leak revenue</text>
+  <path d="M360 60 L360 70 M215 70 L505 70 M215 70 L215 82 M505 70 L505 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="60" y="80" width="270" height="96" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#ibcs)"/>
-    <text x="195" y="103" font-size="10" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">PEAK: UNDERPRICED</text>
-    <text x="195" y="122" font-size="9.5" fill="hsl(var(--muted-foreground))">100% + waitlist ≈ 2× demand</text>
-    <text x="195" y="138" font-size="9.5" fill="hsl(var(--muted-foreground))">price is rationing by luck, not value</text>
-    <text x="195" y="160" font-size="10" font-weight="700" fill="hsl(var(--foreground))">fix: raise peak fares in steps</text>
-    <rect x="370" y="80" width="270" height="96" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#ibcs)"/>
-    <text x="505" y="103" font-size="10" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">OFF-PEAK: EMPTY BERTHS</text>
-    <text x="505" y="122" font-size="9.5" fill="hsl(var(--muted-foreground))">55% occupancy · marginal cost of a</text>
-    <text x="505" y="138" font-size="9.5" fill="hsl(var(--muted-foreground))">filled berth ≈ ₹60 (linen + booking fee)</text>
-    <text x="505" y="160" font-size="10" font-weight="700" fill="hsl(var(--foreground))">fix: discounted advance fares midweek</text>
+    <rect x="95" y="84" width="240" height="96" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="215" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">PEAK: UNDERPRICED</text>
+    <text x="215" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">30–40 seat waitlist on a 36-berth bus —</text>
+    <text x="215" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">price rations by luck, not value</text>
+    <text x="215" y="157" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">demand ≈ 2× capacity</text>
+    <text x="215" y="172" font-size="8" fill="hsl(var(--muted-foreground))">fix: raise peak fares in steps</text>
+    <rect x="385" y="84" width="240" height="96" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="505" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">OFF-PEAK: EMPTY BERTHS</text>
+    <text x="505" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">marginal cost of a filled berth ≈ ₹60</text>
+    <text x="505" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">(linen + booking fee) · rail competes midweek</text>
+    <text x="505" y="157" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">55% occupancy</text>
+    <text x="505" y="172" font-size="8" fill="hsl(var(--muted-foreground))">fix: discounted advance fares</text>
   </g>
+  <path d="M215 180 L215 196 M505 180 L505 196" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
   <g text-anchor="middle">
-    <rect x="60" y="206" width="180" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="150" y="227" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FAIRNESS RISK</text>
-    <text x="150" y="243" font-size="8.5" fill="hsl(var(--muted-foreground))">"₹2,600 for a bus?!" —</text>
-    <text x="150" y="256" font-size="8.5" fill="hsl(var(--muted-foreground))">cap the ratio, frame as early-bird</text>
-    <rect x="260" y="206" width="180" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="350" y="227" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">AGGREGATOR RISK</text>
-    <text x="350" y="243" font-size="8.5" fill="hsl(var(--muted-foreground))">platforms sort by price —</text>
-    <text x="350" y="256" font-size="8.5" fill="hsl(var(--muted-foreground))">peak hikes lose ranking visibility</text>
-    <rect x="460" y="206" width="180" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="550" y="227" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">COMPETITIVE RISK</text>
-    <text x="550" y="243" font-size="8.5" fill="hsl(var(--muted-foreground))">rivals stay flat &amp; advertise it —</text>
-    <text x="550" y="256" font-size="8.5" fill="hsl(var(--muted-foreground))">premium product must justify gap</text>
+    <rect x="95" y="198" width="240" height="72" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="215" y="216" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">STEPPED CURVE · 3 peak deps/wk</text>
+    <text x="215" y="232" font-size="8.5" fill="hsl(var(--muted-foreground))">⅓ @ ₹1,400 · ⅓ @ ₹1,800 · ⅓ @ ₹2,300</text>
+    <text x="215" y="246" font-size="8.5" fill="hsl(var(--muted-foreground))">avg ≈ ₹1,830 → +₹430/berth</text>
+    <text x="215" y="262" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">3 × 36 × 430 ≈ +₹46,400/wk</text>
+    <rect x="385" y="198" width="240" height="72" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="216" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">OFF-PEAK FILL · 4 deps/wk</text>
+    <text x="505" y="232" font-size="8.5" fill="hsl(var(--muted-foreground))">₹999 advance fare: 55% → ~70%</text>
+    <text x="505" y="246" font-size="8.5" fill="hsl(var(--muted-foreground))">+22 × ₹999 ≈ ₹22k − dilution 15 × ₹400</text>
+    <text x="505" y="262" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">net ≈ +₹16,000/wk</text>
   </g>
-  <text x="350" y="305" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">The math says yes loudly; the design problem is making "yes" survive customers, platforms, and rivals.</text>
+  <path d="M215 270 L215 286 M505 270 L505 286 M135 286 L585 286 M135 286 L135 300 M360 286 L360 300 M585 286 L585 300" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="302" width="210" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="135" y="322" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FAIRNESS RISK</text>
+    <text x="135" y="338" font-size="8" fill="hsl(var(--muted-foreground))">"₹2,600 for a bus?!" — cap ratio at ~2.3×,</text>
+    <text x="135" y="352" font-size="8" fill="hsl(var(--muted-foreground))">frame as early-bird off a raised anchor</text>
+    <rect x="255" y="302" width="210" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="360" y="322" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">AGGREGATOR RISK</text>
+    <text x="360" y="338" font-size="8" fill="hsl(var(--muted-foreground))">60% book via platforms that sort by price —</text>
+    <text x="360" y="352" font-size="8" fill="hsl(var(--muted-foreground))">push the ₹999 fare through direct app only</text>
+    <rect x="480" y="302" width="210" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="585" y="322" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">COMPETITIVE RISK</text>
+    <text x="585" y="338" font-size="8" fill="hsl(var(--muted-foreground))">rivals stay flat and advertise it —</text>
+    <text x="585" y="352" font-size="8" fill="hsl(var(--muted-foreground))">the premium product must justify the gap</text>
+  </g>
+  <path d="M135 366 L135 382 M360 366 L360 382 M585 366 L585 382 M135 382 L585 382 M360 382 L360 396" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="398" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="417" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹62,000 / BUS / WEEK → ~₹39 CR / YR (+20%)</text>
+  <text x="360" y="434" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">3 fare steps, ceiling 2.3× floor · no repricing after booking · pilot 2 routes, 8 weeks</text>
+  <text x="360" y="472" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">A waitlist is a price signal, not an ops problem. Dynamic pricing is 30% arithmetic, 70% mechanism design.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

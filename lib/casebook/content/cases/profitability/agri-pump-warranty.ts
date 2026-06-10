@@ -20,42 +20,73 @@ export const agriPumpWarranty: Page = {
       { type: 'callout', variant: 'tip', md: 'Convert margin points into **rupees** immediately (5 pts × ₹600 cr = ₹30 cr). It turns an abstract "margins fell" into a concrete hunt, and tells you what size of cause is even plausible.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 680, ariaLabel: 'Cost decomposition tree for a pump manufacturer splitting cost of goods sold and operating expenses into six leaf buckets', caption: 'The ₹30-crore hunt — interrogate each leaf for "what changed in 18 months?"', svg: `<svg viewBox="0 0 680 300" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="apcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="apng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="230" y="16" width="220" height="46" rx="12" fill="url(#apng)" filter="url(#apcs)"/>
-  <text x="340" y="36" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">TOTAL COST BASE</text>
-  <text x="340" y="52" text-anchor="middle" font-size="9.5" fill="#b9c4d6">find the new ₹30 crore</text>
-  <path d="M340 62 L340 78 M170 78 L510 78 M170 78 L170 94 M510 78 L510 94" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <rect x="70" y="96" width="200" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#apcs)"/>
-  <text x="170" y="120" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--foreground))">COGS</text>
-  <rect x="410" y="96" width="200" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#apcs)"/>
-  <text x="510" y="120" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--foreground))">BELOW THE LINE</text>
-  <path d="M170 136 L170 150 M60 150 L280 150 M60 150 L60 164 M170 150 L170 164 M280 150 L280 164" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-  <path d="M510 136 L510 150 M400 150 L620 150 M400 150 L400 164 M510 150 L510 164 M620 150 L620 164" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Three-tier cost tree splitting COGS and below-the-line costs into six leaves with verdicts, warranty tripled from 6 to 19 crore, false-economy math row of 8 crore saving versus 13 crore claims and 4 crore overtime, net minus 9 crore verdict bar', caption: 'The ₹30-crore hunt resolved — five leaves flat, warranty tripled. The false-economy row prices the cheap winding at total cost.', svg: `<svg viewBox="0 0 720 455" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="apng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#apng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">TOTAL COST BASE</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">find the new ₹30 crore — 5 margin pts × ₹600 cr revenue</text>
+  <path d="M360 60 L360 70 M190 70 L529 70 M190 70 L190 82 M529 70 L529 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="15" y="166" width="90" height="44" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="60" y="185" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">MATERIALS</text>
-    <text x="60" y="199" font-size="8.5" fill="hsl(var(--muted-foreground))">copper · steel</text>
-    <rect x="125" y="166" width="90" height="44" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="170" y="185" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LABOUR</text>
-    <text x="170" y="199" font-size="8.5" fill="hsl(var(--muted-foreground))">wages · overtime</text>
-    <rect x="235" y="166" width="90" height="44" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="280" y="185" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">ENERGY</text>
-    <text x="280" y="199" font-size="8.5" fill="hsl(var(--muted-foreground))">power · fuel</text>
-    <rect x="355" y="166" width="90" height="44" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-    <text x="400" y="185" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">WARRANTY</text>
-    <text x="400" y="199" font-size="8.5" fill="hsl(var(--muted-foreground))">claims · service</text>
-    <rect x="465" y="166" width="90" height="44" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="510" y="185" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LOGISTICS</text>
-    <text x="510" y="199" font-size="8.5" fill="hsl(var(--muted-foreground))">freight · depots</text>
-    <rect x="575" y="166" width="90" height="44" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
-    <text x="620" y="185" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">SG&amp;A</text>
-    <text x="620" y="199" font-size="8.5" fill="hsl(var(--muted-foreground))">sales · admin</text>
+    <rect x="60" y="84" width="260" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="190" y="108" font-size="10" font-weight="700" fill="hsl(var(--foreground))">COGS</text>
+    <rect x="399" y="84" width="260" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="529" y="108" font-size="10" font-weight="700" fill="hsl(var(--foreground))">BELOW THE LINE</text>
   </g>
-  <text x="340" y="250" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Ask one question per leaf: "what changed in the last 18 months?" — then chase the leaf that answers.</text>
+  <path d="M190 124 L190 138 M77 138 L303 138 M77 138 L77 152 M190 138 L190 152 M303 138 L303 152" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <path d="M529 124 L529 138 M416 138 L642 138 M416 138 L416 152 M529 138 L529 152 M642 138 L642 152" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="25" y="154" width="105" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="77" y="172" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">MATERIALS</text>
+    <text x="77" y="187" font-size="8" fill="hsl(var(--muted-foreground))">copper · steel</text>
+    <text x="77" y="200" font-size="8" fill="hsl(var(--muted-foreground))">up slightly, hedged</text>
+    <text x="77" y="226" font-size="10" font-weight="700" fill="hsl(var(--primary))">flat ✓</text>
+    <rect x="138" y="154" width="105" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="190" y="172" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LABOUR</text>
+    <text x="190" y="187" font-size="8" fill="hsl(var(--muted-foreground))">factory wages</text>
+    <text x="190" y="200" font-size="8" fill="hsl(var(--muted-foreground))">% of revenue</text>
+    <text x="190" y="226" font-size="10" font-weight="700" fill="hsl(var(--primary))">flat ✓</text>
+    <rect x="251" y="154" width="105" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="303" y="172" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">ENERGY</text>
+    <text x="303" y="187" font-size="8" fill="hsl(var(--muted-foreground))">power · fuel</text>
+    <text x="303" y="200" font-size="8" fill="hsl(var(--muted-foreground))">% of revenue</text>
+    <text x="303" y="226" font-size="10" font-weight="700" fill="hsl(var(--primary))">flat ✓</text>
+    <rect x="364" y="154" width="105" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="416" y="172" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">WARRANTY</text>
+    <text x="416" y="187" font-size="8" fill="hsl(var(--muted-foreground))">claims tripled —</text>
+    <text x="416" y="200" font-size="8" fill="hsl(var(--muted-foreground))">cheap winding cohort</text>
+    <text x="416" y="222" font-size="10" font-weight="700" fill="hsl(var(--primary))">₹6 → ₹19 cr</text>
+    <text x="416" y="237" font-size="8" fill="hsl(var(--muted-foreground))">3× field failures</text>
+    <rect x="477" y="154" width="105" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="529" y="172" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">LOGISTICS</text>
+    <text x="529" y="187" font-size="8" fill="hsl(var(--muted-foreground))">freight · depots</text>
+    <text x="529" y="200" font-size="8" fill="hsl(var(--muted-foreground))">% of revenue</text>
+    <text x="529" y="226" font-size="10" font-weight="700" fill="hsl(var(--primary))">flat ✓</text>
+    <rect x="590" y="154" width="105" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="642" y="172" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">SG&amp;A</text>
+    <text x="642" y="187" font-size="8" fill="hsl(var(--muted-foreground))">sales · admin</text>
+    <text x="642" y="200" font-size="8" fill="hsl(var(--muted-foreground))">% of revenue</text>
+    <text x="642" y="226" font-size="10" font-weight="700" fill="hsl(var(--primary))">flat ✓</text>
+  </g>
+  <path d="M77 246 L77 264 M190 246 L190 264 M303 246 L303 264 M416 246 L416 264 M529 246 L529 264 M642 246 L642 264 M77 264 L642 264 M135 264 L135 278 M360 264 L360 278 M585 264 L585 278" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="280" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="135" y="298" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">PROCUREMENT SAVING</text>
+    <text x="135" y="314" font-size="8.5" fill="hsl(var(--muted-foreground))">₹400 × 200,000 pumps</text>
+    <text x="135" y="330" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">+₹8 cr / yr</text>
+    <rect x="255" y="280" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="298" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">NEW WARRANTY CLAIMS</text>
+    <text x="360" y="314" font-size="8.5" fill="hsl(var(--muted-foreground))">₹19 cr − ₹6 cr baseline</text>
+    <text x="360" y="330" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">−₹13 cr / yr</text>
+    <rect x="480" y="280" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="585" y="298" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">SERVICE OVERTIME</text>
+    <text x="585" y="314" font-size="8.5" fill="hsl(var(--muted-foreground))">same failures, same cohort</text>
+    <text x="585" y="330" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ −₹4 cr / yr</text>
+  </g>
+  <path d="M135 338 L135 352 M360 338 L360 352 M585 338 L585 352 M135 352 L585 352 M360 352 L360 364" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="366" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="385" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">NET −₹9 CR/YR — THE "SAVING" CAUSED THE SLIDE</text>
+  <text x="360" y="402" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">revert/dual-source the winding · service the at-risk cohort pre-season · TCO gate on procurement</text>
+  <text x="360" y="438" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Today's warranty line reflects decisions made 20 months ago — price every procurement saving at total cost, not unit cost.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

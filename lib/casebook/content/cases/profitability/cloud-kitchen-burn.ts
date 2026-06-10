@@ -20,34 +20,62 @@ export const cloudKitchenBurn: Page = {
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'Build the order-level P&L, then split the network: what do the contribution-positive kitchens do differently?' },
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Order-level profit and loss waterfall for a cloud kitchen from gross order value to contribution', caption: 'The order-level P&L — every lever on one line. The case is won or lost in these six bars.', svg: `<svg viewBox="0 0 720 330" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="ckcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="ckng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="20" y="30" width="92" height="170" rx="8" fill="url(#ckng)" filter="url(#ckcs)"/>
-  <text x="66" y="55" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">AOV</text>
-  <text x="66" y="70" text-anchor="middle" font-size="9" fill="#b9c4d6">₹380</text>
-  <rect x="132" y="30" width="92" height="48" rx="8" fill="hsl(var(--primary))" opacity="0.85"/>
-  <text x="178" y="50" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffffff">COMMISSION</text>
-  <text x="178" y="64" text-anchor="middle" font-size="9" fill="#ffffff">−₹95 (25%)</text>
-  <rect x="244" y="78" width="92" height="34" rx="8" fill="hsl(var(--primary))" opacity="0.7"/>
-  <text x="290" y="93" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffffff">DISCOUNTS</text>
-  <text x="290" y="106" text-anchor="middle" font-size="9" fill="#ffffff">−₹45</text>
-  <rect x="356" y="112" width="92" height="60" rx="8" fill="hsl(var(--primary))" opacity="0.55"/>
-  <text x="402" y="135" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffffff">FOOD COGS</text>
-  <text x="402" y="149" text-anchor="middle" font-size="9" fill="#ffffff">−₹125 (33%)</text>
-  <rect x="468" y="172" width="92" height="26" rx="8" fill="hsl(var(--primary))" opacity="0.4"/>
-  <text x="514" y="184" text-anchor="middle" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">PACKAGING</text>
-  <text x="514" y="195" text-anchor="middle" font-size="9" fill="hsl(var(--foreground))">−₹28</text>
-  <rect x="580" y="198" width="92" height="40" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="626" y="214" text-anchor="middle" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">KITCHEN OPEX</text>
-  <text x="626" y="228" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">−₹105/order*</text>
-  <path d="M112 200 L580 200" stroke="hsl(var(--border-strong))" stroke-width="1" stroke-dasharray="4 4"/>
-  <rect x="150" y="258" width="420" height="44" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="276" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">CONTRIBUTION ≈ −₹18 / ORDER</text>
-  <text x="360" y="293" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">*kitchen rent + staff ÷ orders — the only bar that volume dilutes</text>
-  <text x="360" y="322" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Commission + discounts take ₹140 of a ₹380 order before food is even cooked.</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Order-level profit and loss waterfall from 380 rupee order value through commission, discounts, food cost, packaging and kitchen opex to minus 18 rupees contribution, followed by break-even density math of 218 orders per day and a good versus bad kitchen comparison', caption: 'The order P&L waterfall, then the density band — ₹87 pre-opex contribution vs ₹19k/day opex makes the whole case arithmetic.', svg: `<svg viewBox="0 0 720 560" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="ckng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#ckng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">ORDER P&amp;L → DENSITY MATH</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">loss/order flat at −₹18 while volume doubles — fix the order, then the divisor</text>
+  <rect x="20" y="80" width="92" height="170" rx="8" fill="url(#ckng)"/>
+  <text x="66" y="105" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">AOV</text>
+  <text x="66" y="120" text-anchor="middle" font-size="9" fill="#b9c4d6">₹380</text>
+  <rect x="132" y="80" width="92" height="48" rx="8" fill="hsl(var(--primary))" opacity="0.85"/>
+  <text x="178" y="100" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffffff">COMMISSION</text>
+  <text x="178" y="114" text-anchor="middle" font-size="9" fill="#ffffff">−₹95 (25%)</text>
+  <rect x="244" y="128" width="92" height="34" rx="8" fill="hsl(var(--primary))" opacity="0.7"/>
+  <text x="290" y="143" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffffff">DISCOUNTS</text>
+  <text x="290" y="156" text-anchor="middle" font-size="9" fill="#ffffff">−₹45</text>
+  <rect x="356" y="162" width="92" height="60" rx="8" fill="hsl(var(--primary))" opacity="0.55"/>
+  <text x="402" y="185" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffffff">FOOD COGS</text>
+  <text x="402" y="199" text-anchor="middle" font-size="9" fill="#ffffff">−₹125 (33%)</text>
+  <rect x="468" y="222" width="92" height="26" rx="8" fill="hsl(var(--primary))" opacity="0.4"/>
+  <text x="514" y="234" text-anchor="middle" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">PACKAGING</text>
+  <text x="514" y="245" text-anchor="middle" font-size="9" fill="hsl(var(--foreground))">−₹28</text>
+  <rect x="580" y="248" width="92" height="40" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
+  <text x="626" y="264" text-anchor="middle" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">KITCHEN OPEX</text>
+  <text x="626" y="278" text-anchor="middle" font-size="9" fill="hsl(var(--muted-foreground))">−₹105/order</text>
+  <path d="M112 250 L580 250" stroke="hsl(var(--border-strong))" stroke-width="1" stroke-dasharray="4 4"/>
+  <text x="626" y="302" text-anchor="middle" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">= −₹18/order</text>
+  <path d="M360 252 L360 296 M135 296 L585 296 M135 296 L135 310 M360 296 L360 310 M585 296 L585 310" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="312" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="135" y="330" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">PRE-OPEX CONTRIBUTION</text>
+    <text x="135" y="346" font-size="8.5" fill="hsl(var(--muted-foreground))">380 − 95 − 45 − 125 − 28</text>
+    <text x="135" y="362" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹87 / order</text>
+    <rect x="255" y="312" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="330" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">KITCHEN OPEX</text>
+    <text x="360" y="346" font-size="8.5" fill="hsl(var(--muted-foreground))">rent + 8 staff, semi-fixed</text>
+    <text x="360" y="362" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹19,000 / day</text>
+    <rect x="480" y="312" width="210" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="585" y="330" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">BREAK-EVEN DENSITY</text>
+    <text x="585" y="346" font-size="8.5" fill="hsl(var(--muted-foreground))">19,000 ÷ 87</text>
+    <text x="585" y="362" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ 218 orders / day</text>
+  </g>
+  <path d="M135 370 L135 384 M360 370 L360 384 M585 370 L585 384 M135 384 L585 384 M215 384 L215 398 M505 384 L505 398" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="400" width="240" height="58" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="215" y="418" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">POSITIVE THIRD · 210/day</text>
+    <text x="215" y="434" font-size="8.5" fill="hsl(var(--muted-foreground))">same commission, COGS, discounts</text>
+    <text x="215" y="450" font-size="10" font-weight="700" fill="hsl(var(--primary))">87 × 210 ≈ ₹18.3k — clears opex ✓</text>
+    <rect x="385" y="400" width="240" height="58" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="418" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">NEGATIVE REST · 90/day</text>
+    <text x="505" y="434" font-size="8.5" fill="hsl(var(--muted-foreground))">87 × 90 = ₹7,830 vs ₹19,000</text>
+    <text x="505" y="450" font-size="10" font-weight="700" fill="hsl(var(--primary))">−₹11,170 / day per weak kitchen</text>
+  </g>
+  <path d="M215 458 L215 472 M505 458 L505 472 M215 472 L505 472 M360 472 L360 484" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="486" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="505" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">CLEAR ~220 ORDERS/DAY — OR SHRINK FORMAT, OR CLOSE</text>
+  <text x="360" y="522" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">ramp dense micro-markets · 2-brand/4-staff thin markets · exit the bottom ~5</text>
+  <text x="360" y="552" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Commission + discounts take ₹140 of a ₹380 order before food is cooked — yet survivors and casualties differ only in density.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

@@ -19,41 +19,58 @@ export const japaneseStationeryIndia: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Market entry spine for a premium stationery brand entering India: attractiveness, right to win, entry mode, and path to 500 crore', caption: 'The decision spine, loaded with this case\'s specifics — note Q4 is a reverse-engineered target, not an open question.', svg: `<svg viewBox="0 0 720 360" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="jscs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="jsng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="250" y="14" width="220" height="44" rx="12" fill="url(#jsng)" filter="url(#jscs)"/>
-  <text x="360" y="34" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">ENTER INDIA?</text>
-  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">target: ₹500 cr by year 5</text>
-  <path d="M360 58 L360 74 M115 74 L605 74 M115 74 L115 90 M278 74 L278 90 M442 74 L442 90 M605 74 L605 90" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Three-tier decision tree for entering India: four questions each carrying numbers, market of 12,000 crore with premium at 8 percent equal to 960 growing to 1,450 crore, implied share math showing 500 crore equals 34 percent and is implausible, achievable case of 325 to 375 crore, and an enter-but-reset verdict bar', caption: 'The spine rebuilt with the numbers in every node — Q4 turns the ₹500 cr ambition into an implied 34% share, and kills it.', svg: `<svg viewBox="0 0 720 425" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="jsng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#jsng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">ENTER INDIA?</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">client target: ₹500 cr by year 5 — test it before planning around it</text>
+  <path d="M360 60 L360 70 M115 70 L605 70 M115 70 L115 80 M278 70 L278 80 M442 70 L442 80 M605 70 L605 80" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="35" y="92" width="160" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#jscs)"/>
-    <text x="115" y="111" font-size="9" font-weight="700" letter-spacing="0.08em" fill="hsl(var(--primary))">Q1 · ATTRACTIVE?</text>
-    <text x="115" y="128" font-size="9.5" fill="hsl(var(--muted-foreground))">premium-segment size</text>
-    <text x="115" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">· growth · competition</text>
-    <text x="115" y="156" font-size="9.5" fill="hsl(var(--muted-foreground))">· import duties</text>
-    <rect x="198" y="92" width="160" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#jscs)"/>
-    <text x="278" y="111" font-size="9" font-weight="700" letter-spacing="0.08em" fill="hsl(var(--primary))">Q2 · CAN WE WIN?</text>
-    <text x="278" y="128" font-size="9.5" fill="hsl(var(--muted-foreground))">product superiority</text>
-    <text x="278" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">· brand pull vs zero</text>
-    <text x="278" y="156" font-size="9.5" fill="hsl(var(--muted-foreground))">awareness · distribution gap</text>
-    <rect x="362" y="92" width="160" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#jscs)"/>
-    <text x="442" y="111" font-size="9" font-weight="700" letter-spacing="0.08em" fill="hsl(var(--primary))">Q3 · HOW?</text>
-    <text x="442" y="128" font-size="9.5" fill="hsl(var(--muted-foreground))">export &amp; distribute</text>
-    <text x="442" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">· JV with Indian brand</text>
-    <text x="442" y="156" font-size="9.5" fill="hsl(var(--muted-foreground))">· acquire · local mfg</text>
-    <rect x="525" y="92" width="160" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#jscs)"/>
-    <text x="605" y="111" font-size="9" font-weight="700" letter-spacing="0.08em" fill="hsl(var(--primary))">Q4 · DOES IT PAY?</text>
-    <text x="605" y="128" font-size="9.5" fill="hsl(var(--muted-foreground))">reverse-engineer:</text>
-    <text x="605" y="142" font-size="9.5" fill="hsl(var(--muted-foreground))">what share/doors/ASP</text>
-    <text x="605" y="156" font-size="9.5" fill="hsl(var(--muted-foreground))">does ₹500 cr imply?</text>
+    <rect x="35" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="115" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">Q1 · ATTRACTIVE?</text>
+    <text x="115" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">₹12,000 cr market, +9%/yr</text>
+    <text x="115" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">premium (&gt;₹100) = 8%</text>
+    <text x="115" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">= ₹960 cr today</text>
+    <text x="115" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">→ ~₹1,450 cr (yr 5)</text>
+    <text x="115" y="186" font-size="8" fill="hsl(var(--muted-foreground))">growth + premiumization</text>
+    <rect x="198" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="278" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">Q2 · CAN WE WIN?</text>
+    <text x="278" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">product edge real; zero brand</text>
+    <text x="278" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">awareness, distribution gap;</text>
+    <text x="278" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">ASP ₹150 retail</text>
+    <text x="278" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">₹90 realized</text>
+    <text x="278" y="186" font-size="8" fill="hsl(var(--muted-foreground))">after trade margins + duties</text>
+    <rect x="362" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="442" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--foreground))">Q3 · HOW?</text>
+    <text x="442" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">import &amp; distribute · JV ·</text>
+    <text x="442" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">acquire · local mfg —</text>
+    <text x="442" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">mode follows the segment</text>
+    <text x="442" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">JV opens ₹30–60 line</text>
+    <text x="442" y="186" font-size="8" fill="hsl(var(--muted-foreground))">= the ₹4,000+ cr mid segment</text>
+    <rect x="525" y="82" width="160" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="605" y="101" font-size="9" font-weight="700" letter-spacing="0.06em" fill="hsl(var(--primary))">Q4 · DOES IT PAY?</text>
+    <text x="605" y="118" font-size="8.5" fill="hsl(var(--muted-foreground))">reverse-engineer the target:</text>
+    <text x="605" y="132" font-size="8.5" fill="hsl(var(--muted-foreground))">what share does ₹500 cr</text>
+    <text x="605" y="146" font-size="8.5" fill="hsl(var(--muted-foreground))">imply by year 5?</text>
+    <text x="605" y="170" font-size="10" font-weight="700" fill="hsl(var(--primary))">implied ~34% share</text>
+    <text x="605" y="186" font-size="8" fill="hsl(var(--muted-foreground))">the question that decides the case</text>
   </g>
-  <rect x="140" y="210" width="440" height="46" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="229" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">FEASIBILITY CHECK: IS THE IMPLIED SHARE PLAUSIBLE?</text>
-  <text x="360" y="246" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">if ₹500 cr needs 40% of the premium segment, the answer is "not as planned"</text>
-  <text x="360" y="300" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">With a hard revenue target, Q4 stops being "estimate profits" and becomes "sanity-check the ambition."</text>
+  <path d="M115 202 L115 220 M278 202 L278 220 M442 202 L442 220 M605 202 L605 220 M115 220 L605 220 M215 220 L215 236 M505 220 L505 236" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="238" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="215" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FEASIBILITY CHECK</text>
+    <text x="215" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">₹500 ÷ ₹1,450 cr ≈ 34% vs 5–15% benchmark</text>
+    <text x="215" y="288" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">implausible ✗</text>
+    <rect x="385" y="238" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">ACHIEVABLE CASE</text>
+    <text x="505" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">12% × ₹1,450 ≈ ₹175 cr + mid-JV ₹150–200 cr</text>
+    <text x="505" y="288" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">₹325–375 cr stretch</text>
+  </g>
+  <path d="M215 296 L215 312 M505 296 L505 312 M215 312 L505 312 M360 312 L360 326" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="160" y="328" width="400" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="347" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">ENTER — BUT RESET THE TARGET TO ≈ ₹350 CR</text>
+  <text x="360" y="364" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">premium import first (top 8 metros) → mid-segment JV for scale · walk away above 15% implied share</text>
+  <text x="360" y="402" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Reverse-engineer the implied share before building any plan — "enter, but your target is wrong" is often the strongest answer.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

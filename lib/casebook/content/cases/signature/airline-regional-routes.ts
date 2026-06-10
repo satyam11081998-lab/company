@@ -19,36 +19,53 @@ export const airlineRegionalRoutes: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Route evaluation framework comparing avoidable loss against network feed contribution, producing a keep, fix, or cut decision per route', caption: 'The decision rule, per route: avoidable loss vs network feed. The blob answer ("cut all 22") is guaranteed wrong.', svg: `<svg viewBox="0 0 720 360" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="arcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="arng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="235" y="14" width="250" height="44" rx="12" fill="url(#arng)" filter="url(#arcs)"/>
-  <text x="360" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">PER ROUTE: KEEP, FIX, OR CUT?</text>
-  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">two numbers decide each of the 22</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier route framework: avoidable loss versus network feed panels, the keep-fix-cut decision rule, an 8-5-9 segmentation tier with 40 versus 85 crore for keepers and 75 versus 12 crore for cuts, and a 100-plus crore verdict bar', caption: 'Two numbers decide each of the 22 — and the 8/5/9 tier shows them per bucket. The blob answer was worth ₹25 cr; the segmented one, ₹100+.', svg: `<svg viewBox="0 0 720 510" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="arng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#arng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">PER ROUTE: KEEP, FIX, OR CUT?</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">₹240 cr "loss" = ₹95 cr unavoidable + ₹145 cr avoidable, vs ₹120 cr of feed</text>
+  <path d="M360 60 L360 70 M215 70 L505 70 M215 70 L215 82 M505 70 L505 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="60" y="86" width="280" height="110" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#arcs)"/>
-    <text x="200" y="108" font-size="10" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">A · AVOIDABLE LOSS</text>
-    <text x="200" y="127" font-size="9" fill="hsl(var(--muted-foreground))">fully-allocated loss</text>
-    <text x="200" y="141" font-size="9" fill="hsl(var(--muted-foreground))">− corporate overhead share (stays)</text>
-    <text x="200" y="155" font-size="9" fill="hsl(var(--muted-foreground))">− fleet ownership if planes redeploy/can't sell</text>
-    <text x="200" y="169" font-size="9" fill="hsl(var(--muted-foreground))">− hub charges that persist</text>
-    <text x="200" y="187" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">= cash actually saved by cutting</text>
-    <rect x="380" y="86" width="280" height="110" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#arcs)"/>
-    <text x="520" y="108" font-size="10" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">B · NETWORK FEED</text>
-    <text x="520" y="127" font-size="9" fill="hsl(var(--muted-foreground))">connecting pax × trunk fare share ×</text>
-    <text x="520" y="141" font-size="9" fill="hsl(var(--muted-foreground))">trunk margin − (those seats resold to</text>
-    <text x="520" y="155" font-size="9" fill="hsl(var(--muted-foreground))">local demand? subtract recapture)</text>
-    <text x="520" y="169" font-size="9" fill="hsl(var(--muted-foreground))">+ cargo feed + loyalty ecosystem value</text>
-    <text x="520" y="187" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">= margin that dies with the route</text>
+    <rect x="95" y="84" width="240" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="215" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">A · AVOIDABLE LOSS</text>
+    <text x="215" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">fully-allocated loss − overhead share</text>
+    <text x="215" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">(stays) − fleet ownership that redeploys</text>
+    <text x="215" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">− hub charges that persist</text>
+    <text x="215" y="171" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹145 cr network-wide</text>
+    <text x="215" y="186" font-size="8" fill="hsl(var(--muted-foreground))">cash actually saved by cutting</text>
+    <rect x="385" y="84" width="240" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="104" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">B · NETWORK FEED</text>
+    <text x="505" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">38% of regional pax connect: their trunk</text>
+    <text x="505" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">margin − recapture haircut (40–60%)</text>
+    <text x="505" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">+ cargo feed + loyalty ecosystem</text>
+    <text x="505" y="171" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹120 cr network-wide</text>
+    <text x="505" y="186" font-size="8" fill="hsl(var(--muted-foreground))">margin that dies with the route</text>
   </g>
-  <path d="M200 196 L200 224 M520 196 L520 224 M200 224 L520 224 M360 224 L360 246" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <rect x="120" y="248" width="480" height="62" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="270" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.03em" fill="hsl(var(--primary))">B &gt; A → KEEP (it's a feeder, the "loss" is an accounting artifact)</text>
-  <text x="360" y="287" text-anchor="middle" font-size="10" fill="hsl(var(--foreground))">B &lt; A but fixable → FIX (right-size aircraft, frequency, pricing)</text>
-  <text x="360" y="302" text-anchor="middle" font-size="10" fill="hsl(var(--foreground))">B ≪ A, no fix → CUT (and redeploy the aircraft to trunk demand)</text>
-  <text x="360" y="340" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">Both executives are wrong: the CFO counts unavoidable costs as savings; the CEO claims feed for routes where only 10% connect.</text>
+  <path d="M215 194 L215 210 M505 194 L505 210 M215 210 L505 210 M360 210 L360 222" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="120" y="224" width="480" height="62" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+  <text x="360" y="245" text-anchor="middle" font-size="10" font-weight="700" fill="hsl(var(--primary))">B &gt; A → KEEP (the "loss" is an accounting artifact)</text>
+  <text x="360" y="261" text-anchor="middle" font-size="9.5" fill="hsl(var(--foreground))">B &lt; A but fixable → FIX (right-size aircraft, frequency, pricing)</text>
+  <text x="360" y="276" text-anchor="middle" font-size="9.5" fill="hsl(var(--foreground))">B ≪ A, no fix → CUT (redeploy aircraft to trunk demand)</text>
+  <path d="M360 286 L360 298 M135 298 L585 298 M135 298 L135 312 M360 298 L360 312 M585 298 L585 312" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="314" width="210" height="72" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="135" y="332" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">KEEP 8 · FEED ≥55%</text>
+    <text x="135" y="348" font-size="8.5" fill="hsl(var(--muted-foreground))">avoidable ₹40 cr vs feed ₹85 cr</text>
+    <text x="135" y="368" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">+₹45 cr by keeping</text>
+    <rect x="255" y="314" width="210" height="72" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="360" y="332" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FIX 5 · THE MIDDLE</text>
+    <text x="360" y="348" font-size="8.5" fill="hsl(var(--muted-foreground))">70–90-seaters · hub-bank timing · subsidies</text>
+    <text x="360" y="368" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">revisit in 12 months</text>
+    <rect x="480" y="314" width="210" height="72" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="585" y="332" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">CUT 9 · FEED &lt;12%</text>
+    <text x="585" y="348" font-size="8.5" fill="hsl(var(--muted-foreground))">avoidable ₹75 cr vs feed ₹12 cr</text>
+    <text x="585" y="368" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">+₹63 cr from exit</text>
+  </g>
+  <path d="M135 386 L135 402 M360 386 L360 402 M585 386 L585 402 M135 402 L585 402 M360 402 L360 416" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="150" y="418" width="420" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="437" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹100+ CR/YR vs ₹25 CR FROM CUT-EVERYTHING</text>
+  <text x="360" y="454" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">report every regional route monthly on avoidable P&amp;L + feed — kill the fully-allocated mirage permanently</text>
+  <text x="360" y="492" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Both executives held a partial truth: the CFO counted unavoidable costs as savings; the CEO claimed feed for routes where 10% connect.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [
