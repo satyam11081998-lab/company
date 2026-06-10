@@ -145,6 +145,21 @@ export const PRIMERS: Primer[] = [
       { label: 'ONDC',                            url: 'https://ondc.org' },
     ],
   },
+  {
+    slug: 'industry-primers/food-processing',
+    folder: 'food-processing',
+    no: 9,
+    title: 'Food Processing',
+    sector: 'Agri & FMCG',
+    sources: [
+      { label: 'IBEF — Food Processing',          url: 'https://www.ibef.org/industry/food-processing' },
+      { label: 'MoFPI',                           url: 'https://www.mofpi.gov.in' },
+      { label: 'Invest India — Food Processing',  url: 'https://www.investindia.gov.in/sector/food-processing' },
+      { label: 'APEDA',                           url: 'https://apeda.gov.in' },
+      { label: 'FSSAI',                           url: 'https://www.fssai.gov.in' },
+      { label: 'PLISFPI (PLI scheme)',            url: 'https://www.mofpi.gov.in/Schemes/production-linked-incentive-scheme' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
