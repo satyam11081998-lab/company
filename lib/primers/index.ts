@@ -160,6 +160,20 @@ export const PRIMERS: Primer[] = [
       { label: 'PLISFPI (PLI scheme)',            url: 'https://www.mofpi.gov.in/Schemes/production-linked-incentive-scheme' },
     ],
   },
+  {
+    slug: 'industry-primers/fmcg',
+    folder: 'fmcg',
+    no: 10,
+    title: 'FMCG',
+    sector: 'Consumer Staples',
+    sources: [
+      { label: 'IBEF — FMCG',                     url: 'https://www.ibef.org/industry/fmcg' },
+      { label: 'NielsenIQ — India',               url: 'https://nielseniq.com/global/en/locations/india/' },
+      { label: 'McKinsey — Consumer (India)',     url: 'https://www.mckinsey.com/industries/consumer-packaged-goods/our-insights' },
+      { label: 'Invest India — Consumer',         url: 'https://www.investindia.gov.in/sector/retail-e-commerce' },
+      { label: 'Bain — India Consumer',           url: 'https://www.bain.com/region/india/' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
