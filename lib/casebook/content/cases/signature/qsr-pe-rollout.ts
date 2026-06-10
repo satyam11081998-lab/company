@@ -19,41 +19,51 @@ export const qsrPeRollout: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Rollout strategy structured by market distance from the proven model and the private equity exit timeline, with a diagnosis box for the failing city', caption: 'Sequence markets by model-distance, then fit the sequence to the fund\'s clock — the two constraints solve the executive fight.', svg: `<svg viewBox="0 0 720 360" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="qpcs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="qpng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-  </defs>
-  <rect x="230" y="12" width="260" height="42" rx="11" fill="url(#qpng)" filter="url(#qpcs)"/>
-  <text x="360" y="30" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">150 OUTLETS, 4 YEARS, ONE BROKEN CITY</text>
-  <text x="360" y="46" text-anchor="middle" font-size="9" fill="#b9c4d6">diagnose → re-segment → re-sequence</text>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier rollout tree: Mumbai diagnosis, model-distance rings and the exit clock, an exit-math tier comparing sprint-to-150 at 55 crore EBITDA and 11.5 times equal to 630 crore against quality-130 at 58 crore and 14.5 times equal to 840 crore, and a 210 crore delta verdict bar', caption: 'Diagnose, re-segment, re-sequence — and the exit-math tier prices the executive fight: the "missing" 20 outlets are worth −₹210 cr.', svg: `<svg viewBox="0 0 720 430" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="qpng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#qpng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">150 OUTLETS, 4 YEARS, ONE BROKEN CITY</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">diagnose → re-segment → re-sequence against the exit clock</text>
+  <path d="M360 60 L360 70 M125 70 L595 70 M125 70 L125 82 M360 70 L360 82 M595 70 L595 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="40" y="80" width="200" height="116" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#qpcs)"/>
-    <text x="140" y="101" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">1 · WHY IS MUMBAI FAILING?</text>
-    <text x="140" y="120" font-size="9" fill="hsl(var(--muted-foreground))">taste localization? price point vs</text>
-    <text x="140" y="134" font-size="9" fill="hsl(var(--muted-foreground))">local meal benchmarks? brand</text>
-    <text x="140" y="148" font-size="9" fill="hsl(var(--muted-foreground))">unknown vs strong local rivals?</text>
-    <text x="140" y="162" font-size="9" fill="hsl(var(--muted-foreground))">site selection? delivery-mix shock?</text>
-    <text x="140" y="182" font-size="9" font-weight="700" fill="hsl(var(--foreground))">fix or formally exit the city</text>
-    <rect x="260" y="80" width="200" height="116" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#qpcs)"/>
-    <text x="360" y="101" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">2 · MODEL-DISTANCE MAP</text>
-    <text x="360" y="120" font-size="9" fill="hsl(var(--muted-foreground))">RING 1: rest of South — proven</text>
-    <text x="360" y="134" font-size="9" fill="hsl(var(--muted-foreground))">taste/brand adjacency, ~60 sites</text>
-    <text x="360" y="148" font-size="9" fill="hsl(var(--muted-foreground))">RING 2: biryani-strong North/East</text>
-    <text x="360" y="162" font-size="9" fill="hsl(var(--muted-foreground))">metros · RING 3: the Mumbais</text>
-    <text x="360" y="182" font-size="9" font-weight="700" fill="hsl(var(--foreground))">grow in rings, not in leaps</text>
-    <rect x="480" y="80" width="200" height="116" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#qpcs)"/>
-    <text x="580" y="101" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">3 · THE EXIT CLOCK</text>
-    <text x="580" y="120" font-size="9" fill="hsl(var(--muted-foreground))">buyers pay for: outlet count ×</text>
-    <text x="580" y="134" font-size="9" fill="hsl(var(--muted-foreground))">unit economics × *proven* replicability</text>
-    <text x="580" y="148" font-size="9" fill="hsl(var(--muted-foreground))">120 healthy outlets &gt; 150 with a</text>
-    <text x="580" y="162" font-size="9" fill="hsl(var(--muted-foreground))">visible graveyard of failures</text>
-    <text x="580" y="182" font-size="9" font-weight="700" fill="hsl(var(--foreground))">quality of growth IS the multiple</text>
+    <rect x="30" y="84" width="190" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="125" y="103" font-size="9" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">1 · WHY IS MUMBAI FAILING?</text>
+    <text x="125" y="120" font-size="8.5" fill="hsl(var(--muted-foreground))">₹280 ticket, 25% above local ·</text>
+    <text x="125" y="134" font-size="8.5" fill="hsl(var(--muted-foreground))">delivery 70% vs 45% in South ·</text>
+    <text x="125" y="148" font-size="8.5" fill="hsl(var(--muted-foreground))">brand unknown vs two strong rivals</text>
+    <text x="125" y="172" font-size="10" font-weight="700" fill="hsl(var(--primary))">wrong format, not bad city</text>
+    <text x="125" y="188" font-size="8" fill="hsl(var(--muted-foreground))">convert to delivery kitchens or exit</text>
+    <rect x="265" y="84" width="190" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="360" y="103" font-size="9" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">2 · MODEL-DISTANCE MAP</text>
+    <text x="360" y="120" font-size="8.5" fill="hsl(var(--muted-foreground))">RING 1: rest of South, ~60 sites —</text>
+    <text x="360" y="134" font-size="8.5" fill="hsl(var(--muted-foreground))">proven · RING 2: biryani-strong</text>
+    <text x="360" y="148" font-size="8.5" fill="hsl(var(--muted-foreground))">metros · RING 3: the Mumbais</text>
+    <text x="360" y="172" font-size="10" font-weight="700" fill="hsl(var(--primary))">grow in rings, not leaps</text>
+    <text x="360" y="188" font-size="8" fill="hsl(var(--muted-foreground))">home additions all at or above plan</text>
+    <rect x="500" y="84" width="190" height="120" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="595" y="103" font-size="9" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">3 · THE EXIT CLOCK</text>
+    <text x="595" y="120" font-size="8.5" fill="hsl(var(--muted-foreground))">buyers pay: outlet count ×</text>
+    <text x="595" y="134" font-size="8.5" fill="hsl(var(--muted-foreground))">unit economics × proven replicability;</text>
+    <text x="595" y="148" font-size="8.5" fill="hsl(var(--muted-foreground))">graveyards get discounted</text>
+    <text x="595" y="172" font-size="10" font-weight="700" fill="hsl(var(--primary))">quality of growth IS the multiple</text>
+    <text x="595" y="188" font-size="8" fill="hsl(var(--muted-foreground))">130 healthy &gt; 150 with failures</text>
   </g>
-  <rect x="120" y="230" width="480" height="48" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="250" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.03em" fill="hsl(var(--primary))">RESOLUTION: ACCELERATE RING 1, PILOT RING 2, FREEZE RING 3</text>
-  <text x="360" y="267" text-anchor="middle" font-size="9.5" fill="hsl(var(--muted-foreground))">both executives get half their wish — and the exit gets a story buyers believe</text>
-  <text x="360" y="320" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">A PE timeline doesn't change what's true about the business; it changes which truths you can afford to test.</text>
+  <path d="M125 204 L125 222 M360 204 L360 222 M595 204 L595 222 M125 222 L595 222 M215 222 L215 236 M505 222 L505 236" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="238" width="240" height="64" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="215" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">SPRINT TO 150</text>
+    <text x="215" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">~₹55 cr EBITDA, messy cohort data → 11.5×</text>
+    <text x="215" y="292" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">≈ ₹630 cr EV</text>
+    <rect x="385" y="238" width="240" height="64" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="256" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">QUALITY 130</text>
+    <text x="505" y="272" font-size="8.5" fill="hsl(var(--muted-foreground))">~₹58 cr EBITDA, clean replication proof → 14.5×</text>
+    <text x="505" y="292" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ ₹840 cr EV</text>
+  </g>
+  <path d="M215 302 L215 318 M505 302 L505 318 M215 318 L505 318 M360 318 L360 332" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="150" y="334" width="420" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="353" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">Δ ≈ ₹210 CR — ACCELERATE RING 1 · PILOT RING 2 · FREEZE RING 3</text>
+  <text x="360" y="370" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">the "missing" 20 outlets are worth −₹210 cr — show LPs the multiple math, not the count</text>
+  <text x="360" y="408" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">A PE timeline doesn't change what's true about the business; it changes which truths you can afford to test.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [

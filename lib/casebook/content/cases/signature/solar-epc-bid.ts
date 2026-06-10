@@ -19,44 +19,70 @@ export const solarEpcBid: Page = {
       ]},
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
-      { type: 'svg', maxWidth: 720, ariaLabel: 'Bid decision structure with three gates: strategic fit and capacity, competitive read including the irrational rival, and price built from cost plus risk pricing plus strategic discount', caption: 'Three gates, in order. The rival\'s "crazy" bids get explained, not envied, at gate two.', svg: `<svg viewBox="0 0 720 360" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
-  <defs>
-    <filter id="secs" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f1c33" flood-opacity="0.10"/></filter>
-    <linearGradient id="seng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient>
-    <marker id="sear" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 Z" fill="hsl(var(--border-strong))"/></marker>
-  </defs>
+      { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier bid decision tree: three gates with numbers, a four-hypothesis rival-decode tier covering cost edge, buying share, change-order game and winners curse each with its counter-move, the price build from 1,385 plus 72 plus 73 crore, and a bid-1,530 floor-1,490 verdict bar', caption: 'Three gates, then the rival decoded into four testable hypotheses — each with its counter-move — before any number is written down.', svg: `<svg viewBox="0 0 720 565" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs><linearGradient id="seng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#seng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">BID OR NO-BID: ₹1,600 CR TENDER</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">lowest technically-qualified bidder wins — three gates, in order</text>
+  <path d="M360 60 L360 70 M125 70 L595 70 M125 70 L125 82 M360 70 L360 82 M595 70 L595 82" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="40" y="30" width="190" height="96" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#secs)"/>
-    <text x="135" y="52" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">GATE 1 · WANT IT?</text>
-    <text x="135" y="70" font-size="9" fill="hsl(var(--muted-foreground))">capacity: book 1.4× → 2.1×</text>
-    <text x="135" y="84" font-size="9" fill="hsl(var(--muted-foreground))">· 30% subcontract need</text>
-    <text x="135" y="98" font-size="9" fill="hsl(var(--muted-foreground))">strategic: 3 GW utility pipeline</text>
-    <text x="135" y="115" font-size="9" font-weight="700" fill="hsl(var(--foreground))">YES, with conditions</text>
-    <rect x="265" y="30" width="190" height="96" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25" filter="url(#secs)"/>
-    <text x="360" y="52" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">GATE 2 · CAN WE WIN?</text>
-    <text x="360" y="70" font-size="9" fill="hsl(var(--muted-foreground))">decode the rival: module tie-ups?</text>
-    <text x="360" y="84" font-size="9" fill="hsl(var(--muted-foreground))">in-house installation? buying the</text>
-    <text x="360" y="98" font-size="9" fill="hsl(var(--muted-foreground))">market? change-order recovery game?</text>
-    <text x="360" y="115" font-size="9" font-weight="700" fill="hsl(var(--foreground))">explain, then decide</text>
-    <rect x="490" y="30" width="190" height="96" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.5" filter="url(#secs)"/>
-    <text x="585" y="52" font-size="9.5" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">GATE 3 · AT WHAT PRICE?</text>
-    <text x="585" y="70" font-size="9" fill="hsl(var(--muted-foreground))">base cost + risk premiums</text>
-    <text x="585" y="84" font-size="9" fill="hsl(var(--muted-foreground))">(module volatility · delay LDs)</text>
-    <text x="585" y="98" font-size="9" fill="hsl(var(--muted-foreground))">− strategic entry discount</text>
-    <text x="585" y="115" font-size="9" font-weight="700" fill="hsl(var(--foreground))">floor = walk-away, written down</text>
+    <rect x="30" y="84" width="190" height="100" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="125" y="104" font-size="9" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">GATE 1 · WANT IT?</text>
+    <text x="125" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">capacity: book 1.4× → 2.1×,</text>
+    <text x="125" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">30% subcontracting · strategic:</text>
+    <text x="125" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">3 GW utility pipeline behind it</text>
+    <text x="125" y="171" font-size="10" font-weight="700" fill="hsl(var(--primary))">YES, with conditions</text>
+    <rect x="265" y="84" width="190" height="100" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="104" font-size="9" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--primary))">GATE 2 · CAN WE WIN?</text>
+    <text x="360" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">the rival wins 8–10% below</text>
+    <text x="360" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">everyone — explain it before</text>
+    <text x="360" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">deciding anything</text>
+    <text x="360" y="171" font-size="10" font-weight="700" fill="hsl(var(--primary))">decode, never envy ↓</text>
+    <rect x="500" y="84" width="190" height="100" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="595" y="104" font-size="9" font-weight="700" letter-spacing="0.05em" fill="hsl(var(--foreground))">GATE 3 · AT WHAT PRICE?</text>
+    <text x="595" y="121" font-size="8.5" fill="hsl(var(--muted-foreground))">base cost + priced risk</text>
+    <text x="595" y="135" font-size="8.5" fill="hsl(var(--muted-foreground))">(module volatility · delay LDs)</text>
+    <text x="595" y="149" font-size="8.5" fill="hsl(var(--muted-foreground))">− strategic entry discount</text>
+    <text x="595" y="171" font-size="10" font-weight="700" fill="hsl(var(--primary))">floor written before bid day</text>
   </g>
-  <path d="M230 78 L259 78" stroke="hsl(var(--border-strong))" stroke-width="1.75" marker-end="url(#sear)"/>
-  <path d="M455 78 L484 78" stroke="hsl(var(--border-strong))" stroke-width="1.75" marker-end="url(#sear)"/>
-  <rect x="90" y="170" width="540" height="120" rx="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.5"/>
-  <text x="360" y="192" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">THE PRICE BUILD (₹ CR)</text>
-  <text x="120" y="215" font-size="10" fill="hsl(var(--foreground))">Base cost (modules 60% hedged via supplier MoU + BoS + install + PM)</text>
-  <text x="600" y="215" text-anchor="end" font-size="10" font-weight="600" fill="hsl(var(--foreground))">1,385</text>
-  <text x="120" y="235" font-size="10" fill="hsl(var(--foreground))">+ Risk premiums: unhedged module 40% · LD exposure · monsoon float</text>
-  <text x="600" y="235" text-anchor="end" font-size="10" font-weight="600" fill="hsl(var(--foreground))">+72</text>
-  <text x="120" y="255" font-size="10" fill="hsl(var(--foreground))">+ Target margin 7% → − strategic entry discount (~2 pts, priced not vibes)</text>
-  <text x="600" y="255" text-anchor="end" font-size="10" font-weight="600" fill="hsl(var(--foreground))">+73</text>
-  <text x="120" y="277" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">BID ≈ ₹1,530 cr · WALK-AWAY FLOOR ≈ ₹1,490 cr</text>
-  <text x="360" y="330" text-anchor="middle" font-size="10" font-style="italic" fill="hsl(var(--muted-foreground))">If the rival bids below your explained-cost floor, losing the tender is the profitable outcome.</text>
+  <path d="M125 184 L125 200 M360 184 L360 200 M595 184 L595 200 M125 200 L595 200 M115 200 L115 214 M278 200 L278 214 M442 200 L442 214 M605 200 L605 214" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="35" y="216" width="160" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="115" y="234" font-size="9" font-weight="700" fill="hsl(var(--foreground))">① COST EDGE</text>
+    <text x="115" y="250" font-size="8" fill="hsl(var(--muted-foreground))">captive module sourcing,</text>
+    <text x="115" y="263" font-size="8" fill="hsl(var(--muted-foreground))">in-house install force</text>
+    <text x="115" y="284" font-size="8.5" font-weight="700" fill="hsl(var(--primary))">counter: fix our costs</text>
+    <rect x="198" y="216" width="160" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="278" y="234" font-size="9" font-weight="700" fill="hsl(var(--foreground))">② BUYING SHARE</text>
+    <text x="278" y="250" font-size="8" fill="hsl(var(--muted-foreground))">deliberate, with</text>
+    <text x="278" y="263" font-size="8" fill="hsl(var(--muted-foreground))">investor money</text>
+    <text x="278" y="284" font-size="8.5" font-weight="700" fill="hsl(var(--primary))">counter: wait them out</text>
+    <rect x="362" y="216" width="160" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="442" y="234" font-size="9" font-weight="700" fill="hsl(var(--foreground))">③ CHANGE-ORDER GAME</text>
+    <text x="442" y="250" font-size="8" fill="hsl(var(--muted-foreground))">bid low, recover margin via</text>
+    <text x="442" y="263" font-size="8" fill="hsl(var(--muted-foreground))">variations and claims</text>
+    <text x="442" y="284" font-size="8.5" font-weight="700" fill="hsl(var(--primary))">counter: sell delivery credibility</text>
+    <rect x="525" y="216" width="160" height="92" rx="8" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="605" y="234" font-size="9" font-weight="700" fill="hsl(var(--foreground))">④ WINNER'S CURSE</text>
+    <text x="605" y="250" font-size="8" fill="hsl(var(--muted-foreground))">incompetence that will</text>
+    <text x="605" y="263" font-size="8" fill="hsl(var(--muted-foreground))">surface as defaults</text>
+    <text x="605" y="284" font-size="8.5" font-weight="700" fill="hsl(var(--primary))">counter: let them absorb it</text>
+  </g>
+  <path d="M115 308 L115 322 M278 308 L278 322 M442 308 L442 322 M605 308 L605 322 M115 322 L605 322 M360 322 L360 336" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <rect x="90" y="338" width="540" height="116" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+  <text x="360" y="360" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.04em" fill="hsl(var(--primary))">THE PRICE BUILD (₹ CR)</text>
+  <text x="120" y="382" font-size="9.5" fill="hsl(var(--foreground))">Base cost (modules 60% hedged via supplier MoU + BoS + install + PM)</text>
+  <text x="600" y="382" text-anchor="end" font-size="9.5" font-weight="600" fill="hsl(var(--foreground))">1,385</text>
+  <text x="120" y="401" font-size="9.5" fill="hsl(var(--foreground))">+ Risk premiums: unhedged module 40% · LD exposure · monsoon float</text>
+  <text x="600" y="401" text-anchor="end" font-size="9.5" font-weight="600" fill="hsl(var(--foreground))">+72</text>
+  <text x="120" y="420" font-size="9.5" fill="hsl(var(--foreground))">+ Target margin 7% → − strategic entry discount (~2 pts, priced not vibes)</text>
+  <text x="600" y="420" text-anchor="end" font-size="9.5" font-weight="600" fill="hsl(var(--foreground))">+73</text>
+  <text x="360" y="442" text-anchor="middle" font-size="10" font-weight="700" fill="hsl(var(--primary))">the relationship argument is already in the price — two margin points of it</text>
+  <path d="M360 454 L360 468" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="150" y="470" width="420" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="489" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">BID ≈ ₹1,530 CR · WRITTEN FLOOR ≈ ₹1,490 CR</text>
+  <text x="360" y="506" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">module MoU ≥60% first · back-to-back LDs with subcontractors · if outbid below floor, debrief and position for tranche 2</text>
+  <text x="360" y="544" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">If the rival bids below your explained-cost floor, losing the tender is the profitable outcome. Losing well is a strategy.</text>
 </svg>` },
     ]},
     { type: 'caseSection', label: 'analysis', blocks: [
