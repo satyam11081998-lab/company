@@ -57,6 +57,20 @@ export const PRIMERS: Primer[] = [
       { label: 'IATA',                            url: 'https://www.iata.org' },
     ],
   },
+  {
+    slug: 'industry-primers/banking',
+    folder: 'banking',
+    no: 3,
+    title: 'Banking',
+    sector: 'Financial Services',
+    sources: [
+      { label: 'IBEF — Banking in India',         url: 'https://www.ibef.org/industry/banking-india' },
+      { label: 'Reserve Bank of India (RBI)',     url: 'https://www.rbi.org.in' },
+      { label: 'NPCI — UPI data',                 url: 'https://www.npci.org.in/what-we-do/upi/product-statistics' },
+      { label: 'BCG — Financial Institutions',    url: 'https://www.bcg.com/industries/financial-institutions/overview' },
+      { label: 'PwC India — Financial Services',  url: 'https://www.pwc.in/industries/financial-services.html' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

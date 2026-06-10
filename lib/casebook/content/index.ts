@@ -39,6 +39,68 @@ import { amo } from './miscellaneous/misc-amo';
 import { fourm } from './miscellaneous/misc-4-ms';
 import { fourv } from './miscellaneous/misc-4-vs-data';
 import { tamsamsom } from './miscellaneous/misc-tam-sam-som';
+// Cases — Profitability
+import { multiplexMarginSqueeze } from './cases/profitability/multiplex-margin-squeeze';
+import { cloudKitchenBurn } from './cases/profitability/cloud-kitchen-burn';
+import { agriPumpWarranty } from './cases/profitability/agri-pump-warranty';
+import { budgetHotelRevpar } from './cases/profitability/budget-hotel-revpar';
+import { diagnosticLabExpansion } from './cases/profitability/diagnostic-lab-expansion';
+// Cases — Market Entry
+import { japaneseStationeryIndia } from './cases/market-entry/japanese-stationery-india';
+import { evTwoWheelerTier2 } from './cases/market-entry/ev-two-wheeler-tier2';
+import { d2cSkincareOffline } from './cases/market-entry/d2c-skincare-offline';
+import { saasPayrollSea } from './cases/market-entry/saas-payroll-sea';
+// Cases — Growth
+import { regionalSnackBrand } from './cases/growth/regional-snack-brand';
+import { vernacularEdtechPlateau } from './cases/growth/vernacular-edtech-plateau';
+import { tier2GymChain } from './cases/growth/tier2-gym-chain';
+// Cases — Pricing
+import { airportLoungeAccess } from './cases/pricing/airport-lounge-access';
+import { b2bIotSensor } from './cases/pricing/b2b-iot-sensor';
+import { intercityBusDynamic } from './cases/pricing/intercity-bus-dynamic';
+// Cases — M&A / PE / DD
+import { coldChainAcquisition } from './cases/ma-pe-dd/cold-chain-acquisition';
+import { peEyecareChain } from './cases/ma-pe-dd/pe-eyecare-chain';
+import { cementSouthernTarget } from './cases/ma-pe-dd/cement-southern-target';
+// Cases — Unconventional
+import { railwayPlatformCrowding } from './cases/unconventional/railway-platform-crowding';
+import { bloodDonationSupply } from './cases/unconventional/blood-donation-supply';
+import { stadiumNonMatchday } from './cases/unconventional/stadium-non-matchday';
+// Cases — Signature
+import { airlineRegionalRoutes } from './cases/signature/airline-regional-routes';
+import { festivalFlashSale } from './cases/signature/festival-flash-sale';
+import { qsrPeRollout } from './cases/signature/qsr-pe-rollout';
+import { solarEpcBid } from './cases/signature/solar-epc-bid';
+// Guesstimates — Population & Consumption
+import { smartphonesSoldIndia } from './guesstimates/smartphones-sold-india';
+import { biryaniPlatesMetro } from './guesstimates/biryani-plates-metro';
+import { schoolUniformsIndia } from './guesstimates/school-uniforms-india';
+import { weddingsIndiaAnnual } from './guesstimates/weddings-india-annual';
+import { toothpasteTubesIndia } from './guesstimates/toothpaste-tubes-india';
+// Guesstimates — Infrastructure & Assets
+import { petrolPumpsIndia } from './guesstimates/petrol-pumps-india';
+import { hospitalBedsMetro } from './guesstimates/hospital-beds-metro';
+import { atmsTier1City } from './guesstimates/atms-tier1-city';
+import { deliveryRidersMetro } from './guesstimates/delivery-riders-metro';
+import { mobileTowersIndia } from './guesstimates/mobile-towers-india';
+// Guesstimates — Business & Revenue
+import { multiplexScreenRevenue } from './guesstimates/multiplex-screen-revenue';
+import { metroDailyRevenue } from './guesstimates/metro-daily-revenue';
+import { iplFranchiseRevenue } from './guesstimates/ipl-franchise-revenue';
+import { tollPlazaCollection } from './guesstimates/toll-plaza-collection';
+import { kiranaMonthlyGmv } from './guesstimates/kirana-monthly-gmv';
+// Guesstimates — Habits & Time
+import { upiTransactionsDaily } from './guesstimates/upi-transactions-daily';
+import { chaiRailwayStation } from './guesstimates/chai-railway-station';
+import { officeElevatorTrips } from './guesstimates/office-elevator-trips';
+import { ottWatchHours } from './guesstimates/ott-watch-hours';
+import { cabRidesMetro } from './guesstimates/cab-rides-metro';
+// Guesstimates — Curveballs
+import { cityGarbageDaily } from './guesstimates/city-garbage-daily';
+import { cricketBatsIndia } from './guesstimates/cricket-bats-india';
+import { paintConsumptionIndia } from './guesstimates/paint-consumption-india';
+import { waterTankersSummer } from './guesstimates/water-tankers-summer';
+import { streetlightsMetro } from './guesstimates/streetlights-metro';
 const SEED_PAGES: Record<string, Page> = {
   [repeatableMethod.slug]: repeatableMethod,
   [newBlocksTest.slug]: newBlocksTest,
@@ -79,6 +141,58 @@ const SEED_PAGES: Record<string, Page> = {
   [fourm.slug]: fourm,
   [fourv.slug]: fourv,
   [tamsamsom.slug]: tamsamsom,
+  // Cases
+  [multiplexMarginSqueeze.slug]: multiplexMarginSqueeze,
+  [cloudKitchenBurn.slug]: cloudKitchenBurn,
+  [agriPumpWarranty.slug]: agriPumpWarranty,
+  [budgetHotelRevpar.slug]: budgetHotelRevpar,
+  [diagnosticLabExpansion.slug]: diagnosticLabExpansion,
+  [japaneseStationeryIndia.slug]: japaneseStationeryIndia,
+  [evTwoWheelerTier2.slug]: evTwoWheelerTier2,
+  [d2cSkincareOffline.slug]: d2cSkincareOffline,
+  [saasPayrollSea.slug]: saasPayrollSea,
+  [regionalSnackBrand.slug]: regionalSnackBrand,
+  [vernacularEdtechPlateau.slug]: vernacularEdtechPlateau,
+  [tier2GymChain.slug]: tier2GymChain,
+  [airportLoungeAccess.slug]: airportLoungeAccess,
+  [b2bIotSensor.slug]: b2bIotSensor,
+  [intercityBusDynamic.slug]: intercityBusDynamic,
+  [coldChainAcquisition.slug]: coldChainAcquisition,
+  [peEyecareChain.slug]: peEyecareChain,
+  [cementSouthernTarget.slug]: cementSouthernTarget,
+  [railwayPlatformCrowding.slug]: railwayPlatformCrowding,
+  [bloodDonationSupply.slug]: bloodDonationSupply,
+  [stadiumNonMatchday.slug]: stadiumNonMatchday,
+  [airlineRegionalRoutes.slug]: airlineRegionalRoutes,
+  [festivalFlashSale.slug]: festivalFlashSale,
+  [qsrPeRollout.slug]: qsrPeRollout,
+  [solarEpcBid.slug]: solarEpcBid,
+  // Guesstimates
+  [smartphonesSoldIndia.slug]: smartphonesSoldIndia,
+  [biryaniPlatesMetro.slug]: biryaniPlatesMetro,
+  [schoolUniformsIndia.slug]: schoolUniformsIndia,
+  [weddingsIndiaAnnual.slug]: weddingsIndiaAnnual,
+  [toothpasteTubesIndia.slug]: toothpasteTubesIndia,
+  [petrolPumpsIndia.slug]: petrolPumpsIndia,
+  [hospitalBedsMetro.slug]: hospitalBedsMetro,
+  [atmsTier1City.slug]: atmsTier1City,
+  [deliveryRidersMetro.slug]: deliveryRidersMetro,
+  [mobileTowersIndia.slug]: mobileTowersIndia,
+  [multiplexScreenRevenue.slug]: multiplexScreenRevenue,
+  [metroDailyRevenue.slug]: metroDailyRevenue,
+  [iplFranchiseRevenue.slug]: iplFranchiseRevenue,
+  [tollPlazaCollection.slug]: tollPlazaCollection,
+  [kiranaMonthlyGmv.slug]: kiranaMonthlyGmv,
+  [upiTransactionsDaily.slug]: upiTransactionsDaily,
+  [chaiRailwayStation.slug]: chaiRailwayStation,
+  [officeElevatorTrips.slug]: officeElevatorTrips,
+  [ottWatchHours.slug]: ottWatchHours,
+  [cabRidesMetro.slug]: cabRidesMetro,
+  [cityGarbageDaily.slug]: cityGarbageDaily,
+  [cricketBatsIndia.slug]: cricketBatsIndia,
+  [paintConsumptionIndia.slug]: paintConsumptionIndia,
+  [waterTankersSummer.slug]: waterTankersSummer,
+  [streetlightsMetro.slug]: streetlightsMetro,
 };
 
 // Flatten tree to easily lookup nodes by slug

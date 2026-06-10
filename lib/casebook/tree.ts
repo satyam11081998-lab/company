@@ -170,6 +170,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     children: [
       { title: '1 · Asset Management', kind: 'page', slug: 'industry-primers/asset-management' },
       { title: '2 · Aviation', kind: 'page', slug: 'industry-primers/aviation' },
+      { title: '3 · Banking', kind: 'page', slug: 'industry-primers/banking' },
     ],
   },
 ];
