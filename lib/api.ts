@@ -82,11 +82,24 @@ export async function submitCaseAnswer(payload: {
  * Returns the full list (star first, then by GD-worthiness score).
  */
 export async function fetchHeadlines(token?: string): Promise<NewsHeadline[]> {
-  const res = await fetch(`${API_URL}/news/headlines`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/news/headlines`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      cache: 'no-store',
+      // The backend is on a sleep-prone free tier; without a timeout a cold
+      // start makes this hang ~50s and the page "only loads". Time out so the
+      // UI shows a retriable message instead of an infinite spinner.
+      signal: AbortSignal.timeout(45000),
+    });
+  } catch (e: any) {
+    throw new Error(
+      e?.name === 'TimeoutError'
+        ? 'The briefs service is waking up — please retry in a few seconds.'
+        : (e?.message || 'Could not reach the briefs service.'),
+    );
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to fetch headlines (${res.status}): ${text || res.statusText}`);
@@ -101,10 +114,22 @@ export async function fetchHeadlines(token?: string): Promise<NewsHeadline[]> {
  * Otherwise triggers OpenAI generation (~5-10 seconds first time).
  */
 export async function generateBrief(headlineId: string, token?: string): Promise<GeneratedBriefData> {
-  const res = await fetch(`${API_URL}/news/briefs/${headlineId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/news/briefs/${headlineId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      // Generation is a slower OpenAI call; allow more headroom but still cap it
+      // so a cold/stuck backend errors retriably instead of spinning forever.
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch (e: any) {
+    throw new Error(
+      e?.name === 'TimeoutError'
+        ? 'Generating the brief is taking longer than usual — please retry.'
+        : (e?.message || 'Could not reach the briefs service.'),
+    );
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to generate brief (${res.status}): ${text || res.statusText}`);
@@ -117,11 +142,21 @@ export async function generateBrief(headlineId: string, token?: string): Promise
  * Returns 404 error if no brief exists yet.
  */
 export async function fetchBrief(headlineId: string, token?: string): Promise<GeneratedBriefData> {
-  const res = await fetch(`${API_URL}/news/briefs/${headlineId}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/news/briefs/${headlineId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(45000),
+    });
+  } catch (e: any) {
+    throw new Error(
+      e?.name === 'TimeoutError'
+        ? 'The briefs service is waking up — please retry in a few seconds.'
+        : (e?.message || 'Could not reach the briefs service.'),
+    );
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to fetch brief (${res.status}): ${text || res.statusText}`);

@@ -167,6 +167,8 @@ export const CASEBOOK_TREE: NavNode[] = [
     title: 'G · Industry Primers',
     kind: 'section',
     icon: 'Building2',
-    children: Array.from({ length: 15 }).map((_, i) => ({ title: `Industry Primer ${i + 1}`, kind: 'page', slug: `industry-primers/primer-${i + 1}` })),
+    children: [
+      { title: '1 · Asset Management', kind: 'page', slug: 'industry-primers/asset-management' },
+    ],
   },
 ];

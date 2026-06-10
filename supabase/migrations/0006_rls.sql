@@ -19,7 +19,19 @@
 -- ---------------------------------------------------------------------
 alter table public.users enable row level security;
 
-drop policy if exists users_select_own on public.users;
+-- CRITICAL: drop EVERY existing policy on users first. Production had a
+-- pre-existing permissive SELECT policy (using true); RLS combines policies
+-- with OR, so simply adding an owner policy left anon able to read all 55
+-- rows. This loop removes whatever it's named, then we recreate owner-only.
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies where schemaname='public' and tablename='users'
+  loop
+    execute format('drop policy if exists %I on public.users', p.policyname);
+  end loop;
+end $$;
+
 create policy users_select_own on public.users
   for select using (auth.uid() = id);
 

@@ -8,12 +8,53 @@ import { CasebookSearch } from './casebook-search';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import type { Page } from '@/lib/casebook/types';
+import { getPrimerBySlug } from '@/lib/primers';
+import { PrimerEmbed } from './primer-embed';
 
 interface CasebookReaderProps {
   page: Page;
 }
 
 export function CasebookReader({ page }: CasebookReaderProps) {
+  // Industry Primers are self-contained static pages embedded via an iframe,
+  // not typed Block content. Keep the Casebook chrome (left nav + breadcrumbs)
+  // and swap the reading column for the embedded primer + source strip.
+  const primer = page.kind === 'primer' ? getPrimerBySlug(page.slug) : null;
+  if (primer) {
+    return (
+      <div className="w-full min-h-screen bg-background grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] relative">
+        <aside className="border-r border-border bg-card/50 hidden lg:flex flex-col h-[calc(100vh-6rem)] sticky top-24 overflow-y-auto">
+          <CasebookSearch />
+        </aside>
+
+        <main className="px-4 sm:px-6 lg:px-8 py-8 lg:py-10 relative">
+          <div className="flex items-center gap-4 mb-5">
+            <Sheet>
+              <SheetTrigger className="lg:hidden fixed bottom-24 right-6 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
+                <Menu className="w-6 h-6" />
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
+                <CasebookSearch />
+              </SheetContent>
+            </Sheet>
+            <div className="flex-1">
+              <Breadcrumbs slug={page.slug} />
+            </div>
+          </div>
+
+          <header className="mb-6">
+            <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
+              No. {primer.no} · {primer.sector}
+            </span>
+            <h1 className="text-h1 text-foreground mt-1">{page.title}</h1>
+          </header>
+
+          <PrimerEmbed primer={primer} />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen bg-background grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_220px] xl:pr-8 relative">
       {/* Left Sidebar: Navigation & Search */}
