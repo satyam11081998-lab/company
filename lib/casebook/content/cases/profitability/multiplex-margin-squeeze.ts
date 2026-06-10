@@ -1,6 +1,6 @@
 import type { Page } from '@/lib/casebook/types';
 
-// Wholly invented scenario — no resemblance to any sourced case.
+// Wholly invented scenario — no resemblance to any sourced case. (v2)
 export const multiplexMarginSqueeze: Page = {
   slug: 'cases/profitability/multiplex-margin-squeeze',
   title: 'The Multiplex Selling More Tickets, Earning Less',

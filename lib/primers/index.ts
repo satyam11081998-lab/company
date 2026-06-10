@@ -42,6 +42,21 @@ export const PRIMERS: Primer[] = [
       { label: 'SEBI',                            url: 'https://www.sebi.gov.in' },
     ],
   },
+  {
+    slug: 'industry-primers/aviation',
+    folder: 'aviation',
+    no: 2,
+    title: 'Aviation',
+    sector: 'Aviation',
+    sources: [
+      { label: 'IBEF — Indian Aviation',          url: 'https://www.ibef.org/industry/indian-aviation' },
+      { label: 'Invest India — Aviation',         url: 'https://www.investindia.gov.in/sector/aviation' },
+      { label: 'Ministry of Civil Aviation',      url: 'https://www.civilaviation.gov.in' },
+      { label: 'DGCA',                            url: 'https://www.dgca.gov.in' },
+      { label: 'Airports Authority of India',     url: 'https://www.aai.aero' },
+      { label: 'IATA',                            url: 'https://www.iata.org' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
