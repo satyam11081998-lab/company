@@ -8,28 +8,59 @@ export const petrolPumpsIndia: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['infrastructure', 'demand-capacity'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of petrol pumps (fuel stations) in India. Infrastructure guesstimates almost always resolve as **total demand ÷ capacity per unit**: fuel consumed nationally ÷ what one station can viably sell.' },
-    { type: 'svg', maxWidth: 640, ariaLabel: 'Estimation tree from vehicle fleet fuel demand divided by viable station throughput to station count', caption: 'Fleet → daily fuel demand → ÷ station throughput → station count.', svg: `<svg viewBox="0 0 640 250" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+    { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree: vehicle fleet split into two-wheelers, cars and commercial vehicles, each with count times litres per day, summed to national demand, divided by viable station throughput', caption: 'The full tree — each vehicle class carries its own count × intensity. Note commercial vehicles: 8% of the fleet, ~60% of the fuel.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="ppng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#ppng)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">PETROL PUMPS IN INDIA</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">national fuel demand ÷ viable station throughput</text>
+  <path d="M360 60 L360 78" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="25" y="26" width="180" height="74" rx="10" fill="url(#ppng)"/>
-    <text x="115" y="48" font-size="10" font-weight="700" fill="#ffffff">FLEET FUEL DEMAND</text>
-    <text x="115" y="65" font-size="9" fill="#b9c4d6">2W: 250M × 0.6 L/day = 150M L</text>
-    <text x="115" y="79" font-size="9" fill="#b9c4d6">cars: 60M × 1.5 = 90M L</text>
-    <text x="115" y="93" font-size="9" fill="#b9c4d6">trucks/buses: ~28M × 12 ≈ 340M L</text>
-    <rect x="245" y="26" width="170" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-    <text x="330" y="50" font-size="10" font-weight="700" fill="hsl(var(--foreground))">TOTAL ≈ 580M L/DAY</text>
-    <text x="330" y="68" font-size="9" fill="hsl(var(--muted-foreground))">(commercial vehicles dominate</text>
-    <text x="330" y="82" font-size="9" fill="hsl(var(--muted-foreground))">— most people get this wrong)</text>
-    <rect x="455" y="26" width="165" height="74" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-    <text x="537" y="50" font-size="10" font-weight="700" fill="hsl(var(--primary))">STATION THROUGHPUT</text>
-    <text x="537" y="68" font-size="9" fill="hsl(var(--muted-foreground))">viable average ≈</text>
-    <text x="537" y="82" font-size="9" fill="hsl(var(--muted-foreground))">6,000–7,000 L/day</text>
+    <rect x="210" y="80" width="300" height="40" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="360" y="105" font-size="10.5" font-weight="700" fill="hsl(var(--foreground))">STEP 1 · FLEET FUEL DEMAND, BY CLASS</text>
   </g>
-  <path d="M205 63 L241 63 M415 63 L451 63" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <path d="M330 100 L330 128 M537 100 L537 128 M330 128 L537 128 M433 128 L433 150" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
-  <rect x="283" y="154" width="300" height="40" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-  <text x="433" y="179" text-anchor="middle" font-size="11" font-weight="700" fill="hsl(var(--primary))">≈ 85,000–95,000 PUMPS</text>
-  <text x="320" y="226" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Reality ≈ 90,000+ — this build lands inside the truth, which is what a guesstimate is for.</text>
+  <path d="M360 120 L360 136 M125 136 L595 136 M125 136 L125 152 M360 136 L360 152 M595 136 L595 152" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="30" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="125" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">TWO-WHEELERS</text>
+    <text x="125" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">~250M active</text>
+    <text x="125" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">~25 km/day ÷ 45 km/L</text>
+    <text x="125" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">≈ 0.6 L/day each</text>
+    <text x="125" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ 150M L/day</text>
+    <text x="125" y="256" font-size="8" fill="hsl(var(--muted-foreground))">26% of demand</text>
+    <rect x="265" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="360" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">CARS</text>
+    <text x="360" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">~60M active</text>
+    <text x="360" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">~22 km/day ÷ 15 km/L</text>
+    <text x="360" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">≈ 1.5 L/day each</text>
+    <text x="360" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ 90M L/day</text>
+    <text x="360" y="256" font-size="8" fill="hsl(var(--muted-foreground))">15% of demand</text>
+    <rect x="500" y="154" width="190" height="110" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="595" y="174" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">COMMERCIAL (the key)</text>
+    <text x="595" y="191" font-size="8.5" fill="hsl(var(--muted-foreground))">~28M trucks/buses/LCVs</text>
+    <text x="595" y="205" font-size="8.5" fill="hsl(var(--muted-foreground))">~150+ km/day, run all day</text>
+    <text x="595" y="219" font-size="8.5" fill="hsl(var(--muted-foreground))">≈ 12 L/day each</text>
+    <text x="595" y="241" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">≈ 340M L/day</text>
+    <text x="595" y="256" font-size="8" fill="hsl(var(--muted-foreground))">59% of demand from 8% of fleet</text>
+  </g>
+  <path d="M125 264 L125 282 M360 264 L360 282 M595 264 L595 282 M125 282 L595 282 M360 282 L360 298" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="210" y="300" width="300" height="40" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="360" y="325" font-size="10.5" font-weight="700" fill="hsl(var(--primary))">TOTAL ≈ 580M LITRES / DAY</text>
+  </g>
+  <path d="M360 340 L360 356 M215 356 L505 356 M215 356 L215 372 M505 356 L505 372" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="95" y="374" width="240" height="58" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="215" y="394" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">STEP 2 · STATION VIABILITY</text>
+    <text x="215" y="410" font-size="8.5" fill="hsl(var(--muted-foreground))">urban 10k+ L/day · highway 8k · rural 3–4k</text>
+    <text x="215" y="425" font-size="10" font-weight="700" fill="hsl(var(--primary))">blended ≈ 6,500 L/day</text>
+    <rect x="385" y="374" width="240" height="58" rx="9" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
+    <text x="505" y="394" font-size="9.5" font-weight="700" fill="hsl(var(--primary))">STEP 3 · DIVIDE</text>
+    <text x="505" y="412" font-size="10" font-weight="700" fill="hsl(var(--foreground))">580M ÷ 6,500</text>
+    <text x="505" y="427" font-size="8.5" fill="hsl(var(--muted-foreground))">demand ÷ unit capacity</text>
+  </g>
+  <path d="M215 432 L215 450 M505 432 L505 450 M215 450 L505 450 M360 450 L360 462" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="190" y="464" width="340" height="40" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="489" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">≈ 85,000–95,000 PUMPS (reality: ~90k ✓)</text>
 </svg>` },
     { type: 'steps', ordered: true, items: [
       { title: 'Fleet', md: 'Registered-and-active: ~250M two-wheelers, ~60M cars, ~28M commercial vehicles (trucks, buses, LCVs).' },

@@ -8,26 +8,46 @@ export const schoolUniformsIndia: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 4, tags: ['cohort', 'consumption'] },
   blocks: [
     { type: 'prose', md: 'Estimate annual sales of school uniform sets in India. A textbook **cohort × frequency** build: how many school-goers, how many sets each per year.' },
-    { type: 'svg', maxWidth: 620, ariaLabel: 'Estimation tree from population to school-age cohort to enrolled uniform-wearing students times sets per year', caption: 'Cohort → enrolled & uniformed → sets per child per year.', svg: `<svg viewBox="0 0 620 240" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+    { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from population pyramid to school-age cohort, filtered by enrollment and uniform mandate, split into primary and senior grades with different sets per year, summed to annual demand', caption: 'Pyramid → cohort → filters → grade-wise replacement rates → total. Note the primary/senior split — growth rates differ.', svg: `<svg viewBox="0 0 720 500" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="sung" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
+  <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#sung)"/>
+  <text x="360" y="34" text-anchor="middle" font-size="11.5" font-weight="700" fill="#ffffff">UNIFORM SETS SOLD / YEAR</text>
+  <text x="360" y="50" text-anchor="middle" font-size="9" fill="#b9c4d6">cohort × filters × replacement rate</text>
+  <path d="M360 60 L360 78" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
   <g text-anchor="middle">
-    <rect x="20" y="26" width="170" height="62" rx="10" fill="url(#sung)"/>
-    <text x="105" y="50" font-size="10" font-weight="700" fill="#ffffff">SCHOOL-AGE (5–17)</text>
-    <text x="105" y="67" font-size="9" fill="#b9c4d6">~13 cohorts × ~23M ≈ 300M</text>
-    <rect x="225" y="26" width="170" height="62" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
-    <text x="310" y="46" font-size="10" font-weight="700" fill="hsl(var(--foreground))">ENROLLED + UNIFORMED</text>
-    <text x="310" y="63" font-size="9" fill="hsl(var(--muted-foreground))">~90% enrolled × ~95%</text>
-    <text x="310" y="77" font-size="9" fill="hsl(var(--muted-foreground))">uniform schools ≈ 255M</text>
-    <rect x="430" y="26" width="170" height="62" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-    <text x="515" y="46" font-size="10" font-weight="700" fill="hsl(var(--primary))">SETS / CHILD / YEAR</text>
-    <text x="515" y="63" font-size="9" fill="hsl(var(--muted-foreground))">growth + wear: ~2 new</text>
-    <text x="515" y="77" font-size="9" fill="hsl(var(--muted-foreground))">sets/yr (2–3 lower grades)</text>
+    <rect x="210" y="80" width="300" height="52" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+    <text x="360" y="100" font-size="10" font-weight="700" fill="hsl(var(--foreground))">SCHOOL-AGE POPULATION (5–17)</text>
+    <text x="360" y="117" font-size="9" fill="hsl(var(--muted-foreground))">1.4B, flat pyramid → ~23M per year-cohort × 13 cohorts ≈ <tspan font-weight="700" fill="hsl(var(--primary))">300M</tspan></text>
   </g>
-  <path d="M190 57 L221 57 M395 57 L426 57" stroke="hsl(var(--border-strong))" stroke-width="1.5"/>
-  <path d="M310 88 L310 116 M515 88 L515 116 M310 116 L515 116 M412 116 L412 138" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
-  <rect x="262" y="142" width="300" height="40" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.4"/>
-  <text x="412" y="167" text-anchor="middle" font-size="11" font-weight="700" fill="hsl(var(--primary))">≈ 500M SETS / YEAR</text>
-  <text x="310" y="215" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">At ₹500–700/set this is a ₹25,000–35,000 cr market — state the "so what" unprompted.</text>
+  <path d="M360 132 L360 148 M205 148 L515 148 M205 148 L205 164 M515 148 L515 164" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="85" y="166" width="240" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="205" y="186" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FILTER 1 · ENROLLED</text>
+    <text x="205" y="203" font-size="8.5" fill="hsl(var(--muted-foreground))">~90% enrollment (RTE era; dropouts in 15–17)</text>
+    <text x="205" y="221" font-size="10" font-weight="700" fill="hsl(var(--primary))">→ 270M students</text>
+    <rect x="395" y="166" width="240" height="64" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="515" y="186" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">FILTER 2 · UNIFORM MANDATE</text>
+    <text x="515" y="203" font-size="8.5" fill="hsl(var(--muted-foreground))">~95% of Indian schools, govt + private</text>
+    <text x="515" y="221" font-size="10" font-weight="700" fill="hsl(var(--primary))">→ 255M uniformed</text>
+  </g>
+  <path d="M205 230 L205 248 M515 230 L515 248 M205 248 L515 248 M360 248 L360 264 M185 264 L535 264 M185 264 L185 280 M535 264 L535 280" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.25"/>
+  <g text-anchor="middle">
+    <rect x="65" y="282" width="240" height="74" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="185" y="302" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">PRIMARY (5–11) ≈ 140M</text>
+    <text x="185" y="319" font-size="8.5" fill="hsl(var(--muted-foreground))">fast growth + rough wear</text>
+    <text x="185" y="333" font-size="8.5" fill="hsl(var(--muted-foreground))">~2.3 new sets/child/yr</text>
+    <text x="185" y="349" font-size="10" font-weight="700" fill="hsl(var(--primary))">≈ 320M sets</text>
+    <rect x="415" y="282" width="240" height="74" rx="9" fill="hsl(var(--card))" stroke="hsl(var(--border-strong))" stroke-width="1.1"/>
+    <text x="535" y="302" font-size="9.5" font-weight="700" fill="hsl(var(--foreground))">SENIOR (12–17) ≈ 115M</text>
+    <text x="535" y="319" font-size="8.5" fill="hsl(var(--muted-foreground))">slower growth, careful use</text>
+    <text x="535" y="333" font-size="8.5" fill="hsl(var(--muted-foreground))">~1.6 new sets/child/yr</text>
+    <text x="535" y="349" font-size="10" font-weight="700" fill="hsl(var(--primary))">≈ 185M sets</text>
+  </g>
+  <path d="M185 356 L185 378 M535 356 L535 378 M185 378 L535 378 M360 378 L360 396" fill="none" stroke="hsl(var(--border-strong))" stroke-width="1.4"/>
+  <rect x="190" y="398" width="340" height="44" rx="10" fill="hsl(var(--background))" stroke="hsl(var(--primary))" stroke-width="1.6"/>
+  <text x="360" y="417" text-anchor="middle" font-size="11.5" font-weight="700" fill="hsl(var(--primary))">≈ 500M SETS / YEAR</text>
+  <text x="360" y="434" text-anchor="middle" font-size="8.5" fill="hsl(var(--muted-foreground))">× ₹500–700/set ≈ ₹25,000–35,000 cr market</text>
+  <text x="360" y="474" text-anchor="middle" font-size="9.5" font-style="italic" fill="hsl(var(--muted-foreground))">Seasonality kicker: ~70% sells in the June–July back-to-school window — capacity planning is the real business problem.</text>
 </svg>` },
     { type: 'steps', ordered: true, items: [
       { title: 'Cohort', md: '1.4B population, near-uniform age pyramid up to ~25: each year-cohort ≈ 23M. Ages 5–17 = 13 cohorts → **~300M** children.' },

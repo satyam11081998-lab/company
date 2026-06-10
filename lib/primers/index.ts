@@ -71,6 +71,21 @@ export const PRIMERS: Primer[] = [
       { label: 'PwC India — Financial Services',  url: 'https://www.pwc.in/industries/financial-services.html' },
     ],
   },
+  {
+    slug: 'industry-primers/defence',
+    folder: 'defence',
+    no: 4,
+    title: 'Defence',
+    sector: 'Aerospace & Defence',
+    sources: [
+      { label: 'IBEF — Defence Manufacturing',    url: 'https://www.ibef.org/industry/defence-manufacturing' },
+      { label: 'Ministry of Defence (PIB)',       url: 'https://pib.gov.in/PressReleseDetail.aspx?PRID=2114042' },
+      { label: 'Dept. of Defence Production',      url: 'https://ddpmod.gov.in' },
+      { label: 'SIDM',                            url: 'https://www.sidm.in' },
+      { label: 'iDEX (Innovations for Defence)',  url: 'https://idex.gov.in' },
+      { label: 'SIPRI — Arms Transfers',          url: 'https://www.sipri.org/databases/armstransfers' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
