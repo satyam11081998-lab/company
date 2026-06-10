@@ -100,6 +100,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Statista — India E-Commerce',     url: 'https://www.statista.com/markets/413/topic/457/e-commerce/' },
     ],
   },
+  {
+    slug: 'industry-primers/education',
+    folder: 'education',
+    no: 6,
+    title: 'Education',
+    sector: 'Education & Skilling',
+    sources: [
+      { label: 'IBEF — Education & Training',      url: 'https://www.ibef.org/industry/education-sector-india' },
+      { label: 'Invest India — Education',         url: 'https://www.investindia.gov.in/sector/education' },
+      { label: 'Ministry of Education (UDISE+)',   url: 'https://www.education.gov.in/statistics-new' },
+      { label: 'AISHE — Higher Education Survey',  url: 'https://aishe.gov.in' },
+      { label: 'NEP 2020',                        url: 'https://www.education.gov.in/nep/about-nep' },
+      { label: 'UGC',                             url: 'https://www.ugc.gov.in' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
