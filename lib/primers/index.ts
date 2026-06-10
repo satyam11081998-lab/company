@@ -130,6 +130,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Vahan Dashboard',                 url: 'https://vahan.parivahan.gov.in/vahan4dashboard/' },
     ],
   },
+  {
+    slug: 'industry-primers/food-delivery',
+    folder: 'food-delivery',
+    no: 8,
+    title: 'Food Delivery',
+    sector: 'Internet & Food-tech',
+    sources: [
+      { label: 'Inc42 — Food-tech',               url: 'https://inc42.com/tag/food-delivery/' },
+      { label: 'Redseer — Foodtech',              url: 'https://redseer.com/sectors/foodtech/' },
+      { label: 'Bain & Co — India',               url: 'https://www.bain.com/region/india/' },
+      { label: 'Eternal (Zomato) Investors',      url: 'https://www.eternal.com/investor-relations/' },
+      { label: 'Swiggy Investor Relations',       url: 'https://www.swiggy.com/investor-relations' },
+      { label: 'ONDC',                            url: 'https://ondc.org' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
