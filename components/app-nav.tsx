@@ -37,27 +37,33 @@ export default function AppNav() {
             <nav className="hidden md:flex items-center gap-0.5">
               {[
                 { href: '/dashboard',   label: 'Dashboard' },
-                { href: '/learn/casebook', label: 'Learn' },
+                // "Learn" owns the casebook EXCEPT the case-competitions track,
+                // which gets its own top-level entry below.
+                { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
+                { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
                 { href: '/practice',    label: 'Practice' },
                 { href: '/gd-briefs',   label: 'GD Briefs' },
                 { href: '/cheat-sheet', label: 'Cheat Sheet' },
                 { href: '/leaderboard', label: 'Leaderboard' },
-              ].map(({ href, label }) => (
+              ].map(({ href, label, active }: { href: string; label: string; active?: boolean }) => {
+                const linkActive = active ?? isActive(href);
+                return (
                 <Link
                   key={href}
                   href={href}
                   className={`relative px-4 py-2 text-[17px] font-medium transition-colors rounded-sm ${
-                    isActive(href)
+                    linkActive
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'
                   }`}
                 >
                   {label}
-                  {isActive(href) && (
+                  {linkActive && (
                     <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-none" />
                   )}
                 </Link>
-              ))}
+                );
+              })}
             </nav>
           )}
         </div>

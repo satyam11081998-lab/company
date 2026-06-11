@@ -101,6 +101,18 @@ import { cricketBatsIndia } from './guesstimates/cricket-bats-india';
 import { paintConsumptionIndia } from './guesstimates/paint-consumption-india';
 import { waterTankersSummer } from './guesstimates/water-tankers-summer';
 import { streetlightsMetro } from './guesstimates/streetlights-metro';
+// Case Competitions track
+import { whyTheyMatter } from './case-competitions/why-they-matter';
+import { indiaCircuit } from './case-competitions/india-circuit';
+import { teamFormation } from './case-competitions/team-formation';
+import { decodingTheProblem } from './case-competitions/decoding-the-problem';
+import { researchAndInsight } from './case-competitions/research-and-insight';
+import { buildingTheSolution } from './case-competitions/building-the-solution';
+import { theWinningDeck } from './case-competitions/the-winning-deck';
+import { theFinalePitch } from './case-competitions/the-finale-pitch';
+import { judgesAndMistakes } from './case-competitions/judges-and-mistakes';
+import { zeroToPodiumRoadmap } from './case-competitions/zero-to-podium-roadmap';
+import { deckSkeletonLibrary } from './case-competitions/deck-skeleton-library';
 const SEED_PAGES: Record<string, Page> = {
   [repeatableMethod.slug]: repeatableMethod,
   [newBlocksTest.slug]: newBlocksTest,
@@ -193,6 +205,18 @@ const SEED_PAGES: Record<string, Page> = {
   [paintConsumptionIndia.slug]: paintConsumptionIndia,
   [waterTankersSummer.slug]: waterTankersSummer,
   [streetlightsMetro.slug]: streetlightsMetro,
+  // Case Competitions track
+  [whyTheyMatter.slug]: whyTheyMatter,
+  [indiaCircuit.slug]: indiaCircuit,
+  [teamFormation.slug]: teamFormation,
+  [decodingTheProblem.slug]: decodingTheProblem,
+  [researchAndInsight.slug]: researchAndInsight,
+  [buildingTheSolution.slug]: buildingTheSolution,
+  [theWinningDeck.slug]: theWinningDeck,
+  [theFinalePitch.slug]: theFinalePitch,
+  [judgesAndMistakes.slug]: judgesAndMistakes,
+  [zeroToPodiumRoadmap.slug]: zeroToPodiumRoadmap,
+  [deckSkeletonLibrary.slug]: deckSkeletonLibrary,
 };
 
 // Flatten tree to easily lookup nodes by slug

@@ -259,4 +259,23 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: '10 · FMCG', kind: 'page', slug: 'industry-primers/fmcg' },
     ],
   },
+  {
+    title: 'H · Case Competitions',
+    kind: 'section',
+    icon: 'Trophy',
+    defaultOpen: true,
+    children: [
+      { title: '1 · Why competitions matter', kind: 'page', slug: 'case-competitions/why-they-matter', meta: { difficulty: 'easy' } },
+      { title: '2 · The Indian circuit', kind: 'page', slug: 'case-competitions/india-circuit', meta: { difficulty: 'easy' } },
+      { title: '3 · Building the team', kind: 'page', slug: 'case-competitions/team-formation', meta: { difficulty: 'easy' } },
+      { title: '4 · Decoding the problem statement', kind: 'page', slug: 'case-competitions/decoding-the-problem', meta: { difficulty: 'moderate' } },
+      { title: '5 · Research that wins', kind: 'page', slug: 'case-competitions/research-and-insight', meta: { difficulty: 'moderate' } },
+      { title: '6 · Building the solution', kind: 'page', slug: 'case-competitions/building-the-solution', meta: { difficulty: 'moderate' } },
+      { title: '7 · The winning deck', kind: 'page', slug: 'case-competitions/the-winning-deck', meta: { difficulty: 'moderate' } },
+      { title: '8 · The finale pitch & Q&A', kind: 'page', slug: 'case-competitions/the-finale-pitch', meta: { difficulty: 'challenging' } },
+      { title: '9 · Judges & the kill-list', kind: 'page', slug: 'case-competitions/judges-and-mistakes', meta: { difficulty: 'moderate' } },
+      { title: '10 · Zero to podium roadmap', kind: 'page', slug: 'case-competitions/zero-to-podium-roadmap', meta: { difficulty: 'easy' } },
+      { title: '11 · The Deck Skeleton Library', kind: 'page', slug: 'case-competitions/deck-skeleton-library', meta: { difficulty: 'easy' } },
+    ],
+  },
 ];
