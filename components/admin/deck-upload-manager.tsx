@@ -87,9 +87,13 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
       const putRes = await fetch(sessionData.uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': mimeType },
+        credentials: 'omit',
         body: file,
       });
-      if (!putRes.ok) throw new Error(`File upload failed (${putRes.status})`);
+      if (!putRes.ok) {
+        const errText = await putRes.text().catch(() => '');
+        throw new Error(`File upload failed (${putRes.status}): ${errText}`);
+      }
       const uploaded = await putRes.json();
       if (!uploaded?.id) throw new Error('Storage did not return a file id');
 
