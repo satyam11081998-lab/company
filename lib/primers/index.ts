@@ -174,6 +174,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Bain — India Consumer',           url: 'https://www.bain.com/region/india/' },
     ],
   },
+  {
+    slug: 'industry-primers/healthcare',
+    folder: 'healthcare',
+    no: 11,
+    title: 'Healthcare',
+    sector: 'Healthcare',
+    sources: [
+      { label: 'IBEF — Healthcare',               url: 'https://www.ibef.org/industry/healthcare-india' },
+      { label: 'MoHFW',                           url: 'https://mohfw.gov.in/' },
+      { label: 'NHA',                             url: 'https://nha.gov.in/' },
+      { label: 'NITI Aayog — Healthcare',         url: 'https://www.niti.gov.in/index.php/health-and-nutrition' },
+      { label: 'EY — Healthcare',                 url: 'https://www.ey.com/en_in/health' },
+      { label: 'Invest India — Healthcare',       url: 'https://www.investindia.gov.in/sector/healthcare' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
