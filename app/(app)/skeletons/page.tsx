@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import DeckVault, { type VaultDeck } from '@/components/skeleton-library';
+import { effectiveTier } from '@/lib/tier';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,11 +17,11 @@ export default async function DeckVaultPage() {
       .eq('is_active', true)
       .order('sort', { ascending: true })
       .order('created_at', { ascending: false }),
-    supabase.from('users').select('is_pro, is_admin').eq('id', user.id).single(),
+    supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).single(),
   ]);
 
   const decks = (decksRes.data as VaultDeck[] | null) || [];
-  const hasAccess = !!(userRowRes.data?.is_pro || userRowRes.data?.is_admin);
+  const hasAccess = effectiveTier(userRowRes.data as any) === 'pro' || !!userRowRes.data?.is_admin;
 
   return (
     <div className="min-h-screen bg-muted">
