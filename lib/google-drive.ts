@@ -31,14 +31,18 @@ function b64url(input: Buffer | string): string {
   return Buffer.from(input).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+export function getFolderId(): string {
+  const folder = process.env.GDRIVE_FOLDER_ID?.replace(/^"|"$/g, '').trim();
+  if (!folder) throw new Error('GDRIVE_FOLDER_ID is missing');
+  return folder;
+}
+
 function getCreds() {
   // Option 1: Base64-encoded JSON file (Bulletproof method)
   if (process.env.GOOGLE_SA_CREDENTIALS) {
     try {
       const json = JSON.parse(Buffer.from(process.env.GOOGLE_SA_CREDENTIALS, 'base64').toString('utf-8'));
-      const folder = process.env.GDRIVE_FOLDER_ID?.replace(/^"|"$/g, '').trim();
-      if (!folder) throw new Error('GDRIVE_FOLDER_ID is missing');
-      return { email: json.client_email, key: json.private_key, folder };
+      return { email: json.client_email, key: json.private_key };
     } catch (e: any) {
       throw new Error(`Failed to parse GOOGLE_SA_CREDENTIALS: ${e.message}`);
     }
@@ -47,9 +51,8 @@ function getCreds() {
   // Option 2: Individual variables
   const email = process.env.GOOGLE_SA_CLIENT_EMAIL?.replace(/^"|"$/g, '').replace(/'/g, '').trim();
   const rawKey = process.env.GOOGLE_SA_PRIVATE_KEY || '';
-  const folder = process.env.GDRIVE_FOLDER_ID?.replace(/^"|"$/g, '').trim();
   
-  if (!email || !rawKey || !folder) {
+  if (!email || !rawKey) {
     throw new Error('Google Drive storage is not configured (Provide GOOGLE_SA_CREDENTIALS base64 string OR individual vars)');
   }
 
@@ -68,7 +71,7 @@ function getCreds() {
     
   const key = `-----BEGIN PRIVATE KEY-----\n${b64.match(/.{1,64}/g)?.join('\n')}\n-----END PRIVATE KEY-----\n`;
 
-  return { email, key, folder };
+  return { email, key };
 }
 
 // Module-scoped token cache (per lambda instance).
@@ -139,7 +142,7 @@ export async function createUploadSession(
   mimeType: string,
   origin: string
 ): Promise<string> {
-  const { folder } = getCreds();
+  const folder = getFolderId();
   const token = await getAccessToken();
   const res = await fetch(
     'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true',
