@@ -51,9 +51,13 @@ export default async function DeckViewerPage({ params }: { params: { id: string 
         </div>
       </header>
 
-      <main className="flex-1 container max-w-6xl py-6">
+      <main className="flex-1 container max-w-6xl py-6 relative">
         {isPdf ? (
-          <PDFViewer url={`/api/skeletons/file/${params.id}`} />
+          <PDFViewer 
+            url={`/api/skeletons/file/${params.id}`} 
+            userEmail={user.email || ''} 
+            userId={user.id} 
+          />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
             <div className="bg-muted-foreground/10 p-6 rounded-2xl mb-6">
