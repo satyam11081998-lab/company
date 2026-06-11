@@ -11,6 +11,16 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-11 — industry-primers-healthcare — c5d70b9
+industry-primers: add "11 · Healthcare" static bundle and wire up casebook registry
+touches: public/primers/healthcare/index.html, lib/primers/index.ts, lib/casebook/tree.ts
+breaking: no   affects: none
+
+## 2026-06-11 — deck-vault-drm-and-pro-pivot — ce11ebf
+vault: heavy canvas PDF viewer (react-pdf), sticky blur blackout, hostile keyboard screenshot blockers, forensic identity watermarking (MECE - Email - UserID).
+touches: components/pdf-viewer.tsx, app/(app)/skeletons/view/[id]/page.tsx, components/skeleton-library.tsx, app/(app)/skeletons/page.tsx, app/api/skeletons/file/[deckId]/route.ts
+breaking: yes — file proxy streams PDF to canvas, native browser downloads and right-clicks are totally disabled. Vault access now requires the 'pro' subscription_tier instead of standalone purchase.   affects: Vault, Payments
+
 ## 2026-06-09 — news-daily-fix — Vercel Cron backup for /cron/fetch-news + /cron/schedule-daily (daily brief refresh no longer depends on GitHub Actions), news fetch timeouts + "waking up" hint so GD Briefs never spins forever
 breaking: no
 
