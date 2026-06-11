@@ -218,6 +218,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Statista — Cement Industry',      url: 'https://www.statista.com/markets/415/topic/467/construction/' },
     ],
   },
+  {
+    slug: 'industry-primers/hospitality',
+    folder: 'hospitality',
+    no: 14,
+    title: 'Hospitality',
+    sector: 'Travel & Hospitality',
+    sources: [
+      { label: 'IBEF — Tourism & Hospitality',    url: 'https://www.ibef.org/industry/tourism-hospitality-india' },
+      { label: 'Ministry of Tourism',             url: 'https://tourism.gov.in/' },
+      { label: 'HVS — India Hotel Market',        url: 'https://hvs.com/' },
+      { label: 'Hotelivate',                      url: 'https://hotelivate.com/' },
+      { label: 'Mordor Intelligence',             url: 'https://www.mordorintelligence.com/industry-reports/india-hospitality-industry' },
+      { label: 'FHRAI',                           url: 'https://www.fhrai.com/' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
