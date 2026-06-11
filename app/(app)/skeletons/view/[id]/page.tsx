@@ -14,7 +14,7 @@ export default async function DeckViewerPage({ params }: { params: { id: string 
   if (!user) redirect('/login');
 
   // Verify entitlement
-  const { data: userRow } = await supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).single();
+  const { data: userRow } = await supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).maybeSingle();
   
   if (effectiveTier(userRow as any) !== 'pro' && !userRow?.is_admin) {
     redirect('/skeletons'); // Boot them back to the paywall

@@ -29,7 +29,7 @@ export async function GET(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Entitlement: buyer or admin.
-    const { data: userRow } = await supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).single();
+    const { data: userRow } = await supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).maybeSingle();
     if (effectiveTier(userRow as any) !== 'pro' && !userRow?.is_admin) {
       return NextResponse.json({ error: 'Deck Vault access required' }, { status: 403 });
     }

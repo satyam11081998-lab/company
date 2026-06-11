@@ -17,7 +17,7 @@ export default async function DeckVaultPage() {
       .eq('is_active', true)
       .order('sort', { ascending: true })
       .order('created_at', { ascending: false }),
-    supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).single(),
+    supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).maybeSingle(),
   ]);
 
   const decks = (decksRes.data as VaultDeck[] | null) || [];
