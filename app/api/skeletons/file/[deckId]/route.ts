@@ -28,11 +28,8 @@ export async function GET(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Entitlement: buyer or admin.
-    const [{ data: access }, { data: userRow }] = await Promise.all([
-      supabase.from('skeleton_access').select('user_id').eq('user_id', user.id).maybeSingle(),
-      supabase.from('users').select('is_admin').eq('id', user.id).single(),
-    ]);
-    if (!access && !userRow?.is_admin) {
+    const { data: userRow } = await supabase.from('users').select('is_pro, is_admin').eq('id', user.id).single();
+    if (!userRow?.is_pro && !userRow?.is_admin) {
       return NextResponse.json({ error: 'Deck Vault access required' }, { status: 403 });
     }
 
@@ -53,7 +50,7 @@ export async function GET(
       const upstream = await fetchFileStream(driveFileId(deck.storage_path));
       const headers = new Headers({
         'Content-Type': CONTENT_TYPES[ext] || 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${safeName}"`,
+        'Content-Disposition': `inline; filename="${safeName}"`,
         'Cache-Control': 'private, no-store',
         'X-Content-Type-Options': 'nosniff',
       });
@@ -65,7 +62,7 @@ export async function GET(
     // Legacy: file lives in the Supabase bucket → short-lived signed URL.
     const { data: signed, error: signError } = await supabase.storage
       .from('skeletons')
-      .createSignedUrl(deck.storage_path, 120, { download: safeName });
+      .createSignedUrl(deck.storage_path, 120);
     if (signError || !signed?.signedUrl) {
       return NextResponse.json({ error: 'Could not prepare download' }, { status: 500 });
     }

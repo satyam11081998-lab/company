@@ -235,6 +235,7 @@ export default function UpgradePage() {
                 <FeatureItem text="Live AI hints & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
                 <FeatureItem text="AI interviewer chatbot" />
+                <FeatureItem text="Deck Vault lifetime access" />
               </ul>
               <button
                 onClick={() => handleUpgrade("pro")}

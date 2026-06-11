@@ -9,18 +9,18 @@ export default async function DeckVaultPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const [decksRes, accessRes] = await Promise.all([
+  const [decksRes, userRowRes] = await Promise.all([
     supabase
       .from('deck_skeletons')
       .select('id, title, source_kind, competition, result, case_type, round_type, file_type, description, tags')
       .eq('is_active', true)
       .order('sort', { ascending: true })
       .order('created_at', { ascending: false }),
-    supabase.from('skeleton_access').select('user_id').eq('user_id', user.id).maybeSingle(),
+    supabase.from('users').select('is_pro, is_admin').eq('id', user.id).single(),
   ]);
 
   const decks = (decksRes.data as VaultDeck[] | null) || [];
-  const hasAccess = !!accessRes.data;
+  const hasAccess = !!(userRowRes.data?.is_pro || userRowRes.data?.is_admin);
 
   return (
     <div className="min-h-screen bg-muted">
