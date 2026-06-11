@@ -79,6 +79,9 @@ export const GUESSTIMATE_DIMENSION_MAX = 5;
 
 export const MIN_ANSWER_CHARS = 200;
 
+/** One-time price of the Deck Skeleton Library, in INR. */
+export const SKELETON_LIBRARY_PRICE_INR = 500;
+
 /** Routes that are accessible without authentication. */
 export const PUBLIC_ROUTES: string[] = [
   '/',
