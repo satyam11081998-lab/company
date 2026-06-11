@@ -78,6 +78,26 @@ async function getAccessToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt - 60_000) {
     return cachedToken.token;
   }
+
+  // --- OPTION A: OAuth2 Refresh Token (Personal Google Accounts) ---
+  if (process.env.GOOGLE_DRIVE_REFRESH_TOKEN && process.env.GOOGLE_DRIVE_CLIENT_ID && process.env.GOOGLE_DRIVE_CLIENT_SECRET) {
+    const res = await fetch(TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_DRIVE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+        refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
+        grant_type: 'refresh_token',
+      }),
+    });
+    if (!res.ok) throw new Error(`OAuth2 refresh failed: ${res.status} ${await res.text()}`);
+    const data = await res.json();
+    cachedToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000 };
+    return cachedToken.token;
+  }
+
+  // --- OPTION B: Service Account JWT ---
   const { email, key } = getCreds();
   const iat = Math.floor(Date.now() / 1000);
   const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
