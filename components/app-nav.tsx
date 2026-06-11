@@ -41,6 +41,7 @@ export default function AppNav() {
                 // which gets its own top-level entry below.
                 { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
                 { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
+                { href: '/skeletons',   label: 'Deck Vault' },
                 { href: '/practice',    label: 'Practice' },
                 { href: '/gd-briefs',   label: 'GD Briefs' },
                 { href: '/cheat-sheet', label: 'Cheat Sheet' },

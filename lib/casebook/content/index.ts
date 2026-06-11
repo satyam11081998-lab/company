@@ -112,7 +112,6 @@ import { theWinningDeck } from './case-competitions/the-winning-deck';
 import { theFinalePitch } from './case-competitions/the-finale-pitch';
 import { judgesAndMistakes } from './case-competitions/judges-and-mistakes';
 import { zeroToPodiumRoadmap } from './case-competitions/zero-to-podium-roadmap';
-import { deckSkeletonLibrary } from './case-competitions/deck-skeleton-library';
 const SEED_PAGES: Record<string, Page> = {
   [repeatableMethod.slug]: repeatableMethod,
   [newBlocksTest.slug]: newBlocksTest,
@@ -216,7 +215,6 @@ const SEED_PAGES: Record<string, Page> = {
   [theFinalePitch.slug]: theFinalePitch,
   [judgesAndMistakes.slug]: judgesAndMistakes,
   [zeroToPodiumRoadmap.slug]: zeroToPodiumRoadmap,
-  [deckSkeletonLibrary.slug]: deckSkeletonLibrary,
 };
 
 // Flatten tree to easily lookup nodes by slug

@@ -17,6 +17,7 @@ const GATED = [
   '/cases',
   '/cheat-sheet',
   '/home',
+  '/skeletons',
   '/auth/',
 ];
 

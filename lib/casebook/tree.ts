@@ -275,7 +275,6 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: '8 · The finale pitch & Q&A', kind: 'page', slug: 'case-competitions/the-finale-pitch', meta: { difficulty: 'challenging' } },
       { title: '9 · Judges & the kill-list', kind: 'page', slug: 'case-competitions/judges-and-mistakes', meta: { difficulty: 'moderate' } },
       { title: '10 · Zero to podium roadmap', kind: 'page', slug: 'case-competitions/zero-to-podium-roadmap', meta: { difficulty: 'easy' } },
-      { title: '11 · The Deck Skeleton Library', kind: 'page', slug: 'case-competitions/deck-skeleton-library', meta: { difficulty: 'easy' } },
     ],
   },
 ];
