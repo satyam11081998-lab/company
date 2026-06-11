@@ -65,7 +65,6 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
   if (!hasAccess) {
     return (
       <>
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <Card className="ui-card max-w-2xl mx-auto p-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Lock className="h-6 w-6" />
@@ -75,17 +74,19 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
             {decks.length > 0 ? `${decks.length}+ ` : 'A growing collection of '}
             case-competition decks from national winners, finalists and semi-finalists —
             corporate flagships and B-school competitions — plus problem statements and templates.
-            One payment, lifetime access, every future addition included.
+            Included in your Pro subscription.
           </p>
           <ul className="mt-6 text-left max-w-md mx-auto space-y-2 text-body text-muted-foreground">
             <li className="flex gap-2"><Building2 className="h-4 w-4 mt-1 text-primary shrink-0" /> Corporate comps: HUL L.I.M.E., Flipkart WiRED, TVS EPIC, Samsung EDGE, Tata Steel-a-thon &amp; more</li>
             <li className="flex gap-2"><GraduationCap className="h-4 w-4 mt-1 text-primary shrink-0" /> B-school comps: IIM Lucknow, Rohtak, Kashipur, Ranchi winners &amp; national finalists</li>
-            <li className="flex gap-2"><Download className="h-4 w-4 mt-1 text-primary shrink-0" /> Filter, select any number, download instantly</li>
+            <li className="flex gap-2"><Eye className="h-4 w-4 mt-1 text-primary shrink-0" /> Read inline in our secure DRM viewer</li>
             <li className="flex gap-2"><ShieldCheck className="h-4 w-4 mt-1 text-primary shrink-0" /> For learning and reference — study the structures, build your own decks</li>
           </ul>
-          <Button className="mt-8 h-11 px-8 text-base font-semibold" onClick={handleBuy} disabled={busy}>
-            {busy ? 'Opening checkout…' : `Unlock for ₹${PRICE_INR}`}
-          </Button>
+          <Link href="/upgrade">
+            <Button className="mt-8 h-11 px-8 text-base font-semibold">
+              Upgrade to Pro
+            </Button>
+          </Link>
           <p className="mt-3 text-small text-muted-foreground">
             New to competitions? Start with the free{' '}
             <Link href="/learn/casebook/case-competitions/why-they-matter" className="text-primary hover:underline">

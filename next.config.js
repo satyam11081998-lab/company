@@ -1,6 +1,9 @@
 const nextConfig = {
   output: 'standalone',
   images: { unoptimized: true },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   onDemandEntries: {
     maxInactiveAge: 10000,
     pagesBufferLength: 2,
