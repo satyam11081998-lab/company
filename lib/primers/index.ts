@@ -233,6 +233,21 @@ export const PRIMERS: Primer[] = [
       { label: 'FHRAI',                           url: 'https://www.fhrai.com/' },
     ],
   },
+  {
+    slug: 'industry-primers/insurance',
+    folder: 'insurance',
+    no: 15,
+    title: 'Insurance',
+    sector: 'Financial Services',
+    sources: [
+      { label: 'IRDAI',                           url: 'https://irdai.gov.in/' },
+      { label: 'IBEF — Insurance',                url: 'https://www.ibef.org/industry/insurance-sector-india' },
+      { label: 'Life Insurance Council',          url: 'https://www.lifeinscouncil.org/' },
+      { label: 'General Insurance Council',       url: 'https://www.gicouncil.in/' },
+      { label: 'Swiss Re — Sigma Reports',        url: 'https://www.swissre.com/institute/research/sigma-research.html' },
+      { label: 'McKinsey — Insurance',            url: 'https://www.mckinsey.com/industries/financial-services/our-insights/insurance' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
