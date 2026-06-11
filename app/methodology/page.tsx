@@ -6,6 +6,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { UserRow } from '@/lib/types';
 
+export const metadata = {
+  title: 'Scoring methodology',
+  description: 'How MECE scores case interview and GD practice — six dimensions, transparent rubrics, and percentile ranks against MBA aspirants across India.',
+  alternates: { canonical: '/methodology' },
+};
+
 export default async function MethodologyPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

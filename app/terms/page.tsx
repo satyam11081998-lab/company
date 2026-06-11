@@ -6,6 +6,12 @@ import type { UserRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Terms of service',
+  description: 'The terms that govern your use of MECE.',
+  alternates: { canonical: '/terms' },
+};
+
 export default async function TermsPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

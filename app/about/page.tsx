@@ -12,6 +12,12 @@ import { TESTIMONIALS } from '@/lib/testimonials';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'About us',
+  description: 'Who builds MECE and why — the team behind India\'s structured placement-interview prep platform for MBA and PGDM students.',
+  alternates: { canonical: '/about' },
+};
+
 export default async function AboutPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

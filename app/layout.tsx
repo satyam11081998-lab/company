@@ -7,18 +7,41 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import GeoPattern from '@/components/geo-pattern';
 import { Analytics } from "@vercel/analytics/next";
-
-const SITE_URL = 'https://mece.in';
-const SITE_TITLE = 'MECE — Placement interview prep for Indian MBA students';
-const SITE_DESC = 'Cases, frameworks, GD briefs, and structured feedback for MBA & PGDM placement interviews — consulting, finance, marketing, product, ops.';
+import { SITE_URL, SITE_TITLE, SITE_DESC, siteGraphJsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: 'MECE',
-  title: SITE_TITLE,
+  title: {
+    default: SITE_TITLE,
+    template: '%s · MECE',
+  },
   description: SITE_DESC,
-  keywords: ['MBA placement', 'case interview', 'GD prep', 'consulting prep', 'product manager interview'],
-  robots: { index: true, follow: true },
+  keywords: [
+    'MBA placement preparation',
+    'case interview practice',
+    'guesstimate questions',
+    'GD topics for MBA',
+    'consulting interview prep India',
+    'summer placement interview',
+    'product manager interview prep',
+    'MBA casebook',
+  ],
+  authors: [{ name: 'MECE', url: SITE_URL }],
+  creator: 'MECE',
+  publisher: 'MECE',
+  category: 'education',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   openGraph: {
     type: 'website',
     url: SITE_URL,
@@ -26,14 +49,13 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESC,
     locale: 'en_IN',
-    images: [{ url: '/og-card.png', alt: 'MECE', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: SITE_TITLE,
     description: SITE_DESC,
-    images: ['/og-card.png'],
   },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -45,14 +67,9 @@ export const viewport: Viewport = {
 
 /** Root HTML layout — GeoPattern is fixed behind everything, cards cover it naturally */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "EducationalOrganization",
-    "name": "MECE",
-    "url": SITE_URL,
-    "logo": `${SITE_URL}/logo.png`,
-    "description": SITE_DESC
-  };
+  // Organization + WebSite entity graph — page-level JSON-LD (articles,
+  // breadcrumbs) references these nodes by @id.
+  const jsonLd = siteGraphJsonLd();
 
   return (
     <html lang="en" suppressHydrationWarning>

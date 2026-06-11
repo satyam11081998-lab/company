@@ -6,6 +6,12 @@ import type { UserRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Privacy policy',
+  description: 'How MECE collects, uses, and protects your data.',
+  alternates: { canonical: '/privacy' },
+};
+
 export default async function PrivacyPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

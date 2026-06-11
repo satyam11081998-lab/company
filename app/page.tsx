@@ -8,6 +8,10 @@ import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, 
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  alternates: { canonical: '/' },
+};
+
 export default async function LandingPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

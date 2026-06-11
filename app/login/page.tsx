@@ -1,7 +1,14 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import AuthForm from '@/components/auth-form';
 import Logo from '@/components/logo';
+
+export const metadata: Metadata = {
+  title: 'Login',
+  description: 'Log in to MECE to continue your placement interview prep — cases, guesstimates, frameworks, and GD briefs.',
+  alternates: { canonical: '/login' },
+};
 
 /** Login page. */
 export default function LoginPage() {

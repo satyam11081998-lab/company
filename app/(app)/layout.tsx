@@ -1,12 +1,62 @@
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import Link from 'next/link';
 import AppNav from '@/components/app-nav';
 import { UserProvider } from '@/components/user-context';
 import MobileBottomNav from '@/components/mobile-bottom-nav';
 import Footer from '@/components/footer';
+import Logo from '@/components/logo';
+import ThemeToggle from '@/components/theme-toggle';
 import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
 import type { UserRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Public-content carve-out: /learn/** is listed in PUBLIC_ROUTES (middleware
+ * lets unauthenticated requests through) so the Casebook is crawlable by
+ * search engines and AI crawlers and readable by logged-out visitors.
+ * Middleware sets `x-pathname` on the REQUEST headers, so it is reliable
+ * here. Fail-safe: if the header is ever missing, guests fall back to the
+ * login redirect (the pre-existing behaviour) — never the other way around.
+ */
+function isPublicLearnPath(pathname: string): boolean {
+  return pathname === '/learn' || pathname.startsWith('/learn/');
+}
+
+/** Lightweight chrome for logged-out readers of public learn content. */
+function GuestChrome({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
+        <div className="container flex h-14 md:h-16 items-center justify-between">
+          <Link href="/" className="flex items-center -ml-2 shrink-0" aria-label="MECE home">
+            <Logo isLanding={true} className="" />
+          </Link>
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <ThemeToggle />
+            <Link href="/login" className="hidden sm:block">
+              <button className="text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors">
+                Login
+              </button>
+            </Link>
+            <Link href="/signup">
+              <button className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap">
+                Get started free
+              </button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+      <main className="min-h-[calc(100vh-64px)] flex flex-col relative w-full overflow-x-clip max-w-[100vw]">
+        <div className="flex-1 pb-10">
+          {children}
+        </div>
+        <Footer className="pb-12" />
+      </main>
+    </>
+  );
+}
 
 export default async function AppLayout({
   children,
@@ -17,7 +67,14 @@ export default async function AppLayout({
   // during the same request, no extra Supabase round-trips fire. Cuts the
   // typical per-navigation auth cost from ~400ms to ~200ms.
   const authUser = await getCachedAuthUser();
-  if (!authUser) redirect('/login');
+
+  if (!authUser) {
+    const pathname = headers().get('x-pathname') ?? '';
+    if (isPublicLearnPath(pathname)) {
+      return <GuestChrome>{children}</GuestChrome>;
+    }
+    redirect('/login');
+  }
 
   const userRow = await getCachedUserRow(authUser.id);
 

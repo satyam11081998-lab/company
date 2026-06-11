@@ -1,7 +1,14 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import AuthForm from '@/components/auth-form';
 import Logo from '@/components/logo';
+
+export const metadata: Metadata = {
+  title: 'Sign up free',
+  description: 'Create a free MECE account — practice cases, guesstimates, and GD briefs scored across 6 dimensions, and rank against MBA aspirants across India.',
+  alternates: { canonical: '/signup' },
+};
 
 /** Signup page. */
 export default function SignupPage() {

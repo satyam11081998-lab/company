@@ -93,6 +93,12 @@ export const PUBLIC_ROUTES: string[] = [
   '/terms',
   '/refund',
   '/learn',
+  // SEO/crawler surfaces — extensionless URLs the middleware matcher doesn't
+  // skip, so they must be explicitly public or link previews break.
+  '/og', // dynamic Open Graph image generator
+  '/opengraph-image',
+  '/twitter-image',
+  '/manifest.webmanifest',
 ];
 
 /** Auth pages — if logged in, user gets redirected away from these. */

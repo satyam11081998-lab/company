@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Refund & Cancellation Policy — MECE',
+  title: 'Refund & Cancellation Policy',
+  description: 'MECE refund and cancellation policy — cancel any time; 7-day money-back guarantee on Pro plans.',
+  alternates: { canonical: '/refund' },
 };
 
 export default function RefundPage() {
