@@ -32,12 +32,25 @@ function b64url(input: Buffer | string): string {
 }
 
 function getCreds() {
-  const email = process.env.GOOGLE_SA_CLIENT_EMAIL?.replace(/^"|"$/g, '').trim();
+  // Option 1: Base64-encoded JSON file (Bulletproof method)
+  if (process.env.GOOGLE_SA_CREDENTIALS) {
+    try {
+      const json = JSON.parse(Buffer.from(process.env.GOOGLE_SA_CREDENTIALS, 'base64').toString('utf-8'));
+      const folder = process.env.GDRIVE_FOLDER_ID?.replace(/^"|"$/g, '').trim();
+      if (!folder) throw new Error('GDRIVE_FOLDER_ID is missing');
+      return { email: json.client_email, key: json.private_key, folder };
+    } catch (e: any) {
+      throw new Error(`Failed to parse GOOGLE_SA_CREDENTIALS: ${e.message}`);
+    }
+  }
+
+  // Option 2: Individual variables
+  const email = process.env.GOOGLE_SA_CLIENT_EMAIL?.replace(/^"|"$/g, '').replace(/'/g, '').trim();
   const rawKey = process.env.GOOGLE_SA_PRIVATE_KEY || '';
   const folder = process.env.GDRIVE_FOLDER_ID?.replace(/^"|"$/g, '').trim();
   
   if (!email || !rawKey || !folder) {
-    throw new Error('Google Drive storage is not configured (GOOGLE_SA_CLIENT_EMAIL / GOOGLE_SA_PRIVATE_KEY / GDRIVE_FOLDER_ID)');
+    throw new Error('Google Drive storage is not configured (Provide GOOGLE_SA_CREDENTIALS base64 string OR individual vars)');
   }
 
   // Reconstruct the PEM defensively to ignore all mangled newlines, spaces, or quotes from Vercel env vars
@@ -47,7 +60,11 @@ function getCreds() {
     .replace(/\\n/g, '')
     .replace(/\\r/g, '')
     .replace(/\s+/g, '')
-    .replace(/"/g, '');
+    .replace(/["']/g, '');
+    
+  if (b64.length < 100) {
+     throw new Error('GOOGLE_SA_PRIVATE_KEY looks truncated or corrupted. It must be the full RSA private key.');
+  }
     
   const key = `-----BEGIN PRIVATE KEY-----\n${b64.match(/.{1,64}/g)?.join('\n')}\n-----END PRIVATE KEY-----\n`;
 
