@@ -88,9 +88,9 @@ async function getAccessToken(): Promise<string> {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_DRIVE_CLIENT_ID,
-        client_secret: process.env.GOOGLE_DRIVE_CLIENT_SECRET,
-        refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
+        client_id: process.env.GOOGLE_DRIVE_CLIENT_ID.trim(),
+        client_secret: process.env.GOOGLE_DRIVE_CLIENT_SECRET.trim(),
+        refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN.trim(),
         grant_type: 'refresh_token',
       }),
     });
