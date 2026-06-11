@@ -189,6 +189,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Invest India — Healthcare',       url: 'https://www.investindia.gov.in/sector/healthcare' },
     ],
   },
+  {
+    slug: 'industry-primers/automobile',
+    folder: 'automobile',
+    no: 12,
+    title: 'Automobile',
+    sector: 'Automotive & Mobility',
+    sources: [
+      { label: 'IBEF — Automobiles',              url: 'https://www.ibef.org/industry/india-automobiles' },
+      { label: 'SIAM',                            url: 'https://www.siam.in/' },
+      { label: 'MHI',                             url: 'https://heavyindustries.gov.in/' },
+      { label: 'FADA',                            url: 'https://fada.in/' },
+      { label: 'ACMA',                            url: 'https://www.acma.in/' },
+      { label: 'Invest India — Automobile',       url: 'https://www.investindia.gov.in/sector/automobile' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

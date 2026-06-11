@@ -258,6 +258,7 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: '9 · Food Processing', kind: 'page', slug: 'industry-primers/food-processing' },
       { title: '10 · FMCG', kind: 'page', slug: 'industry-primers/fmcg' },
       { title: '11 · Healthcare', kind: 'page', slug: 'industry-primers/healthcare' },
+      { title: '12 · Automobile', kind: 'page', slug: 'industry-primers/automobile' },
     ],
   },
   {
