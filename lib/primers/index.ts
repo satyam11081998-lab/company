@@ -248,6 +248,20 @@ export const PRIMERS: Primer[] = [
       { label: 'McKinsey — Insurance',            url: 'https://www.mckinsey.com/industries/financial-services/our-insights/insurance' },
     ],
   },
+  {
+    slug: 'industry-primers/iron-steel',
+    folder: 'iron-steel',
+    no: 16,
+    title: 'Iron & Steel',
+    sector: 'Manufacturing & Heavy Industry',
+    sources: [
+      { label: 'IBEF — Iron and Steel',           url: 'https://www.ibef.org/industry/steel' },
+      { label: 'Ministry of Steel',               url: 'https://steel.gov.in/' },
+      { label: 'worldsteel (WSA)',                url: 'https://worldsteel.org/' },
+      { label: 'Joint Plant Committee (JPC)',     url: 'https://jpcindiansteel.nic.in/' },
+      { label: 'Indian Steel Association (ISA)',  url: 'https://indsteel.org/' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
