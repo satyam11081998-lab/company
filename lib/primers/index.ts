@@ -204,6 +204,20 @@ export const PRIMERS: Primer[] = [
       { label: 'Invest India — Automobile',       url: 'https://www.investindia.gov.in/sector/automobile' },
     ],
   },
+  {
+    slug: 'industry-primers/cement',
+    folder: 'cement',
+    no: 13,
+    title: 'Cement',
+    sector: 'Infrastructure & Real Estate',
+    sources: [
+      { label: 'IBEF — Cement',                   url: 'https://www.ibef.org/industry/cement-india' },
+      { label: 'CMA (Cement Manufacturers)',      url: 'https://www.cmaindia.org/' },
+      { label: 'Invest India — Cement',           url: 'https://www.investindia.gov.in/sector/cement' },
+      { label: 'CRISIL — Ratings',                url: 'https://www.crisil.com/' },
+      { label: 'Statista — Cement Industry',      url: 'https://www.statista.com/markets/415/topic/467/construction/' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

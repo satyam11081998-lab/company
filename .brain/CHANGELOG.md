@@ -11,7 +11,12 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
-## 2026-06-11 — industry-primers-automobile
+## 2026-06-11 — industry-primers-cement
+industry-primers: add "13 · Cement" static bundle and wire up casebook registry
+touches: public/primers/cement/index.html, lib/primers/index.ts, lib/casebook/tree.ts
+breaking: no   affects: none
+
+## 2026-06-11 — industry-primers-automobile — de3573e
 industry-primers: add "12 · Automobile" static bundle and wire up casebook registry
 touches: public/primers/automobile/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
