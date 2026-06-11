@@ -32,12 +32,25 @@ function b64url(input: Buffer | string): string {
 }
 
 function getCreds() {
-  const email = process.env.GOOGLE_SA_CLIENT_EMAIL;
-  const key = process.env.GOOGLE_SA_PRIVATE_KEY?.replace(/\\n/g, '\n');
-  const folder = process.env.GDRIVE_FOLDER_ID;
-  if (!email || !key || !folder) {
+  const email = process.env.GOOGLE_SA_CLIENT_EMAIL?.replace(/^"|"$/g, '').trim();
+  const rawKey = process.env.GOOGLE_SA_PRIVATE_KEY || '';
+  const folder = process.env.GDRIVE_FOLDER_ID?.replace(/^"|"$/g, '').trim();
+  
+  if (!email || !rawKey || !folder) {
     throw new Error('Google Drive storage is not configured (GOOGLE_SA_CLIENT_EMAIL / GOOGLE_SA_PRIVATE_KEY / GDRIVE_FOLDER_ID)');
   }
+
+  // Reconstruct the PEM defensively to ignore all mangled newlines, spaces, or quotes from Vercel env vars
+  const b64 = rawKey
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/\\n/g, '')
+    .replace(/\\r/g, '')
+    .replace(/\s+/g, '')
+    .replace(/"/g, '');
+    
+  const key = `-----BEGIN PRIVATE KEY-----\n${b64.match(/.{1,64}/g)?.join('\n')}\n-----END PRIVATE KEY-----\n`;
+
   return { email, key, folder };
 }
 
