@@ -27,14 +27,14 @@ export default function PDFViewer({ url, userEmail, userId }: PDFViewerProps) {
   // 1. Aggressive Window Focus/Blur Blackout
   useEffect(() => {
     const handleBlur = () => setIsBlackedOut(true);
-    const handleFocus = () => setIsBlackedOut(false);
+    // We intentionally do NOT auto-recover on focus. 
+    // Snipping tools can trigger weird focus events when dragging. 
+    // The user must explicitly click "Resume Reading".
 
     window.addEventListener('blur', handleBlur);
-    window.addEventListener('focus', handleFocus);
 
     return () => {
       window.removeEventListener('blur', handleBlur);
-      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 
@@ -86,12 +86,6 @@ export default function PDFViewer({ url, userEmail, userId }: PDFViewerProps) {
   const triggerBlackout = (message: string) => {
     setIsBlackedOut(true);
     toast.error(message);
-    // Auto-recover after a few seconds if they aren't actively blurred
-    setTimeout(() => {
-      if (document.hasFocus()) {
-        setIsBlackedOut(false);
-      }
-    }, 3000);
   };
 
   useEffect(() => {
@@ -169,10 +163,16 @@ export default function PDFViewer({ url, userEmail, userId }: PDFViewerProps) {
           <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center text-white p-8">
             <AlertTriangle className="h-16 w-16 mb-4 opacity-50" />
             <h2 className="text-2xl font-bold mb-2">Viewing Paused</h2>
-            <p className="text-white/70 text-center max-w-md">
-              The document has been hidden because the window lost focus or a screenshot shortcut was detected. 
-              Click back into the window to resume reading.
+            <p className="text-white/70 text-center max-w-md mb-6">
+              The document has been hidden because the window lost focus or a screenshot shortcut was detected.
             </p>
+            <Button 
+              variant="outline" 
+              className="bg-white text-black hover:bg-gray-200"
+              onClick={() => setIsBlackedOut(false)}
+            >
+              Resume Reading
+            </Button>
           </div>
         )}
 
