@@ -15,11 +15,11 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── FOMO Banner ──────────────────────────────────────────────── */}
-      <div className="bg-primary px-4 py-2.5 text-center text-primary-foreground text-[13px] font-medium flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-        <span className="animate-pulse">🔥</span> 
+      <div className="bg-muted/50 border-b border-border px-4 py-2.5 text-center text-[13px] font-medium flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-muted-foreground">
+        <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block animate-pulse" />
         Thousands of aspirants are already studying our free casebook. Don't be the only one unprepared.
-        <Link href="/learn/casebook/getting-started/what-it-tests" className="underline font-bold hover:text-white/80 flex items-center gap-1 ml-1">
-          Read it now <ArrowRight className="h-3 w-3" />
+        <Link href="/learn/casebook/getting-started/what-it-tests" className="text-foreground font-semibold hover:text-primary transition-colors flex items-center gap-1 ml-1">
+          Read it now <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
