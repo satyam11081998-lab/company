@@ -166,7 +166,7 @@ export default function AboutPage() {
 
         {/* ── Disambiguation callout ─────────────────────────────────── */}
         <section className="mb-20" data-reveal>
-          <Card className="p-8 border-l-4 border-l-primary">
+          <Card className="p-8">
             <h2 className="text-xl font-bold text-foreground mb-3">MECE the platform vs. the MECE principle</h2>
             <div className="grid gap-6 md:grid-cols-2">
               <div>

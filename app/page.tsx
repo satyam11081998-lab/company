@@ -4,6 +4,7 @@ import TestimonialsCarousel from '@/components/testimonials-carousel';
 import Logo from '@/components/logo';
 import Footer from '@/components/footer';
 import AuthCTA from '@/components/auth-cta';
+import LandingMobileNav from '@/components/landing-mobile-nav';
 import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle } from 'lucide-react';
 import ScrollAnimations from '@/components/scroll-animations';
 import { faqPageJsonLd } from '@/lib/seo';
@@ -45,7 +46,7 @@ const faqJsonLd = faqPageJsonLd(HOMEPAGE_FAQS);
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen bg-background overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <ScrollAnimations />
 
@@ -75,6 +76,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <ThemeToggle />
             <AuthCTA variant="nav" />
+            <LandingMobileNav />
           </div>
         </div>
       </nav>

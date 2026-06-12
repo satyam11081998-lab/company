@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/components/user-context';
@@ -8,7 +10,7 @@ import ThemeToggle from '@/components/theme-toggle';
 import TierBadge from '@/components/tier-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Menu, X } from 'lucide-react';
 import Logo from '@/components/logo';
 
 /**
@@ -19,9 +21,39 @@ import Logo from '@/components/logo';
 export default function AppNav() {
   const { user, tier, isFree } = useUser();
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  // Lock body scroll + close on Escape while the drawer is open.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
+
+  const NAV_LINKS: { href: string; label: string; active?: boolean }[] = [
+    { href: '/dashboard', label: 'Dashboard' },
+    // "Learn" owns the casebook EXCEPT the case-competitions track,
+    // which gets its own top-level entry below.
+    { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
+    { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
+    { href: '/skeletons', label: 'Deck Vault' },
+    { href: '/practice', label: 'Practice' },
+    { href: '/gd-briefs', label: 'GD Briefs' },
+    { href: '/cheat-sheet', label: 'Cheat Sheet' },
+    { href: '/leaderboard', label: 'Leaderboard' },
+  ];
 
   return (
     <header className="nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]">
@@ -34,19 +66,20 @@ export default function AppNav() {
           </Link>
 
           {user && (
+            <button
+              type="button"
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(true)}
+              className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-md text-navy-foreground/70 hover:bg-navy-mid/40 transition-colors"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+
+          {user && (
             <nav className="hidden md:flex items-center gap-0.5">
-              {[
-                { href: '/dashboard',   label: 'Dashboard' },
-                // "Learn" owns the casebook EXCEPT the case-competitions track,
-                // which gets its own top-level entry below.
-                { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
-                { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
-                { href: '/skeletons',   label: 'Deck Vault' },
-                { href: '/practice',    label: 'Practice' },
-                { href: '/gd-briefs',   label: 'GD Briefs' },
-                { href: '/cheat-sheet', label: 'Cheat Sheet' },
-                { href: '/leaderboard', label: 'Leaderboard' },
-              ].map(({ href, label, active }: { href: string; label: string; active?: boolean }) => {
+              {NAV_LINKS.map(({ href, label, active }) => {
                 const linkActive = active ?? isActive(href);
                 return (
                 <Link
@@ -123,6 +156,65 @@ export default function AppNav() {
           )}
         </div>
       </div>
+
+      {/* Mobile drawer — links are hidden md:flex above; this exposes them on phones */}
+      {mounted && menuOpen && user && createPortal(
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <div
+            className="absolute inset-0 bg-navy/50 backdrop-blur-sm"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0 w-[82%] max-w-xs bg-navy border-r border-navy-mid/40 shadow-2xl flex flex-col animate-slide-right">
+            <div className="flex items-center justify-between h-14 px-4 border-b border-navy-mid/30">
+              <span className="text-navy-foreground font-semibold">Menu</span>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setMenuOpen(false)}
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md text-navy-foreground/70 hover:bg-navy-mid/40 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto py-2">
+              {NAV_LINKS.map(({ href, label, active }) => {
+                const linkActive = active ?? isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`block px-5 py-3 text-[16px] font-medium transition-colors ${
+                      linkActive
+                        ? 'text-navy-foreground bg-navy-mid/30'
+                        : 'text-navy-foreground/60 hover:text-navy-foreground/90'
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="border-t border-navy-mid/30 p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2 text-navy-foreground/60">
+                <span className="font-mono text-base font-medium text-primary tabular-nums">{user.points}</span>
+                <span className="text-xs">points</span>
+              </div>
+              {tier !== 'pro' && (
+                <Link
+                  href="/upgrade"
+                  onClick={() => setMenuOpen(false)}
+                  className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-primary px-3 py-2 border border-primary/30 rounded bg-primary/5"
+                >
+                  <Sparkles className="h-4 w-4" /> Upgrade to Pro
+                </Link>
+              )}
+              <SignOutButton />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </header>
   );
 }
