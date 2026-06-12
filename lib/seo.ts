@@ -95,18 +95,55 @@ const KIND_TO_RESOURCE_TYPE: Record<Page['kind'], string> = {
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
+/**
+ * Official, *live* off-domain profiles that corroborate MECE as a real named
+ * entity. Wiring these into Organization.sameAs is the single highest-leverage
+ * entity-recognition signal: it lets Google's Knowledge Graph (and the LLMs
+ * trained on it) reconcile "mece.in" to one organization and tell it apart
+ * from the MECE problem-solving principle.
+ *
+ * RULE: add a URL only once the profile is PUBLISHED and resolves 200. A 404
+ * in sameAs is worse than an omission. Uncomment / extend as each goes live.
+ */
+export const SOCIAL_PROFILES: string[] = [
+  // 'https://www.linkedin.com/company/mece-prep/',
+  // 'https://www.crunchbase.com/organization/mece-prep',
+  // 'https://www.wikidata.org/wiki/Q__________',
+  // 'https://x.com/mece_in',
+  // 'https://www.instagram.com/mece.in/',
+  // 'https://www.youtube.com/@mece-in',
+];
+
 export function organizationJsonLd() {
   return {
     '@type': 'EducationalOrganization',
     '@id': ORG_ID,
     name: SITE_NAME,
+    legalName: 'MECE Prep',
+    alternateName: ['MECE Prep', 'MECE.in'],
     url: SITE_URL,
     logo: {
       '@type': 'ImageObject',
       url: `${SITE_URL}/logo.png`,
     },
+    image: `${SITE_URL}/opengraph-image`,
     description: SITE_DESC,
+    // Hard disambiguation from the McKinsey/Minto MECE *principle*. This single
+    // field tells search + AI systems the platform is a distinct named entity,
+    // not the consulting concept it shares a name with.
+    disambiguatingDescription:
+      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for Indian students. It is distinct from the MECE problem-solving principle (Mutually Exclusive, Collectively Exhaustive) used in management consulting.',
+    slogan: 'Placement interview prep, the structured way.',
+    foundingDate: '2025',
     areaServed: 'IN',
+    email: 'team@mece.in',
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'team@mece.in',
+      contactType: 'customer support',
+      areaServed: 'IN',
+      availableLanguage: ['English', 'Hindi'],
+    },
     knowsAbout: [
       'case interviews',
       'guesstimates',
@@ -115,6 +152,7 @@ export function organizationJsonLd() {
       'consulting interview preparation',
       'business frameworks',
     ],
+    ...(SOCIAL_PROFILES.length ? { sameAs: SOCIAL_PROFILES } : {}),
   };
 }
 
@@ -308,13 +346,16 @@ export function glossaryTermJsonLd(opts: {
 /* ── EEAT metadata helpers ─────────────────────────────────────────── */
 
 export const EEAT_AUTHOR = 'MECE Editorial Team';
+// Org-only EEAT (no individual named). The prior "Industry Experts / Ex-MBB &
+// Tier 1 Consultants" placeholder read as manufactured authority (a Helpful-
+// Content / quality-rater risk) and is removed. Authorship and editorial review
+// are attributed to the MECE Editorial Team as an organisation.
 export const EEAT_REVIEWER = {
-  name: 'Industry Experts',
-  title: 'Consulting Professionals',
-  credential: 'Ex-MBB & Tier 1 Consultants',
+  name: EEAT_AUTHOR,
+  credential: 'for consulting-curriculum accuracy',
 };
 
-/** Author + reviewer structured data fragment for Article schema. */
+/** Author + reviewer (organisation-level) fragment for Article schema. */
 export function eeatPersonJsonLd() {
   return {
     author: {
@@ -323,13 +364,9 @@ export function eeatPersonJsonLd() {
       url: SITE_URL,
     },
     reviewedBy: {
-      '@type': 'Person',
-      name: EEAT_REVIEWER.name,
-      jobTitle: EEAT_REVIEWER.title,
-      alumniOf: {
-        '@type': 'EducationalOrganization',
-        name: 'IMI Delhi',
-      },
+      '@type': 'Organization',
+      name: EEAT_AUTHOR,
+      url: SITE_URL,
     },
   };
 }

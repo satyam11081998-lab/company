@@ -4,15 +4,50 @@ import TestimonialsCarousel from '@/components/testimonials-carousel';
 import Logo from '@/components/logo';
 import Footer from '@/components/footer';
 import AuthCTA from '@/components/auth-cta';
-import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle } from 'lucide-react';
+import ScrollAnimations from '@/components/scroll-animations';
+import { faqPageJsonLd } from '@/lib/seo';
 
 export const metadata = {
   alternates: { canonical: '/' },
 };
 
+/** Homepage FAQ — also emitted as FAQPage JSON-LD for AEO + entity disambiguation. */
+const HOMEPAGE_FAQS = [
+  {
+    question: 'What is MECE?',
+    answer:
+      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for Indian students. It offers a free case-interview casebook, AI-scored case and guesstimate practice across six dimensions, daily group-discussion (GD) briefs, and a national leaderboard.',
+  },
+  {
+    question: 'Is mece.in the same as the MECE framework?',
+    answer:
+      'No. The MECE principle (Mutually Exclusive, Collectively Exhaustive) is a problem-solving concept popularised in management consulting. MECE — the platform at mece.in — is a separate product that helps Indian MBA and PGDM students prepare for placement interviews. It is named after the principle but is a distinct service.',
+  },
+  {
+    question: 'Who is MECE for?',
+    answer:
+      'Indian MBA and PGDM students preparing for summer-internship and final placements — especially consulting, finance, marketing, product, and operations roles at firms such as McKinsey, BCG, Bain, Goldman Sachs, P&G, and HUL.',
+  },
+  {
+    question: 'Is MECE free?',
+    answer:
+      'The MECE Casebook — frameworks, worked cases, and guesstimates — is free to read without an account. Scored practice, GD briefs, and the leaderboard need a free account, with paid plans for unlimited practice. No credit card is required to start.',
+  },
+  {
+    question: 'How does MECE score my answers?',
+    answer:
+      'Every submission is graded on a transparent 100-point rubric across six dimensions — Structure, Quantitative, Synthesis, Business Judgment, Creativity, and Professional Tone — with written feedback in about 60 seconds. The full rubric is on the methodology page.',
+  },
+];
+
+const faqJsonLd = faqPageJsonLd(HOMEPAGE_FAQS);
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <ScrollAnimations />
 
       {/* ── FOMO Banner ──────────────────────────────────────────────── */}
       <div className="bg-destructive px-4 py-2.5 text-center text-destructive-foreground text-[13px] font-medium flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
@@ -59,7 +94,8 @@ export default function LandingPage() {
               the structured way.
             </h1>
             <p className="mt-5 text-[15px] text-muted-foreground leading-relaxed max-w-md">
-              Cases, frameworks, and GD prep for every MBA aspirant — consulting, finance, marketing, product, ops. Scored across 6 dimensions. Ranked against every aspirant in India.
+              <strong className="font-semibold text-foreground/80">MECE is a placement-interview prep platform for Indian MBA &amp; PGDM students.</strong>{' '}
+              Cases, frameworks, and GD prep across consulting, finance, marketing, product, and ops — scored on 6 dimensions and ranked against aspirants nationwide.
             </p>
             <div className="mt-7">
               <AuthCTA variant="hero" />
@@ -140,7 +176,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Feature 1: Scoring (left text + right card) ───────────────── */}
-      <section id="scoring" className="max-w-6xl mx-auto px-6 py-12 md:py-20">
+      <section id="scoring" className="max-w-6xl mx-auto px-6 py-12 md:py-20" data-reveal>
         <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
           <div>
             <div className="badge-pill mb-4">
@@ -213,7 +249,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Feature 2: Cases (centered + 2 cards) ────────────────────── */}
-      <section id="features" className="bg-card border-y border-border py-20 relative overflow-hidden">
+      <section id="features" className="bg-card border-y border-border py-20 relative overflow-hidden" data-reveal>
         {/* Geometric watermark */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
           {[
@@ -391,7 +427,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Feature 4: Leaderboard (left text + right card) ───────────── */}
-      <section className="bg-card border-y border-border py-12 md:py-20">
+      <section className="bg-card border-y border-border py-12 md:py-20" data-reveal>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
             <div>
@@ -467,7 +503,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Methodology strip ─────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
+      <section className="max-w-6xl mx-auto px-6 py-16" data-reveal>
         <div className="text-center mb-10">
           <div className="badge-pill mx-auto w-fit mb-4">
             <Users className="h-3.5 w-3.5" />
@@ -506,7 +542,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials section */}
-      <section className="py-20 px-6 bg-card">
+      <section className="py-20 px-6 bg-card" data-reveal>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
@@ -517,6 +553,31 @@ export default function LandingPage() {
             </h2>
           </div>
           <TestimonialsCarousel />
+        </div>
+      </section>
+
+      {/* ── FAQ / entity disambiguation ──────────────────────────────── */}
+      <section id="faq" className="max-w-3xl mx-auto px-6 py-16" data-reveal>
+        <div className="text-center mb-10">
+          <div className="badge-pill mx-auto w-fit mb-4">
+            <HelpCircle className="h-3.5 w-3.5" />
+            FAQ
+          </div>
+          <h2 className="text-3xl font-bold text-foreground">Questions about MECE</h2>
+          <p className="mt-3 text-[15px] text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            MECE (mece.in) is a placement-interview prep platform for Indian MBA &amp; PGDM students — not to be confused with the MECE problem-solving principle it is named after.
+          </p>
+        </div>
+        <div className="space-y-3">
+          {HOMEPAGE_FAQS.map((faq) => (
+            <details key={faq.question} className="ui-card p-5 group">
+              <summary className="flex items-center justify-between gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-[15px] font-semibold text-foreground">
+                {faq.question}
+                <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+              </summary>
+              <p className="mt-3 text-[14px] text-muted-foreground leading-relaxed">{faq.answer}</p>
+            </details>
+          ))}
         </div>
       </section>
 

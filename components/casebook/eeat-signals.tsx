@@ -44,13 +44,12 @@ export default function EEATSignals({
         <span>By <strong className="font-medium text-foreground/70">{EEAT_AUTHOR}</strong></span>
       </span>
 
-      {/* Reviewer */}
+      {/* Reviewer (organisation-level — no individual named) */}
       <span className="inline-flex items-center gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5" />
         <span>
-          Reviewed by{' '}
-          <strong className="font-medium text-foreground/70">{EEAT_REVIEWER.name}</strong>
-          <span className="hidden sm:inline">, {EEAT_REVIEWER.credential}</span>
+          Editorially reviewed
+          <span className="hidden sm:inline"> {EEAT_REVIEWER.credential}</span>
         </span>
       </span>
 

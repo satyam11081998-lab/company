@@ -534,3 +534,25 @@
 }
 .flame { animation: flicker 2.6s ease-in-out infinite; transform-origin: center bottom; }
 .pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
+
+/* ── Scroll reveal ─────────────────────────────────────────────────────
+   JS-gated: the `.reveal-ready` class is only added by <ScrollAnimations/>
+   after hydration, so no-JS visitors and crawlers always see full content.
+   Reduced-motion users are opted out entirely. */
+.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  will-change: opacity, transform;
+}
+.reveal-ready [data-reveal].revealed {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-ready [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

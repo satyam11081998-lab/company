@@ -2,27 +2,55 @@ import Link from 'next/link';
 import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import AuthCTA from '@/components/auth-cta';
+import ScrollAnimations from '@/components/scroll-animations';
 import { Card } from '@/components/ui/card';
-import { genericArticleJsonLd, genericBreadcrumbJsonLd } from '@/lib/seo';
+import { ChevronRight, HelpCircle } from 'lucide-react';
+import { genericArticleJsonLd, genericBreadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo';
+
+const PAGE_TITLE = 'Scoring methodology';
 
 export const metadata = {
   title: 'Scoring methodology',
-  description: 'How MECE scores case interview and GD practice — six dimensions, transparent rubrics, and percentile ranks against MBA aspirants across India.',
+  description: 'How MECE scores case-interview and GD practice — a transparent 100-point rubric across six dimensions, an arithmetic backstop that verifies your math, written feedback in ~60 seconds, and live percentile ranks against MBA aspirants across India.',
   alternates: { canonical: '/methodology' },
 };
 
 const articleJsonLd = genericArticleJsonLd({
-  title: 'Scoring methodology',
-  description: 'How MECE scores case interview and GD practice — six dimensions, transparent rubrics, and percentile ranks against MBA aspirants across India.',
+  title: PAGE_TITLE,
+  description: 'How MECE scores case-interview and GD practice — a transparent 100-point rubric across six dimensions, an arithmetic backstop, and percentile ranks against MBA aspirants across India.',
   url: '/methodology',
   datePublished: '2025-01-01',
-  dateModified: '2026-06-01',
+  dateModified: '2026-06-12',
 });
 
 const breadcrumbJsonLd = genericBreadcrumbJsonLd([
   { name: 'Home', url: '/' },
   { name: 'Methodology' },
 ]);
+
+const METHODOLOGY_FAQS = [
+  {
+    question: 'Is the scoring done by AI or by a human?',
+    answer:
+      'By an AI engine, against a fixed 100-point rubric. For guesstimates and quantitative cases an independent arithmetic backstop re-checks the numbers, so a confident but wrong answer cannot quietly score well. The same rubric runs on every submission, so scores are comparable over time.',
+  },
+  {
+    question: 'What are the six dimensions?',
+    answer:
+      'Structure (25), Quantitative Skills (20), Synthesis & Communication (20), Business Judgment (15), Hypothesis-Driven Creativity (10), and Professional Tone (10) — totalling 100 points.',
+  },
+  {
+    question: 'How is my percentile calculated?',
+    answer:
+      'Your points accumulate across submissions and are ranked live against other MBA aspirants practising on MECE across India, so your percentile reflects the active pool rather than a fixed curve.',
+  },
+  {
+    question: 'Can this replace a real mock interview?',
+    answer:
+      'No. It scores written submissions and is best used alongside mocks with peers, mentors, and professors. Live behavioural signals — composure, listening, body language — are not captured.',
+  },
+];
+const methodologyFaqJsonLd = faqPageJsonLd(METHODOLOGY_FAQS);
 
 export default function MethodologyPage() {
   return (
@@ -36,6 +64,11 @@ export default function MethodologyPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(methodologyFaqJsonLd) }}
+      />
+      <ScrollAnimations />
 
       {/* Static nav */}
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
@@ -107,6 +140,67 @@ export default function MethodologyPage() {
               description="Confident without arrogance, acknowledging uncertainty where appropriate, ethical recommendations, intellectual humility."
               groundedIn="Behavioral signals consistently evaluated in high-stakes placement interviews; ethical compromises are near-disqualifying."
             />
+          </div>
+        </section>
+
+        <section className="mt-14" data-reveal>
+          <h2 className="text-2xl font-bold text-foreground">How a score is produced</h2>
+          <p className="mt-2 text-body text-muted-foreground">
+            The same five steps run on every submission, so feedback is consistent rather than dependent on who is reviewing.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {[
+              ['1 · Parse', 'Your answer is read for its structure — the buckets you created, the math you ran, and the recommendation you landed on.'],
+              ['2 · Score the rubric', 'Each of the six dimensions is graded against fixed criteria, producing a 0–100 total with per-dimension points.'],
+              ['3 · Verify the math', 'For guesstimates and quantitative cases, an arithmetic backstop independently recomputes the numbers and flags inconsistencies.'],
+              ['4 · Write feedback', 'You get specific written feedback per dimension — what worked, what was missing, and the single highest-leverage fix.'],
+              ['5 · Rank', 'Points are added to your running total and your live percentile against the national pool is updated.'],
+            ].map(([t, d]) => (
+              <Card key={t} className="p-5">
+                <p className="text-strong font-semibold text-foreground">{t}</p>
+                <p className="mt-1 text-body leading-relaxed text-muted-foreground">{d}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-14" data-reveal>
+          <h2 className="text-2xl font-bold text-foreground">The arithmetic backstop</h2>
+          <Card className="mt-6 p-6 space-y-4 text-body leading-relaxed text-foreground/80">
+            <p>
+              A common failure mode in AI scoring is rewarding an answer that <em>sounds</em> rigorous but whose numbers
+              do not add up. MECE guards against this with an independent arithmetic backstop: for guesstimates and
+              quantitative cases, it recomputes the chain of estimates from your stated assumptions and checks each
+              derived step.
+            </p>
+            <p>
+              Stated and base values are used as given; only derived steps with finite inputs are flagged; percentage
+              and reference operations are handled explicitly. If nothing can be reliably verified, the system defers to
+              the language model rather than inventing a penalty — so your score reflects your reasoning, not a glitch.
+            </p>
+          </Card>
+        </section>
+
+        <section className="mt-14" data-reveal>
+          <h2 className="text-2xl font-bold text-foreground">Percentile &amp; the leaderboard</h2>
+          <p className="mt-2 text-body text-muted-foreground">
+            A score is only useful if you know what it means. Yours is placed in context two ways.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Card className="p-6">
+              <p className="text-strong font-semibold text-foreground">Live percentile</p>
+              <p className="mt-1 text-body leading-relaxed text-muted-foreground">
+                Your standing is computed against the active pool of MBA aspirants practising on MECE across India — a
+                moving benchmark, not a fixed curve.
+              </p>
+            </Card>
+            <Card className="p-6">
+              <p className="text-strong font-semibold text-foreground">Points &amp; milestones</p>
+              <p className="mt-1 text-body leading-relaxed text-muted-foreground">
+                Every submission and GD brief earns points that ladder you up a milestone path, so consistent practice
+                shows up as visible progress — not just a single number.
+              </p>
+            </Card>
           </div>
         </section>
 
@@ -195,6 +289,24 @@ export default function MethodologyPage() {
               spot an issue with your evaluation, we want to hear about it.
             </p>
           </Card>
+        </section>
+
+        <section className="mt-14" data-reveal>
+          <div className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-primary mb-3">
+            <HelpCircle className="h-4 w-4" /> FAQ
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">Questions about scoring</h2>
+          <div className="mt-6 space-y-3">
+            {METHODOLOGY_FAQS.map((faq) => (
+              <details key={faq.question} className="bg-card border border-border rounded-xl p-5 group">
+                <summary className="flex items-center justify-between gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-base font-semibold text-foreground">
+                  {faq.question}
+                  <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+                </summary>
+                <p className="mt-3 text-body text-muted-foreground leading-relaxed">{faq.answer}</p>
+              </details>
+            ))}
+          </div>
         </section>
 
         <div className="mt-14 flex justify-center">
