@@ -11,7 +11,12 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
-## 2026-06-12 — industry-primers-it-ites
+## 2026-06-12 — industry-primers-logistics
+industry-primers: add "18 · Logistics" static bundle and wire up casebook registry
+touches: public/primers/logistics/index.html, lib/primers/index.ts, lib/casebook/tree.ts
+breaking: no   affects: none
+
+## 2026-06-12 — industry-primers-it-ites — 2237f73
 industry-primers: add "17 · IT & ITeS" static bundle and wire up casebook registry
 touches: public/primers/it-ites/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none

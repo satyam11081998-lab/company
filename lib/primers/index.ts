@@ -277,6 +277,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Gartner — IT Spending',           url: 'https://www.gartner.com/en/newsroom' },
     ],
   },
+  {
+    slug: 'industry-primers/logistics',
+    folder: 'logistics',
+    no: 18,
+    title: 'Logistics',
+    sector: 'Transport & Supply Chain',
+    sources: [
+      { label: 'IBEF — Logistics',                url: 'https://www.ibef.org/industry/logistics-india' },
+      { label: 'PIB',                             url: 'https://pib.gov.in' },
+      { label: 'KPMG — Logistics',                url: 'https://kpmg.com/in' },
+      { label: 'DPIIT / NCAER — Logistics Cost',  url: 'https://www.dpiit.gov.in' },
+      { label: 'Horizon Research',                url: 'https://www.grandviewresearch.com/horizon' },
+      { label: 'Statista',                        url: 'https://www.statista.com' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
