@@ -292,6 +292,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Statista',                        url: 'https://www.statista.com' },
     ],
   },
+  {
+    slug: 'industry-primers/oil-gas',
+    folder: 'oil-gas',
+    no: 19,
+    title: 'Oil & Gas',
+    sector: 'Energy & Resources',
+    sources: [
+      { label: 'IBEF — Oil & Gas',                url: 'https://www.ibef.org/industry/oil-gas-india' },
+      { label: 'PPAC',                            url: 'https://www.ppac.gov.in' },
+      { label: 'MoPNG',                           url: 'https://mopng.gov.in' },
+      { label: 'PIB — MoPNG',                     url: 'https://pib.gov.in' },
+      { label: 'Invest India — Oil & Gas',        url: 'https://www.investindia.gov.in/sector/oil-gas' },
+      { label: 'Statista',                        url: 'https://www.statista.com' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

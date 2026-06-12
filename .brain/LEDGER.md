@@ -21,7 +21,7 @@ propose a new row via handoff but do not edit others' rows.
 | **Deck Vault & DRM** | A | feat/deck-vault | **BUILT & SECURED** (react-pdf + blackout + watermark) | `app/(app)/skeletons/*`, `components/pdf-viewer.tsx`, `components/skeleton-library.tsx`, `lib/google-drive.ts` | Payments-contract (needs 'pro' tier) |
 | **GD Cheat Sheet (Pro)** | B | feat/cheatsheet | **BUILT** | `app/(app)/cheat-sheet/*`, `components/cheat-sheet/*`, `lib/cheatsheet.ts`, `app/api/cheatsheet/*`, `supabase/migrations/0003_cheat_sheet.sql` | DB:`users` (tier read), GD-briefs `data_points` shape (reader), Tier infra |
 | **Onboarding & Profile** | A | feat/onboarding | **BUILT & LIVE (2026-06-08)** | `app/(app)/onboarding/*`, `app/(app)/profile/*`, `components/onboarding/*`, `components/profile/*`, `app/api/onboarding/*`, `app/api/college-email/*`, `lib/types-onboarding.ts`, `supabase/migrations/0005_user_onboarding.sql` | C6 users-schema, DB:`colleges`/`college_email_verifications`, Supabase Storage `avatars` bucket, Supabase Auth SMTP |
-| **Industry Primers** | A | feat/industry-primers | **BUILT (18 primers)** | `public/primers/**`, `app/(app)/learn/industry-primers/**`, `lib/primers/*` | Casebook-tree |
+| **Industry Primers** | A | feat/industry-primers | **BUILT (19 primers)** | `public/primers/**`, `app/(app)/learn/industry-primers/**`, `lib/primers/*` | Casebook-tree |
 
 ## Collision watch (features that touch the same surface)
 - **DB:`cases`** is touched by Dashboard, Guesstimate, and Daily-content → any
