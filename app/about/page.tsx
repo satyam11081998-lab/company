@@ -30,7 +30,7 @@ const breadcrumbJsonLd = genericBreadcrumbJsonLd([
 
 export default function AboutPage() {
   // Find founders from the existing testimonials data
-  const founders = TESTIMONIALS.slice(0, 3);
+  const founders = TESTIMONIALS.slice(0, 2);
 
   return (
     <div className="min-h-screen bg-muted flex flex-col">
@@ -161,7 +161,7 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold text-foreground">The Minds Behind MECE.in</h2>
             <p className="mt-4 text-lg text-muted-foreground">Built by MBA candidates, for MBA candidates.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-12">
             {founders.map((founder) => (
               <div key={founder.id} className="flex flex-col items-center text-center">
                 <Avatar className="h-44 w-44 border-[6px] border-border shadow-lg mb-6">
