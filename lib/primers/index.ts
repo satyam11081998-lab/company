@@ -307,6 +307,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Statista',                        url: 'https://www.statista.com' },
     ],
   },
+  {
+    slug: 'industry-primers/ott',
+    folder: 'ott',
+    no: 20,
+    title: 'OTT',
+    sector: 'Media & Entertainment',
+    sources: [
+      { label: 'IBEF — Media & Entertainment',    url: 'https://www.ibef.org/industry/media-entertainment-india' },
+      { label: 'FICCI-EY M&E Report',             url: 'https://www.ficci.in/sector/media-entertainment' },
+      { label: 'Ormax Media',                     url: 'https://www.ormaxmedia.com' },
+      { label: 'KPMG India',                      url: 'https://kpmg.com/in' },
+      { label: 'MIB',                             url: 'https://mib.gov.in' },
+      { label: 'Statista',                        url: 'https://www.statista.com' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

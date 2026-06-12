@@ -11,7 +11,12 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
-## 2026-06-12 — industry-primers-oil-gas
+## 2026-06-12 — industry-primers-ott — (pending)
+industry-primers: add "20 · OTT" static bundle and wire up casebook registry
+touches: public/primers/ott/index.html, lib/primers/index.ts, lib/casebook/tree.ts
+breaking: no   affects: none
+
+## 2026-06-12 — industry-primers-oil-gas — 817d216
 industry-primers: add "19 · Oil & Gas" static bundle and wire up casebook registry
 touches: public/primers/oil-gas/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
