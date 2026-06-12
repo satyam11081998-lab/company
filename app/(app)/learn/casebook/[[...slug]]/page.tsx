@@ -7,7 +7,10 @@ import {
   extractPageDescription,
   casebookArticleJsonLd,
   casebookBreadcrumbJsonLd,
+  faqPageJsonLd,
 } from '@/lib/seo';
+import { getClusterFAQs } from '@/lib/casebook/faqs';
+import { getClusterIdFromSlug, isClusterLanding } from '@/components/casebook/cluster-faq-section';
 
 export function generateStaticParams() {
   const params = ALL_PAGE_SLUGS.map((slug) => ({

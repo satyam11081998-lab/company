@@ -19,6 +19,10 @@ const GATED = [
   '/home',
   '/skeletons',
   '/auth/',
+  '/forgot-password',
+  '/reset-password',
+  '/login',
+  '/signup',
 ];
 
 /**

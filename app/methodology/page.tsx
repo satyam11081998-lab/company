@@ -1,10 +1,9 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
-import { UserProvider } from '@/components/user-context';
+import Logo from '@/components/logo';
+import ThemeToggle from '@/components/theme-toggle';
+import AuthCTA from '@/components/auth-cta';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import type { UserRow } from '@/lib/types';
+import { genericArticleJsonLd, genericBreadcrumbJsonLd } from '@/lib/seo';
 
 export const metadata = {
   title: 'Scoring methodology',
@@ -12,21 +11,45 @@ export const metadata = {
   alternates: { canonical: '/methodology' },
 };
 
-export default async function MethodologyPage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  let userRow: UserRow | null = null;
-  if (user) {
-    const { data } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
-    userRow = data as UserRow | null;
-  }
+const articleJsonLd = genericArticleJsonLd({
+  title: 'Scoring methodology',
+  description: 'How MECE scores case interview and GD practice — six dimensions, transparent rubrics, and percentile ranks against MBA aspirants across India.',
+  url: '/methodology',
+  datePublished: '2025-01-01',
+  dateModified: '2026-06-01',
+});
 
+const breadcrumbJsonLd = genericBreadcrumbJsonLd([
+  { name: 'Home', url: '/' },
+  { name: 'Methodology' },
+]);
+
+export default function MethodologyPage() {
   return (
     <div className="min-h-screen bg-muted">
-      <UserProvider initialUser={userRow}>
-        <AppNav />
-      </UserProvider>
+      {/* JSON-LD structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+
+      {/* Static nav */}
+      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
+        <div className="container flex h-14 md:h-16 items-center justify-between">
+          <Link href="/" className="flex items-center -ml-2 shrink-0">
+            <Logo isLanding />
+          </Link>
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <ThemeToggle />
+            <AuthCTA variant="nav" />
+          </div>
+        </div>
+      </nav>
+
       <main className="container max-w-4xl py-12">
         <div className="text-center">
           <p className="text-base font-semibold uppercase tracking-wider text-primary">Methodology</p>
@@ -175,10 +198,10 @@ export default async function MethodologyPage() {
         </section>
 
         <div className="mt-14 flex justify-center">
-          <Link href="/cases">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
+          <Link href="/signup">
+            <button className="btn-primary">
               Start practicing
-            </Button>
+            </button>
           </Link>
         </div>
       </main>

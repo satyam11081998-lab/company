@@ -5,6 +5,9 @@ import { BlockRenderer } from './block-renderer';
 import { OnThisPage } from './on-this-page';
 import { PrevNextLinks } from './prev-next';
 import { CasebookSearch } from './casebook-search';
+import EEATSignals from './eeat-signals';
+import RelatedContent from './related-content';
+import ClusterFAQSection from './cluster-faq-section';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import type { Page } from '@/lib/casebook/types';
@@ -79,7 +82,7 @@ export function CasebookReader({ page }: CasebookReaderProps) {
             </div>
           </div>
           
-          <header className="mb-10">
+          <header className="mb-6">
             <h1 className="text-h1 text-foreground mb-4">{page.title}</h1>
             {page.subtitle && (
               <p className="text-h3 font-normal text-muted-foreground leading-relaxed">
@@ -87,6 +90,8 @@ export function CasebookReader({ page }: CasebookReaderProps) {
               </p>
             )}
           </header>
+
+          <EEATSignals lastUpdated="2026-06-01" showMethodology={!!page.meta} />
 
           {page.meta && <PageMetaBar meta={page.meta} hasKeyTakeaways={page.blocks.some(b => b.type === 'keyTakeaways')} />}
 
@@ -118,6 +123,10 @@ export function CasebookReader({ page }: CasebookReaderProps) {
               );
             })()}
           </div>
+
+          <ClusterFAQSection slug={page.slug} />
+
+          <RelatedContent slug={page.slug} />
 
           <PrevNextLinks currentSlug={page.slug} />
         </article>

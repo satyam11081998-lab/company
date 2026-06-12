@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { CASEBOOK_TREE } from '@/lib/casebook/tree';
 import type { NavNode } from '@/lib/casebook/types';
+import { GLOSSARY_TERMS } from '@/lib/glossary/terms';
 import { SITE_URL } from '@/lib/seo';
 
 /**
@@ -10,6 +11,7 @@ import { SITE_URL } from '@/lib/seo';
  *   deliberately NOT listed — submitting redirecting URLs erodes trust
  *   with crawlers.
  * - The two live framework pages are public and content-rich, so they are.
+ * - All 75 glossary term pages are individually listed.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -29,12 +31,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry('', 1, 'weekly'),
     entry('/methodology', 0.8, 'monthly'),
     entry('/about', 0.6, 'monthly'),
-    entry('/signup', 0.7, 'monthly'),
-    entry('/login', 0.4, 'monthly'),
+    entry('/pricing', 0.7, 'monthly'),
+    entry('/glossary', 0.6, 'weekly'),
     entry('/privacy', 0.2, 'yearly'),
     entry('/terms', 0.2, 'yearly'),
     entry('/refund', 0.2, 'yearly'),
   ];
+
+  /* Glossary — 75 individual term pages */
+  const glossaryEntries = GLOSSARY_TERMS.map((t) =>
+    entry(`/glossary/${t.slug}`, 0.5, 'monthly')
+  );
 
   const casebookRoutes: MetadataRoute.Sitemap = [];
   const collectCasebookRoutes = (nodes: NavNode[]) => {
@@ -54,5 +61,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry('/learn/market/market-entry', 0.7, 'monthly'),
   ];
 
-  return [...core, ...casebookRoutes, ...liveFrameworks];
+  return [...core, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks];
 }
+

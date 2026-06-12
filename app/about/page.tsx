@@ -1,16 +1,13 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import AppNav from '@/components/app-nav';
-import { UserProvider } from '@/components/user-context';
+import Logo from '@/components/logo';
+import ThemeToggle from '@/components/theme-toggle';
+import AuthCTA from '@/components/auth-cta';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Footer from '@/components/footer';
-import type { UserRow } from '@/lib/types';
 import { Shield, Trophy, Activity, Layers } from 'lucide-react';
 import { TESTIMONIALS } from '@/lib/testimonials';
-
-export const dynamic = 'force-dynamic';
+import { genericArticleJsonLd, genericBreadcrumbJsonLd } from '@/lib/seo';
 
 export const metadata = {
   title: 'About us',
@@ -18,24 +15,48 @@ export const metadata = {
   alternates: { canonical: '/about' },
 };
 
-export default async function AboutPage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  let userRow: UserRow | null = null;
-  if (user) {
-    const { data } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
-    userRow = data as UserRow | null;
-  }
+const articleJsonLd = genericArticleJsonLd({
+  title: 'About MECE',
+  description: 'Who builds MECE and why — the team behind India\'s structured placement-interview prep platform for MBA and PGDM students.',
+  url: '/about',
+  datePublished: '2025-01-01',
+  dateModified: '2026-06-01',
+});
 
+const breadcrumbJsonLd = genericBreadcrumbJsonLd([
+  { name: 'Home', url: '/' },
+  { name: 'About' },
+]);
+
+export default function AboutPage() {
   // Find founders from the existing testimonials data
   const founders = TESTIMONIALS.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-muted flex flex-col">
-      <UserProvider initialUser={userRow}>
-        <AppNav />
-      </UserProvider>
+      {/* JSON-LD structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+
+      {/* Static nav */}
+      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
+        <div className="container flex h-14 md:h-16 items-center justify-between">
+          <Link href="/" className="flex items-center -ml-2 shrink-0">
+            <Logo isLanding />
+          </Link>
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <ThemeToggle />
+            <AuthCTA variant="nav" />
+          </div>
+        </div>
+      </nav>
+
       <main className="container max-w-6xl py-16 flex-grow">
         
         {/* Header Section */}
@@ -176,10 +197,10 @@ export default async function AboutPage() {
             <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
               Your placement season starts now. Join the ranks of MBA students mastering their interviews with MECE.
             </p>
-            <Link href="/practice">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary-hover px-10 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all">
+            <Link href="/signup">
+              <button className="btn-primary text-lg px-10 py-4 shadow-md hover:shadow-lg transition-all">
                 Start Practicing Free
-              </Button>
+              </button>
             </Link>
           </div>
         </section>

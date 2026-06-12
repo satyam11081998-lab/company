@@ -95,6 +95,8 @@ export const PUBLIC_ROUTES: string[] = [
   '/privacy',
   '/terms',
   '/refund',
+  '/pricing',
+  '/glossary',
   '/learn',
   // SEO/crawler surfaces — extensionless URLs the middleware matcher doesn't
   // skip, so they must be explicitly public or link previews break.

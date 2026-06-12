@@ -190,6 +190,150 @@ export function casebookArticleJsonLd(page: Page) {
   };
 }
 
+/* ── FAQ schema ────────────────────────────────────────────────────── */
+
+/** FAQPage structured data — improves rich snippet eligibility and AEO extraction. */
+export function faqPageJsonLd(faqs: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
+/* ── Pricing / Product schema ──────────────────────────────────────── */
+
+/** Product + Offer structured data for the /pricing page. */
+export function pricingProductJsonLd(plans: {
+  name: string;
+  description: string;
+  price: number;
+  currency?: string;
+  url?: string;
+}[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': plans.map((plan) => ({
+      '@type': 'Product',
+      name: `MECE ${plan.name}`,
+      description: plan.description,
+      brand: { '@id': ORG_ID },
+      offers: {
+        '@type': 'Offer',
+        price: plan.price,
+        priceCurrency: plan.currency || 'INR',
+        availability: 'https://schema.org/InStock',
+        url: plan.url || absoluteUrl('/pricing'),
+        seller: { '@id': ORG_ID },
+      },
+    })),
+  };
+}
+
+/* ── Generic Article schema ────────────────────────────────────────── */
+
+/** Article JSON-LD for static pages like /methodology, /about. */
+export function genericArticleJsonLd(opts: {
+  title: string;
+  description: string;
+  url: string;
+  datePublished?: string;
+  dateModified?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: opts.title,
+    description: opts.description,
+    url: absoluteUrl(opts.url),
+    mainEntityOfPage: absoluteUrl(opts.url),
+    inLanguage: 'en-IN',
+    author: { '@id': ORG_ID },
+    publisher: { '@id': ORG_ID },
+    isPartOf: { '@id': WEBSITE_ID },
+    ...(opts.datePublished ? { datePublished: opts.datePublished } : {}),
+    ...(opts.dateModified ? { dateModified: opts.dateModified } : {}),
+  };
+}
+
+/* ── Generic Breadcrumb schema ─────────────────────────────────────── */
+
+/** BreadcrumbList for any page — pass an array of {name, url} items. */
+export function genericBreadcrumbJsonLd(items: { name: string; url?: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      ...(item.url ? { item: absoluteUrl(item.url) } : {}),
+    })),
+  };
+}
+
+/* ── Glossary / DefinedTerm schema ─────────────────────────────────── */
+
+/** DefinedTerm JSON-LD for glossary pages — improves AI extraction. */
+export function glossaryTermJsonLd(opts: {
+  term: string;
+  definition: string;
+  url: string;
+  category?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'DefinedTerm',
+    name: opts.term,
+    description: opts.definition,
+    url: absoluteUrl(opts.url),
+    inDefinedTermSet: {
+      '@type': 'DefinedTermSet',
+      name: 'MECE MBA Glossary',
+      url: absoluteUrl('/glossary'),
+    },
+    ...(opts.category
+      ? { termCode: opts.category }
+      : {}),
+  };
+}
+
+/* ── EEAT metadata helpers ─────────────────────────────────────────── */
+
+export const EEAT_AUTHOR = 'MECE Editorial Team';
+export const EEAT_REVIEWER = {
+  name: 'Industry Experts',
+  title: 'Consulting Professionals',
+  credential: 'Ex-MBB & Tier 1 Consultants',
+};
+
+/** Author + reviewer structured data fragment for Article schema. */
+export function eeatPersonJsonLd() {
+  return {
+    author: {
+      '@type': 'Organization',
+      name: EEAT_AUTHOR,
+      url: SITE_URL,
+    },
+    reviewedBy: {
+      '@type': 'Person',
+      name: EEAT_REVIEWER.name,
+      jobTitle: EEAT_REVIEWER.title,
+      alumniOf: {
+        '@type': 'EducationalOrganization',
+        name: 'IMI Delhi',
+      },
+    },
+  };
+}
+
 /* ── Markdown serialization (llms-full.txt) ────────────────────────── */
 
 /** Serialize typed blocks to plain markdown for AI/LLM consumption. */
