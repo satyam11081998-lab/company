@@ -11,9 +11,9 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
-## 2026-06-13 — seo-entity-hardening — f6867da
-seo-entity-hardening: entity disambiguation schema, reframed /about, detailed /methodology, homepage FAQ schema + scroll motion, .gitattributes
-touches: lib/seo.ts, components/casebook/eeat-signals.tsx, app/page.tsx, app/about/page.tsx, app/methodology/page.tsx, components/scroll-animations.tsx, app/globals.css, .gitattributes
+## 2026-06-13 — seo-entity-hardening — 9dcc745
+seo-entity-hardening: entity disambiguation schema, reframed /about, detailed /methodology, homepage FAQ schema + scroll motion, mobile nav drawers, .gitattributes
+touches: lib/seo.ts, components/casebook/eeat-signals.tsx, app/page.tsx, app/about/page.tsx, app/methodology/page.tsx, components/scroll-animations.tsx, app/globals.css, .gitattributes, components/landing-mobile-nav.tsx, components/app-nav.tsx
 breaking: no   affects: none
 
 ## 2026-06-12 — industry-primers-ott — (pending)
