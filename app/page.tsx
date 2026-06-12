@@ -14,6 +14,15 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Inter', sans-serif" }}>
 
+      {/* ── FOMO Banner ──────────────────────────────────────────────── */}
+      <div className="bg-primary px-4 py-2.5 text-center text-primary-foreground text-[13px] font-medium flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+        <span className="animate-pulse">🔥</span> 
+        Thousands of aspirants are already studying our free casebook. Don't be the only one unprepared.
+        <Link href="/learn/casebook/getting-started/what-it-tests" className="underline font-bold hover:text-white/80 flex items-center gap-1 ml-1">
+          Read it now <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+
       {/* ── Nav ──────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full overflow-hidden max-w-[100vw]">
         <div className="container flex h-14 md:h-16 items-center justify-between">
@@ -22,7 +31,7 @@ export default function LandingPage() {
               <Logo isLanding={true} className="" />
             </Link>
             <div className="hidden md:flex items-center gap-8">
-              {[['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
+              {[['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
                 <Link key={href} href={href} className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
                   {label}
                 </Link>
