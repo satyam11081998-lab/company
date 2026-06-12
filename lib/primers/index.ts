@@ -262,6 +262,21 @@ export const PRIMERS: Primer[] = [
       { label: 'Indian Steel Association (ISA)',  url: 'https://indsteel.org/' },
     ],
   },
+  {
+    slug: 'industry-primers/it-ites',
+    folder: 'it-ites',
+    no: 17,
+    title: 'IT & ITeS',
+    sector: 'Technology & Services',
+    sources: [
+      { label: 'NASSCOM',                         url: 'https://nasscom.in/' },
+      { label: 'IBEF — IT & ITeS',                url: 'https://www.ibef.org/industry/information-technology-india' },
+      { label: 'MeitY',                           url: 'https://www.meity.gov.in/' },
+      { label: 'Invest India — IT & BPM',         url: 'https://www.investindia.gov.in/sector/it-bpm' },
+      { label: 'Statista — IT in India',          url: 'https://www.statista.com/markets/418/topic/486/technology/' },
+      { label: 'Gartner — IT Spending',           url: 'https://www.gartner.com/en/newsroom' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

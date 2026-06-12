@@ -263,6 +263,7 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: '14 · Hospitality', kind: 'page', slug: 'industry-primers/hospitality' },
       { title: '15 · Insurance', kind: 'page', slug: 'industry-primers/insurance' },
       { title: '16 · Iron & Steel', kind: 'page', slug: 'industry-primers/iron-steel' },
+      { title: '17 · IT & ITeS', kind: 'page', slug: 'industry-primers/it-ites' },
     ],
   },
   {
