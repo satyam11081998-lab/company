@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-13 — seo-entity-hardening — f6867da
+seo-entity-hardening: entity disambiguation schema, reframed /about, detailed /methodology, homepage FAQ schema + scroll motion, .gitattributes
+touches: lib/seo.ts, components/casebook/eeat-signals.tsx, app/page.tsx, app/about/page.tsx, app/methodology/page.tsx, components/scroll-animations.tsx, app/globals.css, .gitattributes
+breaking: no   affects: none
+
 ## 2026-06-12 — industry-primers-ott — (pending)
 industry-primers: add "20 · OTT" static bundle and wire up casebook registry
 touches: public/primers/ott/index.html, lib/primers/index.ts, lib/casebook/tree.ts
