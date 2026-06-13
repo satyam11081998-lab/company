@@ -269,6 +269,8 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: '20 · OTT', kind: 'page', slug: 'industry-primers/ott' },
       { title: '21 · Payments', kind: 'page', slug: 'industry-primers/payments' },
       { title: '22 · Pharmaceuticals', kind: 'page', slug: 'industry-primers/pharmaceuticals' },
+      { title: '23 · Power', kind: 'page', slug: 'industry-primers/power' },
+      { title: '24 · Quick Commerce', kind: 'page', slug: 'industry-primers/quick-commerce' },
     ],
   },
   {

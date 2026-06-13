@@ -350,6 +350,34 @@ export const PRIMERS: Primer[] = [
       { label: 'NPPA / PIB',                      url: 'https://www.nppaindia.nic.in' },
     ],
   },
+  {
+    slug: 'industry-primers/power',
+    folder: 'power',
+    no: 23,
+    title: 'Power',
+    sector: 'Energy & Utilities',
+    sources: [
+      { label: 'IBEF — Power',                    url: 'https://www.ibef.org/industry/power-sector-india' },
+      { label: 'CERC',                            url: 'https://cercind.gov.in' },
+      { label: 'CEA — Power Sector at a Glance',  url: 'https://cea.nic.in' },
+      { label: 'NITI ICED',                       url: 'https://iced.niti.gov.in' },
+      { label: 'Statista',                        url: 'https://www.statista.com' },
+    ],
+  },
+  {
+    slug: 'industry-primers/quick-commerce',
+    folder: 'quick-commerce',
+    no: 24,
+    title: 'Quick Commerce',
+    sector: 'Retail & Consumer Tech',
+    sources: [
+      { label: 'IBEF — Retail & E-Commerce',      url: 'https://www.ibef.org/industry/ecommerce' },
+      { label: 'JM Financial',                    url: 'https://www.jmfl.com' },
+      { label: 'IIM Ahmedabad',                   url: 'https://www.iima.ac.in' },
+      { label: 'Company filings (Eternal/Swiggy/Zepto)', url: 'https://www.bseindia.com' },
+      { label: 'BlueWeave Consulting',            url: 'https://www.blueweaveconsulting.com' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
