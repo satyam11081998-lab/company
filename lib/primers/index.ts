@@ -393,6 +393,20 @@ export const PRIMERS: Primer[] = [
       { label: 'Statista',                        url: 'https://www.statista.com' },
     ],
   },
+  {
+    slug: 'industry-primers/semiconductor',
+    folder: 'semiconductor',
+    no: 26,
+    title: 'Semiconductor',
+    sector: 'Deep Tech & Electronics',
+    sources: [
+      { label: 'India Semiconductor Mission',     url: 'https://ism.gov.in' },
+      { label: 'MeitY',                           url: 'https://www.meity.gov.in' },
+      { label: 'ITIF',                            url: 'https://itif.org' },
+      { label: 'Chip War (Chris Miller)',         url: 'https://www.christophermiller.net' },
+      { label: 'Invest India — Semiconductors',   url: 'https://www.investindia.gov.in' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
