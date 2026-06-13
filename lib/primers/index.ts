@@ -378,6 +378,21 @@ export const PRIMERS: Primer[] = [
       { label: 'BlueWeave Consulting',            url: 'https://www.blueweaveconsulting.com' },
     ],
   },
+  {
+    slug: 'industry-primers/retail',
+    folder: 'retail',
+    no: 25,
+    title: 'Retail',
+    sector: 'Consumer & Retail',
+    sources: [
+      { label: 'IBEF — Retail in India',          url: 'https://www.ibef.org/industry/retail-india' },
+      { label: 'BCG–RAI',                         url: 'https://www.rai.net.in' },
+      { label: 'Deloitte–FICCI Retail Report',    url: 'https://www.deloitte.com/in' },
+      { label: 'Bain — How India Shops Online',   url: 'https://www.bain.com/insights/how-india-shops-online-2025' },
+      { label: 'Cushman & Wakefield',             url: 'https://www.cushmanwakefield.com' },
+      { label: 'Statista',                        url: 'https://www.statista.com' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {

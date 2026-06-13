@@ -271,6 +271,7 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: '22 · Pharmaceuticals', kind: 'page', slug: 'industry-primers/pharmaceuticals' },
       { title: '23 · Power', kind: 'page', slug: 'industry-primers/power' },
       { title: '24 · Quick Commerce', kind: 'page', slug: 'industry-primers/quick-commerce' },
+      { title: '25 · Retail', kind: 'page', slug: 'industry-primers/retail' },
     ],
   },
   {
