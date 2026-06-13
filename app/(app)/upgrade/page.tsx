@@ -6,6 +6,14 @@ import { Check, Star, Zap, ShieldCheck, Sparkles, Minus } from "lucide-react";
 import { useUser } from "@/components/user-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  BILLING_PERIODS,
+  BILLING_PERIOD_LABELS,
+  BILLING_PERIOD_SUFFIX,
+  priceFor,
+  perMonthEquivalent,
+  type BillingPeriod,
+} from "@/lib/tier";
 
 // Required for TS to know about Razorpay on window object
 declare global {
@@ -18,6 +26,7 @@ export default function UpgradePage() {
   const { user, tier, refresh } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [period, setPeriod] = useState<BillingPeriod>("monthly");
 
   const handleUpgrade = async (target: "lite" | "pro") => {
     if (!user) {
@@ -32,7 +41,7 @@ export default function UpgradePage() {
       const res = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier: target }),
+        body: JSON.stringify({ tier: target, period }),
       });
 
       const data = await res.json();
@@ -47,7 +56,7 @@ export default function UpgradePage() {
         amount: data.amount,
         currency: data.currency,
         name: "MECE Placement Prep",
-        description: `${target.toUpperCase()} Subscription`,
+        description: `${target.toUpperCase()} • ${BILLING_PERIOD_LABELS[period]}`,
         order_id: data.id,
         handler: async function (response: any) {
           // 3. Verify signature on backend
@@ -60,6 +69,7 @@ export default function UpgradePage() {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 tier: target,
+                period,
                 amount: data.amount,
               }),
             });
@@ -130,6 +140,33 @@ export default function UpgradePage() {
           </p>
         </div>
 
+        {/* Billing period toggle */}
+        <div className="flex justify-center -mt-4">
+          <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1">
+            {BILLING_PERIODS.map((p) => {
+              const savePct = Math.round(
+                (1 - perMonthEquivalent("pro", p) / priceFor("pro", "monthly")) * 100,
+              );
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-4 h-9 rounded-md text-sm font-medium transition-colors ${
+                    period === p
+                      ? "bg-background text-foreground shadow-sm border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {BILLING_PERIOD_LABELS[p]}
+                  {p !== "monthly" && savePct > 0 && (
+                    <span className="ml-1.5 text-[11px] font-semibold text-success">save {savePct}%</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Pricing Cards — Free / Lite / Pro */}
         <div className="grid md:grid-cols-3 gap-5 items-stretch">
           {/* Free */}
@@ -173,10 +210,7 @@ export default function UpgradePage() {
                 {current === "lite" && <CurrentTag />}
               </div>
               <p className="text-xs text-muted-foreground">Practise beyond the daily pair.</p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="font-mono text-3xl font-bold tabular-nums text-foreground tracking-tight">₹199</span>
-                <span className="text-xs text-muted-foreground">/mo</span>
-              </div>
+              <PriceBlock tier="lite" period={period} />
             </div>
             <div className="p-6 flex-1 flex flex-col justify-between gap-8">
               <ul className="space-y-3">
@@ -220,10 +254,7 @@ export default function UpgradePage() {
                 {current === "pro" && <CurrentTag />}
               </div>
               <p className="text-xs text-muted-foreground">Unlimited practice and AI prep.</p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="font-mono text-3xl font-bold tabular-nums text-foreground tracking-tight">₹499</span>
-                <span className="text-xs text-muted-foreground">/mo</span>
-              </div>
+              <PriceBlock tier="pro" period={period} />
             </div>
             <div className="p-6 flex-1 flex flex-col justify-between gap-8 bg-primary/[0.01]">
               <ul className="space-y-3">
@@ -248,6 +279,25 @@ export default function UpgradePage() {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function PriceBlock({ tier, period }: { tier: "lite" | "pro"; period: BillingPeriod }) {
+  return (
+    <div className="mt-6">
+      <div className="flex items-baseline gap-1">
+        <span className="font-mono text-3xl font-bold tabular-nums text-foreground tracking-tight">
+          ₹{priceFor(tier, period).toLocaleString("en-IN")}
+        </span>
+        <span className="text-xs text-muted-foreground">{BILLING_PERIOD_SUFFIX[period]}</span>
+      </div>
+      {period !== "monthly" && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          ≈ ₹{perMonthEquivalent(tier, period).toLocaleString("en-IN")}/mo · billed{" "}
+          {period === "annual" ? "yearly" : "quarterly"}
+        </p>
+      )}
     </div>
   );
 }

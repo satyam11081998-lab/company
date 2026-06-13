@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Check, Minus, Star, Zap, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Check, Minus, ArrowRight } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -10,6 +10,7 @@ import {
 import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import Footer from '@/components/footer';
+import PricingPlans from '@/components/pricing-plans';
 import {
   pricingProductJsonLd,
   faqPageJsonLd,
@@ -167,111 +168,7 @@ export default function PricingPage() {
 
         {/* ── Pricing Cards ──────────────────────────────────────────── */}
         <section className="container max-w-5xl mx-auto px-4 py-10">
-          <div className="grid md:grid-cols-3 gap-5 items-stretch">
-            {/* Free */}
-            <div className="ui-card flex flex-col h-full animate-slide-up" style={{ animationDelay: '60ms' }}>
-              <div className="p-6 border-b border-border flex flex-col">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-muted-foreground" />
-                  <h2 className="text-lg font-bold text-foreground tracking-tight">Free</h2>
-                </div>
-                <p className="text-xs text-muted-foreground">Build the daily habit at no cost.</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-mono text-3xl font-bold tabular-nums text-foreground tracking-tight">₹0</span>
-                  <span className="text-xs text-muted-foreground">/mo</span>
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between gap-8">
-                <ul className="space-y-3">
-                  <FeatureItem text="Full Learn & Casebook library" />
-                  <FeatureItem text="Today's daily case & guesstimate" />
-                  <FeatureItem text="Leaderboard & badges" />
-                  <FeatureItem muted text="No extra bank practice" cross />
-                  <FeatureItem muted text="No re-attempts or GD briefs" cross />
-                  <FeatureItem muted text="No hints or AI features" cross />
-                </ul>
-                <Link href="/signup" className="mt-auto">
-                  <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors">
-                    Get started free
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Lite */}
-            <div className="ui-card flex flex-col h-full animate-slide-up" style={{ animationDelay: '120ms' }}>
-              <div className="p-6 border-b border-border flex flex-col">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="h-4 w-4 text-amber-500" />
-                  <h2 className="text-lg font-bold text-foreground tracking-tight">Lite</h2>
-                </div>
-                <p className="text-xs text-muted-foreground">Practise beyond the daily pair.</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-mono text-3xl font-bold tabular-nums text-foreground tracking-tight">₹199</span>
-                  <span className="text-xs text-muted-foreground">/mo</span>
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between gap-8">
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2.5">
-                    <ShieldCheck className="h-4 w-4 text-foreground/70 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-foreground leading-tight">Everything in Free</span>
-                  </li>
-                  <FeatureItem text="2 extra cases & guesstimates / day" />
-                  <FeatureItem text="Unlimited re-attempts" />
-                  <FeatureItem text="GD Briefs unlocked" />
-                  <FeatureItem text="5 AI hints per case" />
-                  <FeatureItem muted text="No bookmarks or cheat-sheet" cross />
-                </ul>
-                <Link href="/signup" className="mt-auto">
-                  <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
-                    Get Lite
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Pro */}
-            <div
-              className="ui-card flex flex-col h-full animate-slide-up relative border-primary shadow-[0_0_15px_rgba(200,16,46,0.1)]"
-              style={{ animationDelay: '180ms' }}
-            >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <span className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-primary-hover shadow-sm">
-                  Recommended
-                </span>
-              </div>
-              <div className="p-6 border-b border-border flex flex-col bg-primary/[0.02]">
-                <div className="flex items-center gap-2 mb-2">
-                  <Star className="h-4 w-4 text-primary" />
-                  <h2 className="text-lg font-bold text-foreground tracking-tight">Pro</h2>
-                </div>
-                <p className="text-xs text-muted-foreground">Unlimited practice and AI prep.</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-mono text-3xl font-bold tabular-nums text-foreground tracking-tight">₹499</span>
-                  <span className="text-xs text-muted-foreground">/mo</span>
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between gap-8 bg-primary/[0.01]">
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2.5">
-                    <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
-                  </li>
-                  <FeatureItem text="Unlimited practice bank" />
-                  <FeatureItem text="Live AI hints & model Q&A" />
-                  <FeatureItem text="Bookmarks & personal cheat-sheet" />
-                  <FeatureItem text="AI interviewer chatbot" />
-                  <FeatureItem text="Deck Vault lifetime access" />
-                </ul>
-                <Link href="/signup" className="mt-auto">
-                  <button className="w-full bg-primary text-white hover:bg-primary-hover h-10 text-sm font-semibold rounded-md flex items-center justify-center transition-colors shadow-sm">
-                    Upgrade to Pro
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
+          <PricingPlans />
         </section>
 
         {/* ── Feature Comparison Table ────────────────────────────────── */}
@@ -429,21 +326,6 @@ export default function PricingPage() {
 }
 
 /* ── Helper components ─────────────────────────────────────────────── */
-
-function FeatureItem({ text, muted, cross }: { text: string; muted?: boolean; cross?: boolean }) {
-  return (
-    <li className="flex items-start gap-2.5">
-      {cross ? (
-        <Minus className="h-4 w-4 text-muted-foreground/40 mt-0.5 flex-shrink-0" />
-      ) : (
-        <Check className="h-4 w-4 text-success/70 mt-0.5 flex-shrink-0" />
-      )}
-      <span className={`text-sm leading-tight ${muted ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-        {text}
-      </span>
-    </li>
-  );
-}
 
 function CellValue({ value }: { value: boolean | string }) {
   if (value === true) {

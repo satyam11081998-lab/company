@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServiceClient } from '@/lib/supabase/service';
-import { TIER_PRICES } from '@/lib/tier';
+import { priceFor, periodDays, isBillingPeriod } from '@/lib/tier';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,13 +64,14 @@ export async function POST(req: Request) {
           .from('payments').select('id').eq('razorpay_payment_id', paymentId).maybeSingle();
         if (existing) return NextResponse.json({ ok: true, dedup: true });
 
-        const expectedPaise = (TIER_PRICES as Record<string, number>)[tier] * 100;
+        const period = isBillingPeriod(notes.period) ? notes.period : 'monthly';
+        const expectedPaise = priceFor(tier, period) * 100;
         if (Number(order.amount) !== expectedPaise) {
           return NextResponse.json({ ok: false, reason: 'amount mismatch' }, { status: 200 });
         }
 
         const now = new Date();
-        const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const expiresAt = new Date(now.getTime() + periodDays(period) * 24 * 60 * 60 * 1000);
         await supabase.from('users').update({
           subscription_tier: tier,
           subscription_started_at: now.toISOString(),

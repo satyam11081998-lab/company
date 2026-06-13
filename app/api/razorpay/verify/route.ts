@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
-import { TIER_PRICES } from '@/lib/tier';
+import { priceFor, periodDays, isBillingPeriod } from '@/lib/tier';
 
 export async function POST(req: Request) {
   try {
@@ -48,7 +48,10 @@ export async function POST(req: Request) {
       } catch {
         return NextResponse.json({ error: 'Could not verify order with Razorpay' }, { status: 400 });
       }
-      const expectedPaise = (TIER_PRICES as Record<string, number>)[tier] * 100;
+      // Period is taken from the order's server-set notes, never from the client,
+      // so the access window can't be inflated by tampering with the verify body.
+      const period = isBillingPeriod(order?.notes?.period) ? order.notes.period : 'monthly';
+      const expectedPaise = priceFor(tier, period) * 100;
       if (Number(order.amount) !== expectedPaise) {
         return NextResponse.json({ error: 'Paid amount does not match the selected plan' }, { status: 400 });
       }
@@ -64,7 +67,7 @@ export async function POST(req: Request) {
       }
 
       const now = new Date();
-      const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      const expiresAt = new Date(now.getTime() + periodDays(period) * 24 * 60 * 60 * 1000);
 
       // Update user tier + subscription dates
       const { error: updateError } = await supabase
@@ -81,8 +84,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
       }
 
-      // Insert payment record for audit trail
-      const amountPaise = (TIER_PRICES as Record<string, number>)[tier] * 100;
+      // Insert payment record for audit trail (use the actual paid amount).
+      const amountPaise = Number(order.amount);
       const { error: paymentError } = await supabase
         .from('payments')
         .insert({
