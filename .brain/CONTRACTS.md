@@ -42,6 +42,7 @@ Source of truth: `lib/casebook/types.ts`; consumed by `components/casebook/caseb
 ## C4 · API / route contract   (v1)
 - Frontend ↔ backend base URL + CORS: backend allows `localhost:3000`, `mece.in`, `www.mece.in` (`main.py`).
 - Routes: `app/api/me`, `app/api/razorpay/{order,verify,webhook}`, `app/auth/callback`; backend `routes/{submit,daily,cron,news,attempts,transcribe,vision}.py`.
+  - **Note (2026-06-14)**: `razorpay/order` and `razorpay/verify` accept optional `period` (monthly, 3-month, annual); additive.
 - **Rule:** new domain/route or changed request/response shape = announce. Affects: Daily-content, any frontend caller.
 
 ## C5 · Curriculum data   (v1)
