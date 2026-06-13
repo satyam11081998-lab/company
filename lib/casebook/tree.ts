@@ -23,6 +23,9 @@ export const CASEBOOK_TREE: NavNode[] = [
     defaultOpen: true,
     children: [
       { title: 'The Pain & The Promise', kind: 'page', slug: 'guesstimates/pain-and-promise' },
+      { title: 'The Four Approaches', kind: 'page', slug: 'guesstimates/four-approaches' },
+      { title: 'The Ideal Flow', kind: 'page', slug: 'guesstimates/ideal-flow' },
+      { title: 'Pressure-Testing & Traps', kind: 'page', slug: 'guesstimates/pressure-testing' },
       { title: 'Public EV charging points in a metro', kind: 'page', slug: 'guesstimates/ev-charging-points-metro', meta: { difficulty: 'moderate' } },
       {
         title: 'Population & Consumption',
@@ -273,6 +276,7 @@ export const CASEBOOK_TREE: NavNode[] = [
       { title: '24 · Quick Commerce', kind: 'page', slug: 'industry-primers/quick-commerce' },
       { title: '25 · Retail', kind: 'page', slug: 'industry-primers/retail' },
       { title: '26 · Semiconductor', kind: 'page', slug: 'industry-primers/semiconductor' },
+      { title: '27 · Telecom', kind: 'page', slug: 'industry-primers/telecom' },
     ],
   },
   {

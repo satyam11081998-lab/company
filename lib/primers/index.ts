@@ -407,6 +407,20 @@ export const PRIMERS: Primer[] = [
       { label: 'Invest India — Semiconductors',   url: 'https://www.investindia.gov.in' },
     ],
   },
+  {
+    slug: 'industry-primers/telecom',
+    folder: 'telecom',
+    no: 27,
+    title: 'Telecom',
+    sector: 'Connectivity & Digital Infrastructure',
+    sources: [
+      { label: 'IBEF — Telecom',                  url: 'https://www.ibef.org/industry/telecommunications' },
+      { label: 'TRAI',                            url: 'https://www.trai.gov.in' },
+      { label: 'DoT',                             url: 'https://dot.gov.in' },
+      { label: 'Invest India — Telecom',          url: 'https://www.investindia.gov.in' },
+      { label: 'McKinsey',                        url: 'https://www.mckinsey.com' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
