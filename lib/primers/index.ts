@@ -322,6 +322,20 @@ export const PRIMERS: Primer[] = [
       { label: 'Statista',                        url: 'https://www.statista.com' },
     ],
   },
+  {
+    slug: 'industry-primers/payments',
+    folder: 'payments',
+    no: 21,
+    title: 'Payments',
+    sector: 'Financial Technology',
+    sources: [
+      { label: 'NPCI',                            url: 'https://www.npci.org.in' },
+      { label: 'RBI — Annual Report',             url: 'https://www.rbi.org.in' },
+      { label: 'PwC India Payments Handbook',     url: 'https://www.pwc.in' },
+      { label: 'Worldline India',                 url: 'https://worldline.com/en-in' },
+      { label: 'IBEF — Fintech',                  url: 'https://www.ibef.org/industry/fintech-india' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
