@@ -336,6 +336,20 @@ export const PRIMERS: Primer[] = [
       { label: 'IBEF — Fintech',                  url: 'https://www.ibef.org/industry/fintech-india' },
     ],
   },
+  {
+    slug: 'industry-primers/pharmaceuticals',
+    folder: 'pharmaceuticals',
+    no: 22,
+    title: 'Pharmaceuticals',
+    sector: 'Healthcare & Life Sciences',
+    sources: [
+      { label: 'IBEF — Pharmaceuticals',          url: 'https://www.ibef.org/industry/pharmaceutical-india' },
+      { label: 'Invest India — Pharma',           url: 'https://www.investindia.gov.in/sector/pharmaceuticals' },
+      { label: 'Pharmexcil',                      url: 'https://pharmexcil.com' },
+      { label: 'EY Pharma Outlook',               url: 'https://www.ey.com/en_in/life-sciences' },
+      { label: 'NPPA / PIB',                      url: 'https://www.nppaindia.nic.in' },
+    ],
+  },
 ];
 
 export function getPrimerBySlug(slug: string): Primer | null {
