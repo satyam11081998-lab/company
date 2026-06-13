@@ -11,6 +11,12 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-14 — guesstimate-modules — 853905e
+casebook: Guesstimates Pages 2-4 — Four Approaches, Ideal Flow, Pressure-Testing & Traps.
+Inserted in Section B after Pain & Promise; +3 routes. P5 (cheat sheet) + P6 (worked solve) not wired.
+touches: lib/casebook/content/guesstimates/{four-approaches,ideal-flow,pressure-testing}.ts, lib/casebook/tree.ts, lib/casebook/content/index.ts
+breaking: no   affects: none
+
 ## 2026-06-13 — seo-entity-hardening — 9dcc745
 seo-entity-hardening: entity disambiguation schema, reframed /about, detailed /methodology, homepage FAQ schema + scroll motion, mobile nav drawers, .gitattributes
 touches: lib/seo.ts, components/casebook/eeat-signals.tsx, app/page.tsx, app/about/page.tsx, app/methodology/page.tsx, components/scroll-animations.tsx, app/globals.css, .gitattributes, components/landing-mobile-nav.tsx, components/app-nav.tsx
