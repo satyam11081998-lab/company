@@ -1,0 +1,59 @@
+name: Daily GD news refresh
+
+# Runs every day at 06:00 IST (00:30 UTC) to keep GD Briefs fresh:
+#   1. fetch-news     — pull + classify the latest headlines
+#   2. schedule-daily — set today's daily case + guesstimate
+#   3. cleanup        — drop headlines (and cascaded briefs) older than 14 days
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   CRON_SECRET  — must equal the backend's CRON_SECRET env var
+#   BACKEND_URL  — backend base URL, no trailing slash (e.g. https://api.mece.in)
+#
+# The /news/headlines endpoint also self-heals (auto-refetches if the newest
+# headline is >24h old), so this schedule is the primary path and the self-heal
+# is the backstop if a run is ever missed.
+
+on:
+  schedule:
+    - cron: "30 0 * * *" # 00:30 UTC = 06:00 IST, daily
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-news
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch + classify latest headlines
+        run: |
+          curl -sS --fail-with-body -X POST "${BACKEND_URL}/cron/fetch-news" \
+            -H "X-Cron-Secret: ${CRON_SECRET}" \
+            --max-time 300 --retry 3 --retry-all-errors --retry-delay 20
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+      - name: Fill today's daily schedule
+        if: always()
+        run: |
+          curl -sS --fail-with-body -X POST "${BACKEND_URL}/cron/schedule-daily" \
+            -H "X-Cron-Secret: ${CRON_SECRET}" \
+            --max-time 300 --retry 3 --retry-all-errors --retry-delay 20
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+      - name: Cleanup headlines older than 14 days
+        if: always()
+        run: |
+          curl -sS --fail-with-body -X POST "${BACKEND_URL}/cron/cleanup" \
+            -H "X-Cron-Secret: ${CRON_SECRET}" \
+            --max-time 120 --retry 2 --retry-all-errors --retry-delay 15
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
