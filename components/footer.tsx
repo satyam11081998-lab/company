@@ -10,7 +10,7 @@ export default function Footer({ className = "" }: { className?: string }) {
           {/* Brand Column */}
           <div className="md:col-span-5 lg:col-span-5 flex flex-col items-start pr-0 md:pr-8">
             <Link href="/" className="inline-block mb-8 mt-2 ml-4">
-              <Logo className="scale-[2.2] origin-left" />
+              <Logo full variant="light" />
             </Link>
             <p className="text-sm text-navy-foreground/70 leading-relaxed max-w-sm mb-6">
               The premier platform for Indian MBA students to master consulting, finance, and product management interviews through structured, MECE-driven practice.
