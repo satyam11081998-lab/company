@@ -11,6 +11,10 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-14 — news-freshness — 2e4a9ee
+GD briefs: /news/headlines now newest-first (last 3 days, star pinned, score tiebreak) + self-heal (auto-refetch if newest >24h old, retry once, 15-min throttle). Fetch logic extracted to services/news_pipeline.py; /cron/fetch-news delegates to it. New GitHub Actions daily 06:00 IST scheduler (fetch-news + schedule-daily + cleanup).
+touches: consilio-backend/services/news_pipeline.py, consilio-backend/routes/news.py, consilio-backend/routes/cron.py, consilio/.github/workflows/daily-news.yml
+breaking: no (behavioural; response shapes unchanged)   affects: News pipeline, Daily content
 ## 2026-06-14 — guesstimate-modules — 853905e
 casebook: Guesstimates Pages 2-4 — Four Approaches, Ideal Flow, Pressure-Testing & Traps.
 Inserted in Section B after Pain & Promise; +3 routes. P5 (cheat sheet) + P6 (worked solve) not wired.
