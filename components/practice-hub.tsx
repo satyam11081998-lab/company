@@ -212,7 +212,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHu
                 </div>
                 <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">{c.title}</h3>
                 {c.type !== 'guesstimate' && (
-                  <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{c.content}</p>
+                  <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{plainPreview(c.content)}</p>
                 )}
                 <div className="mt-auto pt-4 border-t flex justify-between items-center">
                    <div className="flex items-center gap-2">
@@ -382,4 +382,27 @@ function getTopicColor(topic: string) {
   if (t.includes('pricing') || t.includes('finance')) return 'amber';
   if (t.includes('product') || t.includes('tech')) return 'navy';
   return 'muted'; // fallback
+}
+
+/**
+ * Strip markdown so card previews never show raw syntax. Some cases (especially
+ * daily news-derived ones) store markdown in `content` — e.g. "# UPI at 10…
+ * **Source:** Livemint…" — which leaked into the line-clamped card body.
+ */
+function plainPreview(md?: string | null): string {
+  if (!md) return '';
+  return md
+    .replace(/```[\s\S]*?```/g, ' ')              // fenced code
+    .replace(/`([^`]+)`/g, '$1')                   // inline code
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')         // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')       // links → text
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')            // headings
+    .replace(/^\s{0,3}>\s?/gm, '')                 // blockquotes
+    .replace(/^\s*[-*+]\s+/gm, '')                 // list bullets
+    .replace(/\*\*([^*]+)\*\*/g, '$1')             // bold **
+    .replace(/__([^_]+)__/g, '$1')                 // bold __
+    .replace(/\*([^*]+)\*/g, '$1')                 // italic *
+    .replace(/^\s*\*{0,2}source:?\*{0,2}.*$/gim, '') // "**Source:**" lines
+    .replace(/\s+/g, ' ')                          // collapse whitespace
+    .trim();
 }

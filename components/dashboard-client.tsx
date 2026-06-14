@@ -7,6 +7,8 @@ import { NewsCard } from '@/components/dashboard/news-card';
 import { GuesstimateCard } from '@/components/dashboard/guesstimate-card';
 import { ConsistencyCard } from '@/components/dashboard/consistency-card';
 import { RecentCard } from '@/components/dashboard/recent-card';
+import GettingStartedChecklist from '@/components/dashboard/getting-started-checklist';
+import WelcomeTour from '@/components/onboarding/welcome-tour';
 // LiveTape removed per owner directive 2026-06-07 — strip not wanted.
 // Keep the import path commented for traceability if it's brought back.
 // import { LiveTape } from '@/components/dashboard/fomo';
@@ -64,6 +66,7 @@ export default function DashboardClient(props: DashboardClientProps) {
   // Map real data to UserVariant shape for the prototype components
   const solved = submissions.filter((s) => s.score != null).length;
   const scored = submissions.filter((s) => s.score != null && s.case_type !== 'guesstimate');
+  const guesstimateSolved = props.guesstimateCount ?? 0;
   const latest = scored.length ? scored[scored.length - 1].score ?? 0 : 0;
   const best = scored.length ? Math.max(...scored.map((s) => s.score as number)) : 0;
   const readinessVal = readiness.status === 'scored' ? readiness.score : null;
@@ -135,6 +138,17 @@ export default function DashboardClient(props: DashboardClientProps) {
         padding: isMobile ? '14px 12px' : '24px 36px',
       }}
     >
+      {/* FIRST-RUN ORIENTATION — new users only. WelcomeTour is a one-time
+          modal (self-gated via localStorage); the checklist persists until the
+          first actions are done. Neither renders for established users. */}
+      {userState === 'new' && <WelcomeTour />}
+      {userState === 'new' && (
+        <GettingStartedChecklist
+          scoredSolved={scored.length}
+          guesstimateSolved={guesstimateSolved}
+        />
+      )}
+
       {/* HERO SECTION */}
       <Hero
         u={u}

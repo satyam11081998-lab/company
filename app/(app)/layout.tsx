@@ -107,7 +107,7 @@ export default async function AppLayout({
         <div className="flex-1 pb-10">
           {children}
         </div>
-        <Footer className="pb-24 md:pb-12" />
+        <Footer className="pb-24 xl:pb-12" />
       </main>
       <MobileBottomNav />
     </UserProvider>

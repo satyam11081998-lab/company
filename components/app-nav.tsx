@@ -10,7 +10,13 @@ import ThemeToggle from '@/components/theme-toggle';
 import TierBadge from '@/components/tier-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Menu, X } from 'lucide-react';
+import { Sparkles, Menu, X, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import Logo from '@/components/logo';
 
 /**
@@ -42,18 +48,25 @@ export default function AppNav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
 
-  const NAV_LINKS: { href: string; label: string; active?: boolean }[] = [
+  // Split into a primary row (always inline on desktop) and a "More" dropdown.
+  // The old flat 8-item bar overflowed and visually collided with the points/
+  // avatar/upgrade cluster at common laptop widths (~1280–1366px). Five primary
+  // links + a More menu fit comfortably and mirror the mobile bottom-bar "More".
+  type NavLink = { href: string; label: string; active?: boolean };
+  const PRIMARY_LINKS: NavLink[] = [
     { href: '/dashboard', label: 'Dashboard' },
-    // "Learn" owns the casebook EXCEPT the case-competitions track,
-    // which gets its own top-level entry below.
+    // "Learn" owns the casebook EXCEPT the case-competitions track (under More).
     { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
-    { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
-    { href: '/skeletons', label: 'Deck Vault' },
     { href: '/practice', label: 'Practice' },
     { href: '/gd-briefs', label: 'GD Briefs' },
-    { href: '/cheat-sheet', label: 'Cheat Sheet' },
     { href: '/leaderboard', label: 'Leaderboard' },
   ];
+  const MORE_LINKS: NavLink[] = [
+    { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
+    { href: '/skeletons', label: 'Deck Vault' },
+    { href: '/cheat-sheet', label: 'Cheat Sheet' },
+  ];
+  const moreActive = MORE_LINKS.some(({ href, active }) => active ?? isActive(href));
 
   return (
     <header className="nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]">
@@ -65,21 +78,25 @@ export default function AppNav() {
             <Logo variant="light" className="" />
           </Link>
 
+          {/* Hamburger retired on mobile: MobileBottomNav's "More" sheet is now
+              the single mobile menu, so the phone no longer has two competing
+              menus. Hidden (not deleted) to keep this change minimal and
+              reversible; the drawer below is consequently dormant on mobile. */}
           {user && (
             <button
               type="button"
               aria-label="Open menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(true)}
-              className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-md text-navy-foreground/70 hover:bg-navy-mid/40 transition-colors"
+              className="hidden inline-flex items-center justify-center h-10 w-10 rounded-md text-navy-foreground/70 hover:bg-navy-mid/40 transition-colors"
             >
               <Menu className="h-5 w-5" />
             </button>
           )}
 
           {user && (
-            <nav className="hidden md:flex items-center gap-0.5">
-              {NAV_LINKS.map(({ href, label, active }) => {
+            <nav className="hidden xl:flex items-center gap-0.5">
+              {PRIMARY_LINKS.map(({ href, label, active }) => {
                 const linkActive = active ?? isActive(href);
                 return (
                 <Link
@@ -98,6 +115,32 @@ export default function AppNav() {
                 </Link>
                 );
               })}
+
+              {/* Secondary destinations, grouped so the bar never overflows. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={`relative flex items-center gap-1 px-4 py-2 text-[17px] font-medium transition-colors rounded-sm outline-none ${
+                    moreActive
+                      ? 'text-navy-foreground'
+                      : 'text-navy-foreground/50 hover:text-navy-foreground/80'
+                  }`}
+                >
+                  More
+                  <ChevronDown className="h-4 w-4" />
+                  {moreActive && (
+                    <span className="absolute bottom-0 left-3 right-7 h-0.5 bg-primary rounded-none" />
+                  )}
+                </DropdownMenuTrigger>
+                {/* @ts-ignore - JSX inferred types lack children */}
+                <DropdownMenuContent align="start" className="w-52">
+                  {MORE_LINKS.map(({ href, label }) => (
+                    /* @ts-ignore - JSX inferred types lack children */
+                    <DropdownMenuItem key={href} asChild>
+                      <Link href={href} className="cursor-pointer w-full">{label}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </nav>
           )}
         </div>
@@ -177,7 +220,7 @@ export default function AppNav() {
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto py-2">
-              {NAV_LINKS.map(({ href, label, active }) => {
+              {[...PRIMARY_LINKS, ...MORE_LINKS].map(({ href, label, active }) => {
                 const linkActive = active ?? isActive(href);
                 return (
                   <Link

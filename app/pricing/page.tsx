@@ -11,6 +11,7 @@ import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import Footer from '@/components/footer';
 import PricingPlans from '@/components/pricing-plans';
+import AuthCTA from '@/components/auth-cta';
 import {
   pricingProductJsonLd,
   faqPageJsonLd,
@@ -133,18 +134,11 @@ export default function PricingPage() {
           <Link href="/" className="flex items-center -ml-2 shrink-0">
             <Logo isLanding />
           </Link>
+          {/* Auth-aware: logged-in users see "Open MECE" → /dashboard instead of
+              the "Login / Get started" pair they'd already completed. */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <ThemeToggle />
-            <Link href="/login" className="hidden sm:block">
-              <button className="text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors">
-                Login
-              </button>
-            </Link>
-            <Link href="/signup">
-              <button className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap">
-                Get started
-              </button>
-            </Link>
+            <AuthCTA variant="nav" />
           </div>
         </div>
       </nav>

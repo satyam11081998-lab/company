@@ -16,7 +16,13 @@ interface NavTreeSectionProps {
 }
 
 function NavTreeSection({ node, searchQuery }: NavTreeSectionProps) {
-  const [isOpen, setIsOpen] = useState(node.title === 'Getting Started');
+  // Initial open state is data-driven via `node.defaultOpen` (set in the
+  // casebook tree). Previously this compared `node.title === 'Getting Started'`,
+  // but section titles are prefixed ('A · Getting Started', …) so the check
+  // never matched and EVERY section loaded collapsed — including the one a
+  // newcomer should see first. sessionStorage (below) still overrides this
+  // once the user manually toggles a section.
+  const [isOpen, setIsOpen] = useState(!!node.defaultOpen);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

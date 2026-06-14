@@ -20,7 +20,6 @@ export const CASEBOOK_TREE: NavNode[] = [
     title: 'B · Guesstimates',
     kind: 'section',
     icon: 'Calculator',
-    defaultOpen: true,
     children: [
       { title: 'The Pain & The Promise', kind: 'page', slug: 'guesstimates/pain-and-promise' },
       { title: 'The Four Approaches', kind: 'page', slug: 'guesstimates/four-approaches' },
@@ -88,7 +87,6 @@ export const CASEBOOK_TREE: NavNode[] = [
     title: 'C · Core Frameworks',
     kind: 'section',
     icon: 'Layers',
-    defaultOpen: true,
     children: [
       { title: 'Structuring fundamentals', kind: 'page', slug: 'core-frameworks/structuring-fundamentals' },
       { title: 'Profitability', kind: 'page', slug: 'core-frameworks/profitability', meta: { difficulty: 'easy' } },
