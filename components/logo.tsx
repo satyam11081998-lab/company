@@ -8,9 +8,9 @@ import React from 'react';
  *   'dark'  — the NAVY logo, for light surfaces (auth cards)
  *   'auto'  — follow the theme: navy in light mode, white in dark mode (default)
  * isLanding — back-compat alias for variant='auto'.
- * full — render the full lockup WITH the tagline (used where there's room, e.g.
- *        the footer). Default is the compact mark (icon + "MECE"), which stays
- *        legible in tight nav bars where the small tagline would be unreadable.
+ * full — render the full lockup WITH the tagline. This is the DEFAULT (headers,
+ *        footer, auth all show the full logo). Pass `full={false}` for the
+ *        compact mark (icon + "MECE") in any spot too tight for the tagline.
  *
  * Sizing is intentional: the source SVG is a ~4:1 wordmark, so heights are kept
  * modest and width is auto. Callers may still pass `className` (e.g. an explicit
@@ -34,10 +34,10 @@ export default function Logo({
   className = '',
   variant = 'auto',
   isLanding = false,
-  full = false,
+  full = true,
 }: LogoProps) {
   const set = full ? SVGS.full : SVGS.mark;
-  const sizeCls = full ? 'h-10 md:h-12 w-auto' : 'h-7 md:h-8 w-auto';
+  const sizeCls = full ? 'h-9 md:h-11 w-auto' : 'h-7 md:h-8 w-auto';
   const base = `${sizeCls} flex-shrink-0 ${className}`;
 
   const mode: LogoVariant = isLanding ? 'auto' : variant;
