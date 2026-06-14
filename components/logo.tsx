@@ -37,7 +37,7 @@ export default function Logo({
   full = true,
 }: LogoProps) {
   const set = full ? SVGS.full : SVGS.mark;
-  const sizeCls = full ? 'h-12 md:h-[60px] w-auto' : 'h-9 md:h-11 w-auto';
+  const sizeCls = full ? 'h-[53px] md:h-[66px] w-auto' : 'h-10 md:h-12 w-auto';
   const base = `${sizeCls} flex-shrink-0 ${className}`;
 
   const mode: LogoVariant = isLanding ? 'auto' : variant;
