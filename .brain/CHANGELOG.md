@@ -11,6 +11,10 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-14 — logo-swap — f1e00a6
+feat(brand): new MECE logo across app — theme-aware, compact-in-nav / full-in-footer+auth. Overwrote legacy placeholders with modern mark + lockup variants.
+touches: public/logo*, components/logo.tsx, components/footer.tsx, app/login/page.tsx, app/signup/page.tsx
+breaking: no   affects: none
 ## 2026-06-14 — news-freshness — 2e4a9ee
 GD briefs: /news/headlines now newest-first (last 3 days, star pinned, score tiebreak) + self-heal (auto-refetch if newest >24h old, retry once, 15-min throttle). Fetch logic extracted to services/news_pipeline.py; /cron/fetch-news delegates to it. New GitHub Actions daily 06:00 IST scheduler (fetch-news + schedule-daily + cleanup).
 touches: consilio-backend/services/news_pipeline.py, consilio-backend/routes/news.py, consilio-backend/routes/cron.py, consilio/.github/workflows/daily-news.yml
