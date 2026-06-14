@@ -9,7 +9,7 @@ export default function Footer({ className = "" }: { className?: string }) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 mb-10">
           {/* Brand Column */}
           <div className="md:col-span-5 lg:col-span-5 flex flex-col items-start pr-0 md:pr-8">
-            <Link href="/" className="inline-block mb-8 mt-2 ml-4">
+            <Link href="/" className="inline-block mb-8 mt-2 -ml-3 md:-ml-5">
               <Logo full variant="light" className="!h-[107px] md:!h-[133px]" />
             </Link>
             <p className="text-sm text-navy-foreground/70 leading-relaxed max-w-sm mb-6">
