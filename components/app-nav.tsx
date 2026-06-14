@@ -61,7 +61,7 @@ export default function AppNav() {
 
         {/* Left: wordmark + nav links */}
         <div className="flex items-center gap-4 md:gap-12">
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center group -ml-2">
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center group -ml-4 md:-ml-6 shrink-0 -mt-1.5">
             <Logo variant="light" className="" />
           </Link>
 
