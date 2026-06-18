@@ -2,18 +2,26 @@
 import { useMemo, useState } from 'react';
 import type { CheatSheetItemRow } from '@/lib/types';
 import { CHEAT_DOMAINS, UNCATEGORIZED, domainMeta } from '@/lib/cheat-domains';
-import { Trash2, StickyNote, ChevronDown, Search, X, Tag as TagIcon } from 'lucide-react';
+import { Trash2, StickyNote, X, Tag as TagIcon, Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { CategoryRail, type RailBucket } from './category-rail';
 
 type Item = CheatSheetItemRow;
 
-const ALL_BUCKETS: string[] = [...CHEAT_DOMAINS.map((d) => d.id), UNCATEGORIZED.id];
+const ALL = 'all';
+
+/** A point belongs to a real domain only if its id is in CHEAT_DOMAINS; else Uncategorized. */
+function bucketOf(it: Item): string {
+  return it.domain && CHEAT_DOMAINS.some((d) => d.id === it.domain) ? it.domain : UNCATEGORIZED.id;
+}
 
 export function CheatSheetClient({ initialItems }: { initialItems: Item[] }) {
   const [items, setItems] = useState<Item[]>(
     initialItems.map((i) => ({ ...i, tags: i.tags ?? [], domain: i.domain ?? null })),
   );
   const [query, setQuery] = useState('');
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [active, setActive] = useState<string>(ALL);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   function patch(id: string, body: Record<string, unknown>) {
     return fetch(`/api/cheatsheet/${id}`, {
@@ -43,26 +51,42 @@ export function CheatSheetClient({ initialItems }: { initialItems: Item[] }) {
     patch(id, { note });
   }
 
-  const filtered = useMemo(() => {
+  // Rail counts come from the FULL item set (pre-search) so they stay stable.
+  const buckets: RailBucket[] = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const it of items) {
+      const b = bucketOf(it);
+      counts.set(b, (counts.get(b) ?? 0) + 1);
+    }
+    const out: RailBucket[] = [{ id: ALL, label: 'All points', accent: '', count: items.length }];
+    for (const d of CHEAT_DOMAINS) {
+      const c = counts.get(d.id) ?? 0;
+      if (c > 0) out.push({ id: d.id, label: d.label, accent: d.accent, count: c });
+    }
+    const uncat = counts.get(UNCATEGORIZED.id) ?? 0;
+    if (uncat > 0) out.push({ id: UNCATEGORIZED.id, label: UNCATEGORIZED.label, accent: UNCATEGORIZED.accent, count: uncat });
+    return out;
+  }, [items]);
+
+  // Category filter first, then search.
+  const visible = useMemo(() => {
+    const byCat = active === ALL ? items : items.filter((it) => bucketOf(it) === active);
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
+    if (!q) return byCat;
+    return byCat.filter(
       (i) =>
         i.content.toLowerCase().includes(q) ||
         (i.tags || []).some((t) => t.toLowerCase().includes(q)) ||
         (i.source_topic || '').toLowerCase().includes(q),
     );
-  }, [items, query]);
+  }, [items, active, query]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, Item[]>();
-    for (const it of filtered) {
-      const key = it.domain && CHEAT_DOMAINS.some((d) => d.id === it.domain) ? it.domain : UNCATEGORIZED.id;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(it);
-    }
-    return ALL_BUCKETS.filter((b) => map.has(b)).map((b) => [b, map.get(b)!] as const);
-  }, [filtered]);
+  const activeMeta =
+    active === ALL
+      ? { label: 'All points', accent: '' }
+      : active === UNCATEGORIZED.id
+        ? UNCATEGORIZED
+        : domainMeta(active);
 
   if (items.length === 0) {
     return (
@@ -72,65 +96,73 @@ export function CheatSheetClient({ initialItems }: { initialItems: Item[] }) {
     );
   }
 
-  return (
-    <div className="space-y-5">
-      {/* Search toolbar */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search points and tags…"
-          className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-      </div>
+  const rail = (
+    <CategoryRail
+      buckets={buckets}
+      active={active}
+      onSelect={setActive}
+      query={query}
+      onQuery={setQuery}
+      onAfterSelect={() => setDrawerOpen(false)}
+    />
+  );
 
-      {grouped.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-          No points match &ldquo;{query}&rdquo;.
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-0 lg:gap-6">
+      {/* Left rail (desktop) */}
+      <aside className="hidden lg:block">
+        <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-hidden rounded-xl border border-border bg-card/50">
+          {rail}
         </div>
-      ) : (
-        grouped.map(([bucket, list]) => {
-          const meta = bucket === UNCATEGORIZED.id ? UNCATEGORIZED : domainMeta(bucket);
-          const isCollapsed = collapsed.has(bucket);
-          return (
-            <section key={bucket} className="overflow-hidden rounded-xl border border-border bg-card">
-              <button
-                onClick={() =>
-                  setCollapsed((s) => {
-                    const n = new Set(s);
-                    if (n.has(bucket)) n.delete(bucket);
-                    else n.add(bucket);
-                    return n;
-                  })
-                }
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-muted/40"
-              >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.accent }} />
-                <span className="text-sm font-semibold text-foreground">{meta.label}</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{list.length}</span>
-                <ChevronDown
-                  className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
-                />
-              </button>
-              {!isCollapsed && (
-                <div className="space-y-2 border-t border-border p-3">
-                  {list.map((it) => (
-                    <ItemCard
-                      key={it.id}
-                      item={it}
-                      onDomain={(d) => setDomain(it.id, d)}
-                      onTags={(t) => setTags(it.id, t)}
-                      onNote={(n) => saveNote(it.id, n)}
-                      onRemove={() => remove(it.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })
-      )}
+      </aside>
+
+      {/* Right content */}
+      <main className="min-w-0">
+        {/* Mobile: open rail in a drawer */}
+        <div className="mb-4 flex items-center gap-3 lg:hidden">
+          <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <SheetTrigger className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium">
+              <Menu className="h-4 w-4" /> Categories
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] p-0">
+              {rail}
+            </SheetContent>
+          </Sheet>
+          <span className="text-sm text-muted-foreground">
+            {activeMeta.label} · {visible.length}
+          </span>
+        </div>
+
+        {/* Desktop header for the active category */}
+        <div className="mb-3 hidden items-center gap-2.5 lg:flex">
+          {active !== ALL && (activeMeta as { accent?: string }).accent ? (
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: (activeMeta as { accent: string }).accent }} />
+          ) : null}
+          <h2 className="text-sm font-semibold text-foreground">{activeMeta.label}</h2>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{visible.length}</span>
+        </div>
+
+        {visible.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+            {query.trim()
+              ? <>No points match &ldquo;{query}&rdquo;.</>
+              : <>No points in {activeMeta.label} yet.</>}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {visible.map((it) => (
+              <ItemCard
+                key={it.id}
+                item={it}
+                onDomain={(d) => setDomain(it.id, d)}
+                onTags={(t) => setTags(it.id, t)}
+                onNote={(n) => saveNote(it.id, n)}
+                onRemove={() => remove(it.id)}
+              />
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
