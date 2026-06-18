@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import DictationButton from '@/components/dictation-button';
+import EngagingLoader from '@/components/engaging-loader';
 import { createClient } from '@/lib/supabase/client';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
 import {
@@ -214,14 +215,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
-  if (loading && !lockedOverlay) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
+  // No full-screen blocker: the case prompt (initialCase) renders immediately on
+  // the left while the live session boots — the engaging loader fills the chat.
   const remaining = attempt?.clarification_remaining || 0;
   const quotaExhausted = attempt ? remaining <= 0 : false;
 
@@ -332,6 +327,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                   </div>
                 </div>
               </div>
+            ) : loading ? (
+              <EngagingLoader variant="inline" label="Connecting you to your interviewer…" />
             ) : (
               <>
                 {messages.map((m) => (<MessageBubble key={m.id} message={m} />))}
@@ -399,7 +396,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                   <button type="button" onClick={toggleMic} disabled={recording === 'transcribing'} className={`shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 animate-pulse' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label="Voice input">
                     {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : recording === 'recording' ? <Square className="h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}
                   </button>
-                  <Button type="button" onClick={() => send('text')} disabled={!composer.trim() || sending} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
+                  <Button type="button" onClick={() => send('text')} disabled={!composer.trim() || sending || !attempt} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
                     <Send className="h-4 w-4 ml-0.5" />
                   </Button>
                 </div>

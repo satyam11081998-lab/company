@@ -9,6 +9,7 @@ import type { GeneratedBriefData } from '@/lib/types';
 import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock, Star } from 'lucide-react';
 import { useUser } from '@/components/user-context';
 import { AddToCheatSheetButton } from '@/components/cheat-sheet/add-to-cheat-sheet-button';
+import EngagingLoader from '@/components/engaging-loader';
 import { createClient } from '@/lib/supabase/client';
 
 export default function BriefDetailPage() {
@@ -104,7 +105,10 @@ export default function BriefDetailPage() {
         </Link>
 
         {loading ? (
-          <BriefSkeleton />
+          <div className="space-y-6">
+            <EngagingLoader variant="inline" label="Preparing your GD brief…" />
+            <BriefSkeleton />
+          </div>
         ) : error ? (
           <Card className="p-6">
             <div className="flex items-start gap-3">

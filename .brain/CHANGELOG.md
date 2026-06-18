@@ -11,6 +11,10 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-18 — feat/engaging-loading — <hash>
+engaging-loading — case prompt renders immediately (no full-screen spinner) + rotating curated quotes/facts loader (lib/loading-content + EngagingLoader) on case boot & GD-brief generation
+breaking: no — affects: none
+
 ## 2026-06-18 — feat/testimonials-admin — <hash>
 feat/testimonials-admin — Notion admin shell + DB-backed testimonials and team grid
 touches: components/testimonials-carousel.tsx, components/team-grid.tsx, app/api/testimonials/route.ts, app/about/page.tsx, admin routes
@@ -265,6 +269,7 @@ breaking: no   affects: none
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
 breaking: yes (historical) â€” Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+
 
 
 

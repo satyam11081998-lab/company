@@ -31,4 +31,5 @@ propose a new row via handoff but do not edit others' rows.
 
 | **Feedback & flagging** | Brain C | feat/feedback | landed | `app/api/feedback/*`, `components/feedback/*`, `app/(app)/admin/feedback/*`, `lib/feedback.ts`, `supabase/migrations/0011_feedback.sql` | C4 API-contract (additive), DB:`users` (FK only, read) |
 | **Testimonials + Admin** | C | feat/testimonials-admin | **BUILT** |
+| **Engaging Loading** | C | feat/engaging-loading | landed | lib/loading-content.ts, components/engaging-loader.tsx, components/solve/ConversationalSolve.tsx | UI-only, no data/contract changes |
 
