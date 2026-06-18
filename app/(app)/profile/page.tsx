@@ -4,6 +4,7 @@ import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached'
 import type { CollegeRow } from '@/lib/types-onboarding';
 import type { SubmissionRow, BadgeRow } from '@/lib/types';
 import ProfileClient from '@/components/profile/profile-client';
+import SignOutButton from '@/components/sign-out-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,9 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-screen bg-muted">
       <main className="container max-w-4xl py-10">
+        <div className="mb-4 flex justify-end">
+          <SignOutButton variant="standalone" />
+        </div>
         <ProfileClient
           user={userRow}
           authEmail={authUser.email ?? ''}

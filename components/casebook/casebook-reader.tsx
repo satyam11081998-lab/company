@@ -10,6 +10,7 @@ import RelatedContent from './related-content';
 import ClusterFAQSection from './cluster-faq-section';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
+import DraggableFab from '@/components/draggable-fab';
 import type { Page } from '@/lib/casebook/types';
 import { getPrimerBySlug } from '@/lib/primers';
 import { PrimerEmbed } from './primer-embed';
@@ -33,9 +34,11 @@ export function CasebookReader({ page }: CasebookReaderProps) {
         <main className="px-4 sm:px-6 lg:px-8 py-8 lg:py-10 relative">
           <div className="flex items-center gap-4 mb-5">
             <Sheet>
-              <SheetTrigger className="lg:hidden fixed bottom-24 left-4 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
-                <Menu className="w-6 h-6" />
-              </SheetTrigger>
+              <DraggableFab storageKey="mece:fab:casebook-menu" initial={{ left: 16, bottom: 96 }} zIndex={50} className="lg:hidden">
+                <SheetTrigger className="p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
+                  <Menu className="w-6 h-6" />
+                </SheetTrigger>
+              </DraggableFab>
               <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
                 <CasebookSearch />
               </SheetContent>
@@ -70,9 +73,11 @@ export function CasebookReader({ page }: CasebookReaderProps) {
         <article className="w-full max-w-[720px] xl:max-w-none ml-0 lg:ml-8 xl:ml-16 xl:mr-[88px]">
           <div className="flex items-center gap-4 mb-6">
             <Sheet>
-              <SheetTrigger className="lg:hidden fixed bottom-24 left-4 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
-                <Menu className="w-6 h-6" />
-              </SheetTrigger>
+              <DraggableFab storageKey="mece:fab:casebook-menu" initial={{ left: 16, bottom: 96 }} zIndex={50} className="lg:hidden">
+                <SheetTrigger className="p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
+                  <Menu className="w-6 h-6" />
+                </SheetTrigger>
+              </DraggableFab>
               <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
                 <CasebookSearch />
               </SheetContent>

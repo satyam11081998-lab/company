@@ -67,13 +67,11 @@ export default function TestimonialsCarousel({
   const showControls = items.length > 3;
 
   return (
-    <Card className="relative overflow-hidden p-8 md:p-10">
-      <Quote className="absolute left-6 top-6 h-10 w-10 text-primary/10" aria-hidden="true" />
-
+    <Card className="relative overflow-hidden p-6 md:p-8">
       <div
         ref={scrollerRef}
-        className={`flex gap-8 ${
-          items.length <= 3 ? 'justify-center flex-wrap md:flex-nowrap' : 'overflow-x-auto snap-x snap-mandatory'
+        className={`flex items-stretch gap-5 ${
+          items.length <= 3 ? 'justify-center flex-wrap lg:flex-nowrap' : 'overflow-x-auto snap-x snap-mandatory'
         } scrollbar-thin pb-2`}
         style={{ scrollbarWidth: 'thin' }}
       >
@@ -81,33 +79,32 @@ export default function TestimonialsCarousel({
           <div
             key={t.id}
             data-card
-            className="flex w-full max-w-sm shrink-0 snap-center flex-col text-center md:w-[320px]"
+            className="flex h-full w-full max-w-sm shrink-0 snap-center flex-col rounded-xl border border-border bg-card p-6 text-left shadow-sm md:w-[320px]"
           >
-            <blockquote className="text-body mb-6 flex-grow font-light italic leading-relaxed text-foreground">
+            <Quote className="mb-3 h-6 w-6 shrink-0 text-primary/30" aria-hidden="true" />
+            <blockquote className="text-body flex-1 font-light italic leading-relaxed text-foreground">
               &ldquo;{t.quote}&rdquo;
             </blockquote>
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-32 w-32 border-[6px] border-primary shadow-lg">
+            <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+              <Avatar className="h-14 w-14 shrink-0 border-2 border-primary shadow-sm">
                 {t.avatar_url && <AvatarImage src={t.avatar_url} alt={t.name} className="object-cover" />}
-                <AvatarFallback className="bg-navy text-3xl font-semibold text-navy-foreground">
+                <AvatarFallback className="bg-navy text-lg font-semibold text-navy-foreground">
                   {t.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <div className="flex items-center justify-center gap-2">
-                  <p className="text-body font-semibold text-foreground">{t.name}</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-small font-semibold text-foreground">{t.name}</p>
                   {t.linkedin_url && (
-                    <a href={t.linkedin_url} target="_blank" rel="noreferrer" className="transition-opacity hover:opacity-80" title="View LinkedIn Profile">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="#0A66C2">
+                    <a href={t.linkedin_url} target="_blank" rel="noreferrer" className="shrink-0 transition-opacity hover:opacity-80" title="View LinkedIn Profile">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="#0A66C2">
                         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                       </svg>
                     </a>
                   )}
                 </div>
-                <div className="mt-1 flex flex-col items-center justify-start">
-                  <p className="text-small w-full truncate text-muted-foreground">{t.school}</p>
-                  <p className="text-micro mt-0.5 w-full leading-tight text-primary line-clamp-2">{t.placement}</p>
-                </div>
+                <p className="truncate text-micro text-muted-foreground">{t.school}</p>
+                <p className="text-micro mt-0.5 leading-snug text-primary line-clamp-2">{t.placement}</p>
               </div>
             </div>
           </div>

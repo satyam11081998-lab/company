@@ -19,11 +19,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Send, Paperclip, Mic, Square, FileText, ArrowLeft, Award } from 'lucide-react';
+import { Loader2, Send, Paperclip, Mic, Square, FileText, ArrowLeft, Award, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import DictationButton from '@/components/dictation-button';
 import EngagingLoader from '@/components/engaging-loader';
 import { createClient } from '@/lib/supabase/client';
@@ -71,6 +72,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState<'idle' | 'recording' | 'transcribing'>('idle');
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
   const [finalRec, setFinalRec] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -220,13 +222,63 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const remaining = attempt?.clarification_remaining || 0;
   const quotaExhausted = attempt ? remaining <= 0 : false;
 
+  // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND
+  // inside the mobile drawer (opened from the chat bar) so the phone is chat-first.
+  const caseContext = (
+    <div className="flex h-full flex-col overflow-y-auto bg-card">
+      <header className="shrink-0 border-b bg-card px-5 py-4">
+        <Link href="/practice" className="mb-3 inline-flex items-center gap-1 text-micro text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3 w-3" /> Practice
+        </Link>
+        <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+          <span>{CASE_TYPE_LABELS[caseDetail.type] || caseDetail.type}</span>
+          <span>·</span>
+          <span>{DIFFICULTY_LABELS[caseDetail.difficulty] || caseDetail.difficulty}</span>
+        </div>
+        <h1 className="mt-1 text-h4 font-semibold leading-tight text-foreground">{caseDetail.title}</h1>
+      </header>
+      <div className="p-5 flex-1 space-y-8">
+        <div>
+          {caseDetail.type !== 'guesstimate' && (
+            <div className="text-small leading-relaxed text-foreground whitespace-pre-wrap">
+              {renderWithBold(caseDetail.content)}
+            </div>
+          )}
+          {(caseDetail.hint || caseDetail.type === 'guesstimate') && (
+            <details className="group mt-4">
+              <summary className="cursor-pointer select-none text-small font-medium text-primary hover:underline">
+                <span className="group-open:hidden">Show hint</span>
+                <span className="hidden group-open:inline">Hide hint</span>
+              </summary>
+              <div className="mt-2 rounded bg-accent px-3 py-2 text-small leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                {caseDetail.type === 'guesstimate' && (
+                  <div className={caseDetail.hint ? 'mb-3 pb-3 border-b border-border/50' : ''}>
+                    <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Framework / Context</span>
+                    {renderWithBold(caseDetail.content)}
+                  </div>
+                )}
+                {caseDetail.hint && (
+                  <div>
+                    {caseDetail.type === 'guesstimate' && <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Hint</span>}
+                    {renderWithBold(caseDetail.hint)}
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
+        </div>
+        {historyPanel && <div className="pt-6 border-t">{historyPanel}</div>}
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed top-14 md:top-16 left-0 right-0 bottom-0 flex flex-col lg:flex-row bg-background overflow-hidden z-30 shadow-2xl">
       
       {/* --------------------------------------------------------- */}
       {/* 1. LEFT PANEL: Case Context & History                      */}
       {/* --------------------------------------------------------- */}
-      <div className="flex w-full lg:w-[35%] xl:w-[30%] flex-col border-r bg-card h-[50dvh] lg:h-full overflow-y-auto">
+      <div className="hidden w-full lg:flex lg:w-[35%] xl:w-[30%] flex-col border-r bg-card lg:h-full overflow-y-auto">
         <header className="shrink-0 border-b bg-card px-5 py-4">
           <Link href="/practice" className="mb-3 inline-flex items-center gap-1 text-micro text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3 w-3" /> Practice
@@ -284,7 +336,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       {/* 2. RIGHT PANEL: Chat Window                                */}
       {/* --------------------------------------------------------- */}
       <div 
-        className="flex flex-1 flex-col relative h-[50dvh] lg:h-full bg-muted/20"
+        className="flex flex-1 flex-col relative h-full bg-muted/20"
         style={{
           backgroundImage: 'radial-gradient(circle at center, hsl(var(--foreground)/0.03) 1.5px, transparent 1.5px)',
           backgroundSize: '20px 20px'
@@ -293,6 +345,17 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         {/* Top bar for right panel */}
         <div className="shrink-0 border-b bg-card/50 backdrop-blur-sm px-5 py-3 flex justify-between items-center z-10 shadow-sm">
            <div className="text-small font-semibold text-foreground/80 flex items-center gap-2">
+             <Sheet open={contextOpen} onOpenChange={setContextOpen}>
+               <SheetTrigger
+                 className="lg:hidden -ml-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
+                 aria-label="Case details & previous attempts"
+               >
+                 <Menu className="h-5 w-5" />
+               </SheetTrigger>
+               <SheetContent side="left" className="w-[88%] max-w-sm p-0">
+                 {caseContext}
+               </SheetContent>
+             </Sheet>
              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
              Live Case Session
            </div>
