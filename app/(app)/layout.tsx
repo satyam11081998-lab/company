@@ -7,6 +7,7 @@ import MobileBottomNav from '@/components/mobile-bottom-nav';
 import Footer from '@/components/footer';
 import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
+import FeedbackLauncher from '@/components/feedback/feedback-launcher';
 import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
 import type { UserRow } from '@/lib/types';
 
@@ -54,6 +55,7 @@ function GuestChrome({ children }: { children: React.ReactNode }) {
         </div>
         <Footer className="pb-12" />
       </main>
+      <FeedbackLauncher />
     </>
   );
 }
@@ -110,6 +112,7 @@ export default async function AppLayout({
         <Footer className="pb-24 xl:pb-12" />
       </main>
       <MobileBottomNav />
+      <FeedbackLauncher />
     </UserProvider>
   );
 }

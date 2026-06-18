@@ -269,3 +269,40 @@ export interface CheatSheetItemRow {
   tags: string[];
   created_at: string;
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// APPEND THIS BLOCK TO THE END OF lib/types.ts
+// (additive type — NOT a CONTRACTS surface; mirrors supabase 0011_feedback.sql)
+// ─────────────────────────────────────────────────────────────────────────
+
+export type FeedbackCategory =
+  | 'data_discrepancy'
+  | 'stale_data'
+  | 'bug'
+  | 'suggestion'
+  | 'content_error'
+  | 'general'
+  | 'other';
+
+export type FeedbackStatus =
+  | 'new'
+  | 'triaged'
+  | 'in_progress'
+  | 'resolved'
+  | 'dismissed';
+
+export interface FeedbackReportRow {
+  id: string;
+  user_id: string | null;
+  category: FeedbackCategory;
+  message: string;
+  contact_email: string | null;
+  path: string | null;
+  context: Record<string, unknown>;
+  status: FeedbackStatus;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

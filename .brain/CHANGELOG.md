@@ -11,6 +11,12 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-18 � feat/feedback � <hash>
+Global feedback launcher, panel, and admin triage queue.
+touches: app/api/feedback/route.ts, components/feedback/*, app/(app)/layout.tsx, app/(app)/admin/feedback/*, lib/feedback.ts, supabase/migrations/0011_feedback.sql
+breaking: no   affects: none
+Notes: new route `app/api/feedback` (C4 additive), new table `feedback_reports`.
+
 ## 2026-06-14 — logo-swap — f1e00a6
 feat(brand): new MECE logo across app — theme-aware, compact-in-nav / full-in-footer+auth. Overwrote legacy placeholders with modern mark + lockup variants.
 touches: public/logo*, components/logo.tsx, components/footer.tsx, app/login/page.tsx, app/signup/page.tsx
@@ -243,3 +249,4 @@ breaking: no   affects: none
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
 breaking: yes (historical) — Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+
