@@ -4,14 +4,19 @@ import { useState } from 'react';
 import SectionHeader from '@/components/section-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
-import { triggerNewsFetch, triggerCaseGeneration } from './actions';
+import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle, UserCog } from 'lucide-react';
+import { triggerNewsFetch, triggerCaseGeneration, grantMembership } from './actions';
 import { CaseEditor } from './case-editor';
 
 export default function AdminPage() {
   const [newsLoading, setNewsLoading] = useState(false);
   const [caseLoading, setCaseLoading] = useState(false);
-  
+
+  const [grantEmail, setGrantEmail] = useState('');
+  const [grantTier, setGrantTier] = useState<'free' | 'lite' | 'pro'>('pro');
+  const [grantDuration, setGrantDuration] = useState('30');
+  const [grantLoading, setGrantLoading] = useState(false);
+
   const [log, setLog] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
 
   const handleNewsFetch = async () => {
@@ -49,6 +54,26 @@ export default function AdminPage() {
       setLog({ type: 'error', message: result.error || 'Failed to generate content' });
     }
     setCaseLoading(false);
+  };
+
+  const handleGrant = async () => {
+    setGrantLoading(true);
+    setLog(null);
+    const days =
+      grantTier === 'free' || grantDuration === 'permanent' ? null : parseInt(grantDuration, 10);
+    const result = await grantMembership({ email: grantEmail.trim(), tier: grantTier, days });
+    if (result.success && result.data) {
+      const exp = result.data.expires_at
+        ? new Date(result.data.expires_at).toLocaleDateString()
+        : 'no expiry';
+      setLog({
+        type: 'success',
+        message: `${result.data.email} is now ${String(result.data.tier).toUpperCase()} · ${exp}.`,
+      });
+    } else {
+      setLog({ type: 'error', message: result.error || 'Failed to update membership.' });
+    }
+    setGrantLoading(false);
   };
 
   return (
@@ -108,6 +133,59 @@ export default function AdminPage() {
           </Button>
         </Card>
       </div>
+
+      {/* Grant / Revoke Membership */}
+      <Card className="p-6 border-border bg-card shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <UserCog className="h-5 w-5 text-primary" />
+            Grant / Revoke Membership
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manually set a user&apos;s tier without payment — for testers, team, or comps. Applies
+            instantly, exactly like a paid upgrade. Choose <span className="font-medium">Free</span> to revoke.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_8rem_9rem_auto]">
+          <input
+            type="email"
+            value={grantEmail}
+            onChange={(e) => setGrantEmail(e.target.value)}
+            placeholder="user@email.com"
+            className="h-10 rounded-md border border-input bg-background px-3 text-body shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <select
+            value={grantTier}
+            onChange={(e) => setGrantTier(e.target.value as 'free' | 'lite' | 'pro')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-body shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="pro">Pro</option>
+            <option value="lite">Lite</option>
+            <option value="free">Free (revoke)</option>
+          </select>
+          <select
+            value={grantDuration}
+            onChange={(e) => setGrantDuration(e.target.value)}
+            disabled={grantTier === 'free'}
+            className="h-10 rounded-md border border-input bg-background px-3 text-body shadow-sm disabled:opacity-50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="30">30 days</option>
+            <option value="90">90 days</option>
+            <option value="365">365 days</option>
+            <option value="permanent">Permanent</option>
+          </select>
+          <Button
+            onClick={handleGrant}
+            disabled={grantLoading || !grantEmail.trim()}
+            className="h-10 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {grantLoading ? 'Applying…' : 'Apply'}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Free clears the expiry and ignores duration. Requires <code>SUPABASE_SERVICE_ROLE_KEY</code> in the server env.
+        </p>
+      </Card>
 
       {/* Log Output */}
       {log && (
