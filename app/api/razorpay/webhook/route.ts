@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServiceClient } from '@/lib/supabase/service';
-import { priceFor, periodDays, isBillingPeriod } from '@/lib/tier';
+import { priceFor, periodDays, isBillingPeriod, BILLING_PERIOD_LABELS } from '@/lib/tier';
+import { sendUpgradeReceipt } from '@/lib/email/send';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,24 @@ export async function POST(req: Request) {
           status: 'paid',
           paid_at: now.toISOString(),
         });
+
+        // Branded upgrade receipt (transactional). Non-blocking; first-time only
+        // (the dedup guard above returns for repeats), so verify + webhook won't double-send.
+        try {
+          const { data: u } = await supabase.from('users').select('name, email').eq('id', uid).maybeSingle();
+          const target = u as { name?: string | null; email?: string | null } | null;
+          if (target?.email) {
+            await sendUpgradeReceipt(target.email, {
+              name: target.name ?? null,
+              tierLabel: tier === 'pro' ? 'Pro' : 'Lite',
+              periodLabel: BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'],
+              amountInr: Math.round(Number(order.amount) / 100),
+              expiresAt: expiresAt.toISOString(),
+            });
+          }
+        } catch (e) {
+          console.error('[webhook] upgrade receipt email failed:', e);
+        }
       }
     } else if (type === 'payment.failed') {
       const payment = event?.payload?.payment?.entity;

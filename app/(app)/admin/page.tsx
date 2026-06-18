@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle, UserCog } from 'lucide-react';
 import { triggerNewsFetch, triggerCaseGeneration, grantMembership } from './actions';
 import { CaseEditor } from './case-editor';
+import BroadcastComposer from './broadcast-composer';
 
 export default function AdminPage() {
   const [newsLoading, setNewsLoading] = useState(false);
@@ -212,6 +213,11 @@ export default function AdminPage() {
       {/* Case Editor (Phase 4) */}
       <div className="mt-8">
         <CaseEditor />
+      </div>
+
+      {/* Broadcast email */}
+      <div className="mt-8">
+        <BroadcastComposer />
       </div>
     </div>
   );

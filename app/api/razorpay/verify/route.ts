@@ -3,7 +3,8 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { priceFor, periodDays, isBillingPeriod } from '@/lib/tier';
+import { priceFor, periodDays, isBillingPeriod, BILLING_PERIOD_LABELS } from '@/lib/tier';
+import { sendUpgradeReceipt } from '@/lib/email/send';
 
 export async function POST(req: Request) {
   try {
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
           subscription_expires_at: expiresAt.toISOString(),
         })
         .eq('id', user.id)
-        .select('id');
+        .select('id, name, email');
 
       if (updateError || !updatedRows || updatedRows.length === 0) {
         console.error("Failed to update user tier in DB:", updateError);
@@ -114,6 +115,23 @@ export async function POST(req: Request) {
       if (paymentError) {
         // Non-blocking: tier is already updated, log the payment insert failure
         console.error("Failed to insert payment record:", paymentError);
+      }
+
+      // Branded upgrade receipt (transactional, via Google Workspace SMTP).
+      // Non-blocking: an email failure must never fail a paid upgrade. Runs only
+      // on first processing (the replay guard returned above for repeats), so the
+      // webhook backstop won't double-send.
+      try {
+        const recipient = updatedRows[0] as { name?: string | null; email?: string | null };
+        await sendUpgradeReceipt(recipient?.email || user.email || '', {
+          name: recipient?.name ?? null,
+          tierLabel: tier === 'pro' ? 'Pro' : 'Lite',
+          periodLabel: BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'],
+          amountInr: Math.round(Number(order.amount) / 100),
+          expiresAt: expiresAt.toISOString(),
+        });
+      } catch (e) {
+        console.error('[verify] upgrade receipt email failed:', e);
       }
 
       return NextResponse.json({ success: true });

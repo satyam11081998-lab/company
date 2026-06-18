@@ -90,6 +90,7 @@ export const PUBLIC_ROUTES: string[] = [
   '/forgot-password',
   '/reset-password',
   '/auth/callback',
+  '/api/unsubscribe', // one-click email unsubscribe — must work logged-out
   '/methodology',
   '/about',
   '/privacy',
