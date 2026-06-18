@@ -2,16 +2,16 @@
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** feat/testimonials-admin
+**Branch:** main
 **Last landed:** <date> — <feature> — <commit short sha>
 **Last sync:** 2026-06-18 15:41 UTC
 
 ## Last 5 commits
+- 870c188 feat(admin): testimonials, team, and Notion admin shell (satyam11081998-lab, 2026-06-18)
 - 5807658 chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
 - 365f772 fix(ui): mobile UI pass (satyam11081998-lab, 2026-06-18)
 - af6a7be Merge branch 'feat/cheatsheet' into main (satyam11081998-lab, 2026-06-18)
 - b2abcbe chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
-- 47a02fd feat(cheatsheet): Notion-style layout redesign with category rail (satyam11081998-lab, 2026-06-18)
 
 ## Open feature branches (not merged into main)
 - (none)
