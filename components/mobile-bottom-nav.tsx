@@ -65,6 +65,9 @@ export default function MobileBottomNav() {
   }, [moreOpen]);
 
   if (!user) return null;
+  // Full-screen focused sessions (the case interview) hide the tab bar so the
+  // chat composer owns the bottom of the screen — app-like, and no overlap.
+  if (pathname?.startsWith('/cases/')) return null;
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
   const moreActive = SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));

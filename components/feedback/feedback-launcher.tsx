@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { MessageSquarePlus } from 'lucide-react';
 import { FeedbackPanel } from './feedback-panel';
 
@@ -11,6 +12,9 @@ import { FeedbackPanel } from './feedback-panel';
  */
 export function FeedbackLauncher() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  // Hidden during the full-screen case session so it doesn't float over the chat.
+  if (pathname?.startsWith('/cases/')) return null;
 
   return (
     <>

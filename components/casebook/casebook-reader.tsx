@@ -33,7 +33,7 @@ export function CasebookReader({ page }: CasebookReaderProps) {
         <main className="px-4 sm:px-6 lg:px-8 py-8 lg:py-10 relative">
           <div className="flex items-center gap-4 mb-5">
             <Sheet>
-              <SheetTrigger className="lg:hidden fixed bottom-24 right-6 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
+              <SheetTrigger className="lg:hidden fixed bottom-24 left-4 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
                 <Menu className="w-6 h-6" />
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
@@ -70,7 +70,7 @@ export function CasebookReader({ page }: CasebookReaderProps) {
         <article className="w-full max-w-[720px] xl:max-w-none ml-0 lg:ml-8 xl:ml-16 xl:mr-[88px]">
           <div className="flex items-center gap-4 mb-6">
             <Sheet>
-              <SheetTrigger className="lg:hidden fixed bottom-24 right-6 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
+              <SheetTrigger className="lg:hidden fixed bottom-24 left-4 z-50 p-3.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center">
                 <Menu className="w-6 h-6" />
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">

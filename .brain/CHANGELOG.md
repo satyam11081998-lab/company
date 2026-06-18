@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-18 — fix/mobile-ui-pass — <hash>
+mobile-ui-pass — hide tab bar + feedback on case session (composer no longer hidden) + safe-area pad; casebook menu FAB ? bottom-left (no feedback collision); landing Today's-case card mobile position; dark-mode rose chips
+touches: components/mobile-bottom-nav.tsx, components/feedback/feedback-launcher.tsx, components/solve/ConversationalSolve.tsx, components/casebook/casebook-reader.tsx, app/page.tsx
+breaking: no   affects: none
+
 ## 2026-06-18 — feat/feedback — <hash>
 Global feedback launcher, panel, and admin triage queue.
 touches: app/api/feedback/route.ts, components/feedback/*, app/(app)/layout.tsx, app/(app)/admin/feedback/*, lib/feedback.ts, supabase/migrations/0011_feedback.sql
@@ -254,5 +259,6 @@ breaking: no   affects: none
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
 breaking: yes (historical) â€” Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+
 
 

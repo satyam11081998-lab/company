@@ -372,7 +372,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         {/* 3. Composer                */}
         {/* ------------------------- */}
         {!lockedOverlay && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 bg-gradient-to-t from-muted/50 via-muted/30 to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] bg-gradient-to-t from-muted/50 via-muted/30 to-transparent">
             <div className="mx-auto max-w-3xl">
               {quotaExhausted && (
                 <p className="mb-3 rounded-lg border bg-card px-4 py-2 text-small text-foreground/80 shadow-sm text-center">
@@ -396,7 +396,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 />
                 
                 <div className="flex items-center gap-1.5 pr-1 mb-0.5">
-                  <button type="button" onClick={toggleMic} disabled={recording === 'transcribing'} className={`shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700 animate-pulse' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label="Voice input">
+                  <button type="button" onClick={toggleMic} disabled={recording === 'transcribing'} className={`shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 animate-pulse' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label="Voice input">
                     {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : recording === 'recording' ? <Square className="h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}
                   </button>
                   <Button type="button" onClick={() => send('text')} disabled={!composer.trim() || sending} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
@@ -427,7 +427,7 @@ function ClarificationCounter({ remaining, quota }: { remaining: number; quota: 
   const danger = remaining <= 1;
   return (
     <div
-      className={`hidden shrink-0 rounded-full border px-3 py-1 text-micro font-semibold sm:block ${danger ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-border bg-muted text-foreground/80'}`}
+      className={`hidden shrink-0 rounded-full border px-3 py-1 text-micro font-semibold sm:block ${danger ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300' : 'border-border bg-muted text-foreground/80'}`}
       title={`You can ask ${quota} clarification questions in total.`}
     >
       Questions remaining: {remaining}

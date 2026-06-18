@@ -150,7 +150,7 @@ export default function LandingPage() {
                 ))}
               </div>
               {/* Second floating card */}
-              <div className="ui-card absolute -bottom-8 -right-4 p-3.5 w-52 animate-float" style={{ animationDelay: '0.5s' }}>
+              <div className="ui-card absolute -bottom-6 right-0 sm:-bottom-8 sm:-right-4 p-3.5 w-44 sm:w-52 animate-float" style={{ animationDelay: '0.5s' }}>
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Today's case</p>
                 <p className="text-[13px] font-semibold text-foreground leading-snug">Estimate MBA prep market in India</p>
                 <div className="mt-2 flex items-center justify-between">
