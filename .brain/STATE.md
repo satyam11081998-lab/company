@@ -2,16 +2,16 @@
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** feat/legal-refund
+**Branch:** main
 **Last landed:** <date> — <feature> — <commit short sha>
 **Last sync:** 2026-06-18 21:23 UTC
 
 ## Last 5 commits
+- 1cfb9f7 feat(legal): refund policy contrast fix, no 7-day money back, update contact email (satyam11081998-lab, 2026-06-19)
 - 016b4ff chore: sync STATE.md after mobile-polish merge (satyam11081998-lab, 2026-06-19)
 - f4ccd68 feat(ui): mobile polish, billing toggle fix, tap feedback (satyam11081998-lab, 2026-06-19)
 - 89d7d9e chore: sync STATE.md after ui-batch-2 merge (satyam11081998-lab, 2026-06-18)
 - c7b614a feat(ui): mobile chat-first case, testimonials, draggable fabs, profile sign-out (satyam11081998-lab, 2026-06-18)
-- 137f7ee chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
 
 ## Open feature branches (not merged into main)
 - (none)
