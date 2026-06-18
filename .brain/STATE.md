@@ -2,16 +2,16 @@
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** feat/engaging-loading
+**Branch:** main
 **Last landed:** <date> — <feature> — <commit short sha>
 **Last sync:** 2026-06-18 16:12 UTC
 
 ## Last 5 commits
+- e0c9ada feat(ui): engaging loader + optimistic case render (satyam11081998-lab, 2026-06-18)
 - c683032 chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
 - 870c188 feat(admin): testimonials, team, and Notion admin shell (satyam11081998-lab, 2026-06-18)
 - 5807658 chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
 - 365f772 fix(ui): mobile UI pass (satyam11081998-lab, 2026-06-18)
-- af6a7be Merge branch 'feat/cheatsheet' into main (satyam11081998-lab, 2026-06-18)
 
 ## Open feature branches (not merged into main)
 - (none)
