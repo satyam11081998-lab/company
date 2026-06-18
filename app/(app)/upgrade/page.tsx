@@ -120,6 +120,27 @@ export default function UpgradePage() {
 
   const current = tier; // effective tier: 'free' | 'lite' | 'pro'
 
+  // The billing period isn't persisted, so infer it from the subscription window
+  // (monthly ≈ 30d, quarter ≈ 91d, annual ≈ 365d). Used to mark "Current Plan" on
+  // the EXACT tier + period the user holds — not on every period of that tier.
+  const purchasedPeriod: BillingPeriod | null = (() => {
+    if (current === "free") return null;
+    const started = user?.subscription_started_at ? new Date(user.subscription_started_at).getTime() : null;
+    const expires = user?.subscription_expires_at ? new Date(user.subscription_expires_at).getTime() : null;
+    if (started === null || expires === null) return null; // permanent / comp grant
+    const days = (expires - started) / 86_400_000;
+    if (days < 60) return "monthly";
+    if (days < 228) return "quarter";
+    return "annual";
+  })();
+
+  // True only when the card's tier AND the selected period match what the user holds.
+  const isCurrentPlan = (cardTier: "free" | "lite" | "pro") => {
+    if (cardTier !== current) return false;
+    if (cardTier === "free" || purchasedPeriod === null) return true;
+    return period === purchasedPeriod;
+  };
+
   return (
     <div className="min-h-screen bg-muted py-10 px-4">
       {/* Load Razorpay SDK */}
@@ -175,7 +196,7 @@ export default function UpgradePage() {
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-4 w-4 text-muted-foreground" />
                 <h2 className="text-lg font-bold text-foreground tracking-tight">Free</h2>
-                {current === "free" && <CurrentTag />}
+                {isCurrentPlan("free") && <CurrentTag />}
               </div>
               <p className="text-xs text-muted-foreground">Build the daily habit at no cost.</p>
               <div className="mt-6 flex items-baseline gap-1">
@@ -207,7 +228,7 @@ export default function UpgradePage() {
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="h-4 w-4 text-amber-500" />
                 <h2 className="text-lg font-bold text-foreground tracking-tight">Lite</h2>
-                {current === "lite" && <CurrentTag />}
+                {isCurrentPlan("lite") && <CurrentTag />}
               </div>
               <p className="text-xs text-muted-foreground">Practise beyond the daily pair.</p>
               <PriceBlock tier="lite" period={period} />
@@ -226,15 +247,17 @@ export default function UpgradePage() {
               </ul>
               <button
                 onClick={() => handleUpgrade("lite")}
-                disabled={loading !== null || current === "lite" || current === "pro"}
+                disabled={loading !== null || current === "pro" || isCurrentPlan("lite")}
                 className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50 mt-auto"
               >
-                {current === "lite"
-                  ? "Current Plan"
-                  : current === "pro"
+                {current === "pro"
                   ? "Included in Pro"
+                  : isCurrentPlan("lite")
+                  ? "Current Plan"
                   : loading === "lite"
                   ? "Processing..."
+                  : current === "lite"
+                  ? `Switch to ${BILLING_PERIOD_LABELS[period]}`
                   : "Get Lite"}
               </button>
             </div>
@@ -251,7 +274,7 @@ export default function UpgradePage() {
               <div className="flex items-center gap-2 mb-2">
                 <Star className="h-4 w-4 text-primary" />
                 <h2 className="text-lg font-bold text-foreground tracking-tight">Pro</h2>
-                {current === "pro" && <CurrentTag />}
+                {isCurrentPlan("pro") && <CurrentTag />}
               </div>
               <p className="text-xs text-muted-foreground">Unlimited practice and AI prep.</p>
               <PriceBlock tier="pro" period={period} />
@@ -270,10 +293,16 @@ export default function UpgradePage() {
               </ul>
               <button
                 onClick={() => handleUpgrade("pro")}
-                disabled={loading !== null || current === "pro"}
+                disabled={loading !== null || isCurrentPlan("pro")}
                 className="w-full bg-primary text-white hover:bg-primary-hover h-10 text-sm font-semibold rounded-md flex items-center justify-center transition-colors shadow-sm disabled:opacity-50 mt-auto"
               >
-                {current === "pro" ? "Current Plan" : loading === "pro" ? "Processing..." : "Upgrade to Pro"}
+                {isCurrentPlan("pro")
+                  ? "Current Plan"
+                  : loading === "pro"
+                  ? "Processing..."
+                  : current === "pro"
+                  ? `Switch to ${BILLING_PERIOD_LABELS[period]}`
+                  : "Upgrade to Pro"}
               </button>
             </div>
           </div>

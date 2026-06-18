@@ -158,14 +158,14 @@ export default function AppNav() {
                 </div>
               </div>
               <Link href="/profile" className="flex-shrink-0 relative inline-block">
-                <Avatar className={`h-7 w-7 md:h-7 md:w-7 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
+                <Avatar className={`h-7 w-7 md:h-7 md:w-7 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : tier === 'lite' ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
                   <AvatarImage src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.id)}`} alt={user.name || ''} />
                   <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-xs font-semibold shadow-inner">
                     {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
-                {tier === 'pro' && (
-                  <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-primary text-white text-[9px] font-bold px-1.5 py-[1px] rounded-full border border-background shadow-sm uppercase leading-none z-10 whitespace-nowrap">
+                {tier !== 'free' && (
+                  <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 ${tier === 'pro' ? 'bg-primary' : 'bg-amber-500'} text-white text-[9px] font-bold px-1.5 py-[1px] rounded-full border border-background shadow-sm uppercase leading-none z-10 whitespace-nowrap`}>
                     {tier}
                   </span>
                 )}
