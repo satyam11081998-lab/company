@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
 
 /** Reusable login/signup form. `mode` controls which action runs on submit. */
 export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
@@ -14,6 +15,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const nextPath = searchParams.get('next') || '/dashboard';
@@ -118,22 +120,33 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
               </Link>
             )}
           </div>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 8 characters"
-            className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              className="w-full rounded-lg border border-border bg-background px-4 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          className="btn-primary w-full rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+          className="btn-primary flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-60"
         >
           {isLoading ? 'Please wait…' : mode === 'login' ? 'Login' : 'Create account'}
         </button>

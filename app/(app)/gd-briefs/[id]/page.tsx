@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { fetchBrief, generateBrief } from '@/lib/api';
 import type { GeneratedBriefData } from '@/lib/types';
-import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock, Star } from 'lucide-react';
 import { useUser } from '@/components/user-context';
 import { AddToCheatSheetButton } from '@/components/cheat-sheet/add-to-cheat-sheet-button';
 import { createClient } from '@/lib/supabase/client';
@@ -216,7 +216,8 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
             Data points to cite
           </SectionHeading>
           <p className="text-small text-muted-foreground mt-1">
-            Concrete numbers with attribution — drop these to sound credible
+            Concrete numbers with attribution — drop these to sound credible.
+            <span className="text-foreground/70"> Tap the <Star className="inline h-3 w-3 -mt-0.5 fill-primary text-primary" aria-hidden="true" /> on any point to save it to your cheat sheet.</span>
           </p>
           <ul className="mt-4 space-y-3">
             {b.data_points.map((dp, i) => (

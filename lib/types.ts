@@ -265,5 +265,7 @@ export interface CheatSheetItemRow {
   content: string;
   note: string | null;
   position: number;
+  domain: string | null;
+  tags: string[];
   created_at: string;
 }

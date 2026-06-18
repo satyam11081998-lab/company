@@ -36,10 +36,10 @@ export default async function CheatSheetPage() {
 
   const items = await listCheatSheetItems(supabase, user.id);
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-2xl font-semibold mb-1">Cheat Sheet</h1>
       <p className="text-muted-foreground mb-6">
-        Your saved data points, grouped by topic. Add a note or remove anything you don’t need.
+        Your saved data points, organised by domain. Assign a domain, add tags, and jot notes to revise fast.
       </p>
       <CheatSheetClient initialItems={items} />
     </div>

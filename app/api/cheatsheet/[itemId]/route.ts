@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { CHEAT_DOMAIN_IDS } from '@/lib/cheat-domains';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,14 @@ export async function PATCH(req: Request, { params }: { params: { itemId: string
   const patch: Record<string, unknown> = {};
   if (typeof body?.note === 'string') patch.note = body.note.slice(0, 2000);
   if (typeof body?.position === 'number') patch.position = body.position;
+  if (body?.domain === null || (typeof body?.domain === 'string' && (CHEAT_DOMAIN_IDS as readonly string[]).includes(body.domain)))
+    patch.domain = body.domain;
+  if (Array.isArray(body?.tags))
+    patch.tags = (body.tags as unknown[])
+      .filter((t): t is string => typeof t === 'string')
+      .map((t) => t.trim().slice(0, 40))
+      .filter(Boolean)
+      .slice(0, 12);
   if (Object.keys(patch).length === 0)
     return NextResponse.json({ error: 'nothing_to_update' }, { status: 400 });
   const { error } = await supabase.from('cheat_sheet_items')
