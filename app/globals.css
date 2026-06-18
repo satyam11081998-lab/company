@@ -358,6 +358,11 @@
 .nav-bar a:hover { color: hsl(var(--navy-foreground)); }
 .nav-bar a.active { color: hsl(var(--navy-foreground)); border-bottom: 2px solid hsl(var(--primary)); }
 
+/* App-like touch feel: remove the grey tap-flash, touch devices only (desktop untouched). */
+@media (hover: none) and (pointer: coarse) {
+  a, button, [role="button"], summary { -webkit-tap-highlight-color: transparent; }
+}
+
 /* ── KPI cell ────────────────────────────────────────────────────── */
 .kpi-cell {
   background: hsl(var(--card));

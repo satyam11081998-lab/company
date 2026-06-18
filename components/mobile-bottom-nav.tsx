@@ -93,7 +93,7 @@ export default function MobileBottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition active:scale-90 ${active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2.5 : 2} />
               <span className="text-[10px] font-medium leading-none">{tab.label}</span>
@@ -107,7 +107,7 @@ export default function MobileBottomNav() {
           onClick={() => setMoreOpen(true)}
           aria-label="More"
           aria-expanded={moreOpen}
-          className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${moreActive || moreOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition active:scale-90 ${moreActive || moreOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
         >
           <MoreHorizontal className="w-[22px] h-[22px]" strokeWidth={moreActive || moreOpen ? 2.5 : 2} />
           <span className="text-[10px] font-medium leading-none">More</span>

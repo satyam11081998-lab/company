@@ -11,6 +11,10 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-19 — feat/mobile-polish — <hash>
+mobile-polish — fix pricing billing-toggle overflow on phones (full-width, stacked save%, 44px targets; desktop reverts at sm:); bottom-nav tap feedback; remove touch tap-flash
+breaking: no — affects: none
+
 ## 2026-06-18 — feat/ui-batch-2 — <hash>
 ui-batch-2 — mobile chat-first case session + case/attempts drawer; equal-height testimonials; profile sign-out; DraggableFab for feedback + casebook menu
 breaking: no — affects: none
@@ -273,6 +277,7 @@ breaking: no   affects: none
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
 breaking: yes (historical) â€” Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+
 
 
 

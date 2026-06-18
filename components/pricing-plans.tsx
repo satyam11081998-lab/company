@@ -23,9 +23,12 @@ export default function PricingPlans() {
 
   return (
     <>
-      {/* Billing period toggle */}
+      {/* Billing period toggle.
+          Mobile: full-width segmented control, each option stacks its "save %"
+          beneath the label and meets the 44px touch target. Everything reverts
+          at `sm:` so the desktop layout is byte-for-byte unchanged. */}
       <div className="flex justify-center mb-8">
-        <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1">
+        <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1 w-full max-w-md sm:w-auto sm:max-w-none">
           {BILLING_PERIODS.map((p) => {
             const savePct = Math.round(
               (1 - perMonthEquivalent("pro", p) / priceFor("pro", "monthly")) * 100,
@@ -35,7 +38,7 @@ export default function PricingPlans() {
                 key={p}
                 onClick={() => setPeriod(p)}
                 aria-pressed={period === p}
-                className={`px-4 h-9 rounded-md text-sm font-medium transition-colors ${
+                className={`flex-1 sm:flex-none flex flex-col sm:block items-center justify-center leading-tight min-h-[44px] sm:min-h-0 sm:h-9 px-2 sm:px-4 py-1.5 sm:py-0 rounded-md text-sm font-medium transition-colors ${
                   period === p
                     ? "bg-background text-foreground shadow-sm border border-border"
                     : "text-muted-foreground hover:text-foreground"
@@ -43,7 +46,7 @@ export default function PricingPlans() {
               >
                 {BILLING_PERIOD_LABELS[p]}
                 {p !== "monthly" && savePct > 0 && (
-                  <span className="ml-1.5 text-[11px] font-semibold text-success">save {savePct}%</span>
+                  <span className="sm:ml-1.5 text-[11px] font-semibold text-success">save {savePct}%</span>
                 )}
               </button>
             );
