@@ -2,16 +2,16 @@
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** feat/ui-batch-2
+**Branch:** main
 **Last landed:** <date> — <feature> — <commit short sha>
 **Last sync:** 2026-06-18 16:33 UTC
 
 ## Last 5 commits
+- c7b614a feat(ui): mobile chat-first case, testimonials, draggable fabs, profile sign-out (satyam11081998-lab, 2026-06-18)
 - 137f7ee chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
 - e0c9ada feat(ui): engaging loader + optimistic case render (satyam11081998-lab, 2026-06-18)
 - c683032 chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
 - 870c188 feat(admin): testimonials, team, and Notion admin shell (satyam11081998-lab, 2026-06-18)
-- 5807658 chore: sync STATE.md after merge (satyam11081998-lab, 2026-06-18)
 
 ## Open feature branches (not merged into main)
 - (none)
