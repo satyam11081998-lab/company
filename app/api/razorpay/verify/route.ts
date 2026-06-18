@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, periodDays, isBillingPeriod } from '@/lib/tier';
 
 export async function POST(req: Request) {
@@ -59,8 +60,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Plan mismatch' }, { status: 400 });
       }
 
+      // Privileged writes MUST run as the service role. Migration 0006's
+      // trg_guard_user_cols silently reverts subscription_tier/dates/points for
+      // any non-service-role caller (and `payments` has no insert policy), so the
+      // session client above would "succeed" without changing the tier. The
+      // session client is only used to identify the paying user.
+      const db = createServiceClient();
+
       // Replay guard — never process the same payment twice.
-      const { data: existingPay } = await supabase
+      const { data: existingPay } = await db
         .from('payments').select('id').eq('razorpay_payment_id', razorpay_payment_id).maybeSingle();
       if (existingPay) {
         return NextResponse.json({ success: true, alreadyProcessed: true });
@@ -69,24 +77,27 @@ export async function POST(req: Request) {
       const now = new Date();
       const expiresAt = new Date(now.getTime() + periodDays(period) * 24 * 60 * 60 * 1000);
 
-      // Update user tier + subscription dates
-      const { error: updateError } = await supabase
+      // Update user tier + subscription dates. `.select()` so a silently
+      // blocked write (RLS / guard trigger / missing service key) surfaces as
+      // zero rows updated and returns an error — never a false success.
+      const { data: updatedRows, error: updateError } = await db
         .from('users')
         .update({
           subscription_tier: tier,
           subscription_started_at: now.toISOString(),
           subscription_expires_at: expiresAt.toISOString(),
         })
-        .eq('id', user.id);
-        
-      if (updateError) {
+        .eq('id', user.id)
+        .select('id');
+
+      if (updateError || !updatedRows || updatedRows.length === 0) {
         console.error("Failed to update user tier in DB:", updateError);
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
       }
 
       // Insert payment record for audit trail (use the actual paid amount).
       const amountPaise = Number(order.amount);
-      const { error: paymentError } = await supabase
+      const { error: paymentError } = await db
         .from('payments')
         .insert({
           user_id: user.id,
