@@ -11,6 +11,12 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-18 � feat/cheatsheet � <hash>
+Notion-style cheat sheet redesign with category rail.
+touches: components/cheat-sheet/category-rail.tsx, components/cheat-sheet/cheat-sheet-client.tsx, app/(app)/cheat-sheet/page.tsx
+breaking: no   affects: none
+Notes: Client-side presentational layout shift only.
+
 ## 2026-06-14 — logo-swap — f1e00a6
 feat(brand): new MECE logo across app — theme-aware, compact-in-nav / full-in-footer+auth. Overwrote legacy placeholders with modern mark + lockup variants.
 touches: public/logo*, components/logo.tsx, components/footer.tsx, app/login/page.tsx, app/signup/page.tsx
@@ -243,3 +249,4 @@ breaking: no   affects: none
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
 breaking: yes (historical) — Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+
