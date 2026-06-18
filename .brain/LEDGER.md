@@ -30,3 +30,5 @@ propose a new row via handoff but do not edit others' rows.
   Guesstimate, Backstop → eval-v2 changing return keys = `BREAKING`, affects all.
 
 | **Feedback & flagging** | Brain C | feat/feedback | landed | `app/api/feedback/*`, `components/feedback/*`, `app/(app)/admin/feedback/*`, `lib/feedback.ts`, `supabase/migrations/0011_feedback.sql` | C4 API-contract (additive), DB:`users` (FK only, read) |
+| **Testimonials + Admin** | C | feat/testimonials-admin | **BUILT** |
+

@@ -1,13 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import SectionHeader from '@/components/section-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle, UserCog } from 'lucide-react';
 import { triggerNewsFetch, triggerCaseGeneration, grantMembership } from './actions';
-import { CaseEditor } from './case-editor';
-import BroadcastComposer from './broadcast-composer';
 
 export default function AdminPage() {
   const [newsLoading, setNewsLoading] = useState(false);
@@ -18,23 +15,17 @@ export default function AdminPage() {
   const [grantDuration, setGrantDuration] = useState('30');
   const [grantLoading, setGrantLoading] = useState(false);
 
-  const [log, setLog] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
+  const [log, setLog] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
 
   const handleNewsFetch = async () => {
     setNewsLoading(true);
     setLog(null);
     const result = await triggerNewsFetch();
-    
     if (result.success) {
-      // The backend reports status + details.saved; saved=0 means nothing landed in
-      // the DB even though the call "succeeded" — surface that as a warning, not success.
       const saved = result.data?.details?.saved;
       const status = result.data?.status;
       if (status === 'warning' || saved === 0) {
-        setLog({
-          type: 'warning',
-          message: `News run completed but saved 0 headlines. ${result.data?.message || ''}`.trim(),
-        });
+        setLog({ type: 'warning', message: `News run completed but saved 0 headlines. ${result.data?.message || ''}`.trim() });
       } else {
         setLog({ type: 'success', message: `News fetched! ${result.data.message || 'Success'}` });
       }
@@ -48,7 +39,6 @@ export default function AdminPage() {
     setCaseLoading(true);
     setLog(null);
     const result = await triggerCaseGeneration();
-    
     if (result.success) {
       setLog({ type: 'success', message: `Content generated! ${result.data.message || 'Success'}` });
     } else {
@@ -60,17 +50,11 @@ export default function AdminPage() {
   const handleGrant = async () => {
     setGrantLoading(true);
     setLog(null);
-    const days =
-      grantTier === 'free' || grantDuration === 'permanent' ? null : parseInt(grantDuration, 10);
+    const days = grantTier === 'free' || grantDuration === 'permanent' ? null : parseInt(grantDuration, 10);
     const result = await grantMembership({ email: grantEmail.trim(), tier: grantTier, days });
     if (result.success && result.data) {
-      const exp = result.data.expires_at
-        ? new Date(result.data.expires_at).toLocaleDateString()
-        : 'no expiry';
-      setLog({
-        type: 'success',
-        message: `${result.data.email} is now ${String(result.data.tier).toUpperCase()} · ${exp}.`,
-      });
+      const exp = result.data.expires_at ? new Date(result.data.expires_at).toLocaleDateString() : 'no expiry';
+      setLog({ type: 'success', message: `${result.data.email} is now ${String(result.data.tier).toUpperCase()} · ${exp}.` });
     } else {
       setLog({ type: 'error', message: result.error || 'Failed to update membership.' });
     }
@@ -82,15 +66,15 @@ export default function AdminPage() {
       <div>
         <h1 className="text-display-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
           <ShieldAlert className="h-6 w-6 text-primary" />
-          Admin Dashboard
+          Operations
         </h1>
         <p className="text-body text-muted-foreground mt-2">
-          God-mode controls for the platform. Only visible to admins.
+          God-mode controls for the platform. Pick a section on the left.
         </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Fetch News Tile */}
+        {/* Fetch News */}
         <Card className="p-6 border-border bg-card shadow-sm hover:border-primary/20 transition-colors">
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -103,16 +87,12 @@ export default function AdminPage() {
               </p>
             </div>
           </div>
-          <Button 
-            onClick={handleNewsFetch} 
-            disabled={newsLoading || caseLoading}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-          >
+          <Button onClick={handleNewsFetch} disabled={newsLoading || caseLoading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
             {newsLoading ? 'Fetching...' : 'Run News Fetcher Now'}
           </Button>
         </Card>
 
-        {/* Generate Cases Tile */}
+        {/* Generate Cases */}
         <Card className="p-6 border-border bg-card shadow-sm hover:border-primary/20 transition-colors">
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -125,11 +105,7 @@ export default function AdminPage() {
               </p>
             </div>
           </div>
-          <Button 
-            onClick={handleCaseGen} 
-            disabled={newsLoading || caseLoading}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-          >
+          <Button onClick={handleCaseGen} disabled={newsLoading || caseLoading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
             {caseLoading ? 'Generating...' : 'Run AI Generator Now'}
           </Button>
         </Card>
@@ -143,8 +119,7 @@ export default function AdminPage() {
             Grant / Revoke Membership
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Manually set a user&apos;s tier without payment — for testers, team, or comps. Applies
-            instantly, exactly like a paid upgrade. Choose <span className="font-medium">Free</span> to revoke.
+            Manually set a user&apos;s tier without payment — for testers, team, or comps. Applies instantly, exactly like a paid upgrade. Choose <span className="font-medium">Free</span> to revoke.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_8rem_9rem_auto]">
@@ -175,11 +150,7 @@ export default function AdminPage() {
             <option value="365">365 days</option>
             <option value="permanent">Permanent</option>
           </select>
-          <Button
-            onClick={handleGrant}
-            disabled={grantLoading || !grantEmail.trim()}
-            className="h-10 bg-primary text-primary-foreground hover:bg-primary/90"
-          >
+          <Button onClick={handleGrant} disabled={grantLoading || !grantEmail.trim()} className="h-10 bg-primary text-primary-foreground hover:bg-primary/90">
             {grantLoading ? 'Applying…' : 'Apply'}
           </Button>
         </div>
@@ -188,7 +159,6 @@ export default function AdminPage() {
         </p>
       </Card>
 
-      {/* Log Output */}
       {log && (
         <div className={`p-4 rounded-lg border flex items-start gap-3 animate-slide-up ${
           log.type === 'success'
@@ -197,28 +167,12 @@ export default function AdminPage() {
             ? 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400'
             : 'bg-destructive/10 border-destructive/20 text-destructive'
         }`}>
-          {log.type === 'success' ? (
-            <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
-          ) : log.type === 'warning' ? (
-            <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-          ) : (
-            <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
-          )}
-          <div className="text-sm font-medium">
-            {log.message}
-          </div>
+          {log.type === 'success' ? <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+            : log.type === 'warning' ? <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+            : <XCircle className="h-5 w-5 shrink-0 mt-0.5" />}
+          <div className="text-sm font-medium">{log.message}</div>
         </div>
       )}
-
-      {/* Case Editor (Phase 4) */}
-      <div className="mt-8">
-        <CaseEditor />
-      </div>
-
-      {/* Broadcast email */}
-      <div className="mt-8">
-        <BroadcastComposer />
-      </div>
     </div>
   );
 }

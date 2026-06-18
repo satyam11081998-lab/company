@@ -5,12 +5,11 @@ import AuthCTA from '@/components/auth-cta';
 import Footer from '@/components/footer';
 import ScrollAnimations from '@/components/scroll-animations';
 import { Card } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Shield, Trophy, BookOpen, Newspaper, Building2,
   GraduationCap, Layers, CheckCircle2, ArrowRight, ChevronRight, HelpCircle,
 } from 'lucide-react';
-import { TESTIMONIALS } from '@/lib/testimonials';
+import TeamGrid from '@/components/team-grid';
 import {
   genericArticleJsonLd, genericBreadcrumbJsonLd, faqPageJsonLd,
 } from '@/lib/seo';
@@ -105,8 +104,6 @@ const WHAT_YOU_GET = [
 ];
 
 export default function AboutPage() {
-  const team = TESTIMONIALS.slice(0, 2);
-
   return (
     <div className="min-h-screen bg-muted flex flex-col">
       {/* JSON-LD structured data */}
@@ -274,31 +271,7 @@ export default function AboutPage() {
               The people who went through the placement grind and decided to build the tool they wished they had.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto gap-12">
-            {team.map((member) => (
-              <div key={member.id} className="flex flex-col items-center text-center">
-                <Avatar className="h-40 w-40 border-[6px] border-border shadow-lg mb-6">
-                  {member.avatar_url && <AvatarImage src={member.avatar_url} alt={member.name} className="object-cover" />}
-                  <AvatarFallback className="bg-navy text-navy-foreground text-5xl font-semibold">
-                    {member.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex items-center gap-2 justify-center mb-1">
-                  <h3 className="text-2xl font-bold text-foreground">{member.name}</h3>
-                  {member.linkedin_url && (
-                    <a href={member.linkedin_url} target="_blank" rel="noreferrer" className="hover:opacity-80 transition-opacity" title="View LinkedIn Profile">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="#0A66C2">
-                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                      </svg>
-                    </a>
-                  )}
-                </div>
-                <p className="text-body font-medium text-muted-foreground mb-3">{member.school}</p>
-                <div className="w-12 h-1.5 bg-primary/20 rounded-full mx-auto mb-4" />
-                <p className="text-base text-primary font-medium leading-snug max-w-[280px]">{member.placement}</p>
-              </div>
-            ))}
-          </div>
+          <TeamGrid />
         </section>
 
         {/* ── FAQ ────────────────────────────────────────────────────── */}

@@ -1,85 +1,112 @@
 /**
- * Testimonials displayed on /landing and /home.
- * To add a new testimonial: append to TESTIMONIALS array.
- * Admin UI for managing these = Phase 6.
+ * Testimonials + team ("brains behind") shown on the landing and /about pages.
+ *
+ * These are now DB-backed (supabase: `testimonials`, `team_members`). The two
+ * arrays below are the verified real profiles, kept ONLY as a render fallback
+ * so the site is never empty if the DB is unreachable or a request runs before
+ * the seed. Admins manage the live list from /admin/testimonials and /admin/team.
  */
+
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TestimonialRow, TeamMemberRow } from '@/lib/types';
 
 export interface Testimonial {
   id: string;
   name: string;
   school: string;
-  placement: string;     // e.g. "Summer placed at Bain"
-  quote: string;         // 2-4 lines
+  placement: string;      // e.g. "Summer Intern @ Bain"
+  quote: string;
   avatar_url: string | null;
   linkedin_url?: string;
 }
 
+export interface TeamMember {
+  id: string;
+  name: string;
+  school: string;
+  placement: string;
+  quote?: string;
+  avatar_url: string | null;
+  linkedin_url?: string;
+}
+
+/** Verified real testimonials — fallback only (DB is source of truth). */
 export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't1',
     name: 'Satyam Kumar',
-    school: 'IMI Delhi PGDM \'27',
+    school: "IMI Delhi PGDM '27",
     placement: 'Ex-TCS | XAT - 99.4 | Mercer Finquest 2025 Winner',
-    quote: "MECE caught flaws in my hypothesis-driven thinking that no one else had pointed out. Used it daily for three weeks before placement season.",
+    quote:
+      'MECE caught flaws in my hypothesis-driven thinking that no one else had pointed out. Used it daily for three weeks before placement season.',
     avatar_url: '/testimonials/satyam.jpg',
-    linkedin_url: 'https://www.linkedin.com/in/satyam-kumar-8254b4157/'
+    linkedin_url: 'https://www.linkedin.com/in/satyam-kumar-8254b4157/',
   },
   {
     id: 't2',
     name: 'Mohit Kumar Raj',
-    school: 'TISS HRM & LR \'27',
+    school: "TISS HRM & LR '27",
     placement: 'Summer Intern @ Hindustan Coca-Cola Beverages | Ex-Marine Engineer',
-    quote: "The 6-dimension scoring is brutally honest — better than mock interviews where peers go easy on you. Pushed me to write tighter syntheses.",
+    quote:
+      'The 6-dimension scoring is brutally honest — better than mock interviews where peers go easy on you. Pushed me to write tighter syntheses.',
     avatar_url: '/testimonials/mohit.jpg',
-    linkedin_url: 'https://www.linkedin.com/in/mohit-kumar-raj-b895b6201/'
-  },
-  {
-    id: 't3',
-    name: 'Kishan Jayaswal',
-    school: 'IIM Indore PGP \'27',
-    placement: 'Summer Intern @ Jindal Steel | Ex-Merchant Navy',
-    quote: "GD briefs alone saved me hours of news scanning. Smart angles section taught me how to think about consumer goods cases differently.",
-    avatar_url: '/testimonials/kishan.jpg',
-    linkedin_url: 'https://www.linkedin.com/in/kishan-jayaswal/'
-  },
-  {
-    id: 't4',
-    name: 'Sneha Mukherjee',
-    school: '',
-    placement: 'Summer placed at BCG',
-    quote: "Career ladder is oddly motivating. Climbing from Day-0 Dreamer to MECE Believer felt like leveling up a game I actually wanted to play.",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SnehaMukherjee',
-  },
-  {
-    id: 't5',
-    name: 'Vihaan Kapoor',
-    school: 'FMS Delhi',
-    placement: 'Final placed at Goldman Sachs',
-    quote: "The structured feedback on my profitability cases was the difference between 'I sort of understand frameworks' and 'I can deploy them under pressure.'",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=VihaanKapoor',
-  },
-  {
-    id: 't6',
-    name: 'Divya Menon',
-    school: 'XLRI',
-    placement: 'Summer placed at Accenture Strategy',
-    quote: "I used MECE during commute. Three submissions a day, every day, for a month. The dimension radar showed exactly where I was leaking points.",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DivyaMenon',
-  },
-  {
-    id: 't7',
-    name: 'Arjun Banerjee',
-    school: '',
-    placement: 'Summer placed at Kearney',
-    quote: "Daily GD briefs gave me an unfair edge in group discussions. Showed up to GDs with actual data points while others gave generic takes.",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ArjunBanerjee',
-  },
-  {
-    id: 't8',
-    name: 'Rhea Joshi',
-    school: 'NMIMS Mumbai',
-    placement: 'Final placed at P&G',
-    quote: "The leaderboard kept me practicing on bad days. Watching ranks shift in real-time made case prep feel less lonely than studying alone at 1am.",
-    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RheaJoshi',
+    linkedin_url: 'https://www.linkedin.com/in/mohit-kumar-raj-b895b6201/',
   },
 ];
+
+/** Same two, as the team fallback. */
+export const TEAM_FALLBACK: TeamMember[] = TESTIMONIALS.map((t) => ({
+  id: `team-${t.id}`,
+  name: t.name,
+  school: t.school,
+  placement: t.placement,
+  avatar_url: t.avatar_url,
+  linkedin_url: t.linkedin_url,
+}));
+
+function mapTestimonial(r: TestimonialRow): Testimonial {
+  return {
+    id: r.id,
+    name: r.name,
+    school: r.school,
+    placement: r.placement,
+    quote: r.quote,
+    avatar_url: r.avatar_url,
+    linkedin_url: r.linkedin_url ?? undefined,
+  };
+}
+
+function mapTeam(r: TeamMemberRow): TeamMember {
+  return {
+    id: r.id,
+    name: r.name,
+    school: r.school,
+    placement: r.placement,
+    quote: r.quote || undefined,
+    avatar_url: r.avatar_url,
+    linkedin_url: r.linkedin_url ?? undefined,
+  };
+}
+
+/** Published testimonials, ordered. Falls back to the verified two if empty. */
+export async function getPublishedTestimonials(supabase: SupabaseClient): Promise<Testimonial[]> {
+  const { data } = await supabase
+    .from('testimonials')
+    .select('*')
+    .eq('status', 'published')
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: false });
+  const rows = (data as TestimonialRow[] | null) ?? [];
+  return rows.length ? rows.map(mapTestimonial) : TESTIMONIALS;
+}
+
+/** Team members, ordered. Falls back to the verified two if empty. */
+export async function getTeamMembers(supabase: SupabaseClient): Promise<TeamMember[]> {
+  const { data } = await supabase
+    .from('team_members')
+    .select('*')
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true });
+  const rows = (data as TeamMemberRow[] | null) ?? [];
+  return rows.length ? rows.map(mapTeam) : TEAM_FALLBACK;
+}

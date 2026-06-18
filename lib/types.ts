@@ -306,3 +306,41 @@ export interface FeedbackReportRow {
   updated_at: string;
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────
+// APPEND THIS BLOCK TO THE END OF lib/types.ts
+// (additive types — mirror supabase 0012_testimonials_team.sql)
+// ─────────────────────────────────────────────────────────────────────────
+
+export type TestimonialStatus = 'pending' | 'published' | 'rejected';
+export type TestimonialSource = 'admin' | 'user';
+
+export interface TestimonialRow {
+  id: string;
+  name: string;
+  school: string;
+  placement: string;
+  quote: string;
+  avatar_url: string | null;
+  linkedin_url: string | null;
+  status: TestimonialStatus;
+  source: TestimonialSource;
+  submitted_email: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamMemberRow {
+  id: string;
+  name: string;
+  school: string;
+  placement: string;
+  quote: string;
+  avatar_url: string | null;
+  linkedin_url: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
