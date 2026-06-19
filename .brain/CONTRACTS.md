@@ -63,3 +63,4 @@ Source of truth: `supabase/migrations/0005_user_onboarding.sql`, mirrored in `li
 - **Rule:** column adds are additive + `IF NOT EXISTS`. Any add = bump version
   + announce. Affects: Onboarding, Profile, Dashboard (auth-cached.ts reader),
   future GD-cohort feature.
+

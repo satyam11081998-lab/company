@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-19 — input-limits — <hash>
+Added max_length caps (20,000) to answer_text, conversational message content, and final_recommendation via net-new services/limits.py; mins unchanged; verified compile + behaviour (long structure posts still accepted, abuse dumps rejected).
+touches: services/limits.py, routes/submit.py, routes/attempts.py, lib/limits.ts, submission-form.tsx, ConversationalSolve.tsx
+breaking: no — C4 announce (request-shape constraint tightened)   affects: callers of /submit and /attempts/*
+
 ## 2026-06-19 — legal-refund — <hash>
 Refund & Cancellation policy updated (no money-back guarantee, team@mece.in) and contrast bug fixed (text uses semantic foreground/muted tokens).
 touches: app/refund/page.tsx
@@ -282,6 +287,7 @@ breaking: no   affects: none
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
 breaking: yes (historical) â€” Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+
 
 
 
