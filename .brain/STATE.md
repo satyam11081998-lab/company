@@ -2,16 +2,16 @@
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** feat/input-limits
+**Branch:** main
 **Last landed:** <date> — <feature> — <commit short sha>
 **Last sync:** 2026-06-19 02:31 UTC
 
 ## Last 5 commits
+- 3d5a679 feat(limits): generous max_length caps for answer, message, recommendation (satyam11081998-lab, 2026-06-19)
+- 7de32ad chore: docs for input-limits (satyam11081998-lab, 2026-06-19)
 - e6c06c5 chore: sync STATE.md after legal-refund merge (satyam11081998-lab, 2026-06-19)
 - 1cfb9f7 feat(legal): refund policy contrast fix, no 7-day money back, update contact email (satyam11081998-lab, 2026-06-19)
 - 016b4ff chore: sync STATE.md after mobile-polish merge (satyam11081998-lab, 2026-06-19)
-- f4ccd68 feat(ui): mobile polish, billing toggle fix, tap feedback (satyam11081998-lab, 2026-06-19)
-- 89d7d9e chore: sync STATE.md after ui-batch-2 merge (satyam11081998-lab, 2026-06-18)
 
 ## Open feature branches (not merged into main)
 - (none)
