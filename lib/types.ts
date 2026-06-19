@@ -344,3 +344,12 @@ export interface TeamMemberRow {
   updated_at: string;
 }
 
+
+export interface CaseTagRow {
+  id: string;
+  user_id: string;
+  case_id: string;
+  tag: string;
+  tag_norm: string;
+  created_at: string;
+}

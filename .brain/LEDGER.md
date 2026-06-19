@@ -36,4 +36,5 @@ propose a new row via handoff but do not edit others' rows.
 | **Mobile Polish** | C | feat/mobile-polish | landed | components/pricing-plans.tsx, components/mobile-bottom-nav.tsx, pp/globals.css | UI-only, no data/contract changes |
 | Legal/static pages | (shared) | feat/legal-refund | Refund page contrast fix + policy update (privacy/terms already live) | app/privacy, app/terms, app/refund | — |
 | Input size limits | B | feat/input-limits | BUILT (answer max 20k, question max 20k, recommendation max 20k) | lib/limits.ts, services/limits.py, routes/submit.py, submission-form.tsx, routes/attempts.py, ConversationalSolve.tsx | C4 |
+| Dynamic domains (case_tags) | (this session) | feat/dynamic-domains | DB BUILT (migration verified); UI pending frontend repo | supabase/migrations/0013_case_tags.sql, lib/types.ts, lib/limits.ts | DB:users/cases (FK, read-only) |
 

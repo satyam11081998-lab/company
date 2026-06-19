@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-19 — dynamic-domains-db — <hash>
+Added per-user case_tags table (user-defined "domains"): FULL unique index on (user_id,case_id,tag_norm), 1-30 char check, RLS owner-only. Additive — does not touch cases. Migration verified idempotent (run twice) + dedup/length behaviour. UI to follow.
+touches: supabase/migrations/0013_case_tags.sql
+breaking: no   affects: none
+
 ## 2026-06-19 — gd-brief-summary — <hash>
 GD-brief summary upgraded from a 2-3 sentence line to a substantive, neutral 120-180 word context paragraph (background + central tension, fairly stated, no side-taking); prompt-only, 8-key shape unchanged. Note: briefs cache per headline, so this affects new briefs.
 touches: services/brief_generator.py
@@ -292,6 +297,7 @@ breaking: no   affects: none
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
 breaking: yes (historical) â€” Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+
 
 
 
