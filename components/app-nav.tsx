@@ -69,7 +69,7 @@ export default function AppNav() {
   const moreActive = MORE_LINKS.some(({ href, active }) => active ?? isActive(href));
 
   return (
-    <header className="nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]">
+    <header className={`nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]${pathname?.startsWith('/cases/') ? ' max-xl:hidden' : ''}`}>
       <div className="container flex h-14 md:h-16 items-center justify-between">
 
         {/* Left: wordmark + nav links */}

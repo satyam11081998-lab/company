@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { submitCaseAnswer } from '@/lib/api';
 import { createClient } from '@/lib/supabase/client';
 import { MIN_ANSWER_CHARS } from '@/lib/constants';
+import { ANSWER_MAX_CHARS } from '@/lib/limits';
 import { Loader2 } from 'lucide-react';
 import DictationButton from '@/components/dictation-button';
 import CameraButton from '@/components/camera-button';
@@ -65,6 +66,7 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
           placeholder="Type out your structure, assumptions and final number. Aim for clear sub-bullets."
           className="resize-none text-base leading-relaxed min-h-[250px] md:min-h-[350px] pb-16"
           required
+          maxLength={ANSWER_MAX_CHARS}
         />
         
         {/* Input tools positioned inside the textarea area */}
@@ -76,7 +78,7 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
 
       <div className="flex items-center justify-between pt-2">
         <span className={`text-base font-medium ${isValid ? 'text-emerald-700' : 'text-muted-foreground'}`}>
-          {charCount} / {MIN_ANSWER_CHARS} characters minimum
+          {charCount} / {ANSWER_MAX_CHARS} characters (min {MIN_ANSWER_CHARS})
         </span>
         <Button type="submit" disabled={!isValid} className="bg-primary text-primary-foreground hover:bg-primary-hover">
           Submit for feedback

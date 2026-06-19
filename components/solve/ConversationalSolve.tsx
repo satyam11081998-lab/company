@@ -40,6 +40,7 @@ import {
   type AttemptSummary,
 } from '@/lib/interview-api';
 import { transcribeAudio } from '@/lib/api';
+import { MESSAGE_MAX_CHARS, RECOMMENDATION_MAX_CHARS } from '@/lib/limits';
 
 interface Props {
   caseId: string;
@@ -273,7 +274,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   );
 
   return (
-    <div className="fixed top-14 md:top-16 left-0 right-0 bottom-0 flex flex-col lg:flex-row bg-background overflow-hidden z-30 shadow-2xl">
+    <div className="fixed top-0 xl:top-16 left-0 right-0 bottom-0 flex flex-col lg:flex-row bg-background overflow-hidden z-30 shadow-2xl">
       
       {/* --------------------------------------------------------- */}
       {/* 1. LEFT PANEL: Case Context & History                      */}
@@ -345,6 +346,9 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         {/* Top bar for right panel */}
         <div className="shrink-0 border-b bg-card/50 backdrop-blur-sm px-5 py-3 flex justify-between items-center z-10 shadow-sm">
            <div className="text-small font-semibold text-foreground/80 flex items-center gap-2">
+             <Link href="/practice" aria-label="Back to Practice" className="lg:hidden -ml-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition">
+               <ArrowLeft className="h-5 w-5" />
+             </Link>
              <Sheet open={contextOpen} onOpenChange={setContextOpen}>
                <SheetTrigger
                  className="lg:hidden -ml-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
@@ -453,6 +457,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                   placeholder={quotaExhausted ? 'Add notes or assumptions…' : 'Ask a clarification or share your structure…'}
                   className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
                   rows={1}
+                  maxLength={MESSAGE_MAX_CHARS}
                 />
                 
                 <div className="flex items-center gap-1.5 pr-1 mb-0.5">
@@ -602,6 +607,7 @@ function SubmitDialog({
           onChange={(e) => setFinalRec(e.target.value)}
           placeholder="My recommendation is to… because (1)… (2)… (3)… Risks to watch: …"
           className="mt-3 min-h-[160px] resize-none text-base"
+          maxLength={RECOMMENDATION_MAX_CHARS}
         />
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -619,7 +625,7 @@ function SubmitDialog({
               <Paperclip className="h-5 w-5" />
             </button>
           </div>
-          <p className="text-small text-muted-foreground">{finalRec.trim().length} characters</p>
+          <p className="text-small text-muted-foreground">{finalRec.trim().length} / {RECOMMENDATION_MAX_CHARS} characters</p>
         </div>
         <div className="mt-4 flex justify-end gap-2 border-t pt-4">
           <Button variant="ghost" onClick={onClose} disabled={submitting}>Cancel</Button>
