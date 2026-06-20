@@ -359,6 +359,21 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Social proof: testimonials (moved up — see CRO note) ─────── */}
+      <section className="py-20 px-6" data-reveal>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+              WHAT MBA ASPIRANTS SAY
+            </p>
+            <h2 className="mt-2 text-h2 text-foreground">
+              From students who've used MECE in their placement journey.
+            </h2>
+          </div>
+          <TestimonialsCarousel />
+        </div>
+      </section>
+
       {/* ── Feature 3: GD Briefs (right text + left card) ─────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-12 md:py-20">
         <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
@@ -543,20 +558,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials section */}
-      <section className="py-20 px-6 bg-card" data-reveal>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
-              WHAT MBA ASPIRANTS SAY
-            </p>
-            <h2 className="mt-2 text-h2 text-foreground">
-              From students who've used MECE in their placement journey.
-            </h2>
-          </div>
-          <TestimonialsCarousel />
-        </div>
-      </section>
 
       {/* ── FAQ / entity disambiguation ──────────────────────────────── */}
       <section id="faq" className="max-w-3xl mx-auto px-6 py-16" data-reveal>
@@ -608,6 +609,14 @@ export default function LandingPage() {
           <p className="mt-4 text-[15px] text-white/50 leading-relaxed">
             No credit card. No commitment. Start practising today and see where you rank.
           </p>
+          <figure className="mt-8 mx-auto max-w-xl">
+            <blockquote className="text-[15px] italic leading-relaxed text-white/80">
+              &ldquo;The 6-dimension scoring is brutally honest — better than mock interviews where peers go easy on you.&rdquo;
+            </blockquote>
+            <figcaption className="mt-3 text-[13px] text-white/50">
+              Mohit Kumar Raj · TISS HRM &amp; LR &rsquo;27
+            </figcaption>
+          </figure>
           <div className="mt-7">
             <AuthCTA variant="cta" />
           </div>
