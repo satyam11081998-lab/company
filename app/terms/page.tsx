@@ -92,7 +92,7 @@ export default async function TermsPage() {
               By submitting responses, calculations, and text to the Platform ("User Content"), you grant us a non-exclusive, worldwide, royalty-free license to process, store, and evaluate your submissions for the purpose of providing the service.
             </p>
             <p className="leading-relaxed">
-              <strong>Evaluation Limitations:</strong> MECE relies on Artificial Intelligence (OpenAI API) to evaluate User Content. While we strive for high accuracy, the AI evaluation augments practice but does not replace human feedback. We assess written submissions only; live behavioral signals are not captured. We are not liable for any placement outcomes or decisions made based on MECE scores.
+              <strong>Evaluation Limitations:</strong> MECE relies on Artificial Intelligence (OpenAI & Claude API) to evaluate User Content. While we strive for high accuracy, the AI evaluation augments practice but does not replace human feedback. We assess written submissions only; live behavioral signals are not captured. We are not liable for any placement outcomes or decisions made based on MECE scores.
             </p>
           </section>
 
