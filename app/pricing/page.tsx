@@ -11,6 +11,7 @@ import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import Footer from '@/components/footer';
 import PricingPlans from '@/components/pricing-plans';
+import TeamsContactBanner from '@/components/teams-contact-banner';
 import AuthCTA from '@/components/auth-cta';
 import {
   pricingProductJsonLd,
@@ -163,6 +164,9 @@ export default function PricingPage() {
         {/* ── Pricing Cards ──────────────────────────────────────────── */}
         <section className="container max-w-5xl mx-auto px-4 py-10">
           <PricingPlans />
+          <div className="mt-6">
+            <TeamsContactBanner />
+          </div>
         </section>
 
         {/* ── Feature Comparison Table ────────────────────────────────── */}

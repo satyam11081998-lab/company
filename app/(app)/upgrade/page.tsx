@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Script from "next/script";
 import { Check, Star, Zap, ShieldCheck, Sparkles, Minus } from "lucide-react";
 import { useUser } from "@/components/user-context";
+import TeamsContactBanner from "@/components/teams-contact-banner";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -307,6 +308,9 @@ export default function UpgradePage() {
             </div>
           </div>
         </div>
+
+        {/* Colleges & clubs — quiet B2B contact line, not a focus */}
+        <TeamsContactBanner />
       </main>
     </div>
   );

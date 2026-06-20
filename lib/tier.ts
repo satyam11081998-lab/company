@@ -87,7 +87,11 @@ export const TIER_LABELS: Record<SubscriptionTier, string> = {
  */
 export type BillingPeriod = 'monthly' | 'quarter' | 'annual';
 
-export const BILLING_PERIODS: BillingPeriod[] = ['monthly', 'quarter', 'annual'];
+// Annual is intentionally NOT offered in the UI (low uptake). The type, prices,
+// and helpers below still understand 'annual' so legacy annual subscribers and
+// the backend (`isBillingPeriod`) stay backward-compatible — we just don't list
+// it as a purchasable option in the toggles.
+export const BILLING_PERIODS: BillingPeriod[] = ['monthly', 'quarter'];
 
 export const BILLING_PERIOD_LABELS: Record<BillingPeriod, string> = {
   monthly: 'Monthly',
