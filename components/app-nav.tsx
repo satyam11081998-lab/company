@@ -157,7 +157,8 @@ export default function AppNav() {
                   <span className="text-xs text-navy-foreground/50">pts</span>
                 </div>
               </div>
-              <Link href="/profile" className="flex-shrink-0 relative inline-block">
+              <Link href="/profile" aria-label="Profile" className="flex-shrink-0 inline-flex items-center justify-center -m-2 p-2 sm:m-0 sm:p-0">
+                <span className="relative inline-block">
                 <Avatar className={`h-7 w-7 md:h-7 md:w-7 rounded-full shadow-md bg-gradient-to-br from-navy-mid/20 to-navy-mid/40 backdrop-blur-sm cursor-pointer ${tier === 'pro' ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : tier === 'lite' ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-background' : 'border border-navy-mid/30'}`}>
                   <AvatarImage src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.id)}`} alt={user.name || ''} />
                   <AvatarFallback className="rounded-full bg-navy-mid text-navy-foreground text-xs font-semibold shadow-inner">
@@ -169,6 +170,7 @@ export default function AppNav() {
                     {tier}
                   </span>
                 )}
+                </span>
               </Link>
               {tier !== 'pro' && (
                 <Link 

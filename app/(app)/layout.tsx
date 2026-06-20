@@ -106,7 +106,7 @@ export default async function AppLayout({
     <UserProvider initialUser={user}>
       <AppNav />
       <main className="min-h-[calc(100vh-64px)] flex flex-col relative w-full overflow-x-clip max-w-[100vw]">
-        <div className="flex-1 pb-10">
+        <div className="flex-1 pb-24 xl:pb-10 min-h-[calc(100vh-3.5rem)] xl:min-h-0">
           {children}
         </div>
         <Footer className="pb-24 xl:pb-12" />
