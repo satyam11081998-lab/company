@@ -220,8 +220,13 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
 
   // No full-screen blocker: the case prompt (initialCase) renders immediately on
   // the left while the live session boots — the engaging loader fills the chat.
+  // Clarification Q&A is a Lite/Pro feature. Free tier gets a 0 quota by
+  // design — that is NOT an 'exhausted' state, so we must not render the
+  // alarming red 'Questions remaining: 0' counter or the 'you've used them
+  // all' banner for free users on their (fully working) daily case/guesstimate.
+  const hasClarifications = (attempt?.clarification_quota ?? 0) > 0;
   const remaining = attempt?.clarification_remaining || 0;
-  const quotaExhausted = attempt ? remaining <= 0 : false;
+  const quotaExhausted = hasClarifications && remaining <= 0;
 
   // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND
   // inside the mobile drawer (opened from the chat bar) so the phone is chat-first.
@@ -365,7 +370,9 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
            </div>
            {!lockedOverlay && attempt && (
              <div className="flex items-center gap-3">
-               <ClarificationCounter remaining={remaining} quota={attempt.clarification_quota} />
+               {hasClarifications && (
+                 <ClarificationCounter remaining={remaining} quota={attempt.clarification_quota} />
+               )}
                <Button size="sm" onClick={() => setSubmitOpen(true)} className="h-8 bg-primary text-primary-foreground hover:bg-primary-hover">
                  Submit
                </Button>
@@ -454,7 +461,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                   value={composer}
                   onChange={(e) => setComposer(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send('text'); } }}
-                  placeholder={quotaExhausted ? 'Add notes or assumptions…' : 'Ask a clarification or share your structure…'}
+                  placeholder={!hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Add notes or assumptions…' : 'Ask a clarification or share your structure…'}
                   className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
                   rows={1}
                   maxLength={MESSAGE_MAX_CHARS}
