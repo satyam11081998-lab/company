@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — testimonials-carousel-overhaul — <pending commit>
+Redesigned the landing testimonials carousel: uniform fixed-height (340px) cards with the quote clamped (line-clamp-6) and the author pinned to the bottom, so varying quote lengths no longer distort the row or leave one card clipped. Removed the bulky outer Card frame; hidden the native scrollbar and added soft edge-fades + polished round arrow controls. ≤3 testimonials center; >3 become a snap carousel.
+touches: components/testimonials-carousel.tsx
+breaking: no   affects: landing page
+
 ## 2026-06-21 — fix-practice-domains-and-caselib-links — <pending commit>
 /practice domain dropdown now lists only real scored-case categories, so every domain resolves to attemptable practice questions. Removed the Case Studies tab/cards and ALL read-only deep-links: /learn/practice-case-library# (study cards + randomizer fallback) and the guesstimate card's /learn/guesstimates-market-sizing# 'Walkthrough'. Tabs now All/Scored/Guesstimates/Attempted; guesstimate card shows only Solve →. Legacy ?tab=studies is sanitized to 'all'.
 touches: components/practice-hub.tsx
