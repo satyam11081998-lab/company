@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — daily-guesstimate-cta — <pending commit>
+Added a dedicated 'Start the guesstimate' primary button to the dashboard daily-guesstimate card (mirrors the daily case's 'Start the case' CTA); routes to /cases/{id}, replaces the subtle 'attempt now →' text. Falls back to 'Browse guesstimates' when no daily.
+touches: components/dashboard/guesstimate-card.tsx
+breaking: no   affects: Dashboard daily tiles
+
 ## 2026-06-21 — fix-daily-link-resolution — <pending commit>
 Daily case + guesstimate tiles fell back to /practice whenever the day's guesstimate was scheduled by short code: daily-server resolved guesstimate_code via eq('id', <code>) against the uuid id column, which threw and — under Promise.all — rejected the whole batch, nulling BOTH daily picks. Now resolves daily refs by id OR code (UUID_RE) and uses Promise.allSettled so one bad lookup can't null the others. access.ts likewise matches the daily guesstimate by id or code (was wrongly locking free users out of the daily guesstimate); caller passes caseRow.code. Recurs-on-new-daily bug.
 touches: lib/daily-server.ts, lib/access.ts, app/(app)/cases/[id]/page.tsx

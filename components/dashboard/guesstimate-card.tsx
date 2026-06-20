@@ -96,13 +96,18 @@ export function GuesstimateCard({ u, daily }: GuesstimateCardProps) {
           </button>
         ))}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2, fontSize: 11, color: 'var(--ink-3)' }}>
-        <span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 10, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>
           <b style={{ color: 'var(--ink)' }}>60-second</b> mental-math warm-up · sharpen your estimation reflex
         </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: 'var(--amber)', fontWeight: 500 }}>
-          {hasDaily ? 'attempt now →' : 'streak +1'}
-        </span>
+        <button
+          type="button"
+          className="btn primary"
+          style={{ padding: '8px 14px', fontSize: 12.5, fontWeight: 600, borderRadius: 9, whiteSpace: 'nowrap', flexShrink: 0 }}
+          onClick={(e) => { e.stopPropagation(); goToCase(); }}
+        >
+          <Bolt style={{ width: 13, height: 13 }} /> {hasDaily ? 'Start the guesstimate' : 'Browse guesstimates'}
+        </button>
       </div>
     </div>
   );
