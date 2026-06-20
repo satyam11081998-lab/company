@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — fix-daily-link-resolution — <pending commit>
+Daily case + guesstimate tiles fell back to /practice whenever the day's guesstimate was scheduled by short code: daily-server resolved guesstimate_code via eq('id', <code>) against the uuid id column, which threw and — under Promise.all — rejected the whole batch, nulling BOTH daily picks. Now resolves daily refs by id OR code (UUID_RE) and uses Promise.allSettled so one bad lookup can't null the others. access.ts likewise matches the daily guesstimate by id or code (was wrongly locking free users out of the daily guesstimate); caller passes caseRow.code. Recurs-on-new-daily bug.
+touches: lib/daily-server.ts, lib/access.ts, app/(app)/cases/[id]/page.tsx
+breaking: no   affects: Dashboard daily tiles, Case solve UX (free-tier daily gating)
+
 ## 2026-06-21 — practice-domains-seed — <pending commit + DB run>
 Added supabase/seed-cases-domains.sql: 7 new practice domains as first-class case TYPES — `market entry`, `pricing`, `m&a`, `operations`, `cost reduction`, `go to market`, `competitive strategy` — 5 mixed-difficulty cases each; topped up `market_sizing` (+4); +6 mixed-difficulty guesstimates. 45 rows total. Mirrors seed-cases-constellation.sql exactly (markdown ~15-min prompts, interview_meta, skill_cluster tag, skill_node NULL). Requires new migration 0017_cases_type_expand.sql (widens the cases.type CHECK — additive, non-breaking) to run first; also added display labels for the new types in lib/constants.ts (CASE_TYPE_LABELS). Idempotent ON CONFLICT (code). With existing profitability/growth, the /practice 'All domains' dropdown becomes ~10 domains, each with >=5 attemptable questions. NOTE: must be run against Supabase to take effect (data, not schema).
 touches: supabase/seed-cases-domains.sql (new)

@@ -66,7 +66,7 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
   const fullUser = userRes.data as UserRow | null;
   const userRating = (ratingRes.data as { rating: string } | null)?.rating || null;
 
-  const access = await getAttemptAccess(supabase, fullUser, { id: caseRow.id, type: caseRow.type });
+  const access = await getAttemptAccess(supabase, fullUser, { id: caseRow.id, type: caseRow.type, code: caseRow.code });
   const hasAttempted = attempts.length > 0;
 
   const historyPanel = hasAttempted ? (

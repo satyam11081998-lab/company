@@ -21,7 +21,7 @@ export interface AttemptAccess {
 export async function getAttemptAccess(
   supabase: any, // server Supabase client (typed loosely to avoid generic-variance friction)
   user: UserRow | null,
-  caseRow: Pick<CaseRow, 'id' | 'type'>,
+  caseRow: Pick<CaseRow, 'id' | 'type' | 'code'>,
 ): Promise<AttemptAccess> {
   const bucket: 'case' | 'guesstimate' = caseRow.type === 'guesstimate' ? 'guesstimate' : 'case';
   const tier = effectiveTier(user);
@@ -34,10 +34,13 @@ export async function getAttemptAccess(
     .eq('scheduled_date', today)
     .limit(1);
   const sched = schedRows?.[0] as { case_id?: string; guesstimate_code?: string } | undefined;
-  const dailyIds = new Set<string>(
+  // guesstimate_code may hold a UUID id OR a short code — match either so the
+  // daily guesstimate is correctly recognised (otherwise free users get locked).
+  const dailyRefs = new Set<string>(
     [sched?.case_id, sched?.guesstimate_code].filter(Boolean) as string[],
   );
-  const isDaily = dailyIds.has(caseRow.id);
+  const isDaily =
+    dailyRefs.has(caseRow.id) || (caseRow.code != null && dailyRefs.has(caseRow.code));
 
   const uid = user?.id ?? '';
   const { data: priorRows } = await supabase
@@ -65,7 +68,7 @@ export async function getAttemptAccess(
     .eq('is_first_attempt', true)
     .gte('created_at', startIso);
   const candidateIds = (todayRows || [])
-    .filter((r: any) => !r.counted_for_daily && !dailyIds.has(r.case_id))
+    .filter((r: any) => !r.counted_for_daily && !dailyRefs.has(r.case_id))
     .map((r: any) => r.case_id);
   let used = 0;
   if (candidateIds.length) {

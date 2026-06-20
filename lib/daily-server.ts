@@ -11,20 +11,25 @@ function todayIstDate(): string {
   return new Date(istMs).toISOString().slice(0, 10);
 }
 
+/** A canonical UUID (v4-ish) — used to tell a real `cases.id` from a short `code`. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Server-side read of today's daily picks, DIRECT from Supabase.
  *
- * This is a faithful port of the FastAPI GET /daily/today handler — same
- * queries, same selection rules — so behaviour is identical, but it runs
- * inside the dashboard server component (no client round-trip, no Render
- * dependency for the read). Tiles paint instantly with the page.
+ * Faithful port of the FastAPI GET /daily/today handler. Runs inside the
+ * dashboard server component so tiles paint instantly.
  *
- * Reads three tables with the USER's session (RLS applies): daily_schedule,
- * cases, news_headlines. Requires authenticated SELECT on daily_schedule +
- * news_headlines (see supabase/daily-read-policies.sql); cases is already readable.
+ * Resilience note: `daily_schedule.guesstimate_code` (and occasionally
+ * `case_id`) may carry EITHER the case's UUID id OR its short `code`
+ * (e.g. "G-45"), depending on which generator wrote the row. We resolve by the
+ * correct column — querying the uuid `id` column with a non-uuid value throws,
+ * and the old Promise.all would let that single error reject the whole batch,
+ * nulling BOTH daily picks (so every tile fell back to /practice whenever the
+ * day's guesstimate was scheduled by code). allSettled isolates each lookup.
  *
- * Never throws — on any miss returns null fields, exactly like the backend
- * (the strip then shows its graceful "Browse…" fallbacks).
+ * Never throws — on any miss returns null fields; the strip shows its graceful
+ * "Browse…" fallbacks.
  */
 export async function getDailyTodayServerSide(): Promise<DailyContentResponse> {
   const today = todayIstDate();
@@ -48,17 +53,20 @@ export async function getDailyTodayServerSide(): Promise<DailyContentResponse> {
       .limit(1);
     const sched = schedRows?.[0] ?? null;
 
-    // case + guesstimate are both `cases` rows; fetch in parallel with the star headline
-    const caseId = sched?.case_id ?? null;
-    const guessId = sched?.guesstimate_code ?? null; // holds the guesstimate case's id
+    const caseRef = sched?.case_id ?? null;
+    const guessRef = sched?.guesstimate_code ?? null; // UUID id OR short code
 
-    const [caseRes, guessRes, starRes] = await Promise.all([
-      caseId
-        ? supabase.from('cases').select('id, title, type, difficulty').eq('id', caseId).limit(1)
-        : Promise.resolve({ data: null }),
-      guessId
-        ? supabase.from('cases').select('id, title, type, difficulty').eq('id', guessId).limit(1)
-        : Promise.resolve({ data: null }),
+    // Resolve a daily ref against the right column (id vs code).
+    const resolveCase = (val: string) =>
+      supabase
+        .from('cases')
+        .select('id, title, type, difficulty')
+        .eq(UUID_RE.test(val) ? 'id' : 'code', val)
+        .limit(1);
+
+    const [caseRes, guessRes, starRes] = await Promise.allSettled([
+      caseRef ? resolveCase(caseRef) : Promise.resolve({ data: null }),
+      guessRef ? resolveCase(guessRef) : Promise.resolve({ data: null }),
       // star headline of the day = today's brief (mirrors backend: is_star, newest first)
       supabase
         .from('news_headlines')
@@ -68,9 +76,12 @@ export async function getDailyTodayServerSide(): Promise<DailyContentResponse> {
         .limit(1),
     ]);
 
-    const caseRow = (caseRes.data as any[] | null)?.[0] ?? null;
-    const guessRow = (guessRes.data as any[] | null)?.[0] ?? null;
-    const starRow = (starRes.data as any[] | null)?.[0] ?? null;
+    const dataOf = (r: PromiseSettledResult<{ data: unknown }>): any[] | null =>
+      r.status === 'fulfilled' ? ((r.value?.data as any[] | null) ?? null) : null;
+
+    const caseRow = dataOf(caseRes)?.[0] ?? null;
+    const guessRow = dataOf(guessRes)?.[0] ?? null;
+    const starRow = dataOf(starRes)?.[0] ?? null;
 
     return {
       date: today,
@@ -80,7 +91,7 @@ export async function getDailyTodayServerSide(): Promise<DailyContentResponse> {
       guesstimate: guessRow
         ? { id: guessRow.id, title: guessRow.title, type: guessRow.type, difficulty: guessRow.difficulty }
         : null,
-      guesstimate_code: guessId,
+      guesstimate_code: guessRef,
       guesstimate_title: guessRow?.title ?? null,
       brief: starRow
         ? {
