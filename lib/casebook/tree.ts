@@ -88,6 +88,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     kind: 'section',
     icon: 'Layers',
     children: [
+      { title: 'MECE', kind: 'page', slug: 'core-frameworks/mece', meta: { difficulty: 'easy' } },
       { title: 'Structuring fundamentals', kind: 'page', slug: 'core-frameworks/structuring-fundamentals' },
       { title: 'Profitability', kind: 'page', slug: 'core-frameworks/profitability', meta: { difficulty: 'easy' } },
       { title: 'Market Entry', kind: 'page', slug: 'core-frameworks/market-entry' },

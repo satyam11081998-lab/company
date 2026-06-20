@@ -5,6 +5,7 @@ import { marketEntry } from './frameworks/market-entry';
 import { growth } from './frameworks/growth';
 import { mergersAcquisitions } from './frameworks/m-and-a';
 import { structuringFundamentals } from './frameworks/structuring-fundamentals';
+import { meceFramework } from './frameworks/mece';
 import { pricing } from './frameworks/pricing';
 import portersFiveForces from './toolkit/porters-five-forces';
 import swot from './toolkit/swot';
@@ -122,6 +123,7 @@ const SEED_PAGES: Record<string, Page> = {
   [marketEntry.slug]: marketEntry,
   [growth.slug]: growth,
   [mergersAcquisitions.slug]: mergersAcquisitions,
+  [meceFramework.slug]: meceFramework,
   [structuringFundamentals.slug]: structuringFundamentals,
   [pricing.slug]: pricing,
   [portersFiveForces.slug]: portersFiveForces,
