@@ -6,6 +6,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import GeoPattern from '@/components/geo-pattern';
+import MobileDesktopBanner from '@/components/mobile-desktop-banner';
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL, SITE_TITLE, SITE_DESC, siteGraphJsonLd } from '@/lib/seo';
 
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body className={`${inter.variable} font-sans text-foreground bg-background antialiased min-h-screen relative selection:bg-primary/20 selection:text-primary`}>
+        <MobileDesktopBanner />
         <ThemeProvider>
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground">
             Skip to content
