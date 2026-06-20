@@ -102,7 +102,7 @@ export default function AppNav() {
                 <Link
                   key={href}
                   href={href}
-                  className={`relative px-4 py-2 text-[17px] font-medium transition-colors rounded-sm ${
+                  className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
                     linkActive
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'
@@ -119,7 +119,7 @@ export default function AppNav() {
               {/* Secondary destinations, grouped so the bar never overflows. */}
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  className={`relative flex items-center gap-1 px-4 py-2 text-[17px] font-medium transition-colors rounded-sm outline-none ${
+                  className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
                     moreActive
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'

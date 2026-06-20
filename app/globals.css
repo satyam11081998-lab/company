@@ -354,9 +354,6 @@
   background: hsl(var(--navy));
   border-bottom: 1px solid hsl(var(--navy-mid));
 }
-.nav-bar a { color: hsl(var(--navy-foreground) / 0.55); font-size: 13px; font-weight: 500; }
-.nav-bar a:hover { color: hsl(var(--navy-foreground)); }
-.nav-bar a.active { color: hsl(var(--navy-foreground)); border-bottom: 2px solid hsl(var(--primary)); }
 
 /* App-like touch feel: remove the grey tap-flash, touch devices only (desktop untouched). */
 @media (hover: none) and (pointer: coarse) {
