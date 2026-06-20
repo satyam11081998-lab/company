@@ -19,6 +19,7 @@ import { Search, Shuffle, ExternalLink, Activity, Calculator, Briefcase, FileTex
 interface PracticeHubProps {
   cases: CaseRow[]; // From database (Scored Cases)
   attemptedCaseIds?: string[];
+  initialTab?: string;
 }
 
 type TabType = 'all' | 'scored' | 'guesstimates' | 'studies' | 'attempted';
@@ -26,12 +27,13 @@ type TabType = 'all' | 'scored' | 'guesstimates' | 'studies' | 'attempted';
 const ALL_CASE_STUDIES = ALL_DOMAINS.flatMap(d => d.cases || []);
 const ALL_DOMAINS_VALUE = '__all__';
 
-export default function PracticeHub({ cases, attemptedCaseIds = [] }: PracticeHubProps) {
+export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab = 'all' }: PracticeHubProps) {
   const searchParams = useSearchParams();
   const focusDomain = searchParams?.get('focus') || null;
   const focusTab = searchParams?.get('tab') as TabType | null;
 
-  const [activeTab, setActiveTab] = useState<TabType>(focusTab || 'all');
+  // Use initialTab if provided (handles server-side resolving of ?type=guesstimate), fallback to focusTab
+  const [activeTab, setActiveTab] = useState<TabType>((initialTab as TabType) || focusTab || 'all');
   const [search, setSearch] = useState('');
   const [domainFilter, setDomainFilter] = useState<string>(focusDomain || ALL_DOMAINS_VALUE);
   const [page, setPage] = useState(1);

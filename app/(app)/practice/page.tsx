@@ -6,7 +6,11 @@ import type { CaseRow } from '@/lib/types';
 
 export const revalidate = 60;
 
-export default async function PracticePage() {
+export default async function PracticePage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -20,6 +24,10 @@ export default async function PracticePage() {
   const cases = (casesRes.data as CaseRow[] | null) || [];
   const attemptedCaseIds = Array.from(new Set((attemptsRes.data || []).map((a) => a.case_id)));
 
+  let initialTab = (searchParams.tab || searchParams.type || 'all') as string;
+  if (initialTab === 'guesstimate') initialTab = 'guesstimates';
+  if (initialTab === 'case') initialTab = 'scored';
+
   return (
     <div className="min-h-screen bg-muted">
       <main className="container max-w-6xl py-10">
@@ -29,7 +37,7 @@ export default async function PracticePage() {
             Active practice across cases, guesstimates, and case studies. Pick a category or hit the randomizer.
           </p>
         </div>
-        <PracticeHub cases={cases} attemptedCaseIds={attemptedCaseIds} />
+        <PracticeHub cases={cases} attemptedCaseIds={attemptedCaseIds} initialTab={initialTab} />
       </main>
     </div>
   );

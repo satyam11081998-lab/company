@@ -26,7 +26,7 @@ interface GuesstimateCardProps {
 export function GuesstimateCard({ u, daily }: GuesstimateCardProps) {
   const router = useRouter();
   const hasDaily = !!daily?.id;
-  const href = hasDaily ? `/cases/${daily!.id}` : '/practice?type=guesstimate';
+  const href = hasDaily ? `/cases/${daily!.id}` : '/practice?tab=guesstimates';
   const goToCase = () => router.push(href);
 
   // Visual hover hint without restructuring the card or adding new className.

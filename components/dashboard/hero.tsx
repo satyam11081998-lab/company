@@ -272,7 +272,7 @@ export function HeroCase({
   // to /practice so the button is never dead. /tour can be wired later for the
   // newcomer flow; for now it also lands on /practice (the existing
   // "browse and pick" experience).
-  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
+  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice?tab=scored';
   const drillHref = '/practice';
   return (
     <div style={{
@@ -360,7 +360,7 @@ export function HeroStreak({
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
+  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice?tab=scored';
   return (
     <div style={{
       display: 'grid',
@@ -418,7 +418,7 @@ export function HeroReadiness({
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice';
+  const primaryHref = today?.id ? `/cases/${today.id}` : '/practice?tab=scored';
   const ready = u.readiness ?? 0;
   return (
     <div style={{
