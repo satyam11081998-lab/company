@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — practice-domains-seed — <pending commit + DB run>
+Added supabase/seed-cases-domains.sql: 7 new practice domains as first-class case TYPES — `market entry`, `pricing`, `m&a`, `operations`, `cost reduction`, `go to market`, `competitive strategy` — 5 mixed-difficulty cases each; topped up `market_sizing` (+4); +6 mixed-difficulty guesstimates. 45 rows total. Mirrors seed-cases-constellation.sql exactly (markdown ~15-min prompts, interview_meta, skill_cluster tag, skill_node NULL). Requires new migration 0017_cases_type_expand.sql (widens the cases.type CHECK — additive, non-breaking) to run first; also added display labels for the new types in lib/constants.ts (CASE_TYPE_LABELS). Idempotent ON CONFLICT (code). With existing profitability/growth, the /practice 'All domains' dropdown becomes ~10 domains, each with >=5 attemptable questions. NOTE: must be run against Supabase to take effect (data, not schema).
+touches: supabase/seed-cases-domains.sql (new)
+breaking: no — additive rows to `cases` (no column/schema change, not a C1 contract event)   affects: Practice hub, DB:cases (rows)
+
 ## 2026-06-21 — testimonials-carousel-overhaul — <pending commit>
 Redesigned the landing testimonials carousel: uniform fixed-height (340px) cards with the quote clamped (line-clamp-6) and the author pinned to the bottom, so varying quote lengths no longer distort the row or leave one card clipped. Removed the bulky outer Card frame; hidden the native scrollbar and added soft edge-fades + polished round arrow controls. ≤3 testimonials center; >3 become a snap carousel.
 touches: components/testimonials-carousel.tsx

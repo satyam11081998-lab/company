@@ -13,6 +13,15 @@ export const CASE_TYPE_LABELS: Record<string, string> = {
   profitability: 'Profitability',
   market_sizing: 'Market Sizing',
   growth: 'Growth',
+  // Practice domains added 2026-06-21 (seed-cases-domains.sql). Display labels
+  // only — CASE_TYPES (dashboard readiness) intentionally stays the core set.
+  'market entry': 'Market Entry',
+  pricing: 'Pricing',
+  'm&a': 'M&A',
+  operations: 'Operations',
+  'cost reduction': 'Cost Reduction',
+  'go to market': 'Go-to-Market',
+  'competitive strategy': 'Competitive Strategy',
 };
 
 export const DIFFICULTY_LABELS: Record<string, string> = {
