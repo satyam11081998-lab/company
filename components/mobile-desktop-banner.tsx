@@ -28,16 +28,13 @@ export default function MobileDesktopBanner() {
 
   return (
     <div
-      className="xl:hidden"
+      className="flex xl:hidden items-center justify-center"
       style={{
         position: 'sticky',
         top: 0,
         zIndex: 9999,
         background: 'var(--red)',
         color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         gap: 6,
         padding: '6px 36px 6px 12px',
         fontSize: 12,
