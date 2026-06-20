@@ -1,14 +1,15 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/components/user-context';
-import { Star, Lock } from 'lucide-react';
+import { Star, Lock, Check } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 import type { CheatSheetItemKind } from '@/lib/types';
 
 /**
  * Star toggle that saves a data point to the user's cheat sheet.
- * Outline star when idle → filled cardinal-red star once saved. Non-pro users
- * get a lock that links to /upgrade.
+ * Outline star when idle -> input mode -> filled checkmark once saved.
  */
 export function AddToCheatSheetButton({
   content,
@@ -21,9 +22,17 @@ export function AddToCheatSheetButton({
   sourceHeadlineId?: string | null;
   sourceKind?: CheatSheetItemKind;
 }) {
-  const { hasTierAccess } = useUser();
+  const { user, hasTierAccess } = useUser();
   const isPro = hasTierAccess('pro');
-  const [state, setState] = useState<'idle' | 'saving' | 'added'>('idle');
+  const [state, setState] = useState<'idle' | 'input' | 'saving' | 'added' | 'already_added'>('idle');
+  const [tag, setTag] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (state === 'input' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [state]);
 
   if (!isPro) {
     return (
@@ -38,35 +47,76 @@ export function AddToCheatSheetButton({
     );
   }
 
-  async function add() {
-    if (state !== 'idle') return;
-    setState('saving');
-    const res = await fetch('/api/cheatsheet', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content,
-        source_topic: sourceTopic,
-        source_headline_id: sourceHeadlineId ?? null,
-        source_kind: sourceKind,
-      }),
-    });
-    setState(res.ok ? 'added' : 'idle');
+  async function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Escape') {
+      setState('idle');
+      return;
+    }
+    if (e.key === 'Enter') {
+      if (!tag.trim()) return;
+      if (tag.length > 30) {
+        toast.error('Domain tag must be 30 characters or less');
+        return;
+      }
+      if (content.length > 2000) {
+        toast.error('Data point is too long to save');
+        return;
+      }
+      
+      setState('saving');
+      const supabase = createClient();
+      const { error } = await supabase.from('cheatsheet_points').insert({
+        user_id: user!.id,
+        point_text: content,
+        source: sourceTopic,
+        headline_id: sourceHeadlineId ?? null,
+        tag: tag.trim(),
+      });
+
+      if (error) {
+        if (error.code === '23505') {
+          setState('already_added');
+          toast.info('Already on your cheat sheet in this domain');
+        } else {
+          setState('idle');
+          toast.error('Failed to save to cheat sheet');
+          console.error(error);
+        }
+      } else {
+        setState('added');
+        toast.success('Saved to cheat sheet');
+      }
+    }
   }
 
-  const added = state === 'added';
+  if (state === 'input') {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={tag}
+        onChange={(e) => setTag(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={() => setState('idle')}
+        placeholder="Enter domain..."
+        className="h-6 w-32 px-2 text-xs rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+      />
+    );
+  }
+
+  const isSuccess = state === 'added' || state === 'already_added';
   return (
     <button
-      onClick={add}
-      disabled={state !== 'idle'}
-      aria-pressed={added}
-      title={added ? 'Saved to your cheat sheet' : 'Save to cheat sheet'}
-      aria-label={added ? 'Saved to cheat sheet' : 'Save to cheat sheet'}
+      onClick={() => isSuccess ? null : setState('input')}
+      disabled={state === 'saving'}
+      aria-pressed={isSuccess}
+      title={isSuccess ? 'Saved to your cheat sheet' : 'Save to cheat sheet'}
+      aria-label={isSuccess ? 'Saved to cheat sheet' : 'Save to cheat sheet'}
       className={`shrink-0 transition-colors disabled:cursor-default ${
-        added ? 'text-primary' : 'text-muted-foreground/60 hover:text-primary'
+        isSuccess ? 'text-primary' : 'text-muted-foreground/60 hover:text-primary'
       } ${state === 'saving' ? 'opacity-60' : ''}`}
     >
-      <Star className={`h-4 w-4 ${added ? 'fill-primary' : ''}`} />
+      {isSuccess ? <Check className="h-4 w-4" /> : <Star className="h-4 w-4" />}
     </button>
   );
 }

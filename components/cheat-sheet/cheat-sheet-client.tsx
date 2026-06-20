@@ -1,92 +1,115 @@
 'use client';
-import { useMemo, useState } from 'react';
-import type { CheatSheetItemRow } from '@/lib/types';
-import { CHEAT_DOMAINS, UNCATEGORIZED, domainMeta } from '@/lib/cheat-domains';
-import { Trash2, StickyNote, X, Tag as TagIcon, Menu } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import type { CheatsheetPointRow } from '@/lib/types';
+import { Trash2, Menu, Download } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { CategoryRail, type RailBucket } from './category-rail';
+import TierGate from '@/components/tier-gate';
 
-type Item = CheatSheetItemRow;
+type Item = CheatsheetPointRow;
 
 const ALL = 'all';
 
-/** A point belongs to a real domain only if its id is in CHEAT_DOMAINS; else Uncategorized. */
-function bucketOf(it: Item): string {
-  return it.domain && CHEAT_DOMAINS.some((d) => d.id === it.domain) ? it.domain : UNCATEGORIZED.id;
-}
-
-export function CheatSheetClient({ initialItems }: { initialItems: Item[] }) {
-  const [items, setItems] = useState<Item[]>(
-    initialItems.map((i) => ({ ...i, tags: i.tags ?? [], domain: i.domain ?? null })),
-  );
-  const [query, setQuery] = useState('');
+export function CheatSheetClient() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<string>(ALL);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  
+  const supabase = createClient();
 
-  function patch(id: string, body: Record<string, unknown>) {
-    return fetch(`/api/cheatsheet/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-  }
+  useEffect(() => {
+    async function fetchPoints() {
+      const { data, error } = await supabase
+        .from('cheatsheet_points')
+        .select('*')
+        .order('tag_norm', { ascending: true })
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) setItems(data as Item[]);
+      setLoading(false);
+    }
+    fetchPoints();
+  }, [supabase]);
 
   async function remove(id: string) {
     const prev = items;
     setItems(items.filter((i) => i.id !== id));
-    const res = await fetch(`/api/cheatsheet/${id}`, { method: 'DELETE' });
-    if (!res.ok) setItems(prev);
+    const { error } = await supabase.from('cheatsheet_points').delete().eq('id', id);
+    if (error) setItems(prev);
   }
 
-  function setDomain(id: string, domain: string | null) {
-    setItems((cur) => cur.map((i) => (i.id === id ? { ...i, domain } : i)));
-    patch(id, { domain });
-  }
-  function setTags(id: string, tags: string[]) {
-    setItems((cur) => cur.map((i) => (i.id === id ? { ...i, tags } : i)));
-    patch(id, { tags });
-  }
-  function saveNote(id: string, note: string) {
-    setItems((cur) => cur.map((i) => (i.id === id ? { ...i, note } : i)));
-    patch(id, { note });
-  }
-
-  // Rail counts come from the FULL item set (pre-search) so they stay stable.
-  const buckets: RailBucket[] = useMemo(() => {
-    const counts = new Map<string, number>();
+  // Print function: open new window, render HTML, print
+  function handlePrint() {
+    const w = window.open('', '_blank');
+    if (!w) return;
+    
+    // Group items
+    const grouped = new Map<string, Item[]>();
     for (const it of items) {
-      const b = bucketOf(it);
-      counts.set(b, (counts.get(b) ?? 0) + 1);
+      if (!grouped.has(it.tag)) grouped.set(it.tag, []);
+      grouped.get(it.tag)!.push(it);
     }
-    const out: RailBucket[] = [{ id: ALL, label: 'All points', accent: '', count: items.length }];
-    for (const d of CHEAT_DOMAINS) {
-      const c = counts.get(d.id) ?? 0;
-      if (c > 0) out.push({ id: d.id, label: d.label, accent: d.accent, count: c });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Cheat Sheet</title>
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; color: #111; max-width: 800px; margin: 0 auto; padding: 2rem; }
+          h1 { border-bottom: 2px solid #eaeaea; padding-bottom: 0.5rem; margin-bottom: 2rem; }
+          h2 { color: #444; margin-top: 2.5rem; text-transform: capitalize; }
+          .point { margin-bottom: 1rem; padding: 1rem; border-left: 3px solid #ccc; background: #fafafa; page-break-inside: avoid; }
+          .source { font-size: 0.85rem; color: #666; margin-top: 0.5rem; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>My Cheat Sheet</h1>
+        ${Array.from(grouped.entries()).sort((a,b) => a[0].localeCompare(b[0])).map(([tag, pts]) => `
+          <h2>${tag}</h2>
+          ${pts.map(p => `
+            <div class="point">
+              <div>${p.point_text}</div>
+              ${p.source ? `<div class="source">from "${p.source}"</div>` : ''}
+            </div>
+          `).join('')}
+        `).join('')}
+        <script>
+          window.onload = () => { window.print(); };
+        </script>
+      </body>
+      </html>
+    `;
+    w.document.write(html);
+    w.document.close();
+  }
+
+  const buckets = useMemo(() => {
+    const counts = new Map<string, number>();
+    const originalTags = new Map<string, string>(); // tag_norm -> original case
+    for (const it of items) {
+      counts.set(it.tag_norm, (counts.get(it.tag_norm) ?? 0) + 1);
+      if (!originalTags.has(it.tag_norm)) originalTags.set(it.tag_norm, it.tag);
     }
-    const uncat = counts.get(UNCATEGORIZED.id) ?? 0;
-    if (uncat > 0) out.push({ id: UNCATEGORIZED.id, label: UNCATEGORIZED.label, accent: UNCATEGORIZED.accent, count: uncat });
-    return out;
+    const out = [{ id: ALL, label: 'All points', count: items.length }];
+    for (const [norm, count] of counts.entries()) {
+      out.push({ id: norm, label: originalTags.get(norm)!, count });
+    }
+    return out.sort((a, b) => a.id === ALL ? -1 : b.id === ALL ? 1 : a.id.localeCompare(b.id));
   }, [items]);
 
-  // Category filter first, then search.
   const visible = useMemo(() => {
-    const byCat = active === ALL ? items : items.filter((it) => bucketOf(it) === active);
-    const q = query.trim().toLowerCase();
-    if (!q) return byCat;
-    return byCat.filter(
-      (i) =>
-        i.content.toLowerCase().includes(q) ||
-        (i.tags || []).some((t) => t.toLowerCase().includes(q)) ||
-        (i.source_topic || '').toLowerCase().includes(q),
-    );
-  }, [items, active, query]);
+    if (active === ALL) return items;
+    return items.filter((it) => it.tag_norm === active);
+  }, [items, active]);
 
-  const activeMeta =
-    active === ALL
-      ? { label: 'All points', accent: '' }
-      : active === UNCATEGORIZED.id
-        ? UNCATEGORIZED
-        : domainMeta(active);
+  if (loading) {
+    return <div className="py-10 text-center text-muted-foreground">Loading cheat sheet...</div>;
+  }
 
   if (items.length === 0) {
     return (
@@ -96,177 +119,107 @@ export function CheatSheetClient({ initialItems }: { initialItems: Item[] }) {
     );
   }
 
+  const activeLabel = buckets.find(b => b.id === active)?.label ?? 'All points';
+
   const rail = (
-    <CategoryRail
-      buckets={buckets}
-      active={active}
-      onSelect={setActive}
-      query={query}
-      onQuery={setQuery}
-      onAfterSelect={() => setDrawerOpen(false)}
-    />
+    <div className="flex flex-col py-2">
+      {buckets.map((b) => (
+        <button
+          key={b.id}
+          onClick={() => { setActive(b.id); setDrawerOpen(false); }}
+          className={`flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-muted/50 ${active === b.id ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground'}`}
+        >
+          <span className="truncate">{b.label}</span>
+          <span className="ml-2 rounded-full bg-background/50 px-2 py-0.5 text-xs">{b.count}</span>
+        </button>
+      ))}
+    </div>
   );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-0 lg:gap-6">
       {/* Left rail (desktop) */}
       <aside className="hidden lg:block">
-        <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-hidden rounded-xl border border-border bg-card/50">
-          {rail}
+        <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-hidden rounded-xl border border-border bg-card/50 flex flex-col">
+          <div className="p-3 border-b border-border bg-card">
+            <TierGate required="pro">
+              <button 
+                onClick={handlePrint}
+                className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors"
+              >
+                <Download className="h-4 w-4" /> Download PDF
+              </button>
+            </TierGate>
+          </div>
+          <div className="overflow-y-auto">
+            {rail}
+          </div>
         </div>
       </aside>
 
       {/* Right content */}
       <main className="min-w-0">
-        {/* Mobile: open rail in a drawer */}
+        {/* Mobile header / drawer */}
         <div className="mb-4 flex items-center gap-3 lg:hidden">
           <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
             <SheetTrigger className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium">
               <Menu className="h-4 w-4" /> Categories
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] p-0">
-              {rail}
+            <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+              <div className="p-4 border-b border-border">
+                <TierGate required="pro">
+                  <button 
+                    onClick={handlePrint}
+                    className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors"
+                  >
+                    <Download className="h-4 w-4" /> Download PDF
+                  </button>
+                </TierGate>
+              </div>
+              <div className="overflow-y-auto flex-1">
+                {rail}
+              </div>
             </SheetContent>
           </Sheet>
           <span className="text-sm text-muted-foreground">
-            {activeMeta.label} · {visible.length}
+            {activeLabel} · {visible.length}
           </span>
         </div>
 
-        {/* Desktop header for the active category */}
         <div className="mb-3 hidden items-center gap-2.5 lg:flex">
-          {active !== ALL && (activeMeta as { accent?: string }).accent ? (
-            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: (activeMeta as { accent: string }).accent }} />
-          ) : null}
-          <h2 className="text-sm font-semibold text-foreground">{activeMeta.label}</h2>
+          <h2 className="text-sm font-semibold text-foreground">{activeLabel}</h2>
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{visible.length}</span>
         </div>
 
         {visible.length === 0 ? (
           <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            {query.trim()
-              ? <>No points match &ldquo;{query}&rdquo;.</>
-              : <>No points in {activeMeta.label} yet.</>}
+            No points in {activeLabel} yet.
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {visible.map((it) => (
-              <ItemCard
-                key={it.id}
-                item={it}
-                onDomain={(d) => setDomain(it.id, d)}
-                onTags={(t) => setTags(it.id, t)}
-                onNote={(n) => saveNote(it.id, n)}
-                onRemove={() => remove(it.id)}
-              />
+              <div key={it.id} className="rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/30">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-flex px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+                        {it.tag}
+                      </span>
+                    </div>
+                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{it.point_text}</p>
+                    {it.source ? (
+                      <p className="text-xs text-muted-foreground mt-2">from &ldquo;{it.source}&rdquo;</p>
+                    ) : null}
+                  </div>
+                  <button onClick={() => remove(it.id)} aria-label="Remove" className="shrink-0 text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         )}
       </main>
-    </div>
-  );
-}
-
-function ItemCard({
-  item,
-  onDomain,
-  onTags,
-  onNote,
-  onRemove,
-}: {
-  item: Item;
-  onDomain: (d: string | null) => void;
-  onTags: (t: string[]) => void;
-  onNote: (n: string) => void;
-  onRemove: () => void;
-}) {
-  const [tagInput, setTagInput] = useState('');
-  const [noteOpen, setNoteOpen] = useState(!!item.note);
-  const tags = item.tags || [];
-
-  function addTag() {
-    const t = tagInput.trim().slice(0, 40);
-    if (!t || tags.includes(t) || tags.length >= 12) {
-      setTagInput('');
-      return;
-    }
-    onTags([...tags, t]);
-    setTagInput('');
-  }
-
-  return (
-    <div className="rounded-lg border border-border bg-background p-3 transition-colors hover:border-primary/30">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm leading-relaxed text-foreground">{item.content}</p>
-        <button onClick={onRemove} aria-label="Remove" className="shrink-0 text-muted-foreground hover:text-destructive">
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-
-      {item.source_topic ? (
-        <p className="mt-1 truncate text-xs text-muted-foreground">from &ldquo;{item.source_topic}&rdquo;</p>
-      ) : null}
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <select
-          value={item.domain ?? ''}
-          onChange={(e) => onDomain(e.target.value || null)}
-          aria-label="Domain"
-          className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
-        >
-          <option value="">Uncategorized</option>
-          {CHEAT_DOMAINS.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.label}
-            </option>
-          ))}
-        </select>
-
-        {tags.map((t) => (
-          <span key={t} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
-            {t}
-            <button onClick={() => onTags(tags.filter((x) => x !== t))} aria-label={`Remove tag ${t}`} className="text-muted-foreground hover:text-destructive">
-              <X className="h-3 w-3" />
-            </button>
-          </span>
-        ))}
-
-        <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-xs text-muted-foreground">
-          <TagIcon className="h-3 w-3" />
-          <input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-            onBlur={addTag}
-            placeholder="tag"
-            className="w-12 bg-transparent text-xs transition-all focus:w-24 focus:outline-none"
-          />
-        </span>
-
-        <button
-          onClick={() => setNoteOpen((v) => !v)}
-          className={`ml-auto inline-flex items-center gap-1 text-xs ${
-            noteOpen || item.note ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <StickyNote className="h-3.5 w-3.5" /> Note
-        </button>
-      </div>
-
-      {noteOpen && (
-        <textarea
-          defaultValue={item.note ?? ''}
-          rows={2}
-          onBlur={(e) => onNote(e.target.value)}
-          placeholder="Add a personal note…"
-          className="mt-2 w-full rounded-md border border-border bg-transparent p-2 text-sm focus:border-primary focus:outline-none"
-        />
-      )}
     </div>
   );
 }

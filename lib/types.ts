@@ -345,10 +345,12 @@ export interface TeamMemberRow {
 }
 
 
-export interface CaseTagRow {
+export interface CheatsheetPointRow {
   id: string;
   user_id: string;
-  case_id: string;
+  point_text: string;
+  source: string;
+  headline_id: string | null;
   tag: string;
   tag_norm: string;
   created_at: string;

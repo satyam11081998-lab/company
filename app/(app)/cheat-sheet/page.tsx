@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import { effectiveTier } from '@/lib/tier';
-import { listCheatSheetItems } from '@/lib/cheatsheet';
 import { CheatSheetClient } from '@/components/cheat-sheet/cheat-sheet-client';
 import TierGate from '@/components/tier-gate';
 
@@ -21,7 +20,6 @@ export default async function CheatSheetPage() {
         <p className="text-muted-foreground mb-6">
           Capture data points from GD briefs and keep them in one structured place to revise before interviews.
         </p>
-        {/* Phase 1 #4 RESOLVED: real interface is { required, children (required), variant?, lockedTitle?, lockedMessage? } */}
         <TierGate
           required="pro"
           variant="card"
@@ -34,14 +32,17 @@ export default async function CheatSheetPage() {
     );
   }
 
-  const items = await listCheatSheetItems(supabase, user.id);
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-1">Cheat Sheet</h1>
-      <p className="text-muted-foreground mb-6">
-        Your saved data points, organised by domain. Pick a category on the left, add tags, and jot notes to revise fast.
-      </p>
-      <CheatSheetClient initialItems={items} />
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold mb-1">Cheat Sheet</h1>
+          <p className="text-muted-foreground mb-6">
+            Your saved data points, organised by domain. Pick a category on the left to revise fast.
+          </p>
+        </div>
+      </div>
+      <CheatSheetClient />
     </div>
   );
 }
