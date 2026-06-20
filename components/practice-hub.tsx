@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ALL_DOMAINS } from '@/lib/curriculum';
 import type { CaseRow } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Shuffle, ExternalLink, Activity, Calculator, Briefcase, FileText, Check, CheckCircle2, Filter } from 'lucide-react';
+import { Search, Shuffle, Activity, Calculator, Briefcase, Check, CheckCircle2, Filter } from 'lucide-react';
 
 interface PracticeHubProps {
   cases: CaseRow[]; // From database (Scored Cases)
@@ -22,9 +21,8 @@ interface PracticeHubProps {
   initialTab?: string;
 }
 
-type TabType = 'all' | 'scored' | 'guesstimates' | 'studies' | 'attempted';
+type TabType = 'all' | 'scored' | 'guesstimates' | 'attempted';
 
-const ALL_CASE_STUDIES = ALL_DOMAINS.flatMap(d => d.cases || []);
 const ALL_DOMAINS_VALUE = '__all__';
 
 export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab = 'all' }: PracticeHubProps) {
@@ -32,8 +30,12 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
   const focusDomain = searchParams?.get('focus') || null;
   const focusTab = searchParams?.get('tab') as TabType | null;
 
-  // Use initialTab if provided (handles server-side resolving of ?type=guesstimate), fallback to focusTab
-  const [activeTab, setActiveTab] = useState<TabType>((initialTab as TabType) || focusTab || 'all');
+  // Use initialTab if provided (handles server-side resolving of ?type=guesstimate), fallback to focusTab.
+  // Sanitize against legacy values (e.g. the removed 'studies' tab) so we never land on a dead tab.
+  const VALID_TABS: TabType[] = ['all', 'scored', 'guesstimates', 'attempted'];
+  const pickTab = (t: string | null | undefined): TabType | null =>
+    t && (VALID_TABS as string[]).includes(t) ? (t as TabType) : null;
+  const [activeTab, setActiveTab] = useState<TabType>(pickTab(initialTab) || pickTab(focusTab) || 'all');
   const [search, setSearch] = useState('');
   const [domainFilter, setDomainFilter] = useState<string>(focusDomain || ALL_DOMAINS_VALUE);
   const [page, setPage] = useState(1);
@@ -44,13 +46,13 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
   useEffect(() => { setPage(1); }, [search, activeTab, domainFilter]);
 
   // Domain dropdown options: every distinct scored-case type + case-study sector.
+  // Domains = the distinct scored-case practice categories. (Case studies were
+  // industry "sectors" whose only action linked to read-only library pages, so
+  // they're gone — every domain here now resolves to attemptable practice.)
   const domainOptions = useMemo(() => {
     const set = new Set<string>();
     for (const c of cases) {
       if (c.type && c.type !== 'guesstimate') set.add(c.type);
-    }
-    for (const s of ALL_CASE_STUDIES) {
-      if (s.sector) set.add(s.sector);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [cases]);
@@ -79,13 +81,6 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
     );
   }, [cases, search, domainActive]);
 
-  const filteredStudies = useMemo(() => {
-    return ALL_CASE_STUDIES.filter(c => {
-      if (domainActive && c.sector !== domainFilter) return false;
-      return c.title.toLowerCase().includes(search.toLowerCase()) || c.sector.toLowerCase().includes(search.toLowerCase());
-    });
-  }, [search, domainActive, domainFilter]);
-
   // Attempted cases live ONLY in the Attempted tab; default views show fresh items.
   const filteredScored = useMemo(
     () => matchedScored.filter(c => !attemptedSet.has(c.id)),
@@ -104,18 +99,15 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
 
   const handleRandomize = () => {
     let pool: any[] = [];
-    if (activeTab === 'all') pool = [...filteredScored, ...filteredGuesstimates, ...filteredStudies];
+    if (activeTab === 'all') pool = [...filteredScored, ...filteredGuesstimates];
     else if (activeTab === 'scored') pool = filteredScored;
     else if (activeTab === 'guesstimates') pool = filteredGuesstimates;
-    else if (activeTab === 'studies') pool = filteredStudies;
     else if (activeTab === 'attempted') pool = attemptedItems;
 
     if (pool.length === 0) return;
     const item = pool[Math.floor(Math.random() * pool.length)];
     if (item?.id) {
       window.location.href = `/cases/${item.id}`;
-    } else if (item?.code) {
-      window.location.href = `/learn/practice-case-library#${item.code}`;
     }
   };
 
@@ -128,11 +120,8 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
     if (activeTab === 'all' || activeTab === 'guesstimates') {
       items.push(...filteredGuesstimates.map(g => ({ ...g, _itemType: 'guesstimate' })));
     }
-    if (activeTab === 'all' || activeTab === 'studies') {
-      items.push(...filteredStudies.map(s => ({ ...s, _itemType: 'study' })));
-    }
     return items;
-  }, [activeTab, filteredScored, filteredGuesstimates, filteredStudies, attemptedItems]);
+  }, [activeTab, filteredScored, filteredGuesstimates, attemptedItems]);
 
   const itemsPerPage = 9;
   const totalPages = Math.ceil(allItems.length / itemsPerPage);
@@ -146,7 +135,6 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
           <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon={<Activity className="w-4 h-4" />}>All</TabButton>
           <TabButton active={activeTab === 'scored'} onClick={() => setActiveTab('scored')} icon={<Briefcase className="w-4 h-4" />}>Scored Cases</TabButton>
           <TabButton active={activeTab === 'guesstimates'} onClick={() => setActiveTab('guesstimates')} icon={<Calculator className="w-4 h-4" />}>Guesstimates</TabButton>
-          <TabButton active={activeTab === 'studies'} onClick={() => setActiveTab('studies')} icon={<FileText className="w-4 h-4" />}>Case Studies</TabButton>
           <TabButton active={activeTab === 'attempted'} onClick={() => setActiveTab('attempted')} icon={<CheckCircle2 className="w-4 h-4" />}>
             Attempted{attemptedCaseIds.length > 0 ? ` (${attemptedCaseIds.length})` : ''}
           </TabButton>
@@ -242,32 +230,8 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
                 </div>
                 <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-navy transition-colors">{g.title}</h3>
                 <div className="mb-4 flex-grow" />
-                <div className="mt-auto pt-4 border-t flex justify-between items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t-navy/10">
-                  {g.code ? (
-                    <Link href={`/learn/guesstimates-market-sizing#${g.code}`} className="text-small font-medium text-muted-foreground hover:text-navy hover:underline shrink-0">Walkthrough</Link>
-                  ) : <span />}
+                <div className="mt-auto pt-4 border-t flex justify-end items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t-navy/10">
                   <Link href={`/cases/${g.id}`} className="text-small font-medium text-navy hover:underline shrink-0">{attempted ? 'Retry' : 'Solve'} &rarr;</Link>
-                </div>
-              </Card>
-            );
-          }
-          if (item._itemType === 'study') {
-            const s = item as any;
-            return (
-              <Card key={`study-${s.code}`} className="ui-card flex flex-col p-5 group hover:border-foreground/20 transition-colors">
-                <div className="flex justify-between items-start mb-3">
-                  <span className="tag-amber px-2 py-1 rounded text-micro uppercase tracking-wide font-medium">
-                    Case Study
-                  </span>
-                  <button title="View source methodology" className="text-muted-foreground hover:text-foreground transition-colors">
-                    <ExternalLink className="h-4 w-4" />
-                  </button>
-                </div>
-                <h3 className="text-strong font-semibold text-foreground mb-2">{s.title}</h3>
-                <p className="text-body text-muted-foreground line-clamp-2 mb-4 flex-grow">{s.problem}</p>
-                <div className="mt-auto pt-4 border-t flex justify-between items-center">
-                   <span className="text-small text-muted-foreground">{s.sector}</span>
-                   <Link href={`/learn/practice-case-library#${s.code}`} className="text-small font-medium text-foreground hover:underline">Read &rarr;</Link>
                 </div>
               </Card>
             );

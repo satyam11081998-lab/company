@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — fix-practice-domains-and-caselib-links — <pending commit>
+/practice domain dropdown now lists only real scored-case categories, so every domain resolves to attemptable practice questions. Removed the Case Studies tab/cards and ALL read-only deep-links: /learn/practice-case-library# (study cards + randomizer fallback) and the guesstimate card's /learn/guesstimates-market-sizing# 'Walkthrough'. Tabs now All/Scored/Guesstimates/Attempted; guesstimate card shows only Solve →. Legacy ?tab=studies is sanitized to 'all'.
+touches: components/practice-hub.tsx
+breaking: no   affects: Practice hub (Guesstimate end-to-end / Case solve UX surface)
+
 ## 2026-06-20 — mece-framework-page — <pending commit>
 Added a dedicated MECE page (Mutually Exclusive, Collectively Exhaustive) as the FIRST entry under Core Frameworks; covers the two failure modes (overlap/gap), five MECE-by-construction split axes, a 10-second check, and cross-links Structuring fundamentals. Runtime-verified (12 blocks, valid types, 5×3 table, on-grammar SVG).
 touches: lib/casebook/content/frameworks/mece.ts (new), lib/casebook/content/index.ts, lib/casebook/tree.ts
