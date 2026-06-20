@@ -13,6 +13,7 @@ import { Menu } from 'lucide-react';
 import type { Page } from '@/lib/casebook/types';
 import { getPrimerBySlug } from '@/lib/primers';
 import { PrimerEmbed } from './primer-embed';
+import { PrimerWorkspace } from './primer-workspace';
 
 interface CasebookReaderProps {
   page: Page;
@@ -25,36 +26,19 @@ export function CasebookReader({ page }: CasebookReaderProps) {
   const primer = page.kind === 'primer' ? getPrimerBySlug(page.slug) : null;
   if (primer) {
     return (
-      <div className="w-full min-h-screen bg-background grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] relative">
-        <aside className="border-r border-border bg-card/50 hidden lg:flex flex-col h-[calc(100vh-6rem)] sticky top-24 overflow-y-auto">
-          <CasebookSearch />
-        </aside>
+      <PrimerWorkspace
+        nav={<CasebookSearch />}
+        breadcrumbs={<Breadcrumbs slug={page.slug} />}
+      >
+        <header className="mb-6">
+          <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
+            No. {primer.no} · {primer.sector}
+          </span>
+          <h1 className="text-h1 text-foreground mt-1">{page.title}</h1>
+        </header>
 
-        <main className="px-4 sm:px-6 lg:px-8 py-8 lg:py-10 relative">
-          <div className="flex items-center gap-4 mb-5">
-            <Sheet>
-              <SheetTrigger className="lg:hidden shrink-0 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 h-10 text-small font-medium text-foreground shadow-sm hover:bg-muted active:scale-95 transition">
-                <Menu className="w-5 h-5 text-primary" /> Contents
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
-                <CasebookSearch />
-              </SheetContent>
-            </Sheet>
-            <div className="flex-1">
-              <Breadcrumbs slug={page.slug} />
-            </div>
-          </div>
-
-          <header className="mb-6">
-            <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
-              No. {primer.no} · {primer.sector}
-            </span>
-            <h1 className="text-h1 text-foreground mt-1">{page.title}</h1>
-          </header>
-
-          <PrimerEmbed primer={primer} />
-        </main>
-      </div>
+        <PrimerEmbed primer={primer} />
+      </PrimerWorkspace>
     );
   }
 
