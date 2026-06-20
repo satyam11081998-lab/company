@@ -8,6 +8,16 @@ export const petrolPumpsIndia: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['infrastructure', 'demand-capacity'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of petrol pumps (fuel stations) in India. Infrastructure guesstimates almost always resolve as **total demand ÷ capacity per unit**: fuel consumed nationally ÷ what one station can viably sell.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Definition: retail fuel stations (petrol/diesel outlets) across India — physical outlets, all brands, public retail — not CNG-only sites or private captive pumps?', note: 'Settling what counts as a ‘pump’ prevents double-counting captive and alt-fuel sites.' },
+        { speaker: 'interviewer', md: 'Public retail fuel outlets, all brands.' },
+        { speaker: 'candidate', md: 'All India, current?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Infrastructure like this resolves as total demand ÷ capacity, so I’ll build national fuel consumption first, then divide by what one viable station sells.', note: 'States the canonical demand-÷-capacity frame up front.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The retail-outlet definition and a national-fuel-demand ÷ per-station-capacity build.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree: vehicle fleet split into two-wheelers, cars and commercial vehicles, each with count times litres per day, summed to national demand, divided by viable station throughput', caption: 'The full tree — each vehicle class carries its own count × intensity. Note commercial vehicles: 8% of the fleet, ~60% of the fuel.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="ppng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#ppng)"/>

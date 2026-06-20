@@ -11,12 +11,13 @@ export const d2cSkincareOffline: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is a digital-first Indian skincare brand doing ₹220 crore annual revenue, ~85% through its own website and marketplaces. Online customer-acquisition costs have doubled in two years and growth has slowed to 15%. The founders want to enter offline retail. Evaluate the move and design the entry.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'This is channel entry rather than market entry — same product, same country, new shelf. Quick checks: what\'s the gross margin online versus what offline trade will demand? And is the brand known beyond its online buyers — do offline shoppers recognize it?', note: 'Naming the case type ("channel entry") early signals you won\'t waste time on country-entry boilerplate.' },
         { speaker: 'interviewer', md: 'Online gross margin is 70%. General trade and modern trade will take 35–45% combined through distributor and retailer margins. Brand awareness: strong among urban women 18–35 on social media; near-zero beyond that.' },
         { speaker: 'candidate', md: 'So offline halves the margin but removes the CAC that\'s strangling online growth. The real comparison is **contribution per unit after channel costs**: online = margin minus rising CAC; offline = thinner margin, no CAC, plus discovery we can\'t buy online anymore. I\'ll structure around where to show up first and what the P&L per channel looks like.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Reframed it as channel entry, not market entry, and centred the build on contribution per unit after channel costs — online CAC versus offline trade margin.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier channel entry tree: four offline formats each with trade take and phase, a contribution math row comparing online at 280 rupees after CAC with beauty retail at 270 rupees, and a sequencing verdict bar', caption: 'Four formats, each with its own P&L and phase — and the contribution row showing why a ₹280 vs ₹270 dead heat still decides the case.', svg: `<svg viewBox="0 0 720 425" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

@@ -8,6 +8,16 @@ export const ottWatchHours: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['time-budget', 'digital'] },
   blocks: [
     { type: 'prose', md: 'Estimate total hours of OTT video (streaming platforms, not YouTube/reels) watched in India per day. Time-based guesstimates have a built-in sanity anchor no other type has: **nobody has more than 24 hours**, and screen time competes with work, sleep, and other media.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Scope: subscription/AVOD streaming platforms — *excluding* YouTube and short-form reels — measured in viewer-hours per day across India?', note: 'Excluding YouTube/reels is enormous; leaving them in would multiply the answer.' },
+        { speaker: 'interviewer', md: 'Yes — long-form platforms, viewer-hours/day.' },
+        { speaker: 'candidate', md: 'A typical day, all India?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then I’ll segment viewers by engagement intensity and sanity-check against the 24-hour budget — streaming competes with work, sleep, and other media.', note: 'The time-budget anchor is unique to this type and catches runaway numbers.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The platform definition (no YouTube/reels), the viewer-hour unit, and an engagement-segmented build checked against the 24-hour budget.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from smartphone base to OTT weekly actives, segmented into binger, regular and occasional bands with hours each, summed and bounded by the national leisure-time budget', caption: 'Base → viewer funnel → engagement bands → sum — then the 24-hour constraint bounds the answer from above.', svg: `<svg viewBox="0 0 720 530" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="otng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#otng)"/>

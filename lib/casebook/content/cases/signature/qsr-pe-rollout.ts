@@ -11,12 +11,13 @@ export const qsrPeRollout: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'A PE fund bought 70% of a 45-outlet biryani QSR chain (₹190 crore revenue, ₹23 crore EBITDA, South-India only) eighteen months ago, underwriting a 150-outlet national chain at exit. Progress: 12 new outlets, of which 7 are below plan — the new-city outlets especially. The fund exits in ~4 years. You\'re hired to fix the rollout. The twist: the operating partner wants to *accelerate* openings to hit 150; the founder-CEO wants to *pause* and fix the model.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Before taking sides: *where* are the 7 underperformers — new cities, or new outlets in home territory? And what does "below plan" mean — slow ramp (trending to plan late) or structurally weak (plateaued below breakeven)?', note: 'The pause-vs-accelerate fight is unresolvable until underperformance is decomposed into ramp-delay vs model-failure.' },
         { speaker: 'interviewer', md: 'All 7 are in two new cities — Hyderabad outlets are ramping slowly but trending up; the 3 Mumbai outlets have plateaued at 60% of plan after 12 months. Home-state additions are all at or above plan.' },
         { speaker: 'candidate', md: 'That\'s three different stories: the home model replicates fine; Hyderabad is a patience problem; Mumbai is a product-market problem. So neither executive is right — accelerating into Mumbai-like cities ships a broken model; pausing everywhere wastes the home model\'s proven runway. The structure: diagnose Mumbai, segment the national map by "distance" from the proven model, and rebuild the rollout sequence against the exit clock.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Separated slow-ramp from structurally-weak outlets by location, so neither ‘accelerate everywhere’ nor ‘pause everywhere’ wins outright.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier rollout tree: Mumbai diagnosis, model-distance rings and the exit clock, an exit-math tier comparing sprint-to-150 at 55 crore EBITDA and 11.5 times equal to 630 crore against quality-130 at 58 crore and 14.5 times equal to 840 crore, and a 210 crore delta verdict bar', caption: 'Diagnose, re-segment, re-sequence — and the exit-math tier prices the executive fight: the "missing" 20 outlets are worth −₹210 cr.', svg: `<svg viewBox="0 0 720 430" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

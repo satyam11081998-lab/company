@@ -8,6 +8,16 @@ export const smartphonesSoldIndia: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 5, tags: ['stock-and-flow', 'consumption'] },
   blocks: [
     { type: 'prose', md: 'Estimate annual smartphone unit sales in India. The elegant route is **stock and flow**: sales = installed base ÷ replacement cycle + first-time buyers. Resist jumping to "X% of population buys one."' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Two checks: annual *new* smartphone units sold to consumers — excluding refurbished and second-hand resale — counting smartphones, not feature phones?', note: 'The used market and feature phones are both large; excluding them keeps the flow meaningful.' },
+        { speaker: 'interviewer', md: 'New smartphones to end consumers, units/year.' },
+        { speaker: 'candidate', md: 'All India, a typical year?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then stock-and-flow: installed base ÷ replacement cycle, plus first-time buyers — not ‘X% of people buy one a year’.', note: 'Stock-and-flow is the workhorse; the naive percentage hides the replacement dynamic.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'New-units-to-consumers scope and a stock-and-flow build (base ÷ cycle + first-timers).' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier estimation tree: population to installed base and replacement cycle on one branch, feature-phone upgraders and new users on the other, computed to annual smartphone sales', caption: 'The full tree — population to installed base to cycle on the left; first-time engines on the right; every node carries its number.', svg: `<svg viewBox="0 0 720 500" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="ssng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#ssng)"/>

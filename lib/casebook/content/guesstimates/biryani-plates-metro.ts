@@ -8,6 +8,16 @@ export const biryaniPlatesMetro: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 5, tags: ['consumption', 'frequency'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of biryani plates sold per day in a 10-million-person metro (restaurants + delivery + street, *commercially sold* only — home cooking excluded). The key structuring move: estimate **eating-out occasions first**, then biryani\'s share of them.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Two scope locks before I build. We count *commercially sold* plates only — restaurants, delivery, street — excluding home cooking? And one plate = one ordered portion, veg or non-veg?', note: 'Home-cooked biryani dwarfs commercial volume; excluding it is the single biggest scope call.' },
+        { speaker: 'interviewer', md: 'Yes — commercial only, any type, one ordered portion.' },
+        { speaker: 'candidate', md: 'And the metro is ~10 million, counted on a typical day, not a festival or weekend peak?' },
+        { speaker: 'interviewer', md: 'Typical day, 10M.' },
+        { speaker: 'candidate', md: 'Then I’ll size eating-out *occasions* first, take biryani’s share of them, and sanity-check against restaurant supply.', note: 'Occasions are the honest denominator; ‘% who eat biryani’ overshoots.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Commercial-only scope, the plate unit, a typical day, and an occasions-first structure — the difference between a grounded number and one inflated by home cooking.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from metro population through commercial eaters split by occupation, meal frequency per segment, biryani share, to plates per day with a supply-side cross-check', caption: 'Population → eater segments → occasions per segment → biryani share → plates. The supply branch cross-checks the answer.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="bpng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#bpng)"/>

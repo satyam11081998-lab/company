@@ -8,6 +8,16 @@ export const waterTankersSummer: Page = {
   meta: { difficulty: 'challenging', readingTimeMin: 6, tags: ['gap-analysis', 'public-systems'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of private water-tanker trips per day in a 10-million metro at summer peak. This is a **gap guesstimate**: tankers don\'t serve total demand — they serve the shortfall between municipal supply and need. Size both sides, then convert the gap to trips.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Framing: private water-tanker *trips* per day at summer peak in a ~10M metro — and tankers serve only the *shortfall* between municipal supply and demand, not total demand? One trip = one full load?', note: '‘Serve the gap, not the total’ is the entire trick; missing it overcounts hugely.' },
+        { speaker: 'interviewer', md: 'Yes — trips serving the supply gap, one load per trip.' },
+        { speaker: 'candidate', md: 'At summer peak specifically?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then it’s a gap build: size daily demand, size effective municipal supply, and convert the shortfall into tanker loads.', note: 'Two independent estimates whose difference — not either alone — is the answer.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The trip/load unit, the summer-peak window, and a demand-minus-supply gap converted to tanker trips.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier gap analysis: summer demand built from per-capita norms and commercial use, supply degraded by reservoir dip and leakage, gap split between borewells and tankers, converted to trips and fleet', caption: 'Demand branch up, supply branch down, the gap split between borewells and tankers, then converted to trips and fleet.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="wtng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#wtng)"/>

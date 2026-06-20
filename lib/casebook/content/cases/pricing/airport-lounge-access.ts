@@ -11,12 +11,13 @@ export const airportLoungeAccess: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client operates a 200-seat premium lounge in a major Indian airport\'s domestic terminal. Today 80% of guests enter free via credit-card programmes that reimburse the lounge ₹650 per visit. The operator wants to launch **walk-in paid access** and asks: what should the price be?' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Pricing needs three anchors: cost floor, competitor reference, and customer value ceiling. But first — what\'s the objective: maximize walk-in revenue, fill off-peak capacity, or protect the card-programme relationships that pay the bills?' },
         { speaker: 'interviewer', md: 'Primary: incremental revenue. Constraint: do nothing that makes the card networks renegotiate below ₹650. Current occupancy: 45% off-peak, 95% at morning and evening banks.', note: 'The constraint is the interesting part — a public walk-in price becomes a *reference price* for the card networks\' next negotiation.' },
         { speaker: 'candidate', md: 'That constraint cuts deep: if we post ₹500 walk-in, the card networks will ask why they pay ₹650. So the walk-in price must sit **above** ₹650 — it\'s not just demand math, it\'s protecting the existing book. Let me build floor, reference, and ceiling, then segment by time of day.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Surfaced that the walk-in price must sit *above* the ₹650 card rate to protect the card-programme book, anchoring floor, reference, and value ceiling.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Pricing band from 280 rupee cost floor through 650 rupee contract floor and competitor band to 2,000 rupee value ceiling, then a peak off-peak segmentation tier of 1,999 capped and 1,399 slot-based, a revenue math row of 2.7 crore per year and 2.3 crore contribution, and a two-price verdict bar', caption: 'The band, then the policy — price is not one number. Both prices sit far above the ₹650 contract reference.', svg: `<svg viewBox="0 0 720 560" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

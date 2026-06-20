@@ -8,6 +8,16 @@ export const metroDailyRevenue: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['revenue-build', 'transport'] },
   blocks: [
     { type: 'prose', md: 'Estimate the daily revenue of a large city metro network (say, ~250 km, in a 15-million metro). Fare revenue is the spine; the differentiating move is remembering **non-fare revenue** — advertising, retail rents, and parking — which real metros lean on heavily.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Two checks: daily revenue of one ~250-km network — do we include *non-fare* revenue (advertising, retail rents, parking), or fare only? And gross collections before subsidy?', note: 'Non-fare can be 20–30% of the total; in-or-out decides the answer’s accuracy.' },
+        { speaker: 'interviewer', md: 'Include non-fare; use gross fare.' },
+        { speaker: 'candidate', md: 'A typical weekday in a ~15M metro?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then ridership × average fare is the spine, and I’ll add the non-fare layer explicitly.', note: 'Names the layer most candidates forget.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Fare-plus-non-fare scope, gross collections, and a ridership × fare spine with an explicit non-fare add-on.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from city population to metro ridership built from commuter and occasional segments, fare mix of pass holders versus single tickets, plus three non-fare streams, summed to daily revenue', caption: 'Ridership from two rider segments, fare from the pass/single mix, then the non-fare layer — each stream sized on its own.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="mrng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#mrng)"/>

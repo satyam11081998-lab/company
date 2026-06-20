@@ -11,12 +11,13 @@ export const vernacularEdtechPlateau: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client runs a vernacular-language exam-prep app (government job exams: SSC, banking, railways) with 8 million downloads and ₹90 crore revenue from a ₹999/year subscription. Revenue has been flat for four quarters despite downloads growing 20% per quarter. Diagnose and fix.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Downloads up, revenue flat — the leak is between install and renewal. Before structuring: is the ₹999 price unchanged? Any competitor or exam-calendar shifts — fewer notifications released — that would suppress the whole category?' },
         { speaker: 'interviewer', md: 'Price unchanged. Exam calendar is normal. Competitors exist but their pricing hasn\'t moved. The problem is internal.', note: 'External causes ruled out in one pass — now the funnel is the whole case.' },
         { speaker: 'candidate', md: 'Then I\'ll walk the funnel: install → activation (first meaningful study session) → trial-to-paid conversion → renewal. Flat revenue against compounding installs means one of these stages collapsed. I\'d like the stage-wise numbers, this year versus last.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Located the leak between install and renewal, ruled out a price or exam-calendar shock, and set up a stage-wise funnel diagnosis.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Subscription funnel with year-on-year rates at each stage, a cohort split under the collapsed activation stage showing 70 percent Bhojpuri and Marathi installs activating at 9 percent versus 30 percent Hindi installs at 37 percent, blended math reproducing 24 percent, and a fix-the-spend verdict bar', caption: 'The funnel with both years\' rates, then the cohort tier under activation — 70% @ 9% vs 30% @ 37% reproduces the 24% exactly.', svg: `<svg viewBox="0 0 720 495" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

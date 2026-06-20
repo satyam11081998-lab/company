@@ -8,6 +8,16 @@ export const streetlightsMetro: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['geometry', 'infrastructure'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of streetlights in a 600-km² metro of 10 million people. The road network is the skeleton: estimate **road-length per km²**, then divide by pole spacing. Geometry beats demographics here.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Definition: public streetlights along roads in a ~600-km² metro — individual light *fixtures*, not poles (a pole can carry two) — excluding private compound, decorative, and flood lighting?', note: 'Fixtures-vs-poles is a quiet ~1.5× error if left unstated.' },
+        { speaker: 'interviewer', md: 'Public road luminaires, count fixtures.' },
+        { speaker: 'candidate', md: 'The metro is ~10 million over ~600 km²?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Geometry beats demographics here — I’ll estimate road-length per km², split by road type, and divide by typical pole spacing.', note: 'The road network, not the population, is the skeleton of this estimate.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The fixture unit, the public-road boundary, and a road-length ÷ pole-spacing geometry build.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier geometry tree: city area through derived road density to road length, split into arterial both-sides and local one-side lighting with different pole spacing, plus parks and junctions, summed with per-capita check', caption: 'Area → derived road density → road mix with per-type spacing → sum + extras → per-capita check. Geometry, not demographics.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="slng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#slng)"/>

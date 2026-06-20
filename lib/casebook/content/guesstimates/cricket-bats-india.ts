@@ -8,6 +8,16 @@ export const cricketBatsIndia: Page = {
   meta: { difficulty: 'challenging', readingTimeMin: 5, tags: ['segmentation', 'replacement-cycle'] },
   blocks: [
     { type: 'prose', md: 'Estimate annual cricket bat sales in India. The naive route ("X% of Indians play cricket") collapses because a gully player\'s ₹400 bat lives five years while an academy kid replaces a ₹4,000 bat yearly. **Segment by seriousness**, give each segment its own ownership and replacement logic.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Two locks: we estimate *new* bats sold per year, units not value — and do we include cheap tennis-ball/gully bats, or only leather-ball bats?', note: 'Tennis-ball bats are most of the volume; including them changes the whole shape.' },
+        { speaker: 'interviewer', md: 'All bats bought to play with, including tennis-ball. Units/year.' },
+        { speaker: 'candidate', md: 'All India, a typical year?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then I won’t use one ‘% who play’ multiplier — I’ll segment players by seriousness (casual, regular, serious) and give each its own ownership and replacement cycle.', note: 'A ₹400 gully bat lasts years; an academy bat is replaced yearly — cycles drive sales, not headcount.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'New-units scope, tennis-ball bats included, and a seriousness-segmented build with per-segment replacement cycles.' },
+    ]},
     { type: 'svg', maxWidth: 640, ariaLabel: 'Four-tier tree from male population to player base, split into casual, regular and serious segments each with sharing, ownership and replacement-cycle assumptions, summed with volume and value shares', caption: 'Base → segments → sharing & cycle logic per segment → sum. Each box carries its volume AND value share — they invert.', svg: `<svg viewBox="0 0 640 410" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="cbng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="195" y="14" width="250" height="46" rx="11" fill="url(#cbng)"/>

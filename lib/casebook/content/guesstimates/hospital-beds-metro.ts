@@ -8,6 +8,16 @@ export const hospitalBedsMetro: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['infrastructure', 'two-way-build'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of hospital beds in a 10-million metro. This one rewards a **two-way build**: a quick norm-based answer (beds per 1,000 people), then a demand-based check (admissions × stay length ÷ occupancy). Reconciling the two is the differentiator.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Definition: inpatient beds across government and private hospitals in one ~10M metro — excluding clinics, day-care, and OPD chairs — functional, not sanctioned?', note: 'Functional-vs-sanctioned and the inpatient-only line keep the two build methods comparable.' },
+        { speaker: 'interviewer', md: 'Inpatient, govt + private, functional.' },
+        { speaker: 'candidate', md: 'A reconciled estimate is fine?' },
+        { speaker: 'interviewer', md: 'Yes, show your reasoning.' },
+        { speaker: 'candidate', md: 'Then I’ll build it two ways — a beds-per-1,000 norm and a demand build (admissions × stay ÷ occupancy) — and reconcile; the gap is the insight.', note: 'The two-way build and reconciliation is exactly what this prompt rewards.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Inpatient/functional bed definition and a deliberate norm-vs-demand two-way build with reconciliation.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Two parallel estimation paths each built in multiple tiers: norm-based beds per thousand, and demand-based from admissions, stay length, occupancy and referral catchment, reconciled into a final count with segmentation', caption: 'Both paths fully unpacked — Path B only matches Path A after the referral-catchment correction, which is the real insight.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="hbng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#hbng)"/>

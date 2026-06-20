@@ -11,12 +11,13 @@ export const stadiumNonMatchday: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'A state cricket association owns a 45,000-seat stadium in a metro suburb. It hosts ~20 match days a year; the other ~345 days it earns almost nothing while costing ₹35 crore annually in maintenance, staff, and debt service. The association asks: how do we monetize the asset year-round without compromising the pitch or match operations?' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Useful trick for asset-monetization cases: inventory the asset as *components*, not as a whole. A stadium isn\'t one thing — it\'s a pitch, stands, concourses, parking, boxes, kitchens, a brand, and a location. Which components are restricted? I assume the pitch is sacred and match windows are immovable.', note: 'Decomposing the asset into separately-rentable components is the whole game in utilization cases.' },
         { speaker: 'interviewer', md: 'Correct — the square (pitch area) must stay protected, and BCCI match windows take absolute priority with 10-day preparation buffers. Everything else is negotiable. The association also wants recurring income, not one-off events only.' },
         { speaker: 'candidate', md: 'So I\'ll sort opportunities along two axes: pitch-risk (does it touch the field?) and revenue type (recurring contract vs per-event). The recurring, zero-pitch-risk quadrant is the priority.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Inventoried the stadium as components and sorted opportunities by pitch-risk and recurring-versus-per-event revenue.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Stadium monetization matrix by pitch risk and revenue recurrence, a five-item revenue build tier of boxes 10.8, retail 6.7, parking 6.5, academy 4.8 and naming rights 8 to 10 crore, and a verdict bar showing 37 to 39 crore recurring against the 35 crore cost base', caption: 'The matrix sorts the ideas; the build tier prices the winning quadrant — five leases cover the ₹35 cr base before a single concert.', svg: `<svg viewBox="0 0 720 565" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

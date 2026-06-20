@@ -11,7 +11,7 @@ export const multiplexMarginSqueeze: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client operates 40 multiplex screens across six Indian cities. Ticket admissions grew 12% last year — the best in its history — yet operating profit fell 18%. The CEO wants to know what is going on and what to do about it.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Before I structure this, three quick clarifications. First, when we say profit fell 18% — is that absolute operating profit, or margin? Second, is the decline uniform across the 40 screens or concentrated in some cities? Third, has the revenue model changed — any shift in how we earn per visitor?', note: 'Three sharp questions, each testable. Note the third one — it anticipates the answer.' },
         { speaker: 'interviewer', md: 'Absolute operating profit. The decline is broad-based across cities. And I\'ll let you discover the revenue model part yourself.' },
@@ -19,6 +19,7 @@ export const multiplexMarginSqueeze: Page = {
         { speaker: 'interviewer', md: 'No one-offs. Same 40 screens both years.' },
       ]},
       { type: 'callout', variant: 'tip', md: 'Admissions **up** + profit **down** with no one-offs means the problem lives in **revenue per visitor** or **cost per visitor**. Say this out loud before drawing the tree — it shows hypothesis-led thinking.' },
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Clarified absolute-versus-margin, the concentration of the decline across screens, and screened for one-off distortions before structuring.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'Decompose profit per visitor. A multiplex earns through three streams per admission — ticket, food & beverage (F&B), and advertising — and carries a largely fixed cost base. Volume is up, so chase the per-visitor economics first.' },

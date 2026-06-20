@@ -8,6 +8,16 @@ export const cabRidesMetro: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['two-way-build', 'transport'] },
   blocks: [
     { type: 'prose', md: 'Estimate daily app-based cab rides (Uber/Ola-style, four-wheelers) in a 10-million metro. Do it demand-side, then **reconcile against driver supply** — if your demand number implies each driver does 40 rides a day, your demand number is wrong.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Frame check: app-based four-wheeler rides only — not autos, bike-taxis, or street-hailed cabs — and we count *rides* (one pickup-to-drop trip), not unique riders?', note: 'Trips vs riders is a 3–4× difference; lock it before multiplying.' },
+        { speaker: 'interviewer', md: 'Correct — app four-wheelers, count trips.' },
+        { speaker: 'candidate', md: 'Typical weekday in a ~10M metro?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'I’ll build demand-side — user base × ride frequency — then reconcile against driver supply; if it implies 40 rides per driver, the demand number is wrong.', note: 'Pre-commits to the supply-side reconciliation the prompt rewards.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Channel scope (app four-wheelers), the trips-not-riders unit, and a demand build checked against plausible driver throughput.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Two fully unpacked builds: demand from user base split into frequent and occasional riders, supply from fleet count times rides per driver day, reconciled into the final range', caption: 'Both builds unpacked to their leaves — when two independent trees land within 10%, the number is defensible.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="crng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#crng)"/>

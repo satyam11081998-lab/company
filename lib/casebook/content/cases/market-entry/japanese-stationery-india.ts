@@ -11,12 +11,13 @@ export const japaneseStationeryIndia: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is a Japanese stationery manufacturer — premium gel pens, mechanical pencils, and notebooks priced 3–5× Indian mass brands. They dominate Japan and Southeast Asia and now want a view: should they enter India, and if so, how?' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Before sizing anything: what does the client want from India — revenue at scale, a manufacturing base, or a defensive move because competitors are entering? And what\'s their bar — payback period or share target?' },
         { speaker: 'interviewer', md: 'Revenue growth; Japan is a shrinking, ageing market. They\'d want a clear path to ₹500 crore annual revenue within 5 years to bother.', note: 'The "why" reframes everything: a growth-hungry client with a shrinking home market accepts more risk than an opportunistic one.' },
         { speaker: 'candidate', md: 'That target lets me work backwards. I\'ll take the standard spine: is the market attractive, can *they specifically* win, how to enter, and does the math reach ₹500 crore.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Pinned the India objective and the ₹500 crore bar, enabling a work-backwards market-entry spine (attractive → can-we-win → how → does the math reach the target).' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Three-tier decision tree for entering India: four questions each carrying numbers, market of 12,000 crore with premium at 8 percent equal to 960 growing to 1,450 crore, implied share math showing 500 crore equals 34 percent and is implausible, achievable case of 325 to 375 crore, and an enter-but-reset verdict bar', caption: 'The spine rebuilt with the numbers in every node — Q4 turns the ₹500 cr ambition into an implied 34% share, and kills it.', svg: `<svg viewBox="0 0 720 425" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

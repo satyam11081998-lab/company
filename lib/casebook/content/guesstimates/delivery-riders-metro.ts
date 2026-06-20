@@ -8,6 +8,16 @@ export const deliveryRidersMetro: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['workforce', 'demand-capacity'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of active food-delivery riders in a 10-million metro. Workforce guesstimates are demand ÷ throughput problems with a **peak-hour correction** — fleets are sized for dinner rush, not the daily average.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Scope: *active food-delivery* riders in one ~10M metro — headcount of people riding, not rider-shifts — excluding quick-commerce and parcel couriers?', note: 'Headcount vs shifts and the q-commerce exclusion both move the number materially.' },
+        { speaker: 'interviewer', md: 'Food delivery only, headcount.' },
+        { speaker: 'candidate', md: 'A typical day?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then orders ÷ rider throughput — but sized for the dinner *peak*, since fleets are staffed for the rush, not the daily average.', note: 'The peak-hour correction is what makes a workforce estimate realistic.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Food-delivery-only scope, the headcount unit, and a peak-sized orders-÷-throughput build.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from metro population to ordering users to daily orders distributed across the day, peak hour load divided by rider throughput at peak, grossed up by roster factor to active rider base', caption: 'Users → orders → the shape of the day (size for the dinner spike, not the average) → throughput → roster gross-up.', svg: `<svg viewBox="0 0 720 530" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="drng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#drng)"/>

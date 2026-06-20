@@ -11,13 +11,14 @@ export const regionalDairyCooperative: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is a farmer-owned dairy cooperative selling milk, curd, and butter across three districts. Profit has fallen for two straight years even though revenue is flat. The board wants to know why — and what to do.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Good clarifying questions', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'steps', ordered: false, items: [
         { md: 'Is revenue *truly* flat, or is a volume drop being masked by a price increase?' },
         { md: 'Which products — is the decline broad or concentrated in one line (e.g., butter)?' },
         { md: 'Has anything changed structurally — input prices, a new competitor, a plant or route change?' },
       ]},
       { type: 'callout', variant: 'tip', md: 'Flat revenue + falling profit points hard at the **cost side** or an adverse **mix shift**. Signal that hypothesis early.' },
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Separated a true revenue drop from price-masked volume, localised the decline by product, and pointed early at a cost-side or adverse mix-shift hypothesis.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'Use the profitability tree, but lead with cost and mix given the flat-revenue signal.' },

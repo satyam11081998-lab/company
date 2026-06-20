@@ -11,12 +11,13 @@ export const saasPayrollSea: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client sells payroll-and-compliance SaaS to 18,000 Indian SMEs at ~₹40,000 average annual contract value (ACV), growing 35% with strong retention. The board wants international expansion and has shortlisted Southeast Asia. Assess the move and recommend a market and an entry route.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Payroll is unusually localization-heavy — tax tables, labour law, statutory filings differ per country and change yearly. So first: why international at all, when India SME penetration is still low? Is this board ambition or a real ceiling?', note: 'Challenging the premise is risky — but payroll\'s localization burden makes "why leave India?" the single best first question here.' },
         { speaker: 'interviewer', md: 'Fair challenge. India remains big, but two US-funded competitors are discounting aggressively at home; the board wants a second engine before the home market commoditizes. Budget is $5M over two years.' },
         { speaker: 'candidate', md: 'A hedge, then — with a hard budget. That argues for *one* country done deeply, not a regional spray. I\'ll screen SEA markets on three axes: SME-payroll demand and willingness to pay, regulatory complexity (our moat once built, our cost to build), and competitive whitespace. Then pick build-vs-partner-vs-acquire.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Framed it as a budgeted hedge favouring one country done deeply, screened on SME demand, regulatory complexity, and cost-to-serve.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree screening four Southeast Asian countries with their data — Indonesia 1.2 million SMEs but complex, Philippines 350 thousand SMEs English-friendly whitespace, Vietnam informal, Singapore saturated — then route economics comparing build-first and partner-first budgets, and a Philippines partner-first verdict bar', caption: 'The screen rebuilt with the data in every node — fit-to-budget picks the Philippines, and the budget math picks the route.', svg: `<svg viewBox="0 0 720 425" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

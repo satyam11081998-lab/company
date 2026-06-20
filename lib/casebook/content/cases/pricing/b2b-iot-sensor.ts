@@ -11,12 +11,13 @@ export const b2bIotSensor: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client built an IoT retrofit kit for textile-mill machinery: vibration and temperature sensors plus software that predicts loom failures 48 hours ahead. Pilot results: unplanned downtime cut by 60%. There is no direct competitor in India. The client asks: how do we price this — per sensor, per machine, per mill? And at what number?' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'With no reference price, this is economic-value pricing: quantify what a breakdown costs the mill, how much we prevent, and take a fair share of that. First — what does one hour of unplanned loom downtime cost a typical mill, and how many such hours do they suffer?' },
         { speaker: 'interviewer', md: 'A mid-size mill runs 80 looms. Each loom contributes about ₹1,800/hour. Unplanned downtime averages 22 hours per loom per year, plus each breakdown event costs ~₹15,000 in emergency repairs versus ₹6,000 planned. Typical mill: ~70 breakdown events a year.', note: 'Everything needed for an EVC (economic value to customer) build is now on the table. The case is won by doing this math cleanly.' },
         { speaker: 'candidate', md: 'I\'ll build the value pool per mill per year, apply our 60% prevention rate, then split that surplus between customer and client — B2B convention says the customer keeps the larger share, or adoption stalls. Then choose the **metric** (per loom/month) to scale naturally with mill size.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Set up economic-value pricing — size the downtime value pool, apply the prevention rate, split the surplus in the customer’s favour, then choose the pricing metric.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Economic value waterfall from downtime value of 31.7 lakh and repair premium of 6.3 lakh to a 38 lakh pain pool, 60 percent prevented equals 22.8 lakh, split 70-30 between customer and client, then a rate-card tier building 699 rupees per loom per month with volume tiers of 700 then 560, and a verdict bar', caption: 'The EVC waterfall, extended to the rate card — pool → prevention → split → metric → tiers. Every number is the build.', svg: `<svg viewBox="0 0 720 565" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

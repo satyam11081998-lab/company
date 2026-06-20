@@ -8,6 +8,16 @@ export const paintConsumptionIndia: Page = {
   meta: { difficulty: 'challenging', readingTimeMin: 6, tags: ['stock-and-flow', 'physical-rates'] },
   blocks: [
     { type: 'prose', md: 'Estimate annual decorative paint consumption in India (litres). This is a **surface-area** problem wearing a market-sizing costume: housing stock × paintable area × repaint frequency, plus the new-construction flow. (Industrial/auto coatings excluded — clarify that upfront.)' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Scope, since it’s wide: *decorative* paint only — excluding industrial and automotive coatings — in litres, and including both repaint of existing stock and new construction?', note: 'Industrial/auto coatings are a different market; excluding them keeps the build clean.' },
+        { speaker: 'interviewer', md: 'Decorative only, litres, both repaint and new build.' },
+        { speaker: 'candidate', md: 'All India, a typical year?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then it’s a surface-area problem: housing stock × paintable area × repaint frequency, plus the new-construction flow.', note: 'Reframes a market-sizing question as the surface-area build it really is.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Decorative-only scope, litres, both repaint and new build — and a surface-area (stock × area × frequency) structure.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier stock-and-flow tree: repaint branch from housing stock through paintable area, urban and rural repaint cycles, and coverage rate; new-build branch from units and commercial construction; summed with value check', caption: 'Stock branch (repaints, with the urban/rural cycle split) + flow branch (new build) — every node carries its number.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="pcng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#pcng)"/>

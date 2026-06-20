@@ -8,6 +8,16 @@ export const cityGarbageDaily: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['physical-rates', 'public-systems'] },
   blocks: [
     { type: 'prose', md: 'Estimate the tonnes of municipal solid waste a 12-million metro generates daily. Anchor on a per-capita physical rate, then remember the half most candidates forget: **commercial, market, and construction waste** isn\'t in anyone\'s kitchen bin.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Definition first: municipal solid waste in tonnes/day — household *plus* commercial, market, and institutional — and do we include construction & demolition debris or keep it separate?', note: 'C&D debris can rival household waste in tonnage; in-or-out swings the answer.' },
+        { speaker: 'interviewer', md: 'MSW including commercial and institutional; keep C&D separate.' },
+        { speaker: 'candidate', md: 'Metro of ~12 million, a normal day?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then I’ll anchor on a per-capita household rate and add the non-household streams candidates forget — markets, offices, street sweeping.', note: 'Half the tonnage isn’t in anyone’s kitchen bin; a single per-capita number undercounts.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The MSW definition, C&D carved out, and an explicit household-plus-non-household build rather than a single per-capita guess.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree: household stream split by income band with per-capita rates, plus commercial, institutional and street/construction streams each sized, summed with a truck-logistics conversion', caption: 'Households split by income band (waste scales with income), plus the three non-household streams — then the truck check.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="cgng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#cgng)"/>

@@ -8,6 +8,16 @@ export const upiTransactionsDaily: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['digital', 'segmentation'] },
   blocks: [
     { type: 'prose', md: 'Estimate daily UPI transactions in India. The trap is assuming one "average user." UPI usage is violently skewed — segment users by intensity before multiplying anything.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Scope: the *count* of UPI transactions per day across India — not value — including both person-to-person and person-to-merchant?', note: 'Count-not-value and P2P+P2M decide what we’re even multiplying.' },
+        { speaker: 'interviewer', md: 'Yes — count/day, P2P and P2M.' },
+        { speaker: 'candidate', md: 'A typical day?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'The trap is one ‘average user’, so I’ll segment by intensity — power users many times a day, light users a few times a month — before summing.', note: 'UPI usage is violently skewed; a single average misreads both the head and the tail.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Count (not value), P2P+P2M scope, and an intensity-segmented build instead of one average user.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from smartphone base to active UPI payers, segmented into heavy, regular and light intensity bands each with population and rate, with each band split into its use-case drivers, summed and sanity-checked', caption: 'Base → three intensity bands → each band\'s use-case drivers → sum → NPCI sanity check. The heavy 20% drives 58% of volume.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="upng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#upng)"/>

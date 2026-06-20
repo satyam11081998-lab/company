@@ -8,6 +8,16 @@ export const toothpasteTubesIndia: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 4, tags: ['consumption', 'usage-rate'] },
   blocks: [
     { type: 'prose', md: 'Estimate annual toothpaste tube sales in India. The crisp route goes through **physical usage**: grams per brushing → tube life → tubes per household per year. Physical-quantity logic is harder to challenge than plucked percentages.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Scope: annual toothpaste *tubes* sold in India — standard-size retail tubes (normalising sachets and family packs to a standard) — across all households?', note: 'Normalising pack sizes first makes the per-household build defensible.' },
+        { speaker: 'interviewer', md: 'Yes — standard tubes, all households, units/year.' },
+        { speaker: 'candidate', md: 'A typical year?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then physical usage: grams per brushing → tube life → tubes per household per year.', note: 'Grams-per-day logic is far harder to challenge than a plucked percentage.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The standardised-tube unit and a physical-usage (grams → tube life → tubes/household) build.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree splitting households into urban and rural, each with its own penetration, usage and pack size, converted through tube life into tubes per year and summed', caption: 'Urban and rural run on different pack sizes and usage — split first, convert each branch through its own tube life, then add.', svg: `<svg viewBox="0 0 720 510" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="ttng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#ttng)"/>

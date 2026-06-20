@@ -8,6 +8,16 @@ export const tollPlazaCollection: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 4, tags: ['flow-rate', 'transport'] },
   blocks: [
     { type: 'prose', md: 'Estimate the daily toll collection at a busy national-highway plaza (e.g., on a metro-to-metro corridor). This is a **flow-rate** build: vehicles per lane per hour × lanes × hours × mix-weighted toll.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Framing: daily toll *collection* in rupees at one busy national-highway plaza — both directions combined — weighted by vehicle mix, since trucks pay multiples of a car?', note: 'Both-directions and mix-weighting are the two calls that most move the rupee figure.' },
+        { speaker: 'interviewer', md: 'Yes — both directions, mix-weighted, one busy plaza.' },
+        { speaker: 'candidate', md: 'A typical day?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then it’s a flow-rate build: vehicles per lane per hour × lanes × operating hours, then a mix-weighted average toll.', note: 'Counting what passes a point is the right primitive for a flow problem.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Both-directions scope, mix-weighted toll, and a flow-rate (lane × hour) build.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree: lane throughput times lanes times utilization gives daily vehicles, split into cars, trucks and buses each with count share and toll rate, multiplied and summed to daily collection', caption: 'Flow build on the left, the three-class mix in the middle, revenue per class at the bottom — trucks carry the plaza.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="tpng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#tpng)"/>

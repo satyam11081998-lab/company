@@ -11,12 +11,13 @@ export const solarEpcBid: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is a solar EPC (engineering-procurement-construction) firm — ₹2,200 crore revenue, order book 1.4× revenue. A state utility has floated a 400 MW tender worth roughly ₹1,600 crore, awarded to the lowest technically-qualified bidder. Two questions from the CEO: should we bid at all, and if yes, at what price — knowing one aggressive rival has been winning tenders at prices the client "cannot understand."' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Bid decisions have three layers: do we *want* it (strategic value + capacity), can we *win* it (competitive read), and what price keeps it worth winning (economics + risk pricing). First: at 1.4× book-to-revenue, do we have execution capacity for a 1,600-crore, presumably 18-month project without starving existing commitments?', note: 'Capacity first — a tender you can\'t execute profitably is a trap regardless of price.' },
         { speaker: 'interviewer', md: 'Tight but feasible: it would push the book to ~2.1×, requiring one new project-management vertical and subcontracting ~30% of installation. And the strategic angle: the client has never worked with this state utility, which has a 3 GW pipeline coming.' },
         { speaker: 'candidate', md: 'So strategic value is real — this is partly a market-entry bid, which justifies a thinner margin but **not** a negative one. Now the economics: module costs are ~60% of an EPC bid and volatile, and the tender presumably fixes our price for 18 months. The risk architecture matters as much as the margin: who carries module price risk, land delays, grid-connection delays?' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Structured the bid as want-it / win-it / price-it, recognising the strategic market-entry value that justifies a thin — but not negative — margin.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier bid decision tree: three gates with numbers, a four-hypothesis rival-decode tier covering cost edge, buying share, change-order game and winners curse each with its counter-move, the price build from 1,385 plus 72 plus 73 crore, and a bid-1,530 floor-1,490 verdict bar', caption: 'Three gates, then the rival decoded into four testable hypotheses — each with its counter-move — before any number is written down.', svg: `<svg viewBox="0 0 720 565" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

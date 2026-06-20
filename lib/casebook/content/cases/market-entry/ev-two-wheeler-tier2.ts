@@ -11,12 +11,13 @@ export const evTwoWheelerTier2: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is an Indian electric two-wheeler maker selling ~15,000 scooters a month, almost entirely in eight metros, through 120 company-owned experience stores. Growth is flattening. The CEO wants a recommendation on entering tier-2 and tier-3 cities — and whether the metro playbook will survive the journey.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Three clarifications. Is the flattening a demand problem or a supply/capacity constraint? Do we have evidence of tier-2 demand today — say, inquiries or deliveries to nearby towns? And what does the metro playbook cost — what\'s the economics of an experience store?' },
         { speaker: 'interviewer', md: 'Demand-side — metro share has plateaued around 18%. About 12% of current bookings already ship to towns *around* the metros, unprompted. An experience store costs ~₹1.2 crore a year to run and supports ~150 sales a month.', note: 'The unprompted 12% is the buried signal: latent demand already exists. Strong candidates seize on it.' },
         { speaker: 'candidate', md: 'That unprompted 12% is meaningful — demand is pulling us outward before we\'ve pushed. The question shifts from *whether* to *how*: which cities, and with what model, since a ₹1.2 crore store needing 150 sales/month may not clear in a tier-3 town.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Confirmed demand is already pulling outward and pinned the metro store economics, shifting the question from *whether* to *how* — which cities, which model.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'Structure in three layers: market attractiveness city-by-city (not "tier-2" as a blob), the right-to-win read across segments, and the entry *model* — because the binding constraint is distribution economics, not product.' },

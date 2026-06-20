@@ -8,6 +8,16 @@ export const officeElevatorTrips: Page = {
   meta: { difficulty: 'challenging', readingTimeMin: 5, tags: ['micro-operations', 'peak-analysis'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of elevator **trips** (door-close to door-open movements) per day in a 30-floor office tower with 6 elevators. The unit matters: trips ≠ passengers, because elevators batch people. This is a fully synthetic system — every number must be constructed.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'The unit drives everything: a ‘trip’ is one door-close to door-open *car movement*, not a passenger journey — for this 30-floor, 6-elevator tower, a typical weekday?', note: 'Trips ≠ passengers because elevators batch; mis-defining this is the classic error.' },
+        { speaker: 'interviewer', md: 'Correct — car movements, typical working day.' },
+        { speaker: 'candidate', md: 'Should I construct every number, since there’s no external data here?' },
+        { speaker: 'interviewer', md: 'Yes, it’s fully synthetic.' },
+        { speaker: 'candidate', md: 'Then: building population → person-journeys (arrivals, lunch, departures, inter-floor) → compress by batching → add empty repositioning trips → sanity-check against six cars’ capacity.', note: 'Batching and empty trips are what turn person-journeys into car movements.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The trip-as-car-movement unit, a synthetic build, and person-journeys compressed by batching plus empty trips.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from building population through journey types per person to peak and off-peak batching, plus empty repositioning trips, summed and checked per car per minute', caption: 'Population → journey inventory → batching by period → + empty trips → physical check. Off-peak generates MORE trips than peak.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="oeng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#oeng)"/>

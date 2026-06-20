@@ -8,6 +8,16 @@ export const iplFranchiseRevenue: Page = {
   meta: { difficulty: 'challenging', readingTimeMin: 6, tags: ['revenue-build', 'sports-business'] },
   blocks: [
     { type: 'prose', md: 'Estimate the annual revenue of a typical IPL franchise. No population tree helps here — the skill tested is **knowing the revenue architecture** of a sports business: central pool share, sponsorship, matchday, and licensing.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Framing: annual *revenue*, not profit, of one *typical* (mid-table economically) franchise — and we count its *share* of the central media pool, not the BCCI’s total?', note: 'Revenue-not-profit and the central-pool-share boundary prevent a wildly off top line.' },
+        { speaker: 'interviewer', md: 'Yes — typical franchise top line, including its central-pool share.' },
+        { speaker: 'candidate', md: 'A normal season?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'No population tree helps, so I’ll build by revenue stream: central-pool share, sponsorships, matchday, and licensing.', note: 'Recognises the ‘units’ here are revenue streams, not people.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Revenue (not profit), a typical franchise, its slice of central money, and a stream-by-stream build.' },
+    ]},
     { type: 'svg', maxWidth: 640, ariaLabel: 'Revenue components of an IPL franchise: central media pool share, sponsorships, matchday and licensing', caption: 'Four streams, each unpacked to its drivers — and one dominant: the central pool dwarfs everything a franchise does locally.', svg: `<svg viewBox="0 0 640 400" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="ipng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="200" y="14" width="240" height="42" rx="11" fill="url(#ipng)"/>

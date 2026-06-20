@@ -11,12 +11,13 @@ export const tier2GymChain: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client runs 35 company-owned gyms in tier-2 cities — strong brand, ₹110 crore revenue, 22% EBITDA. They want to reach 200 locations in five years. The founders are split: half want to keep owning gyms, half want to franchise. Resolve the debate with numbers and a recommendation.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Three checks. What does one owned gym look like — capex, ramp time, steady-state economics? How much capital can the company deploy over five years? And what makes the brand strong — is it replicable by a franchisee, or does it depend on owned-gym service quality?' },
         { speaker: 'interviewer', md: 'An owned gym: ₹2.5 crore capex, 18 months to mature, then ₹3.2 crore revenue at 25% gym-level EBITDA. The company can invest about ₹100 crore over five years. The brand rests on equipment quality and trainer standards — protocols exist on paper.', note: 'Capex per gym × available capital instantly bounds the owned path: ₹100 cr ÷ ₹2.5 cr = 40 new gyms max. The 200 target is unreachable on owned capital alone — the structure must confront this.' },
         { speaker: 'candidate', md: 'Then the math already says something loud: ₹100 crore funds only ~40 owned gyms — 75 total, far from 200. So the real question isn\'t own *versus* franchise; it\'s **which mix**, and whether franchise economics and brand control can be made good enough.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Pinned single-gym economics, the capital envelope, and brand replicability — turning ‘own vs franchise’ into a question of the right *mix*.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree comparing owned and franchised gym models, a five-year hybrid arithmetic row of 70 owned times 80 lakh plus 130 franchised times 22 lakh equals about 85 crore EBITDA, a capital envelope row of 87 crore capex plus 13 crore support organization, and a hybrid verdict bar', caption: 'Both models priced per location, then the hybrid arithmetic — 70 × ₹80L + 130 × ₹22L ≈ ₹85 cr, inside the ₹100 cr envelope.', svg: `<svg viewBox="0 0 720 510" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

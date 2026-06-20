@@ -11,7 +11,7 @@ export const cementSouthernTarget: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client, a North-India cement major, has signed a non-binding term sheet to acquire a southern producer: 4 MTPA capacity across two plants, ₹1,900 crore revenue, running at 62% utilization in a region with chronic overcapacity. Commercial due diligence has surfaced four findings. The client asks: which findings reprice the deal, which kill it, and which are noise?' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'The four findings', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'steps', ordered: true, items: [
         { title: 'Limestone reserves', md: 'The primary quarry\'s mining lease expires in 7 years; renewal is "expected" but the state has lately auctioned rather than renewed leases.' },
         { title: 'Utilization claim', md: 'Management\'s deck claims a path from 62% to 80% utilization in 3 years on regional demand growth of 7–8%; industry analysts forecast 4–5%.' },
@@ -22,6 +22,7 @@ export const cementSouthernTarget: Page = {
         { speaker: 'candidate', md: 'Before triaging: what\'s the deal logic — is the client buying the *capacity* to enter the South, or buying *current cash flows*? The same finding can be fatal to one logic and tolerable to the other.', note: 'DD findings only mean something relative to the deal thesis. State the thesis first; triage second.' },
         { speaker: 'interviewer', md: 'Capacity-entry logic: the client wants a southern footprint it can feed with its own brand and distribution strength. Price on the table: ₹3,400 crore — about $100/tonne of capacity, versus $110–130 replacement cost.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Established the deal thesis (capacity entry, not cash flows) and the price benchmark, so each due-diligence finding can be triaged against the right logic.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Due diligence triage matrix of four findings, a quantification tier converting the power gap to about 190 crore off the price and the utilization story to 200 crore of air, and a reprice verdict bar from 3,400 to about 3,000 crore', caption: 'The triage, then the arithmetic — two findings convert to ~₹400 cr of price, one becomes a condition, one an escrow.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

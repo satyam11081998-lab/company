@@ -11,12 +11,13 @@ export const bloodDonationSupply: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'A state health department collects 4 lakh units of blood annually against an estimated need of 7 lakh. Paid donation is illegal; imports between states are limited. The health secretary asks you to design a programme to close the gap within three years.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Supply problems without a price lever become funnel problems: eligible population → aware → willing → actually donates → donates *again*. Two clarifications: how does the 4 lakh split between voluntary camps and "replacement" donation by patients\' relatives? And what\'s the repeat-donation rate among voluntary donors?' },
         { speaker: 'interviewer', md: '55% voluntary camps, 45% replacement. Repeat rate among voluntary donors: 12% donate more than once a year. Eligible population in the state: roughly 2.8 crore.', note: 'A 12% repeat rate is the buried treasure — a repeat donor costs almost nothing to re-acquire.' },
         { speaker: 'candidate', md: 'Then notice the arithmetic before structuring: 4 lakh units from ~3.2 lakh unique donors out of 2.8 crore eligible — barely 1.1% participation. We don\'t need to convert the masses; we need either +1 percentage point of first-timers, or to move the repeat rate from 12% toward 40%. The repeat lever is cheaper — these people already cleared every barrier once.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Reframed supply as a donation funnel and exposed ~1.1% participation — the lever is first-timers and repeat rate, not converting the masses.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Donor funnel from 2.8 crore eligible to 3.2 lakh donors with 12 percent repeat, two strategy panels, a three-stream bridge tier adding 1.5 lakh repeat, 0.6 lakh replacement-convert and 0.9 lakh new units, and a gap-closed verdict bar', caption: 'The funnel, the two strategies, and the bridge — three quantified streams that sum to the 3 lakh gap.', svg: `<svg viewBox="0 0 720 475" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

@@ -8,6 +8,16 @@ export const evChargingPointsMetro: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['first-principles'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of **public** EV charging points needed in a metro of ~10 million people. Build from demand, not from a number you half-remember.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Two definitions: *public* charging points — individual connectors, not stations — excluding home and captive-fleet chargers? And are we sizing what’s *needed* for current demand, or the installed base?', note: 'Connectors-vs-stations and need-vs-installed are the two calls that most change the answer.' },
+        { speaker: 'interviewer', md: 'Public connectors, sizing current need.' },
+        { speaker: 'candidate', md: 'Metro of ~10 million?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then: vehicle base → EV share → daily charging sessions → ÷ realistic per-point throughput.', note: 'Builds from demand instead of a half-remembered policy number.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Public-connector unit, need-not-installed objective, and a demand-led build from charging sessions ÷ throughput.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier estimation tree from metro population through car ownership, EV share, public-charging reliance, session demand and per-point throughput to the number of public charging points', caption: 'Population → cars → EVs → public-reliant share → sessions → ÷ throughput. Every node carries its number.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="evgng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#evgng)"/>

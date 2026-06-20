@@ -11,12 +11,13 @@ export const cloudKitchenBurn: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client runs 25 cloud kitchens across three metros, selling four house brands exclusively through food-delivery apps. Order volume has doubled for two consecutive years, yet the company has never made money and losses are widening. The founder wants a path to profitability within 12 months.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Three clarifications. Is the loss widening in absolute terms only, or is the loss *per order* also widening? Are all 25 kitchens loss-making, or is there a spread? And are we free to change channels — for example, our own app or dine-in — or must we stay on the aggregators?' },
         { speaker: 'interviewer', md: 'Loss per order is roughly flat, around ₹18. About a third of kitchens are contribution-positive. Channels are open to discussion, but 95% of demand currently comes from two aggregators.' },
         { speaker: 'candidate', md: 'Flat loss per order with doubling volume means we are scaling a broken unit economic — fixed costs are not the story. I\'ll focus on the per-order P&L first, then use the spread between good and bad kitchens as a natural experiment.', note: 'Restates what the data implies before structuring — this is what separates a hypothesis-led candidate.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Established flat loss-per-order against doubling volume — a broken unit economic, not a fixed-cost story — and set up the per-order P&L plus a good-vs-bad-kitchen comparison.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'Build the order-level P&L, then split the network: what do the contribution-positive kitchens do differently?' },

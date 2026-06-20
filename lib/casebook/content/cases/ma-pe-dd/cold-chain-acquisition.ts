@@ -11,12 +11,13 @@ export const coldChainAcquisition: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is India\'s #2 express-parcel company (₹3,800 crore revenue). An investment bank has pitched the acquisition of a regional cold-chain logistics player — 95 reefer trucks, 6 cold warehouses in the South, ₹260 crore revenue, ₹28 crore EBITDA — at an asking price of ₹450 crore. The board wants your view in three weeks.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Acquisitions need three tests: standalone value (is the asset good?), synergy value (is it worth more to *us*?), and price versus both. But the prior question — what\'s the strategic intent? Is the client buying growth, capability, or defence against the #1 player?' },
         { speaker: 'interviewer', md: 'Capability. Quick-commerce and pharma clients keep asking the client for cold delivery; it has none. Building greenfield was estimated at 4 years and ₹600 crore to reach equivalent scale.', note: 'The build-vs-buy benchmark (₹600 cr, 4 yrs) is gold: it bounds what "control of this capability" is worth before any DCF.' },
         { speaker: 'candidate', md: 'So buy-vs-build already favours buying *if* this asset is healthy: ₹450 crore now versus ₹600 crore and four lost years. My structure: standalone quality of the target, synergies — both revenue and cost, each sized and probability-weighted — then integration risks, then the price verdict.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Set the strategic intent and the three acquisition tests — standalone value, synergy value, and price — with buy-vs-build already favouring buy if the asset is healthy.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier M&A tree: standalone value 336 crore, synergies and risks, a synergy quantification tier haircutting revenue synergy to 2 crore and weighting cost synergy to 8 crore, a valuation bridge from 336 to a 396 crore ceiling versus the 450 crore ask, and an open-at-370 verdict bar', caption: 'Value it three times — and the quantification tier shows the haircuts: banker cross-sell to ₹2 cr, route overlap at 75% to ₹8 cr.', svg: `<svg viewBox="0 0 720 505" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

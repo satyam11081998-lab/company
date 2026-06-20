@@ -11,13 +11,14 @@ export const agriPumpWarranty: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client manufactures agricultural water pumps in Coimbatore, selling through 800 dealers across South India. Revenue has been steady at about ₹600 crore, but operating margin has slid from 14% to 9% over six quarters. Diagnose the cause and recommend fixes.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Since revenue is steady, this looks cost-side — but let me confirm: is the revenue *composition* steady too? Same products, same prices, same dealer terms?' },
         { speaker: 'interviewer', md: 'Yes — prices, mix, and dealer margins are unchanged. The problem is below the revenue line.', note: 'The interviewer closes the revenue branch explicitly. Take the hint and go deep on cost — don\'t re-litigate revenue.' },
         { speaker: 'candidate', md: 'Then I\'ll decompose the cost base: COGS — materials, labour, energy; then below-the-line — logistics, warranty and service, SG&A. Margin lost 5 points on ₹600 crore, so I\'m hunting roughly ₹30 crore of new annual cost.' },
       ]},
       { type: 'callout', variant: 'tip', md: 'Convert margin points into **rupees** immediately (5 pts × ₹600 cr = ₹30 cr). It turns an abstract "margins fell" into a concrete hunt, and tells you what size of cause is even plausible.' },
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Confirmed the problem is cost-side with steady revenue composition, scoping the hunt to roughly ₹30 crore of new annual cost across COGS and below-the-line.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Three-tier cost tree splitting COGS and below-the-line costs into six leaves with verdicts, warranty tripled from 6 to 19 crore, false-economy math row of 8 crore saving versus 13 crore claims and 4 crore overtime, net minus 9 crore verdict bar', caption: 'The ₹30-crore hunt resolved — five leaves flat, warranty tripled. The false-economy row prices the cheap winding at total cost.', svg: `<svg viewBox="0 0 720 455" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

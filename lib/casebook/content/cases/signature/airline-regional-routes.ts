@@ -11,12 +11,13 @@ export const airlineRegionalRoutes: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is a full-service Indian airline. Its 22 regional routes (smaller cities → metro hubs) lose ₹240 crore a year combined, while its 35 trunk routes (metro–metro) make ₹610 crore. The CFO wants to cut the regional network entirely. The CEO resists, claiming the regional routes "feed" the profitable network. Resolve it with analysis, not opinions.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'The CEO\'s claim is testable: what fraction of regional passengers connect onward to trunk flights, and what revenue do they contribute there? Also — are the ₹240 crore losses fully-allocated or marginal? Allocation method decides this case.', note: 'Two questions, both aimed at the exact analytical crux: connecting revenue and cost allocation.' },
         { speaker: 'interviewer', md: 'Good. 38% of regional passengers connect to trunk routes. The ₹240 crore is fully-allocated — includes a share of corporate overhead, hub airport charges, and fleet ownership costs that wouldn\'t disappear if the routes closed.' },
         { speaker: 'candidate', md: 'Then I need to rebuild the picture twice: each regional route\'s **avoidable** loss (what we\'d actually save by cutting it), and its **network contribution** (the trunk-route margin its connecting passengers generate). A route is worth keeping if network contribution exceeds avoidable loss — route by route, not as a blob.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Made the CEO’s claim testable — each route’s *avoidable* loss versus its *network contribution* — and pinned the cost-allocation method that decides the case.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier route framework: avoidable loss versus network feed panels, the keep-fix-cut decision rule, an 8-5-9 segmentation tier with 40 versus 85 crore for keepers and 75 versus 12 crore for cuts, and a 100-plus crore verdict bar', caption: 'Two numbers decide each of the 22 — and the 8/5/9 tier shows them per bucket. The blob answer was worth ₹25 cr; the segmented one, ₹100+.', svg: `<svg viewBox="0 0 720 510" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

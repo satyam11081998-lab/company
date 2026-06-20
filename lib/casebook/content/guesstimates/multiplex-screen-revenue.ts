@@ -8,6 +8,16 @@ export const multiplexScreenRevenue: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['revenue-build', 'entertainment'] },
   blocks: [
     { type: 'prose', md: 'Estimate the annual revenue of a single multiplex screen in an Indian metro. Three streams: tickets, food & beverage, advertising. The number most people get wrong is **occupancy** — full Friday-night shows are the exception, not the average.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Framing: annual revenue of *one screen* in a metro multiplex — all three streams (tickets, F&B, advertising)? Revenue, not profit?', note: 'Per-screen, all-streams, top-line — three quick locks that frame the whole build.' },
+        { speaker: 'interviewer', md: 'Yes — one screen, all three streams, top line.' },
+        { speaker: 'candidate', md: 'A typical metro multiplex, normal year?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'The number people botch is occupancy, so I’ll anchor on a realistic *blended* occupancy across showtimes and weekdays — not Friday-night full houses.', note: 'Blended occupancy is the single assumption that most often breaks this estimate.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Per-screen scope, all three revenue streams, and a blended-occupancy anchor instead of peak-show optimism.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier revenue tree for one multiplex screen: admissions built from seats, shows and weekday-weekend occupancy, then three revenue streams riding on admissions, summed to annual revenue', caption: 'Admissions get built first (with the weekday/weekend occupancy split), then all three streams ride on that number.', svg: `<svg viewBox="0 0 720 530" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="msng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#msng)"/>

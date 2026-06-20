@@ -11,12 +11,13 @@ export const diagnosticLabExpansion: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is a pathology-lab chain that grew from 40 to 85 collection centres in 18 months, all feeding two central processing labs. Revenue grew 60%, but EBITDA halved. The board approved the expansion expecting operating leverage — instead margins collapsed. Why, and what now?' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Expansion cases usually break in one of three places: the new units underperform, the new units differ structurally from the old, or the centre cannot absorb the added load. So: are the 45 new centres like-for-like with the original 40 — same cities, same customer mix, same test mix?' },
         { speaker: 'interviewer', md: 'Good question — no. The original 40 are walk-in retail centres in two metros. Most new centres are in smaller cities, and many were opened to service **B2B contracts**: hospitals, clinics, and insurance wellness programmes.', note: 'One clarifying question collapses half the hypothesis space. This is what "structure your clarifications" means.' },
         { speaker: 'candidate', md: 'So the expansion changed the business mix, not just the footprint. B2B pathology typically prices 30–50% below retail. I\'ll structure around segment economics — old retail vs new B2B — plus the central-lab and logistics costs that scale with distance.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Found the expansion changed the business *mix* (retail versus lower-priced B2B), framing segment economics plus the central-lab costs that scale with volume.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree explaining halved EBITDA: segment mix with retail 520 rupees at 38 percent versus B2B 290 rupees at 12 percent now 55 percent of volume, distance costs and central lab strain, contribution bridge row from 38 to 24 to 21 percent, and a re-cut B2B verdict bar', caption: 'The rebuilt tree — mix does the damage (38% → 24%), frictions finish it (→ ~21%). On 1.6× revenue, the bridge closes exactly.', svg: `<svg viewBox="0 0 720 490" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

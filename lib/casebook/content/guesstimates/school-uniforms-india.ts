@@ -8,6 +8,16 @@ export const schoolUniformsIndia: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 4, tags: ['cohort', 'consumption'] },
   blocks: [
     { type: 'prose', md: 'Estimate annual sales of school uniform sets in India. A textbook **cohort × frequency** build: how many school-goers, how many sets each per year.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Scope: annual school-uniform *sets* sold across India — K-12 students in schools that *require* uniforms — where a ‘set’ is one shirt-and-bottom combination bought in a year?', note: 'The uniformed-school filter and the ‘set’ unit keep the cohort math honest.' },
+        { speaker: 'interviewer', md: 'Yes — K-12, uniform-requiring schools, sets/year.' },
+        { speaker: 'candidate', md: 'A typical year?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then it’s cohort × frequency: enrolled-and-uniformed students × sets each buys a year, allowing for growth, wear, and a spare.', note: 'Frequency (sets per child per year) is the lever, not just the headcount.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The set unit, the uniformed-school filter, and a clean cohort × sets-per-year build.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from population pyramid to school-age cohort, filtered by enrollment and uniform mandate, split into primary and senior grades with different sets per year, summed to annual demand', caption: 'Pyramid → cohort → filters → grade-wise replacement rates → total. Note the primary/senior split — growth rates differ.', svg: `<svg viewBox="0 0 720 500" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="sung" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#sung)"/>

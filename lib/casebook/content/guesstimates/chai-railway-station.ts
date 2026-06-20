@@ -8,6 +8,16 @@ export const chaiRailwayStation: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 4, tags: ['footfall', 'conversion'] },
   blocks: [
     { type: 'prose', md: 'Estimate daily chai sales (cups) at a major junction station (~3.5 lakh daily passengers). Footfall builds need two refinements beginners skip: **who** is in the footfall (long-distance vs suburban), and **how long they wait** — dwell time drives consumption.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Before footfall math: we count cups *sold* by all vendors on station premises — stalls, hawkers, vending — at one major junction (~3.5 lakh passengers/day), excluding on-train pantry?', note: 'Bounding ‘on premises’ avoids importing the whole train journey’s tea.' },
+        { speaker: 'interviewer', md: 'Yes — premises only, all vendors, paid cups.' },
+        { speaker: 'candidate', md: 'And should I treat the footfall as mixed — long-distance vs suburban vs staff — rather than one average passenger?' },
+        { speaker: 'interviewer', md: 'Treat it as mixed.' },
+        { speaker: 'candidate', md: 'Then I’ll split footfall by passenger type and weight by *dwell time* — a waiting long-distance traveller buys more than someone changing trains in five minutes.', note: 'Dwell time is the hidden multiplier beginners skip.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Premises-only scope, the paid-cup unit, and a dwell-weighted footfall split instead of a flat conversion rate.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree segmenting station footfall into long-distance, suburban and non-passenger populations, each with dwell time driving conversion and cups per buyer, summed and cross-checked per stall', caption: 'Footfall → three populations → dwell-driven conversion × cups each → sum → per-stall physical check.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="csng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#csng)"/>

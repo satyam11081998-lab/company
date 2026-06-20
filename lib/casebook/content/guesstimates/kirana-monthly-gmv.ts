@@ -8,6 +8,16 @@ export const kiranaMonthlyGmv: Page = {
   meta: { difficulty: 'easy', readingTimeMin: 4, tags: ['micro-sizing', 'retail'] },
   blocks: [
     { type: 'prose', md: 'Estimate the monthly sales (GMV) of a typical neighbourhood kirana store in an urban residential area. Micro-guesstimates flip the telescope: instead of starting from India\'s population, start from the store\'s **catchment**.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Scope: one *typical* standalone neighbourhood kirana in an urban residential area — monthly *sales* (GMV), not margin — not a supermarket or chain outlet?', note: 'GMV-not-margin and ‘standalone, typical’ anchor the micro-build.' },
+        { speaker: 'interviewer', md: 'Yes — typical standalone kirana, monthly GMV.' },
+        { speaker: 'candidate', md: 'Should I work from its local catchment rather than national figures?' },
+        { speaker: 'interviewer', md: 'Yes, that’s the intent.' },
+        { speaker: 'candidate', md: 'Then: nearby households in the catchment × monthly grocery wallet × the share this store captures — cross-checked against a daily footfall × ticket-size view.', note: 'Catchment flips the telescope; the second view guards the first.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'GMV scope, a typical standalone store, and a catchment-based build cross-checked by footfall × ticket size.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from walkable catchment through competing stores to served households, grocery wallet split by category share kept by the kirana, with a counter-side cross-check branch', caption: 'Catchment → competition split → wallet by category → kirana share. The counter view (bills × value) confirms from the other side.', svg: `<svg viewBox="0 0 720 530" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="kgng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#kgng)"/>

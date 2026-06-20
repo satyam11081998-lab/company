@@ -8,6 +8,16 @@ export const atmsTier1City: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['infrastructure', 'demand-capacity'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of ATMs in an 8-million-person tier-1 city. Build cash-withdrawal demand, divide by per-machine capacity — and address the elephant: UPI has eaten most small transactions, but cash demand hasn\'t vanished.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'May I lock the frame first? Are we counting ATMs that *exist today* or the number the city can economically support — and does every machine (bank, white-label, in-branch) count as one?', note: '‘Exist’ vs ‘justified’ diverge once unprofitable machines get pulled; settle it before building.' },
+        { speaker: 'interviewer', md: 'Installed base, today. Every machine counts as one. City of ~8M.' },
+        { speaker: 'candidate', md: 'And the elephant — should I treat UPI as having already cut cash-withdrawal *frequency*, not assume pre-digital habits?' },
+        { speaker: 'interviewer', md: 'Yes, today’s habits.' },
+        { speaker: 'candidate', md: 'Then: population → card-holding adults → split digital-first vs cash-economy with different frequencies → daily withdrawals ÷ per-machine viability.', note: 'Puts UPI inside the frequency assumption rather than bolting it on as a vague caveat.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Objective (installed base), unit (each machine = one), boundary (city not region), and UPI-as-frequency — the four calls that decide whether the count is current or stale.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree from city population to adults with cards, split into salaried digital-heavy and cash-economy segments with different withdrawal frequencies, summed to daily transactions and divided by machine viability', caption: 'Population → card-holding adults → two cash-behaviour segments → transactions → ÷ machine economics. UPI lives inside the frequency split.', svg: `<svg viewBox="0 0 720 530" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="atng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#atng)"/>

@@ -11,12 +11,13 @@ export const regionalSnackBrand: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client makes traditional namkeen snacks with a cult following in Madhya Pradesh — ₹300 crore revenue, 70% from one state, distribution in 45,000 outlets there. The family owners want to double revenue in three years and have asked you to map the options and pick a path.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Doubling in three years means ~26% CAGR against what base growth? And two capability checks: is manufacturing capacity a constraint, and is the family open to outside capital or acquisitions?' },
         { speaker: 'interviewer', md: 'Organic drift is ~10% a year. Capacity can be expanded — that\'s capex, not a blocker. No outside equity; modest debt is fine; small acquisitions possible.', note: 'The gap is now precise: 10% comes free, the case must find the other ~16 points/yr.' },
         { speaker: 'candidate', md: 'So the case is: where do ~₹250 crore of *new* annual revenue come from by year three? I\'ll use the growth matrix — existing/new products × existing/new markets — and size each cell before choosing, because at 26% CAGR we likely need two or three cells, not one.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Reframed the goal as ~₹250 crore of *new* revenue by year three, confirmed capacity and capital headroom, and set up a growth-matrix build of where it comes from.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Sized growth matrix with four quadrants carrying revenue estimates, a confidence-per-rupee sequencing row ordering the four engines, and a verdict bar summing 240 to 310 crore against the doubling target', caption: 'Size every cell first; choose second. The sequencing row orders the engines by confidence-per-rupee — the matrix alone is a list, not a plan.', svg: `<svg viewBox="0 0 720 505" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

@@ -11,12 +11,13 @@ export const peEyecareChain: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client is a mid-market PE fund evaluating a majority stake in an eye-care hospital chain: 18 centres, ₹240 crore revenue, ₹48 crore EBITDA, growing ~15% a year. The fund targets 3× money over a five-year hold. The deal team asks you to assess whether this asset can deliver, and what the value-creation plan must contain.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'PE cases run on the returns equation: entry multiple, EBITDA growth, exit multiple, leverage. So first — what entry valuation is being discussed, and how much debt would the structure carry?' },
         { speaker: 'interviewer', md: 'Entry at 14× EBITDA — ₹672 crore enterprise value — with 40% debt funding. Assume exit at the same 14× unless you argue otherwise.', note: 'With entry = exit multiple and known leverage, the whole 3× question collapses into one number: how big must exit EBITDA be?' },
         { speaker: 'candidate', md: 'Then I can reverse-engineer the requirement before judging the asset. Equity in: 60% × 672 ≈ ₹403 crore. For 3×, equity out ≈ ₹1,210 crore. I\'ll work out what exit EBITDA that implies, then test whether this chain can plausibly get there — organic growth, new centres, margin work — and what could break it.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Locked the returns equation (entry multiple, leverage, exit) so the asset can be judged against the equity return it must deliver.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier private equity tree: returns bridge from 403 crore equity in to 1,210 crore target implying 98 crore exit EBITDA, a 15.4 percent required CAGR bar, three value-creation levers with sub-numbers, a levers-sum row straddling the bar, and a no-margin-of-safety verdict', caption: 'The requirement reverse-engineered, then the levers — they sum to ₹95–105 cr against a ₹98 cr bar. "Barely clears" is the finding.', svg: `<svg viewBox="0 0 720 575" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

@@ -8,6 +8,16 @@ export const mobileTowersIndia: Page = {
   meta: { difficulty: 'challenging', readingTimeMin: 6, tags: ['infrastructure', 'coverage-capacity'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of mobile towers in India. Towers are built for two different reasons: **coverage** (rural — one tower blankets a radius) and **capacity** (urban — towers added because spectrum saturates). Build the two separately; adding them is the answer.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Definition: physical tower structures, counted once even when shared by several operators — not individual BTS, antennas, or cell sites?', note: 'Shared towers counted per-operator would multiply the answer 2–3×.' },
+        { speaker: 'interviewer', md: 'Physical towers, once regardless of tenants.' },
+        { speaker: 'candidate', md: 'All India?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then I’ll build the two reasons towers exist separately — coverage-driven in rural areas, capacity-driven in cities — and add them.', note: 'Coverage vs capacity is the structuring insight; one logic can’t cover both.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Physical-tower unit counted once, and a separate rural-coverage / urban-capacity build.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree splitting towers into rural coverage-driven and urban capacity-driven branches, each unpacked into area, radius, subscribers and per-tower capacity, summed with a tenancy clarification', caption: 'Two physics, fully unpacked: rural towers cover land, urban towers carry traffic. Sum the branches, then clarify the unit.', svg: `<svg viewBox="0 0 720 540" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="mtng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#mtng)"/>

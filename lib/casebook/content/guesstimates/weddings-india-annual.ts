@@ -8,6 +8,16 @@ export const weddingsIndiaAnnual: Page = {
   meta: { difficulty: 'moderate', readingTimeMin: 5, tags: ['cohort', 'flow'] },
   blocks: [
     { type: 'prose', md: 'Estimate the number of weddings in India each year. The clean route is **cohort flow**: how many people reach marrying age annually, and what fraction eventually marries. Avoid the trap of starting from "number of marriage halls" — supply-side here is far messier.' },
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
+      { type: 'dialogue', title: 'Clarifying questions before building the tree', turns: [
+        { speaker: 'candidate', md: 'Definition: weddings — couples married — per year across India, one event per couple, not guests or sub-ceremonies within a wedding?', note: 'One-event-per-couple avoids the inflation of counting multi-day ceremonies separately.' },
+        { speaker: 'interviewer', md: 'Yes — couples married per year.' },
+        { speaker: 'candidate', md: 'A typical year, all India?' },
+        { speaker: 'interviewer', md: 'Yes.' },
+        { speaker: 'candidate', md: 'Then cohort flow: people reaching marrying age each year × the fraction who eventually marry — steadier than starting from marriage-hall supply.', note: 'The population pyramid does the work; supply-side (halls, caterers) is far messier.' },
+      ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'The couples-per-year unit and a cohort-flow build off the marrying-age population rather than venue supply.' },
+    ]},
     { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier cohort-flow tree from population pyramid to annual marrying cohort, adjusted for ever-marry rate and remarriage, divided into couples, with a market-size extension by spend tier', caption: 'Pyramid → cohort flow → adjustments → couples — then the spend-tier extension that turns a count into a market.', svg: `<svg viewBox="0 0 720 520" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
   <defs><linearGradient id="wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(214 64% 19%)"/><stop offset="1" stop-color="hsl(214 74% 11%)"/></linearGradient></defs>
   <rect x="240" y="14" width="240" height="46" rx="11" fill="url(#wing)"/>

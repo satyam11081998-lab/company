@@ -11,12 +11,13 @@ export const intercityBusDynamic: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client runs 120 premium sleeper buses on intercity routes like Mumbai–Goa and Bengaluru–Hyderabad, selling at fixed prices per route (~₹1,400 average). Occupancy swings from 55% midweek to 100% sold-out-with-waitlist on Fridays, Sundays, and holidays. The CEO asks: should we adopt airline-style dynamic pricing, and what would it earn us?' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'The occupancy spread already answers "is there mispricing" — sold-out Fridays mean we\'re underpriced at peak; 55% Tuesdays may mean overpriced off-peak, or just thin demand. Before recommending: how do customers book — direct app or aggregators? And what does the competition do on these routes?' },
         { speaker: 'interviewer', md: '60% book via aggregator platforms, 40% direct. Competitors are mostly fixed-price too; trains are the real midweek competitor. Waitlists on Friday run 30–40 seats per bus.', note: 'A 30–40 seat waitlist on a ~36-berth bus means peak demand is roughly 2× capacity — enormous headroom.' },
         { speaker: 'candidate', md: 'A waitlist the size of the bus itself is the clearest underpricing signal you can get. I\'ll structure this as: where\'s the revenue leak (peak vs off-peak), how much can dynamic pricing recover, and what are the execution risks — fairness perception, aggregator mechanics, and competitive response.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Read the occupancy spread as clear peak underpricing and framed the case as leak → recoverable upside → execution risks (fairness, channel).' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree: peak underpricing and off-peak empty berths, stepped-curve math averaging 1,830 rupees for plus 46,400 per bus week, off-peak fill math netting plus 16,000, three execution risks, and a verdict bar of 62,000 per bus per week or 39 crore annually', caption: 'Two leaks, opposite fixes — and the math tier under each. The honest part is subtracting the ₹6k dilution.', svg: `<svg viewBox="0 0 720 495" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">

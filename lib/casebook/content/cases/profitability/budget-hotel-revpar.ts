@@ -11,13 +11,14 @@ export const budgetHotelRevpar: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'Your client operates 60 budget business hotels (~70 rooms each) across Indian tier-1 and tier-2 cities. Average room rate and total occupancy are both *unchanged* year-on-year, yet property-level profit fell 15%. The CFO insists the numbers "don\'t add up." Find what everyone is missing.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Flat rate, flat occupancy, falling profit — so either revenue has a composition problem the averages hide, or costs rose. First: did total revenue actually stay flat, or only RevPAR?', note: 'When averages look fine but profit isn\'t, suspect the averages. This case is an averages trap from the first line.' },
         { speaker: 'interviewer', md: 'Total room revenue is flat to the rupee. Non-room revenue is negligible. And total operating cost rose about 9%.' },
         { speaker: 'candidate', md: 'Then the case is: why did cost rise 9% with identical occupancy? Unless… the *pattern* of occupancy changed. The same annual occupancy can be smooth or spiky — and spiky is expensive. May I test that?' },
         { speaker: 'interviewer', md: 'Go on — what would "spiky" mean here and why would it cost more?' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Distinguished flat total revenue from flat RevPAR and put the occupancy *pattern* — smooth versus spiky — on trial as the hidden cost driver.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'prose', md: 'The structure splits cost growth into price effects (wages, utilities tariffs) and volume/pattern effects (how demand distributes across days). The unlock is recognizing that **occupancy variance**, not occupancy level, drives staffing and utility costs.' },

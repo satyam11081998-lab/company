@@ -11,12 +11,13 @@ export const railwayPlatformCrowding: Page = {
     { type: 'caseSection', label: 'prompt', blocks: [
       { type: 'prose', md: 'A major metro-city railway terminus sees dangerous platform crowding between 7:30–10:00 am. The divisional railway manager — your client — cannot add platforms or land for at least five years. Reduce peak crowding meaningfully within 12 months, with a modest budget.' },
     ]},
-    { type: 'caseSection', label: 'clarifying', title: 'Opening exchange', blocks: [
+    { type: 'reveal', summary: 'How a strong candidate opens — clarifying questions', blocks: [
       { type: 'dialogue', turns: [
         { speaker: 'candidate', md: 'Crowding is density: people on platforms ÷ platform area over time. With area fixed, I can reduce the *people*, the *time they spend* standing there, or smooth the *distribution* across platforms and minutes. Quick facts: what share of platform occupants are passengers versus accompaniers/vendors? And how early do passengers arrive before their train?', note: 'Unconventional cases reward defining the governing quantity (here: person-minutes per square metre) before any solutions.' },
         { speaker: 'interviewer', md: 'Surveys say: 70% passengers, 18% people seeing someone off, 12% vendors and staff. Long-distance passengers arrive 45–70 minutes early on average. Suburban passengers arrive ~8 minutes early. Both share the same concourse and some platforms.' },
         { speaker: 'candidate', md: 'Two findings jump out: a fifth of the crowd isn\'t travelling at all, and long-distance passengers spend nearly an hour occupying platform space they only need for five minutes of boarding. The structure: reduce non-travellers, shift waiting off-platform, and stagger/redistribute flows. Capacity expansion is off-limits — good; this is a flow problem, not a capacity problem.' },
       ]},
+      { type: 'callout', variant: 'insight', title: 'What the questions locked', md: 'Framed crowding as density and isolated two levers — non-travellers occupying platforms and long-distance passengers’ dwell time.' },
     ]},
     { type: 'caseSection', label: 'structure', blocks: [
       { type: 'svg', maxWidth: 720, ariaLabel: 'Four-tier tree decomposing platform density into people, dwell time and spread levers with numbers, an airport-gate math tier cutting 7.9 lakh person-minutes to 2.2 lakh for minus 70 percent, and a phased rollout verdict bar', caption: 'Density = P × T ÷ (A × S), with the math tier under the dominant lever — 7.9L person-minutes become 2.2L.', svg: `<svg viewBox="0 0 720 440" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
