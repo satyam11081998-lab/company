@@ -79,14 +79,21 @@ export default function BriefDetailPage() {
         <main className="container max-w-3xl py-16">
           <Card className="p-10 text-center">
             <Lock className="h-10 w-10 text-muted-foreground/60 mx-auto" />
-            <h1 className="mt-4 text-h2 text-foreground">GD Briefs is a Lite feature</h1>
+            <h1 className="mt-4 text-h2 text-foreground">Full GD briefs are a Lite feature</h1>
             <p className="mt-2 text-body text-muted-foreground max-w-md mx-auto">
-              Upgrade to Lite or Pro to read full GD briefs.
+              You can browse today&apos;s GD news for free. The full brief — smart angles, likely
+              questions, and opening &amp; closing lines — is included with Lite and Pro.
             </p>
-            <Link href="/upgrade" className="mt-6 inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors">
-              Upgrade now
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link href="/upgrade" className="inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors">
+                Upgrade now
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/gd-briefs" className="inline-flex items-center gap-1.5 text-body font-medium text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-4 w-4" />
+                Browse GD news
+              </Link>
+            </div>
           </Card>
         </main>
       </div>

@@ -13,7 +13,7 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ## 2026-06-21 — gd-news-free-access — <pending commit, 2 repos>
 Free members can now browse the GD news list (backend GET /news/headlines opened to all signed-in users; was Lite-gated). Generating AND viewing a GD brief stays Lite/Pro — server-enforced on both /news/briefs/{id} endpoints — with an 'Unlock with Lite' upgrade CTA on each headline card (full-page wall removed). Also bounded the headline-classifier OpenAI call (timeout=45,max_retries=2) to finish the cron-robustness review.
-touches: consilio/app/(app)/gd-briefs/page.tsx; consilio-backend/routes/news.py, services/headline_classifier.py
+touches: consilio/app/(app)/gd-briefs/page.tsx, consilio/app/(app)/gd-briefs/[id]/page.tsx; consilio-backend/routes/news.py, services/headline_classifier.py
 breaking: no   affects: GD Briefs, News pipeline (tier surface)
 
 ## 2026-06-21 — harden-cron-keepalive — <pending commit>
