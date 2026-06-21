@@ -22,7 +22,6 @@ export default function GdBriefsPage() {
 
   useEffect(() => {
     let mounted = true;
-    if (locked) { setLoading(false); return; }
     // If the load is still going after 6s (typically a sleeping backend waking
     // up), surface a reassuring hint instead of a silent spinner.
     const slowTimer = setTimeout(() => { if (mounted) setSlow(true); }, 6000);
@@ -46,6 +45,7 @@ export default function GdBriefsPage() {
   }, [locked]);
 
   async function handleGenerate(headlineId: string) {
+    if (locked) { router.push('/upgrade'); return; }
     setGeneratingId(headlineId);
     try {
       const supabase = createClient();
@@ -61,35 +61,29 @@ export default function GdBriefsPage() {
   const star = headlines ? headlines.find((h) => h.is_star) || null : null;
   const regulars = headlines ? headlines.filter((h) => !h.is_star).slice(0, 9) : [];
 
-  if (locked) {
-    return (
-      <div className="min-h-screen bg-muted">
-        <main className="container max-w-3xl py-16">
-          <div className="bg-card rounded-xl border border-border shadow-sm p-10 text-center">
-            <Lock className="h-10 w-10 text-muted-foreground/60 mx-auto" />
-            <h1 className="mt-4 text-h2 text-foreground">GD Briefs is a Lite feature</h1>
-            <p className="mt-2 text-body text-muted-foreground max-w-md mx-auto">
-              Daily GD prep — sharp angles, likely questions, opening and closing lines on the day&apos;s biggest debates — is included with Lite and Pro.
-            </p>
-            <Link href="/upgrade" className="mt-6 inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors">
-              Upgrade to unlock GD Briefs
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-muted">
       <main className="container max-w-6xl py-8">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">GD Briefs</h1>
           <p className="mt-1 text-muted-foreground">
-            Sharp takes on the day&apos;s most debate-worthy stories. Click any headline to generate a full GD brief.
+            Today&apos;s most debate-worthy stories. {locked ? 'Browse the news free; generate a GD brief on Lite/Pro.' : 'Click any headline to generate a full GD brief.'}
           </p>
         </div>
+
+        {locked && (
+          <div className="mb-6 flex flex-col gap-3 rounded-xl border border-border bg-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-small text-muted-foreground">
+                You can browse today&apos;s GD-worthy news for free. <span className="font-medium text-foreground">Generating a GD brief</span> — angles, likely questions, opening &amp; closing lines — is a Lite/Pro feature.
+              </p>
+            </div>
+            <Link href="/upgrade" className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary px-4 text-small font-semibold text-white transition-colors hover:bg-primary-hover">
+              Upgrade <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-4">
@@ -138,6 +132,7 @@ export default function GdBriefsPage() {
                 headline={star}
                 generating={generatingId === star.id}
                 onGenerate={() => handleGenerate(star.id)}
+                locked={locked}
               />
             ) : null}
             {regulars.length > 0 ? (
@@ -148,6 +143,7 @@ export default function GdBriefsPage() {
                     headline={h}
                     generating={generatingId === h.id}
                     onGenerate={() => handleGenerate(h.id)}
+                    locked={locked}
                   />
                 ))}
               </div>
@@ -163,10 +159,11 @@ interface CardProps {
   headline: NewsHeadline;
   generating: boolean;
   onGenerate: () => void;
+  locked?: boolean;
 }
 
 function StarHeadlineCard(props: CardProps) {
-  const { headline, generating, onGenerate } = props;
+  const { headline, generating, onGenerate, locked } = props;
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-slide-up">
       <div className="grid md:grid-cols-[2fr_3fr]">
@@ -222,7 +219,12 @@ function StarHeadlineCard(props: CardProps) {
             </div>
           ) : null}
           <div className="mt-auto pt-4">
-            {headline.has_brief ? (
+            {locked ? (
+              <Link href="/upgrade" className="btn-primary inline-flex items-center gap-1.5">
+                <Lock className="h-4 w-4" />
+                Unlock GD briefs
+              </Link>
+            ) : headline.has_brief ? (
               <Link
                 href={'/gd-briefs/' + headline.id}
                 className="btn-primary inline-flex items-center gap-1.5"
@@ -257,7 +259,7 @@ function StarHeadlineCard(props: CardProps) {
 }
 
 function HeadlineCard(props: CardProps) {
-  const { headline, generating, onGenerate } = props;
+  const { headline, generating, onGenerate, locked } = props;
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-video bg-navy">
@@ -304,7 +306,15 @@ function HeadlineCard(props: CardProps) {
           </div>
         ) : null}
         <div className="mt-auto pt-2">
-          {headline.has_brief ? (
+          {locked ? (
+            <Link
+              href="/upgrade"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Unlock with Lite
+            </Link>
+          ) : headline.has_brief ? (
             <Link
               href={'/gd-briefs/' + headline.id}
               className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"

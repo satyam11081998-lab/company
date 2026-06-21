@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — gd-news-free-access — <pending commit, 2 repos>
+Free members can now browse the GD news list (backend GET /news/headlines opened to all signed-in users; was Lite-gated). Generating AND viewing a GD brief stays Lite/Pro — server-enforced on both /news/briefs/{id} endpoints — with an 'Unlock with Lite' upgrade CTA on each headline card (full-page wall removed). Also bounded the headline-classifier OpenAI call (timeout=45,max_retries=2) to finish the cron-robustness review.
+touches: consilio/app/(app)/gd-briefs/page.tsx; consilio-backend/routes/news.py, services/headline_classifier.py
+breaking: no   affects: GD Briefs, News pipeline (tier surface)
+
 ## 2026-06-21 — harden-cron-keepalive — <pending commit>
 Made the automated daily jobs fool-proof against Render free-tier cold starts: (1) daily-news.yml now WAITS for /health=200 before firing work + stronger retries (6x, 600s) + always-chains schedule-daily; (2) new keep-alive.yml pre-warms the dyno every 10 min in the 00:00 UTC window; (3) /api/cron/refresh rewritten with a warm-up poll loop + retried kicks that treat a timeout as 'work continues server-side' and always return 200 (a slow-but-working backend no longer shows as a failed cron); also accepts x-cron-secret. Both triggers (GH Actions + Vercel cron) are idempotent and redundant.
 touches: .github/workflows/daily-news.yml, .github/workflows/keep-alive.yml (new), app/api/cron/refresh/route.ts
