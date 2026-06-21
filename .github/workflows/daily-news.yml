@@ -1,17 +1,20 @@
 name: Daily GD news refresh
 
-# Runs every day at 06:00 IST (00:30 UTC) to keep GD Briefs fresh:
-#   1. fetch-news     — pull + classify the latest headlines
+# Runs every day at 06:00 IST (00:30 UTC) to keep GD Briefs + the daily pick fresh:
+#   0. warm-up       — wait until the (sleep-prone, free-tier) Render backend is
+#                      actually healthy BEFORE firing work, so the work calls
+#                      never race a 30-60s cold start.
+#   1. fetch-news    — pull + classify the latest headlines
 #   2. schedule-daily — set today's daily case + guesstimate
-#   3. cleanup        — drop headlines (and cascaded briefs) older than 14 days
+#   3. cleanup       — drop headlines (and cascaded briefs) older than 14 days
 #
 # Required repository secrets (Settings → Secrets and variables → Actions):
 #   CRON_SECRET  — must equal the backend's CRON_SECRET env var
 #   BACKEND_URL  — backend base URL, no trailing slash (e.g. https://api.mece.in)
 #
-# The /news/headlines endpoint also self-heals (auto-refetches if the newest
-# headline is >24h old), so this schedule is the primary path and the self-heal
-# is the backstop if a run is ever missed.
+# Redundancy: Vercel Cron (/api/cron/refresh) fires the same two jobs at the
+# same time as an independent trigger, and /news/headlines self-heals if a run
+# is ever missed. All backend endpoints are idempotent, so double-firing is safe.
 
 on:
   schedule:
@@ -28,32 +31,48 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
+      - name: Preflight — required secrets present
+        run: |
+          if [ -z "${BACKEND_URL}" ] || [ -z "${CRON_SECRET}" ]; then
+            echo "::error::BACKEND_URL and/or CRON_SECRET repository secrets are not set."
+            exit 1
+          fi
+          echo "Secrets present. Backend: ${BACKEND_URL}"
+
+      - name: Warm up backend (Render cold-start gate)
+        run: |
+          echo "Waiting for ${BACKEND_URL}/health to return 200 ..."
+          for i in $(seq 1 24); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "${BACKEND_URL}/health" || echo 000)
+            echo "attempt $i: /health -> $code"
+            if [ "$code" = "200" ]; then
+              echo "Backend healthy after $i attempt(s)."
+              exit 0
+            fi
+            sleep 8
+          done
+          echo "::warning::Backend not confirmed healthy after warm-up window; continuing — the work steps retry with backoff."
+
       - name: Fetch + classify latest headlines
         run: |
           curl -sS --fail-with-body -X POST "${BACKEND_URL}/cron/fetch-news" \
             -H "X-Cron-Secret: ${CRON_SECRET}" \
-            --max-time 300 --retry 3 --retry-all-errors --retry-delay 20
-        env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+            --max-time 600 --retry 6 --retry-all-errors --retry-delay 30
 
       - name: Fill today's daily schedule
-        if: always()
+        if: always() # run even if fetch-news flaked — the daily pick must exist
         run: |
           curl -sS --fail-with-body -X POST "${BACKEND_URL}/cron/schedule-daily" \
             -H "X-Cron-Secret: ${CRON_SECRET}" \
-            --max-time 300 --retry 3 --retry-all-errors --retry-delay 20
-        env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+            --max-time 600 --retry 6 --retry-all-errors --retry-delay 30
 
       - name: Cleanup headlines older than 14 days
         if: always()
         run: |
           curl -sS --fail-with-body -X POST "${BACKEND_URL}/cron/cleanup" \
             -H "X-Cron-Secret: ${CRON_SECRET}" \
-            --max-time 120 --retry 2 --retry-all-errors --retry-delay 15
-        env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+            --max-time 180 --retry 3 --retry-all-errors --retry-delay 20

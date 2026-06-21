@@ -1,0 +1,42 @@
+name: Keep backend warm
+
+# Render's free tier sleeps a web service after ~15 min of inactivity, which is
+# what makes the 00:30 UTC daily job hit a cold start. This pings /health every
+# ~10 min during the hour AROUND the daily cron so the backend is already awake
+# when the real work fires.
+#
+# Why only the 00:00 UTC hour (not 24/7): a free Render service kept awake all
+# day would burn most of the 750 free instance-hours/month. This warms it just
+# in time for the scheduled jobs. For a truly always-on backend, move Render to
+# a paid (non-sleeping) instance OR add an external uptime pinger
+# (e.g. cron-job.org / UptimeRobot) hitting /health every 5 min.
+#
+# Requires repository secret: BACKEND_URL (no trailing slash).
+# Note: GitHub may delay scheduled runs under load, and disables schedules after
+# 60 days of repo inactivity — the daily job's own warm-up loop is the backstop.
+
+on:
+  schedule:
+    - cron: "*/10 0 * * *" # every 10 min during 00:00-00:59 UTC (around the 00:30 daily job)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health (best-effort)
+        run: |
+          if [ -z "${{ secrets.BACKEND_URL }}" ]; then
+            echo "::warning::BACKEND_URL secret not set — skipping keep-alive."
+            exit 0
+          fi
+          curl -sS -o /dev/null -w 'health: %{http_code} in %{time_total}s\n' \
+            --max-time 60 --retry 3 --retry-all-errors --retry-delay 10 \
+            "${{ secrets.BACKEND_URL }}/health" || echo "keep-alive ping failed (non-fatal)"

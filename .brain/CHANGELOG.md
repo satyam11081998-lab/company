@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — harden-cron-keepalive — <pending commit>
+Made the automated daily jobs fool-proof against Render free-tier cold starts: (1) daily-news.yml now WAITS for /health=200 before firing work + stronger retries (6x, 600s) + always-chains schedule-daily; (2) new keep-alive.yml pre-warms the dyno every 10 min in the 00:00 UTC window; (3) /api/cron/refresh rewritten with a warm-up poll loop + retried kicks that treat a timeout as 'work continues server-side' and always return 200 (a slow-but-working backend no longer shows as a failed cron); also accepts x-cron-secret. Both triggers (GH Actions + Vercel cron) are idempotent and redundant.
+touches: .github/workflows/daily-news.yml, .github/workflows/keep-alive.yml (new), app/api/cron/refresh/route.ts
+breaking: no   affects: Daily content + keep-alive (cron triggers only; backend job code unchanged)
+
 ## 2026-06-21 — daily-guesstimate-cta — <pending commit>
 Added a dedicated 'Start the guesstimate' primary button to the dashboard daily-guesstimate card (mirrors the daily case's 'Start the case' CTA); routes to /cases/{id}, replaces the subtle 'attempt now →' text. Falls back to 'Browse guesstimates' when no daily.
 touches: components/dashboard/guesstimate-card.tsx
