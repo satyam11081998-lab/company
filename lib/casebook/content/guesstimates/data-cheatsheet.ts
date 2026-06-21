@@ -176,6 +176,12 @@ export const dataCheatsheet: Page = {
 </svg>`,
     },
 
+    {
+      type: "callout",
+      variant: "insight",
+      title: "Going deeper → use the Industry Primers",
+      md: "The digital, mobility and sector figures above are quick **national anchors** for fast sizing — not sector depth. When a guesstimate is really about one industry, open its **Industry Primer** for ARPU, GMV, penetration, capacity and sales-mix numbers instead of reinventing them here: [Telecom](/learn/casebook/industry-primers/telecom), [Payments](/learn/casebook/industry-primers/payments), [E-Commerce](/learn/casebook/industry-primers/ecommerce), [Food Delivery](/learn/casebook/industry-primers/food-delivery), [Automobile](/learn/casebook/industry-primers/automobile), [Electric Vehicles](/learn/casebook/industry-primers/ev), [FMCG](/learn/casebook/industry-primers/fmcg), [Retail](/learn/casebook/industry-primers/retail), [Banking](/learn/casebook/industry-primers/banking), [Healthcare](/learn/casebook/industry-primers/healthcare), [Power](/learn/casebook/industry-primers/power), [Oil & Gas](/learn/casebook/industry-primers/oil-gas) — plus ~15 more under **Industry Primers** in the sidebar.",
+    },
     { type: "heading", level: 2, text: "Conversions & time constants", emphasize: "Conversions" },
     {
       type: "table",

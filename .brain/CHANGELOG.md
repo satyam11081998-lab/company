@@ -12,7 +12,7 @@ A brain reading this at session start only needs the top ~15 lines.
 ---
 
 ## 2026-06-21 — guesstimate-data-cheatsheet — <pending commit>
-New casebook page guesstimates/data-cheatsheet (first under B·Guesstimates): a dense, infographic-style reference of India macro+micro anchors for market-sizing — 4 inline SVG panels (anchor-number grid, age structure, income pyramid, economy/digital/mobility) + 3 reference tables (conversions/time, per-capita rates, default assumptions) + tip/warning callouts + takeaways. Figures verified mid-2026 (UN/Worldometer, IMF WEO Oct-2025, NPCI, MoRTH, IAMAI) and labelled as planning anchors; adversarial note flags household-count/smartphone/sector-vs-jobs caveats. Reuses existing block types (no schema change).
+New casebook page guesstimates/data-cheatsheet (first under B·Guesstimates): a dense, infographic-style reference of India macro+micro anchors for market-sizing — 4 inline SVG panels (anchor-number grid, age structure, income pyramid, economy/digital/mobility) + 3 reference tables (conversions/time, per-capita rates, default assumptions) + tip/warning callouts + takeaways. Adds a 'Going deeper → Industry Primers' callout that LINKS the overlapping sector data to the existing primers (Telecom/Payments/E-Commerce/Automobile/EV/FMCG/etc.) instead of duplicating it. Figures verified mid-2026 (UN/Worldometer, IMF WEO Oct-2025, NPCI, MoRTH, IAMAI) and labelled as planning anchors; adversarial note flags household-count/smartphone/sector-vs-jobs caveats. Reuses existing block types (no schema change).
 touches: lib/casebook/content/guesstimates/data-cheatsheet.ts (new), lib/casebook/content/index.ts, lib/casebook/tree.ts
 breaking: no   affects: Casebook content/tree
 
