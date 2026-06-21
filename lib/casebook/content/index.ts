@@ -22,6 +22,7 @@ import { dueDiligence } from './frameworks/m-and-a/due-diligence';
 import { privateEquity } from './frameworks/m-and-a/private-equity';
 import { regionalDairyCooperative } from './cases/profitability/regional-dairy-cooperative';
 import { evChargingPointsMetro } from './guesstimates/ev-charging-points-metro';
+import { dataCheatsheet } from './guesstimates/data-cheatsheet';
 import { painAndPromise } from './guesstimates/pain-and-promise';
 import { fourApproaches } from './guesstimates/four-approaches';
 import { idealFlow } from './guesstimates/ideal-flow';
@@ -141,6 +142,7 @@ const SEED_PAGES: Record<string, Page> = {
   [privateEquity.slug]: privateEquity,
   [regionalDairyCooperative.slug]: regionalDairyCooperative,
   [evChargingPointsMetro.slug]: evChargingPointsMetro,
+  [dataCheatsheet.slug]: dataCheatsheet,
   [painAndPromise.slug]: painAndPromise,
   [fourApproaches.slug]: fourApproaches,
   [idealFlow.slug]: idealFlow,

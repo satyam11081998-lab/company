@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — guesstimate-data-cheatsheet — <pending commit>
+New casebook page guesstimates/data-cheatsheet (first under B·Guesstimates): a dense, infographic-style reference of India macro+micro anchors for market-sizing — 4 inline SVG panels (anchor-number grid, age structure, income pyramid, economy/digital/mobility) + 3 reference tables (conversions/time, per-capita rates, default assumptions) + tip/warning callouts + takeaways. Figures verified mid-2026 (UN/Worldometer, IMF WEO Oct-2025, NPCI, MoRTH, IAMAI) and labelled as planning anchors; adversarial note flags household-count/smartphone/sector-vs-jobs caveats. Reuses existing block types (no schema change).
+touches: lib/casebook/content/guesstimates/data-cheatsheet.ts (new), lib/casebook/content/index.ts, lib/casebook/tree.ts
+breaking: no   affects: Casebook content/tree
+
 ## 2026-06-21 — gd-news-free-access — <pending commit, 2 repos>
 Free members can now browse the GD news list (backend GET /news/headlines opened to all signed-in users; was Lite-gated). Generating AND viewing a GD brief stays Lite/Pro — server-enforced on both /news/briefs/{id} endpoints — with an 'Unlock with Lite' upgrade CTA on each headline card (full-page wall removed). Also bounded the headline-classifier OpenAI call (timeout=45,max_retries=2) to finish the cron-robustness review.
 touches: consilio/app/(app)/gd-briefs/page.tsx, consilio/app/(app)/gd-briefs/[id]/page.tsx; consilio-backend/routes/news.py, services/headline_classifier.py

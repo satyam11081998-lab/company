@@ -21,6 +21,7 @@ export const CASEBOOK_TREE: NavNode[] = [
     kind: 'section',
     icon: 'Calculator',
     children: [
+      { title: 'Data Cheatsheet', kind: 'page', slug: 'guesstimates/data-cheatsheet', meta: { difficulty: 'easy' } },
       { title: 'The Pain & The Promise', kind: 'page', slug: 'guesstimates/pain-and-promise' },
       { title: 'The Four Approaches', kind: 'page', slug: 'guesstimates/four-approaches' },
       { title: 'The Ideal Flow', kind: 'page', slug: 'guesstimates/ideal-flow' },
