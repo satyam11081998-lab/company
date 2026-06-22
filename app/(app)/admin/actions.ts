@@ -157,3 +157,100 @@ export async function triggerCaseGeneration() {
     return { success: false, error: err.message };
   }
 }
+
+
+/**
+ * Admin-only: HARD-DELETE a user by email or LinkedIn URL. Removes the
+ * public.users row (cascades to attempts / payments / badges / etc. via
+ * ON DELETE CASCADE) AND the Supabase auth identity. Irreversible.
+ * Guards: refuses to delete the caller's own account or another admin.
+ * Requires SUPABASE_SERVICE_ROLE_KEY.
+ */
+export async function deleteUserByIdentifier(input: { identifier: string }) {
+  // Inline admin check so we also capture the caller's id (to block self-delete).
+  const authClient = createClient();
+  const {
+    data: { user: caller },
+  } = await authClient.auth.getUser();
+  if (!caller) return { success: false, error: 'Unauthorized.' };
+
+  const { data: callerRow } = await authClient
+    .from('users')
+    .select('is_admin')
+    .eq('id', caller.id)
+    .single();
+  if (!(callerRow as Partial<UserRow>)?.is_admin) {
+    return { success: false, error: 'Forbidden: Admins only.' };
+  }
+
+  const raw = (input.identifier || '').trim();
+  if (!raw) return { success: false, error: 'Enter an email or LinkedIn URL.' };
+
+  const db = createServiceClient();
+  const isEmail = raw.includes('@');
+
+  type Target = {
+    id: string;
+    email: string;
+    name: string | null;
+    linkedin_url: string | null;
+    is_admin: boolean;
+  };
+  let target: Target | null = null;
+
+  if (isEmail) {
+    const { data, error } = await db
+      .from('users')
+      .select('id, email, name, linkedin_url, is_admin')
+      .ilike('email', raw)
+      .maybeSingle();
+    if (error) return { success: false, error: `Lookup failed: ${error.message}` };
+    target = (data as Target | null) ?? null;
+  } else {
+    // Normalise the LinkedIn URL (strip protocol / www / trailing slash) and
+    // match the remaining fragment, so a full URL or a bare handle both work.
+    const frag = raw
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .replace(/\/+$/, '');
+    const { data, error } = await db
+      .from('users')
+      .select('id, email, name, linkedin_url, is_admin')
+      .ilike('linkedin_url', `%${frag}%`)
+      .limit(2);
+    if (error) return { success: false, error: `Lookup failed: ${error.message}` };
+    const rows = (data as Target[] | null) ?? [];
+    if (rows.length > 1) {
+      return {
+        success: false,
+        error: 'Multiple users match that LinkedIn URL — use their email instead.',
+      };
+    }
+    target = rows[0] ?? null;
+  }
+
+  if (!target) return { success: false, error: `No user found for "${raw}".` };
+  if (target.id === caller.id) {
+    return { success: false, error: 'You cannot delete your own account.' };
+  }
+  if (target.is_admin) {
+    return { success: false, error: 'Refusing to delete an admin account.' };
+  }
+
+  const summary = { email: target.email, name: target.name, linkedin_url: target.linkedin_url };
+
+  // 1) Delete the profile row — cascades to all child tables.
+  const { error: rowErr } = await db.from('users').delete().eq('id', target.id);
+  if (rowErr) return { success: false, error: `Failed to delete profile row: ${rowErr.message}` };
+
+  // 2) Delete the auth identity (public.users.id === auth user id; not auto-cascaded).
+  const { error: authErr } = await db.auth.admin.deleteUser(target.id);
+  if (authErr) {
+    return {
+      success: false,
+      error: `Profile + data deleted, but auth identity removal failed: ${authErr.message}. Remove it manually in Supabase -> Authentication -> Users.`,
+    };
+  }
+
+  return { success: true, data: summary };
+}

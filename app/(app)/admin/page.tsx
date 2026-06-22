@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle, UserCog } from 'lucide-react';
-import { triggerNewsFetch, triggerCaseGeneration, grantMembership } from './actions';
+import { RefreshCw, Zap, ShieldAlert, CheckCircle2, XCircle, AlertTriangle, UserCog, Trash2 } from 'lucide-react';
+import { triggerNewsFetch, triggerCaseGeneration, grantMembership, deleteUserByIdentifier } from './actions';
 
 export default function AdminPage() {
   const [newsLoading, setNewsLoading] = useState(false);
@@ -14,6 +14,10 @@ export default function AdminPage() {
   const [grantTier, setGrantTier] = useState<'free' | 'lite' | 'pro'>('pro');
   const [grantDuration, setGrantDuration] = useState('30');
   const [grantLoading, setGrantLoading] = useState(false);
+
+  const [deleteId, setDeleteId] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [log, setLog] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
 
@@ -59,6 +63,23 @@ export default function AdminPage() {
       setLog({ type: 'error', message: result.error || 'Failed to update membership.' });
     }
     setGrantLoading(false);
+  };
+
+  const handleDelete = async () => {
+    setDeleteLoading(true);
+    setLog(null);
+    const result = await deleteUserByIdentifier({ identifier: deleteId.trim() });
+    if (result.success && result.data) {
+      setLog({
+        type: 'success',
+        message: `Deleted ${result.data.email}${result.data.name ? ` (${result.data.name})` : ''} and all their data.`,
+      });
+      setDeleteId('');
+      setDeleteConfirm('');
+    } else {
+      setLog({ type: 'error', message: result.error || 'Failed to delete user.' });
+    }
+    setDeleteLoading(false);
   };
 
   return (
@@ -156,6 +177,48 @@ export default function AdminPage() {
         </div>
         <p className="text-xs text-muted-foreground mt-3">
           Free clears the expiry and ignores duration. Requires <code>SUPABASE_SERVICE_ROLE_KEY</code> in the server env.
+        </p>
+      </Card>
+
+      {/* Danger zone - delete user */}
+      <Card className="p-6 border-destructive/30 bg-destructive/5 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-destructive" />
+            Delete User (Danger Zone)
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Permanently removes a user by <span className="font-medium">email</span> or{' '}
+            <span className="font-medium">LinkedIn URL</span> &mdash; their login and all data (attempts,
+            payments, badges) are erased. <span className="font-medium text-destructive">This cannot be undone.</span>{' '}
+            Admin accounts are protected.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_10rem_auto]">
+          <input
+            type="text"
+            value={deleteId}
+            onChange={(e) => setDeleteId(e.target.value)}
+            placeholder="user@email.com or linkedin.com/in/handle"
+            className="h-10 rounded-md border border-input bg-background px-3 text-body shadow-sm focus:border-destructive focus:outline-none focus:ring-1 focus:ring-destructive"
+          />
+          <input
+            type="text"
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+            placeholder="Type DELETE"
+            className="h-10 rounded-md border border-input bg-background px-3 text-body shadow-sm focus:border-destructive focus:outline-none focus:ring-1 focus:ring-destructive"
+          />
+          <Button
+            onClick={handleDelete}
+            disabled={deleteLoading || !deleteId.trim() || deleteConfirm !== 'DELETE'}
+            className="h-10 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleteLoading ? 'Deleting…' : 'Delete'}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Type <code>DELETE</code> in the second box to enable. Requires <code>SUPABASE_SERVICE_ROLE_KEY</code>.
         </p>
       </Card>
 
