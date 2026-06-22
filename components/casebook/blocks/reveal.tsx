@@ -21,7 +21,7 @@ export function RevealBlock({ summary, tier, blocks }: RevealProps) {
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="my-4 border border-border rounded-lg bg-card shadow-sm overflow-hidden">
       <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/30 transition-colors text-left group">
-        <span className="font-semibold text-body text-navy">{summary}</span>
+        <span className="font-semibold text-body text-navy dark:text-navy-foreground">{summary}</span>
         <div className="flex items-center gap-3">
           {tier && tier !== 'free' && (
             <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded">

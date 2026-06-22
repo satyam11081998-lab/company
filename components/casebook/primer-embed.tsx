@@ -113,7 +113,7 @@ export function PrimerEmbed({ primer }: PrimerEmbedProps) {
             href={s.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-navy hover:text-primary transition-colors border-b border-border hover:border-primary"
+            className="inline-flex items-center gap-1 text-sm text-navy dark:text-navy-foreground hover:text-primary transition-colors border-b border-border hover:border-primary"
           >
             {s.label}
             <ExternalLink className="w-3 h-3" />

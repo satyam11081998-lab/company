@@ -313,6 +313,12 @@
   .tag-navy { background: hsl(var(--navy) / 0.08); color: hsl(var(--navy)); }
   .tag-green { background: hsl(142 55% 95%); color: hsl(var(--success)); }
   .tag-amber { background: hsl(38 92% 95%); color: hsl(var(--warning)); }
+  /* Dark-mode tag chips: the light fills / --navy color go invisible on a dark
+     surface, so re-tint with subtle dark fills + legible light-colored text. */
+  .dark .tag-red   { background: hsl(var(--primary) / 0.18); color: hsl(356 90% 80%); }
+  .dark .tag-navy  { background: hsl(var(--navy-mid)); color: hsl(var(--navy-foreground)); }
+  .dark .tag-green { background: hsl(142 40% 16%); color: hsl(142 50% 75%); }
+  .dark .tag-amber { background: hsl(38 50% 16%); color: hsl(38 85% 70%); }
   /* ============================================
      MECE Typography Scale v2
      Use these instead of raw text-xs / text-sm / text-base

@@ -15,7 +15,7 @@ export function QuoteBlock({ md, attribution }: QuoteProps) {
         "{parseInlineMd(md)}"
       </p>
       {attribution && (
-        <footer className="text-body font-medium text-navy">
+        <footer className="text-body font-medium text-navy dark:text-navy-foreground">
           — {attribution}
         </footer>
       )}

@@ -40,7 +40,7 @@ export function CasebookSearch() {
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
-        <h2 className="text-strong text-navy mb-4 flex items-center gap-2">
+        <h2 className="text-strong text-navy dark:text-navy-foreground mb-4 flex items-center gap-2">
           The MECE Casebook
         </h2>
         <div className="relative">

@@ -34,7 +34,7 @@ export function PrevNextLinks({ currentSlug }: { currentSlug: string }) {
           <span className="text-micro text-muted-foreground font-bold tracking-widest uppercase mb-1 flex items-center gap-1">
             <ChevronLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" /> Previous
           </span>
-          <span className="text-strong text-navy group-hover:text-primary transition-colors line-clamp-2">
+          <span className="text-strong text-navy dark:text-navy-foreground group-hover:text-primary transition-colors line-clamp-2">
             {prev.title}
           </span>
         </Link>
@@ -45,7 +45,7 @@ export function PrevNextLinks({ currentSlug }: { currentSlug: string }) {
           <span className="text-micro text-muted-foreground font-bold tracking-widest uppercase mb-1 flex items-center gap-1">
             Next <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
           </span>
-          <span className="text-strong text-navy group-hover:text-primary transition-colors line-clamp-2">
+          <span className="text-strong text-navy dark:text-navy-foreground group-hover:text-primary transition-colors line-clamp-2">
             {next.title}
           </span>
         </Link>

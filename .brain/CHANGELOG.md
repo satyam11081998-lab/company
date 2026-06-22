@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — casebook-darkmode-contrast — <pending commit>
+Fixed dark-mode text visibility across the casebook chrome + content blocks. Root cause: `text-navy` / `.tag-navy` use the `--navy` token, which stays DARK in dark mode → dark-on-dark, invisible. Added `dark:text-navy-foreground` to the left-nav section labels + 'MECE Casebook' header, case-section headings, reveal/clarifying headers, math-box, quote, prev-next, dialogue interviewer bubble, primer source links; and added `.dark .tag-*` overrides (subtle dark fills + legible light text) so the tag chips are readable. Light mode unchanged.
+touches: components/casebook/{nav-tree,casebook-search,prev-next,primer-embed}.tsx, components/casebook/blocks/{case-section,dialogue,math-box,quote,reveal}.tsx, app/globals.css
+breaking: no   affects: Casebook dark-mode legibility (all pages)
+
 ## 2026-06-21 — guesstimate-data-cheatsheet — <pending commit>
 New casebook page guesstimates/data-cheatsheet (first under B·Guesstimates): a dense, infographic-style reference of India macro+micro anchors for market-sizing — 4 inline SVG panels (anchor-number grid, age structure, income pyramid, economy/digital/mobility) + 3 reference tables (conversions/time, per-capita rates, default assumptions) + tip/warning callouts + takeaways. Adds a 'Going deeper → Industry Primers' callout that LINKS the overlapping sector data to the existing primers (Telecom/Payments/E-Commerce/Automobile/EV/FMCG/etc.) instead of duplicating it. Figures verified mid-2026 (UN/Worldometer, IMF WEO Oct-2025, NPCI, MoRTH, IAMAI) and labelled as planning anchors; adversarial note flags household-count/smartphone/sector-vs-jobs caveats. Reuses existing block types (no schema change).
 touches: lib/casebook/content/guesstimates/data-cheatsheet.ts (new), lib/casebook/content/index.ts, lib/casebook/tree.ts

@@ -27,7 +27,7 @@ export function Dialogue({ title, turns }: DialogueProps) {
                 <div className="flex-shrink-0 md:w-24 mt-0.5">
                   <span className={cn(
                     "inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm",
-                    isInterviewer ? "bg-navy/10 text-navy" : 
+                    isInterviewer ? "bg-navy/10 text-navy dark:bg-navy/40 dark:text-navy-foreground" : 
                     isCandidate ? "bg-primary/10 text-primary" : 
                     "bg-muted text-muted-foreground"
                   )}>
