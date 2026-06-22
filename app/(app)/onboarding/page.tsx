@@ -16,6 +16,13 @@ export default async function OnboardingPage() {
   const userRow = await getCachedUserRow(authUser.id);
   if (userRow?.onboarding_completed_at) redirect('/dashboard');
 
+  // Did this user authenticate via LinkedIn? OIDC gives us name + photo (set by
+  // the handle_new_user trigger) but NOT the public profile URL, so we prefill
+  // what we can and show a 'connected' hint instead of demanding the URL.
+  const providers = (authUser.app_metadata?.providers as string[] | undefined) ?? [];
+  const linkedinConnected =
+    authUser.app_metadata?.provider === 'linkedin_oidc' || providers.includes('linkedin_oidc');
+
   // Load college taxonomy (public read, no RLS hop).
   const supabase = createClient();
   const { data: collegeRows } = await supabase
@@ -31,8 +38,14 @@ export default async function OnboardingPage() {
       <OnboardingForm
         colleges={colleges}
         prefill={{
-          full_name: userRow?.full_name ?? userRow?.name ?? authUser.user_metadata?.full_name ?? '',
+          full_name:
+            userRow?.full_name ??
+            userRow?.name ??
+            (authUser.user_metadata?.full_name as string | undefined) ??
+            (authUser.user_metadata?.name as string | undefined) ??
+            '',
         }}
+        linkedinConnected={linkedinConnected}
       />
     </div>
   );

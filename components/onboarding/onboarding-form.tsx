@@ -16,6 +16,8 @@ import {
 interface Props {
   colleges: CollegeRow[];
   prefill?: Partial<OnboardingFormData>;
+  /** True when the user authenticated via LinkedIn (name + photo already set). */
+  linkedinConnected?: boolean;
 }
 
 /**
@@ -29,7 +31,7 @@ interface Props {
  *   - Submit button gates on validation; failed fields scroll into view
  *   - Branded styling — cream cards, var(--red) accents, no third-party UI
  */
-export default function OnboardingForm({ colleges, prefill = {} }: Props) {
+export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<OnboardingFormData>({
     ...EMPTY_ONBOARDING_FORM,
@@ -286,6 +288,12 @@ export default function OnboardingForm({ colleges, prefill = {} }: Props) {
             style={inputStyle(false)}
             autoComplete="url"
           />
+          {linkedinConnected && (
+            <p style={{ marginTop: 6, fontSize: 12, color: 'var(--ink-4)', lineHeight: 1.4 }}>
+              ✓ Signed in with LinkedIn — your name and photo are already set. Add your public
+              profile URL here only if you want it shown on the leaderboard.
+            </p>
+          )}
         </Field>
 
         <Field label="Show LinkedIn on the leaderboard" optional dataField="show_linkedin">
