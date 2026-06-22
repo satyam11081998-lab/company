@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-21 — leaderboard-college-linkedin — <pending commit + DB run>
+Leaderboard rows + podium now show COLLEGE under the name and an optional LinkedIn 'in' icon to connect. LinkedIn is opt-OUT (default ON via new migration 0018 users.show_linkedin); a profile toggle and an onboarding question let users switch it off. Data layer (leaderboards.ts) now selects college_id/college_other/linkedin_url/show_linkedin, resolves college display names, and only emits linkedinUrl when show_linkedin !== false. NOTE: run migration 0018 on Supabase.
+touches: supabase/migrations/0018_leaderboard_linkedin.sql (new), lib/dashboard/leaderboards.ts, components/leaderboard/leaderboard-client.tsx, components/profile/profile-client.tsx, components/onboarding/onboarding-form.tsx, app/api/onboarding/complete/route.ts, lib/types-onboarding.ts, lib/types.ts
+breaking: no — additive column + UI. affects: Leaderboard, Profile, Onboarding (C6 users-schema: additive col)
+
 ## 2026-06-21 — casebook-darkmode-contrast — <pending commit>
 Fixed dark-mode text visibility across the casebook chrome + content blocks. Root cause: `text-navy` / `.tag-navy` use the `--navy` token, which stays DARK in dark mode → dark-on-dark, invisible. Added `dark:text-navy-foreground` to the left-nav section labels + 'MECE Casebook' header, case-section headings, reveal/clarifying headers, math-box, quote, prev-next, dialogue interviewer bubble, primer source links; and added `.dark .tag-*` overrides (subtle dark fills + legible light text) so the tag chips are readable. Light mode unchanged.
 touches: components/casebook/{nav-tree,casebook-search,prev-next,primer-embed}.tsx, components/casebook/blocks/{case-section,dialogue,math-box,quote,reveal}.tsx, app/globals.css

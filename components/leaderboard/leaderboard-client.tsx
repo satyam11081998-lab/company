@@ -221,10 +221,22 @@ function Row({ u, unit }: { u: LbRow; unit: string }) {
           <AvatarFallback className="bg-navy text-navy-foreground text-sm font-semibold">{initial(u.name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className={`truncate text-sm font-semibold ${u.isYou ? 'text-primary' : 'text-foreground'}`}>
-            {u.name}{u.isYou && <span className="ml-1.5 text-xs font-medium text-primary/70">(you)</span>}
+          <div className="flex items-center gap-1.5">
+            <p className={`truncate text-sm font-semibold ${u.isYou ? 'text-primary' : 'text-foreground'}`}>
+              {u.name}{u.isYou && <span className="ml-1.5 text-xs font-medium text-primary/70">(you)</span>}
+            </p>
+            {u.linkedinUrl && (
+              <a href={u.linkedinUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                 title="Connect on LinkedIn" aria-label={`${u.name} on LinkedIn`}
+                 className="shrink-0 text-[#0A66C2] transition-opacity hover:opacity-80">
+                <Linkedin className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </div>
+          <p className="truncate text-xs text-muted-foreground">
+            {u.college ? <span className="text-foreground/70">{u.college}</span> : null}
+            {u.college ? ' · ' : ''}{u.submissions} {u.submissions === 1 ? 'solve' : 'solves'}
           </p>
-          <p className="text-xs text-muted-foreground">{u.submissions} {u.submissions === 1 ? 'solve' : 'solves'}</p>
         </div>
       </div>
       <div className="flex items-baseline gap-1 shrink-0">
@@ -262,9 +274,19 @@ function Podium({ top3, unit }: { top3: LbRow[]; unit: string }) {
                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary-hover text-white text-2xl font-bold">{initial(u.name)}</AvatarFallback>
               </Avatar>
             </div>
-            <p className={`mt-2 max-w-[10ch] truncate text-center font-semibold ${u.rank === 1 ? 'text-base text-foreground' : 'text-sm text-foreground'} ${u.isYou ? 'text-primary' : ''}`}>
-              {u.name}{u.isYou && ' (you)'}
-            </p>
+            <div className="mt-2 flex items-center gap-1">
+              <p className={`max-w-[10ch] truncate text-center font-semibold ${u.rank === 1 ? 'text-base text-foreground' : 'text-sm text-foreground'} ${u.isYou ? 'text-primary' : ''}`}>
+                {u.name}{u.isYou && ' (you)'}
+              </p>
+              {u.linkedinUrl && (
+                <a href={u.linkedinUrl} target="_blank" rel="noopener noreferrer"
+                   title="Connect on LinkedIn" aria-label={`${u.name} on LinkedIn`}
+                   className="shrink-0 text-[#0A66C2] transition-opacity hover:opacity-80">
+                  <Linkedin className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+            {u.college && <p className="max-w-[14ch] truncate text-center text-[11px] text-muted-foreground">{u.college}</p>}
             <p className="font-mono text-sm font-bold tabular-nums text-primary">{u.points.toLocaleString()} {unit}</p>
             <div className={`mt-1.5 w-16 rounded-t-md ${u.rank === 1 ? 'h-12 bg-primary/15' : u.rank === 2 ? 'h-8 bg-muted' : 'h-5 bg-muted'} border border-border`} />
             <div className="w-16 rounded-b-sm border border-t-0 border-border bg-muted/60 py-0.5 text-center text-[11px] font-bold text-muted-foreground">
@@ -352,7 +374,7 @@ function DailyView({
 
       {top3.length > 0 ? (
         <>
-          <Podium top3={top3.map((e, i) => ({ id: e.user_id, name: e.name || 'Aspirant', avatar_url: e.avatar_url, points: e.score, rank: e.rank, submissions: 0, isYou: e.user_id === userId }))} unit="/100" />
+          <Podium top3={top3.map((e, i) => ({ id: e.user_id, name: e.name || 'Aspirant', avatar_url: e.avatar_url, points: e.score, rank: e.rank, submissions: 0, college: null, linkedinUrl: null, isYou: e.user_id === userId }))} unit="/100" />
           {rest.length > 0 && (
             <div className="ui-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-border bg-muted/30 px-5 py-3">
@@ -361,7 +383,7 @@ function DailyView({
               </div>
               <div className="divide-y divide-border">
                 {rest.map((e) => (
-                  <Row key={e.user_id} unit="/100" u={{ id: e.user_id, name: e.name || 'Aspirant', avatar_url: e.avatar_url, points: e.score, rank: e.rank, submissions: 0, isYou: e.user_id === userId }} />
+                  <Row key={e.user_id} unit="/100" u={{ id: e.user_id, name: e.name || 'Aspirant', avatar_url: e.avatar_url, points: e.score, rank: e.rank, submissions: 0, college: null, linkedinUrl: null, isYou: e.user_id === userId }} />
                 ))}
               </div>
             </div>

@@ -47,6 +47,7 @@ export interface OnboardingFormData {
   placement_focus: PlacementFocus | null;
   // Optional / analytics
   linkedin_url: string;
+  show_linkedin: boolean;
   referral_source: string;
   weekly_hours_target: number | null;
   goal_text: string;
@@ -59,6 +60,7 @@ export const EMPTY_ONBOARDING_FORM: OnboardingFormData = {
   batch_year: null,
   placement_focus: null,
   linkedin_url: '',
+  show_linkedin: true,
   referral_source: '',
   weekly_hours_target: null,
   goal_text: '',

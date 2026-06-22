@@ -28,6 +28,7 @@ export interface UserRow {
   college_email_verified_at?: string | null;
   onboarding_completed_at?: string | null;
   linkedin_url?: string | null;
+  show_linkedin?: boolean | null;
   referral_source?: string | null;
   weekly_hours_target?: number | null;
   goal_text?: string | null;

@@ -51,6 +51,7 @@ export async function POST(req: Request) {
       batch_year: body.batch_year,
       placement_focus: body.placement_focus,
       linkedin_url: body.linkedin_url.trim() || null,
+      show_linkedin: body.show_linkedin ?? true,
       referral_source: body.referral_source || null,
       weekly_hours_target: body.weekly_hours_target ?? null,
       goal_text: body.goal_text.trim() || null,

@@ -288,6 +288,18 @@ export default function OnboardingForm({ colleges, prefill = {} }: Props) {
           />
         </Field>
 
+        <Field label="Show LinkedIn on the leaderboard" optional dataField="show_linkedin">
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 14, lineHeight: 1.45 }}>
+            <input
+              type="checkbox"
+              checked={form.show_linkedin}
+              onChange={(e) => update('show_linkedin', e.target.checked)}
+              style={{ width: 16, height: 16, marginTop: 2, accentColor: 'var(--red)', cursor: 'pointer' }}
+            />
+            <span>Show a LinkedIn link next to your name on the leaderboard so other aspirants can connect. You can change this anytime in your profile.</span>
+          </label>
+        </Field>
+
         <Field label="How did you hear about us?" optional dataField="referral_source">
           <select
             value={form.referral_source}

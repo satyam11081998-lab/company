@@ -19,6 +19,8 @@ export interface LbRow {
   points: number;
   rank: number;
   submissions: number;
+  college: string | null;
+  linkedinUrl: string | null;   // null = not shown (no URL or opted out)
   isYou: boolean;
 }
 
@@ -84,13 +86,14 @@ function etaDays(gap: number, weeklyGain: number): number | null {
  */
 async function buildView(
   svc: SupabaseClient,
-  rows: Array<{ id: string; name: string | null; avatar_url: string | null; points: number }>,
+  rows: Array<{ id: string; name: string | null; avatar_url: string | null; points: number; college_id?: string | null; college_other?: string | null; linkedin_url?: string | null; show_linkedin?: boolean | null }>,
   userId: string,
   myRank: number,
   myPoints: number,
   total: number,
   scopeLabel: string,
   subCounts: Record<string, number>,
+  collegeNames: Record<string, string>,
 ): Promise<LeaderboardView> {
   const lbRows: LbRow[] = rows.map((u, i) => ({
     id: u.id,
@@ -99,6 +102,9 @@ async function buildView(
     points: u.points ?? 0,
     rank: i + 1,
     submissions: subCounts[u.id] || 0,
+    college: (u.college_id && collegeNames[u.college_id]) || u.college_other || null,
+    // Default-visible (opt-out): only hidden when explicitly false or no URL.
+    linkedinUrl: (u.show_linkedin !== false && u.linkedin_url) ? u.linkedin_url : null,
     isYou: u.id === userId,
   }));
 
@@ -149,6 +155,18 @@ async function subCountsFor(svc: SupabaseClient, ids: string[]): Promise<Record<
   return out;
 }
 
+/** Resolve college display names for a set of college ids (short_name preferred). */
+async function collegeNamesFor(svc: SupabaseClient, ids: Array<string | null | undefined>): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  const uniq = Array.from(new Set(ids.filter(Boolean) as string[]));
+  if (!uniq.length) return out;
+  try {
+    const { data } = await svc.from('colleges').select('id, short_name, name').in('id', uniq);
+    for (const c of (data as any[]) || []) out[c.id] = c.short_name || c.name;
+  } catch { /* names are nice-to-have */ }
+  return out;
+}
+
 /** ALL-INDIA leaderboard (top `limit`) + the viewer's true global rank. */
 export async function getAllTimeLeaderboard(
   svc: SupabaseClient,
@@ -156,7 +174,7 @@ export async function getAllTimeLeaderboard(
   limit = 50,
 ): Promise<LeaderboardView> {
   const [{ data: topRows }, meRes, totalRes] = await Promise.all([
-    svc.from('users').select('id, name, avatar_url, points').order('points', { ascending: false }).limit(limit),
+    svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').order('points', { ascending: false }).limit(limit),
     svc.from('users').select('points').eq('id', userId).maybeSingle(),
     svc.from('users').select('id', { count: 'exact', head: true }),
   ]);
@@ -167,7 +185,8 @@ export async function getAllTimeLeaderboard(
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
   const subCounts = await subCountsFor(svc, rows.map((r) => r.id));
-  return buildView(svc, rows, userId, myRank, myPoints, total, 'All India', subCounts);
+  const collegeNames = await collegeNamesFor(svc, rows.map((r) => r.college_id));
+  return buildView(svc, rows, userId, myRank, myPoints, total, 'All India', subCounts, collegeNames);
 }
 
 /** COHORT leaderboard — everyone at the viewer's college. */
@@ -188,7 +207,7 @@ export async function getCohortLeaderboard(
   } catch { /* label only */ }
 
   const [{ data: topRows }, totalRes] = await Promise.all([
-    svc.from('users').select('id, name, avatar_url, points').eq('college_id', collegeId)
+    svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('college_id', collegeId)
       .order('points', { ascending: false }).limit(limit),
     svc.from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId),
   ]);
@@ -199,6 +218,7 @@ export async function getCohortLeaderboard(
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
   const subCounts = await subCountsFor(svc, rows.map((r) => r.id));
-  const view = await buildView(svc, rows, userId, myRank, myPoints, total, collegeName || 'Your college', subCounts);
+  const collegeNames = await collegeNamesFor(svc, rows.map((r) => r.college_id));
+  const view = await buildView(svc, rows, userId, myRank, myPoints, total, collegeName || 'Your college', subCounts, collegeNames);
   return { view, collegeName };
 }

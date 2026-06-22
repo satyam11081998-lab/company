@@ -55,6 +55,7 @@ export default function ProfileClient({
     batch_year: (user as any)?.batch_year ?? null,
     placement_focus: ((user as any)?.placement_focus as PlacementFocus | null) ?? null,
     linkedin_url: (user as any)?.linkedin_url ?? '',
+    show_linkedin: (user as any)?.show_linkedin ?? true,
     referral_source: (user as any)?.referral_source ?? '',
     weekly_hours_target: (user as any)?.weekly_hours_target ?? null,
     goal_text: (user as any)?.goal_text ?? '',
@@ -122,6 +123,7 @@ export default function ProfileClient({
           batch_year: form.batch_year,
           placement_focus: form.placement_focus,
           linkedin_url: form.linkedin_url.trim() || null,
+          show_linkedin: form.show_linkedin,
           referral_source: form.referral_source || null,
           weekly_hours_target: form.weekly_hours_target,
           goal_text: form.goal_text.trim() || null,
@@ -404,6 +406,18 @@ export default function ProfileClient({
             placeholder="https://www.linkedin.com/in/…"
             style={textInputStyle}
           />
+        </FieldRow>
+
+        <FieldRow label="Show LinkedIn on leaderboard" optional>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.45 }}>
+            <input
+              type="checkbox"
+              checked={form.show_linkedin}
+              onChange={(e) => setForm({ ...form, show_linkedin: e.target.checked })}
+              style={{ width: 16, height: 16, marginTop: 2, accentColor: 'var(--red)', cursor: 'pointer' }}
+            />
+            <span>Display a LinkedIn link next to your name on the leaderboard so other aspirants can connect. Turn this off to stay anonymous there.</span>
+          </label>
         </FieldRow>
 
         <FieldRow label="How did you hear about us?" optional>
