@@ -81,25 +81,43 @@ export async function submitCaseAnswer(payload: {
  * Fetch today's curated GD-worthy news headlines.
  * Returns the full list (star first, then by GD-worthiness score).
  */
-export async function fetchHeadlines(token?: string): Promise<NewsHeadline[]> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}/news/headlines`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      cache: 'no-store',
-      // The backend is on a sleep-prone free tier; without a timeout a cold
-      // start makes this hang ~50s and the page "only loads". Time out so the
-      // UI shows a retriable message instead of an infinite spinner.
-      signal: AbortSignal.timeout(45000),
-    });
-  } catch (e: any) {
-    throw new Error(
-      e?.name === 'TimeoutError'
-        ? 'The briefs service is waking up — please retry in a few seconds.'
-        : (e?.message || 'Could not reach the briefs service.'),
-    );
+/**
+ * GET a sleep-prone backend endpoint, transparently absorbing Render free-tier
+ * cold starts. A cold start runs ~50-60s — longer than a single 45s timeout —
+ * so we retry on timeout/network errors across up to 3 attempts (~30s each,
+ * ~90s total) before surfacing a retriable message. A warm backend returns on
+ * the first attempt in well under a second, so this adds no cost in the common
+ * case and stops the "waking up" loop on a cold one.
+ */
+async function getWithWake(url: string, token?: string): Promise<Response> {
+  const ATTEMPTS = 3;
+  const PER_ATTEMPT_MS = 30000;
+  let lastErr: unknown = null;
+  for (let i = 0; i < ATTEMPTS; i++) {
+    try {
+      return await fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(PER_ATTEMPT_MS),
+      });
+    } catch (e: any) {
+      lastErr = e;
+      const retriable = e?.name === 'TimeoutError' || e?.name === 'TypeError'; // timeout or network
+      if (!retriable || i === ATTEMPTS - 1) break;
+      await new Promise((r) => setTimeout(r, 1500)); // let a waking instance breathe
+    }
   }
+  const err = lastErr as { name?: string; message?: string } | null;
+  throw new Error(
+    err?.name === 'TimeoutError'
+      ? 'The briefs service is waking up — please retry in a few seconds.'
+      : (err?.message || 'Could not reach the briefs service.'),
+  );
+}
+
+export async function fetchHeadlines(token?: string): Promise<NewsHeadline[]> {
+  const res = await getWithWake(`${API_URL}/news/headlines`, token);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to fetch headlines (${res.status}): ${text || res.statusText}`);
@@ -142,21 +160,7 @@ export async function generateBrief(headlineId: string, token?: string): Promise
  * Returns 404 error if no brief exists yet.
  */
 export async function fetchBrief(headlineId: string, token?: string): Promise<GeneratedBriefData> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}/news/briefs/${headlineId}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(45000),
-    });
-  } catch (e: any) {
-    throw new Error(
-      e?.name === 'TimeoutError'
-        ? 'The briefs service is waking up — please retry in a few seconds.'
-        : (e?.message || 'Could not reach the briefs service.'),
-    );
-  }
+  const res = await getWithWake(`${API_URL}/news/briefs/${headlineId}`, token);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to fetch brief (${res.status}): ${text || res.statusText}`);
