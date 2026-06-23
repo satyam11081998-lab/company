@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/theme-toggle';
 import TestimonialsCarousel from '@/components/testimonials-carousel';
+import EndorsementsSection from '@/components/endorsements-section';
 import Logo from '@/components/logo';
 import Footer from '@/components/footer';
 import AuthCTA from '@/components/auth-cta';
@@ -373,6 +374,9 @@ export default function LandingPage() {
           <TestimonialsCarousel />
         </div>
       </section>
+
+      {/* Endorsements — curated, credibility-first; hides itself when empty */}
+      <EndorsementsSection />
 
       {/* ── Feature 3: GD Briefs (right text + left card) ─────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-12 md:py-20">

@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, MessageSquareQuote, Users, Megaphone, FileText,
-  FolderLock, Flag, Sparkles,
+  FolderLock, Flag, Sparkles, Activity, BadgeCheck,
 } from 'lucide-react';
 
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
   { href: '/admin', label: 'Operations', icon: LayoutDashboard },
+  { href: '/admin/status', label: 'Status', icon: Activity },
   { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
+  { href: '/admin/endorsements', label: 'Endorsements', icon: BadgeCheck },
   { href: '/admin/team', label: 'Brains behind', icon: Users },
   { href: '/admin/cases', label: 'Cases', icon: Sparkles },
   { href: '/admin/broadcast', label: 'Broadcast', icon: Megaphone },

@@ -356,3 +356,26 @@ export interface CheatsheetPointRow {
   tag_norm: string;
   created_at: string;
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// Endorsements — curated, credibility-first social proof (mirror 0019).
+// ─────────────────────────────────────────────────────────────────────────
+
+export type EndorsementStatus = 'published' | 'hidden';
+
+export interface EndorsementRow {
+  id: string;
+  name: string;
+  role: string;
+  organization: string;
+  credential: string;
+  quote: string;
+  avatar_url: string | null;
+  linkedin_url: string | null;
+  verified: boolean;
+  status: EndorsementStatus;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
