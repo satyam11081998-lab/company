@@ -231,3 +231,34 @@ export async function extractTextFromImage(base64Image: string): Promise<{ text:
 
   return res.json();
 }
+
+
+/**
+ * Generate an Abstract GD brief for any abstract topic (word/phrase/proverb).
+ * Lite/Pro gated server-side. ~5-15s OpenAI call.
+ */
+export async function generateAbstractBrief(
+  topic: string,
+  token?: string,
+): Promise<import('@/lib/abstract-gd').AbstractBrief> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/news/abstract-brief`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ topic }),
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch (e: any) {
+    throw new Error(
+      e?.name === 'TimeoutError'
+        ? 'Generating the brief is taking longer than usual — please retry.'
+        : (e?.message || 'Could not reach the briefs service.'),
+    );
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to generate brief (${res.status}): ${text || res.statusText}`);
+  }
+  return res.json();
+}

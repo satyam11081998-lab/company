@@ -69,6 +69,12 @@ export default function GdBriefsPage() {
           <p className="mt-1 text-muted-foreground">
             Today&apos;s most debate-worthy stories. {locked ? 'Browse the news free; generate a GD brief on Lite/Pro.' : 'Click any headline to generate a full GD brief.'}
           </p>
+          <Link
+            href="/gd-briefs/abstract"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2 text-small font-semibold text-primary transition-colors hover:bg-primary/10"
+          >
+            Practice Abstract GD topics →
+          </Link>
         </div>
 
         {locked && (
