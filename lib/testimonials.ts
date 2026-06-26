@@ -48,7 +48,7 @@ export const TESTIMONIALS: Testimonial[] = [
     school: "TISS HRM & LR '27",
     placement: 'Summer Intern @ Hindustan Coca-Cola Beverages | Ex-Marine Engineer',
     quote:
-      'The 6-dimension scoring is brutally honest — better than mock interviews where peers go easy on you. Pushed me to write tighter syntheses.',
+      'The 6-dimension scoring is brutally honest. In mock interviews my friends always went easy on me; here nothing slipped through, and it pushed me to write much tighter syntheses.',
     avatar_url: '/testimonials/mohit.jpg',
     linkedin_url: 'https://www.linkedin.com/in/mohit-kumar-raj-b895b6201/',
   },

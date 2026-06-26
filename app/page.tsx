@@ -178,6 +178,26 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Social proof: testimonials (top of page for focus) ───────── */}
+      <section className="py-16 px-6" data-reveal>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+              WHAT MBA ASPIRANTS SAY
+            </p>
+            <h2 className="mt-2 text-h2 text-foreground">
+              From students who used MECE in their placement journey.
+            </h2>
+          </div>
+          <TestimonialsCarousel />
+          <div className="mt-8 text-center">
+            <Link href="/testimonials" className="text-small font-semibold text-primary hover:underline">
+              Read all stories &rarr;
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── Feature 1: Scoring (left text + right card) ───────────────── */}
       <section id="scoring" className="max-w-6xl mx-auto px-6 py-12 md:py-20" data-reveal>
         <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
@@ -360,20 +380,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Social proof: testimonials (moved up — see CRO note) ─────── */}
-      <section className="py-20 px-6" data-reveal>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
-              WHAT MBA ASPIRANTS SAY
-            </p>
-            <h2 className="mt-2 text-h2 text-foreground">
-              From students who've used MECE in their placement journey.
-            </h2>
-          </div>
-          <TestimonialsCarousel />
-        </div>
-      </section>
 
       {/* Endorsements — curated, credibility-first; hides itself when empty */}
       <EndorsementsSection />

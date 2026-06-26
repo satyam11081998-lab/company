@@ -46,6 +46,7 @@ export default function Footer({ className = "" }: { className?: string }) {
               <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Company</h4>
               <ul className="space-y-3.5">
                 <li><Link href="/about" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">About Us</Link></li>
+                <li><Link href="/testimonials" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Stories &amp; Reviews</Link></li>
                 <li><a href="mailto:team@mece.in" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Contact Support</a></li>
                 <li><Link href="/privacy" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Terms of Service</Link></li>
