@@ -23,6 +23,14 @@ propose a new row via handoff but do not edit others' rows.
 | **Onboarding & Profile** | A | feat/onboarding | **BUILT & LIVE (2026-06-08)** | `app/(app)/onboarding/*`, `app/(app)/profile/*`, `components/onboarding/*`, `components/profile/*`, `app/api/onboarding/*`, `app/api/college-email/*`, `lib/types-onboarding.ts`, `supabase/migrations/0005_user_onboarding.sql` | C6 users-schema, DB:`colleges`/`college_email_verifications`, Supabase Storage `avatars` bucket, Supabase Auth SMTP |
 | **Industry Primers** | A | feat/industry-primers | **BUILT (20 primers); full-screen overlay + native fullscreen + collapsible nav BUILT (2026-06-20)** | `public/primers/**`, `app/(app)/learn/industry-primers/**`, `lib/primers/*` | Casebook-tree |
 
+| **Auth** | C | feat/auth | **BUILT (LinkedIn OIDC added)** | components/auth-form.tsx | none |
+| **Onboarding** | C | feat/auth | **BUILT (LinkedIn prefill + connected hint)** | pp/(app)/onboarding/page.tsx, components/onboarding/onboarding-form.tsx | Auth |
+| **Admin** | C | feat/admin | **BUILT (Status page, Delete User)** | pp/(app)/admin/* | DB:users, API |
+| **GD Briefs** | C | feat/gd | **BUILT (Abstract GD track, domains added)** | pp/(app)/gd-briefs/*, lib/abstract-gd.ts | News pipeline |
+| **Leaderboard** | C | feat/leaderboard | **BUILT (LinkedIn logo updated)** | components/leaderboard/* | DB:users |
+| **Endorsements** | C | feat/endorsements | **BUILT** | supabase/migrations/0019_endorsements.sql, pp/(app)/admin/endorsements/*, components/endorsements-section.tsx | none |
+| **Colleges** | C | feat/db | **BUILT (0020 refreshed tiers)** | supabase/migrations/0020_colleges_refresh.sql | none |
+
 ## Collision watch (features that touch the same surface)
 - **DB:`cases`** is touched by Dashboard, Guesstimate, and Daily-content â†’ any
   column add is a contract event; announce in CHANGELOG with `affects:` all three.
@@ -37,4 +45,5 @@ propose a new row via handoff but do not edit others' rows.
 | Legal/static pages | (shared) | feat/legal-refund | Refund page contrast fix + policy update (privacy/terms already live) | app/privacy, app/terms, app/refund | — |
 | Input size limits | B | feat/input-limits | BUILT (answer max 20k, question max 20k, recommendation max 20k) | lib/limits.ts, services/limits.py, routes/submit.py, submission-form.tsx, routes/attempts.py, ConversationalSolve.tsx | C4 |
 | Dynamic domains (case_tags) | (this session) | feat/dynamic-domains | DB BUILT (migration verified); UI pending frontend repo | supabase/migrations/0013_case_tags.sql, lib/types.ts, lib/limits.ts | DB:users/cases (FK, read-only) |
+
 
