@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trophy, Lock, ShieldCheck, Filter, Building2, GraduationCap, Layers, Eye } from 'lucide-react';
+import { Trophy, ShieldCheck, Filter, Building2, GraduationCap, Layers, Eye, Rocket } from 'lucide-react';
 
 export interface VaultDeck {
   id: string;
@@ -70,14 +70,14 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
       <>
         <Card className="ui-card max-w-2xl mx-auto p-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Lock className="h-6 w-6" />
+            <Rocket className="h-6 w-6" />
           </div>
-          <h2 className="text-h2 text-foreground">Unlock the Deck Vault</h2>
+          <h2 className="text-h2 text-foreground">The Deck Vault is in the workshop</h2>
           <p className="mt-3 text-body text-muted-foreground max-w-lg mx-auto">
             {decks.length > 0 ? `${decks.length}+ ` : 'A growing collection of '}
             case-competition decks from national winners, finalists and semi-finalists —
             corporate flagships and B-school competitions — plus problem statements and templates.
-            Included in your Pro subscription.
+            We&apos;re still building this — curating the collection and polishing the secure reader before it goes live.
           </p>
           <ul className="mt-6 text-left max-w-md mx-auto space-y-2 text-body text-muted-foreground">
             <li className="flex gap-2"><Building2 className="h-4 w-4 mt-1 text-primary shrink-0" /> Corporate comps: HUL L.I.M.E., Flipkart WiRED, TVS EPIC, Samsung EDGE, Tata Steel-a-thon &amp; more</li>
@@ -85,11 +85,9 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
             <li className="flex gap-2"><Eye className="h-4 w-4 mt-1 text-primary shrink-0" /> Read inline in our secure DRM viewer</li>
             <li className="flex gap-2"><ShieldCheck className="h-4 w-4 mt-1 text-primary shrink-0" /> For learning and reference — study the structures, build your own decks</li>
           </ul>
-          <Link href="/upgrade">
-            <Button className="mt-8 h-11 px-8 text-base font-semibold">
-              Upgrade to Pro
-            </Button>
-          </Link>
+          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-base font-semibold text-primary">
+            <Rocket className="h-5 w-5" /> In active development — launching soon
+          </div>
           <p className="mt-3 text-small text-muted-foreground">
             New to competitions? Start with the free{' '}
             <Link href="/learn/casebook/case-competitions/why-they-matter" className="text-primary hover:underline">
