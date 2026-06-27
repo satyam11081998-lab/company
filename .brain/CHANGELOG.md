@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-06-27 — direct-pdf-download — pending
+direct-pdf-download — Resume Lab + Cheat Sheet download a real text PDF directly via @react-pdf/renderer (no print dialog / headers)
+touches: package.json, next.config.js, components/resume/resume-pdf.tsx, components/resume/resume-editor.tsx, components/cheat-sheet/cheat-sheet-pdf.tsx, components/cheat-sheet/cheat-sheet-client.tsx
+breaking: no   affects: Resume Lab, Cheat Sheet
+
 ## 2026-06-21 — leaderboard-college-linkedin — <pending commit + DB run>
 Leaderboard rows + podium now show COLLEGE under the name and an optional LinkedIn 'in' icon to connect. LinkedIn is opt-OUT (default ON via new migration 0018 users.show_linkedin); a profile toggle and an onboarding question let users switch it off. Data layer (leaderboards.ts) now selects college_id/college_other/linkedin_url/show_linkedin, resolves college display names, and only emits linkedinUrl when show_linkedin !== false. NOTE: run migration 0018 on Supabase.
 touches: supabase/migrations/0018_leaderboard_linkedin.sql (new), lib/dashboard/leaderboards.ts, components/leaderboard/leaderboard-client.tsx, components/profile/profile-client.tsx, components/onboarding/onboarding-form.tsx, app/api/onboarding/complete/route.ts, lib/types-onboarding.ts, lib/types.ts
