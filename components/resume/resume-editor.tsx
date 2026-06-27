@@ -9,7 +9,7 @@ import {
   type PorItem, type CertItem, type ExtraGroup,
 } from '@/lib/resume/schema';
 import {
-  Sparkles, Scissors, Plus, Trash2, Save, Printer, Loader2, Wand2, ChevronDown,
+  Sparkles, Scissors, Plus, Trash2, Save, Download, Loader2, Wand2, ChevronDown,
 } from 'lucide-react';
 
 const inp = 'w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary';
@@ -31,6 +31,7 @@ export function ResumeEditor({ initialId, initialTitle, initialData }: {
   const [rebuildOpen, setRebuildOpen] = useState(false);
   const [rebuildText, setRebuildText] = useState('');
   const [rebuilding, setRebuilding] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   function patch(p: Partial<ResumeData>) { setData((d) => ({ ...d, ...p })); }
 
@@ -55,6 +56,16 @@ export function ResumeEditor({ initialId, initialTitle, initialData }: {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const { downloadResumePdf } = await import('./resume-pdf');
+      await downloadResumePdf(data, title);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'PDF export failed');
+    } finally { setDownloading(false); }
   }
 
   async function runRebuild() {
@@ -100,8 +111,8 @@ export function ResumeEditor({ initialId, initialTitle, initialData }: {
             <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted disabled:opacity-60">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
             </button>
-            <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-              <Printer className="h-4 w-4" /> Download PDF
+            <button onClick={handleDownload} disabled={downloading} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+              {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} {downloading ? 'Generating…' : 'Download PDF'}
             </button>
           </div>
         </div>

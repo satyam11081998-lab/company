@@ -1,5 +1,6 @@
 const nextConfig = {
   output: 'standalone',
+  transpilePackages: ['@react-pdf/renderer'],
   images: { unoptimized: true },
   eslint: {
     ignoreDuringBuilds: true,
@@ -7,6 +8,11 @@ const nextConfig = {
   onDemandEntries: {
     maxInactiveAge: 10000,
     pagesBufferLength: 2,
+  },
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    config.resolve.alias.fontkit = false;
+    return config;
   },
   async headers() {
     return [

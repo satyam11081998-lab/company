@@ -15,6 +15,7 @@ export function CheatSheetClient() {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<string>(ALL);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   
   const supabase = createClient();
 
@@ -39,53 +40,18 @@ export function CheatSheetClient() {
     if (error) setItems(prev);
   }
 
-  // Print function: open new window, render HTML, print
-  function handlePrint() {
-    const w = window.open('', '_blank');
-    if (!w) return;
-    
-    // Group items
-    const grouped = new Map<string, Item[]>();
-    for (const it of items) {
-      if (!grouped.has(it.tag)) grouped.set(it.tag, []);
-      grouped.get(it.tag)!.push(it);
+  async function handleDownloadPdf() {
+    if (downloading) return;
+    if (!items.length) return;
+    setDownloading(true);
+    try {
+      const { downloadCheatSheetPdf } = await import('./cheat-sheet-pdf');
+      await downloadCheatSheetPdf(items.map((i) => ({ tag: i.tag, point_text: i.point_text, source: i.source })));
+    } catch (e) {
+      console.error('cheat-sheet pdf failed', e);
+    } finally {
+      setDownloading(false);
     }
-
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Cheat Sheet</title>
-        <style>
-          body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; color: #111; max-width: 800px; margin: 0 auto; padding: 2rem; }
-          h1 { border-bottom: 2px solid #eaeaea; padding-bottom: 0.5rem; margin-bottom: 2rem; }
-          h2 { color: #444; margin-top: 2.5rem; text-transform: capitalize; }
-          .point { margin-bottom: 1rem; padding: 1rem; border-left: 3px solid #ccc; background: #fafafa; page-break-inside: avoid; }
-          .source { font-size: 0.85rem; color: #666; margin-top: 0.5rem; }
-          @media print {
-            body { padding: 0; }
-          }
-        </style>
-      </head>
-      <body>
-        <h1>My Cheat Sheet</h1>
-        ${Array.from(grouped.entries()).sort((a,b) => a[0].localeCompare(b[0])).map(([tag, pts]) => `
-          <h2>${tag}</h2>
-          ${pts.map(p => `
-            <div class="point">
-              <div>${p.point_text}</div>
-              ${p.source ? `<div class="source">from "${p.source}"</div>` : ''}
-            </div>
-          `).join('')}
-        `).join('')}
-        <script>
-          window.onload = () => { window.print(); };
-        </script>
-      </body>
-      </html>
-    `;
-    w.document.write(html);
-    w.document.close();
   }
 
   const buckets = useMemo(() => {
@@ -143,11 +109,12 @@ export function CheatSheetClient() {
         <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-hidden rounded-xl border border-border bg-card/50 flex flex-col">
           <div className="p-3 border-b border-border bg-card">
             <TierGate required="pro">
-              <button 
-                onClick={handlePrint}
-                className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors"
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+                className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-60"
               >
-                <Download className="h-4 w-4" /> Download PDF
+                <Download className="h-4 w-4" /> {downloading ? 'Generating…' : 'Download PDF'}
               </button>
             </TierGate>
           </div>
@@ -168,11 +135,12 @@ export function CheatSheetClient() {
             <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
               <div className="p-4 border-b border-border">
                 <TierGate required="pro">
-                  <button 
-                    onClick={handlePrint}
-                    className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors"
+                  <button
+                    onClick={handleDownloadPdf}
+                    disabled={downloading}
+                    className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-60"
                   >
-                    <Download className="h-4 w-4" /> Download PDF
+                    <Download className="h-4 w-4" /> {downloading ? 'Generating…' : 'Download PDF'}
                   </button>
                 </TierGate>
               </div>
