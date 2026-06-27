@@ -85,42 +85,35 @@ export const TIER_LABELS: Record<SubscriptionTier, string> = {
  * Billing periods. Monthly is the established baseline; quarter and annual are
  * prepay options that simply grant a longer access window (see BILLING_PERIOD_DAYS).
  */
-export type BillingPeriod = 'monthly' | 'quarter' | 'annual';
+export type BillingPeriod = 'monthly' | 'quarter';
 
-// Annual is intentionally NOT offered in the UI (low uptake). The type, prices,
-// and helpers below still understand 'annual' so legacy annual subscribers and
-// the backend (`isBillingPeriod`) stay backward-compatible — we just don't list
-// it as a purchasable option in the toggles.
+// Only monthly and a 3-month prepay are offered (annual was removed).
 export const BILLING_PERIODS: BillingPeriod[] = ['monthly', 'quarter'];
 
 export const BILLING_PERIOD_LABELS: Record<BillingPeriod, string> = {
   monthly: 'Monthly',
   quarter: '3 months',
-  annual: 'Annual',
 };
 
 /** Short suffix shown next to a price, e.g. "₹999 /yr". */
 export const BILLING_PERIOD_SUFFIX: Record<BillingPeriod, string> = {
   monthly: '/mo',
   quarter: '/3 mo',
-  annual: '/yr',
 };
 
 /** Access window granted per period — drives `subscription_expires_at`. */
 export const BILLING_PERIOD_DAYS: Record<BillingPeriod, number> = {
   monthly: 30,
   quarter: 91,
-  annual: 365,
 };
 
 /**
- * Full price matrix in INR. Monthly stays the long-standing ₹199 / ₹499; the
- * 3-month and annual columns are prepay prices (cheaper per month) that map to
- * a longer expiry window rather than to any new feature.
+ * Full price matrix in INR. Two options only: monthly and a 3-month prepay
+ * (cheaper per month; maps to a longer expiry window, not a new feature).
  */
 export const TIER_PRICING: Record<Exclude<SubscriptionTier, 'free'>, Record<BillingPeriod, number>> = {
-  lite: { monthly: 299, quarter: 749, annual: 1499 },
-  pro: { monthly: 699, quarter: 1799, annual: 3499 },
+  lite: { monthly: 299, quarter: 749 },
+  pro: { monthly: 599, quarter: 1499 },
 };
 
 /**
@@ -133,7 +126,7 @@ export const TIER_PRICES: Record<Exclude<SubscriptionTier, 'free'>, number> = {
 };
 
 export function isBillingPeriod(v: unknown): v is BillingPeriod {
-  return v === 'monthly' || v === 'quarter' || v === 'annual';
+  return v === 'monthly' || v === 'quarter';
 }
 
 /** Price in INR for a tier + period. Unknown periods fall back to monthly. */
@@ -154,6 +147,6 @@ export function perMonthEquivalent(
   tier: Exclude<SubscriptionTier, 'free'>,
   period: BillingPeriod = 'monthly',
 ): number {
-  const months = period === 'annual' ? 12 : period === 'quarter' ? 3 : 1;
+  const months = period === 'quarter' ? 3 : 1;
   return Math.round(priceFor(tier, period) / months);
 }

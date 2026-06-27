@@ -166,7 +166,7 @@ function PriceBlock({ tier, period }: { tier: "lite" | "pro"; period: BillingPer
       {period !== "monthly" && (
         <p className="mt-1 text-[11px] text-muted-foreground">
           ≈ ₹{perMonthEquivalent(tier, period).toLocaleString("en-IN")}/mo · billed{" "}
-          {period === "annual" ? "yearly" : "quarterly"}
+          quarterly
         </p>
       )}
     </div>

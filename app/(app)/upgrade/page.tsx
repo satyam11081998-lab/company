@@ -131,8 +131,7 @@ export default function UpgradePage() {
     if (started === null || expires === null) return null; // permanent / comp grant
     const days = (expires - started) / 86_400_000;
     if (days < 60) return "monthly";
-    if (days < 228) return "quarter";
-    return "annual";
+    return "quarter";
   })();
 
   // True only when the card's tier AND the selected period match what the user holds.
@@ -330,7 +329,7 @@ function PriceBlock({ tier, period }: { tier: "lite" | "pro"; period: BillingPer
       {period !== "monthly" && (
         <p className="mt-1 text-[11px] text-muted-foreground">
           ≈ ₹{perMonthEquivalent(tier, period).toLocaleString("en-IN")}/mo · billed{" "}
-          {period === "annual" ? "yearly" : "quarterly"}
+          quarterly
         </p>
       )}
     </div>
