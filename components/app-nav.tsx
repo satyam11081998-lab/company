@@ -59,9 +59,10 @@ export default function AppNav() {
     { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
     { href: '/practice', label: 'Practice' },
     { href: '/gd-briefs', label: 'GD Briefs' },
-    { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/resume', label: 'Resume Lab' },
   ];
   const MORE_LINKS: NavLink[] = [
+    { href: '/leaderboard', label: 'Leaderboard' },
     { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
     { href: '/skeletons', label: 'Deck Vault' },
     { href: '/cheat-sheet', label: 'Cheat Sheet' },

@@ -31,6 +31,15 @@ propose a new row via handoff but do not edit others' rows.
 | **Endorsements** | C | feat/endorsements | **BUILT** | supabase/migrations/0019_endorsements.sql, pp/(app)/admin/endorsements/*, components/endorsements-section.tsx | none |
 | **Colleges** | C | feat/db | **BUILT (0020 refreshed tiers)** | supabase/migrations/0020_colleges_refresh.sql | none |
 
+| **Auth** | C | feat/auth | **BUILT (LinkedIn OIDC added)** | `components/auth-form.tsx` | none |
+| **Onboarding** | C | feat/auth | **BUILT (LinkedIn prefill + connected hint)** | `app/(app)/onboarding/page.tsx`, `components/onboarding/onboarding-form.tsx` | Auth |
+| **Admin** | C | feat/admin | **BUILT (Status page, Delete User)** | `app/(app)/admin/*` | DB:`users`, API |
+| **GD Briefs** | C | feat/gd | **BUILT (Abstract GD track, domains added)** | `app/(app)/gd-briefs/*`, `lib/abstract-gd.ts` | News pipeline |
+| **Leaderboard** | C | feat/leaderboard | **BUILT (LinkedIn logo updated)** | `components/leaderboard/*` | DB:`users` |
+| **Endorsements** | C | feat/endorsements | **BUILT** | `supabase/migrations/0019_endorsements.sql`, `app/(app)/admin/endorsements/*`, `components/endorsements-section.tsx` | none |
+| **Colleges** | C | feat/db | **BUILT (0020 refreshed tiers)** | `supabase/migrations/0020_colleges_refresh.sql` | none |
+| **Resume Lab** | C | feat/resume | **BUILT (v1 Builder, AI rebuild/refine/generate/fit, print-to-PDF)** | `app/(app)/resume/*`, `components/resume/*`, `lib/resume/*`, `supabase/migrations/0023_resumes.sql` | DB:`resumes`, API |
+
 ## Collision watch (features that touch the same surface)
 - **DB:`cases`** is touched by Dashboard, Guesstimate, and Daily-content â†’ any
   column add is a contract event; announce in CHANGELOG with `affects:` all three.

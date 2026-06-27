@@ -41,7 +41,7 @@ const PRIMARY = [
 ];
 
 // Routes that live behind "More" — used to light up the More tab when active.
-const SECONDARY_PREFIXES = ['/leaderboard', '/skeletons', '/cheat-sheet', '/profile', '/upgrade'];
+const SECONDARY_PREFIXES = ['/resume', '/leaderboard', '/skeletons', '/cheat-sheet', '/profile', '/upgrade'];
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -73,6 +73,7 @@ export default function MobileBottomNav() {
   const moreActive = SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
   const moreLinks = [
+    { href: '/resume', icon: FileText, label: 'Resume Lab' },
     { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { href: '/skeletons', icon: Library, label: 'Deck Vault' },
     { href: '/learn/casebook/case-competitions/why-they-matter', icon: Medal, label: 'Case Competitions' },

@@ -262,3 +262,60 @@ export async function generateAbstractBrief(
   }
   return res.json();
 }
+
+
+// ── Resume Lab AI (Pro-gated, server-side) ───────────────────────────────
+export interface ResumeBulletOption { text: string; chars: number; rationale: string }
+
+async function resumeAi(path: string, body: unknown, token?: string): Promise<ResumeBulletOption[]> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/resume/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(60000),
+    });
+  } catch (e: any) {
+    throw new Error(e?.name === 'TimeoutError' ? 'The AI is taking longer than usual — please retry.' : (e?.message || 'Could not reach the AI service.'));
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`AI request failed (${res.status}): ${text || res.statusText}`);
+  }
+  const json = await res.json();
+  return (json.options || []) as ResumeBulletOption[];
+}
+
+export const refineBullet = (bullet: string, domain: string, maxChars: number, token?: string) =>
+  resumeAi('refine-bullet', { bullet, domain, max_chars: maxChars }, token);
+
+export const generateBullets = (
+  input: { role: string; task: string; result: string; domain: string; count?: number; maxChars: number },
+  token?: string,
+) => resumeAi('generate-bullets', { ...input, max_chars: input.maxChars }, token);
+
+export const fitBullet = (bullet: string, maxChars: number, token?: string) =>
+  resumeAi('fit-bullet', { bullet, max_chars: maxChars }, token);
+
+
+/** Rebuild a full résumé from pasted raw text into the MECE ResumeData shape (Pro). */
+export async function rebuildResume(text: string, token?: string): Promise<import('@/lib/resume/schema').ResumeData> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/resume/rebuild`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch (e: any) {
+    throw new Error(e?.name === 'TimeoutError' ? 'The AI is taking longer than usual — please retry.' : (e?.message || 'Could not reach the AI service.'));
+  }
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`Rebuild failed (${res.status}): ${t || res.statusText}`);
+  }
+  const json = await res.json();
+  return json.data as import('@/lib/resume/schema').ResumeData;
+}

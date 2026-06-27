@@ -119,8 +119,8 @@ export const BILLING_PERIOD_DAYS: Record<BillingPeriod, number> = {
  * a longer expiry window rather than to any new feature.
  */
 export const TIER_PRICING: Record<Exclude<SubscriptionTier, 'free'>, Record<BillingPeriod, number>> = {
-  lite: { monthly: 199, quarter: 499, annual: 999 },
-  pro: { monthly: 499, quarter: 1299, annual: 2499 },
+  lite: { monthly: 299, quarter: 749, annual: 1499 },
+  pro: { monthly: 699, quarter: 1799, annual: 3499 },
 };
 
 /**
