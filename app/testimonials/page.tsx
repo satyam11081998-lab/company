@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getPublishedTestimonials } from '@/lib/testimonials';
 import { getPublishedEndorsements } from '@/lib/endorsements';
 import { Quote, BadgeCheck } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,10 @@ export const metadata: Metadata = {
     'What MBA and PGDM aspirants say about preparing with MECE: case practice, guesstimates, GD briefs, and brutally honest 6-dimension scoring.',
   alternates: { canonical: '/testimonials' },
 };
+
+function initials(n: string) {
+  return n.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
+}
 
 function LinkedInLogo({ className }: { className?: string }) {
   return (
@@ -59,7 +64,11 @@ export default async function TestimonialsWallPage() {
                 <article key={e.id} className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm">
                   <Quote className="mb-3 h-6 w-6 text-primary/25" aria-hidden="true" />
                   <blockquote className="flex-1 text-body font-light italic leading-relaxed text-foreground">&ldquo;{e.quote}&rdquo;</blockquote>
-                  <div className="mt-5 flex items-center gap-2 border-t border-border pt-4">
+                  <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+                    <Avatar className="h-[60px] w-[60px] shrink-0 border-2 border-primary/80 shadow-sm">
+                      {e.avatar_url && <AvatarImage src={e.avatar_url} alt={e.name} className="object-cover" />}
+                      <AvatarFallback className="bg-navy text-base font-semibold text-navy-foreground">{initials(e.name)}</AvatarFallback>
+                    </Avatar>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="truncate text-small font-semibold text-foreground">{e.name}</p>
@@ -87,7 +96,11 @@ export default async function TestimonialsWallPage() {
               <article key={t.id} className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <Quote className="mb-3 h-6 w-6 text-primary/25" aria-hidden="true" />
                 <blockquote className="flex-1 text-body font-light italic leading-relaxed text-foreground">&ldquo;{t.quote}&rdquo;</blockquote>
-                <div className="mt-5 flex items-center gap-2 border-t border-border pt-4">
+                <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+                  <Avatar className="h-[60px] w-[60px] shrink-0 border-2 border-border shadow-sm">
+                    {t.avatar_url && <AvatarImage src={t.avatar_url} alt={t.name} className="object-cover" />}
+                    <AvatarFallback className="bg-navy text-base font-semibold text-navy-foreground">{initials(t.name)}</AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="truncate text-small font-semibold text-foreground">{t.name}</p>

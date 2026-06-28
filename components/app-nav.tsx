@@ -66,6 +66,7 @@ export default function AppNav() {
     { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
     { href: '/skeletons', label: 'Deck Vault' },
     { href: '/cheat-sheet', label: 'Cheat Sheet' },
+    { href: '/testimonials', label: 'Testimonials' },
   ];
   const moreActive = MORE_LINKS.some(({ href, active }) => active ?? isActive(href));
 
