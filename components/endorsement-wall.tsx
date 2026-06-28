@@ -4,7 +4,7 @@
  * EndorsementWall — two on-brand social-proof blocks, in order:
  *   1) Endorsements — a focused, prominent set of mentor/authority vouches (static grid).
  *   2) Testimonials — an auto-sliding rail of peer aspirant reviews (pauses on hover,
- *      hovered card lifts + grows, arrows + crimson progress bar, edge-fade).
+ *      hovered card lifts + grows, prev/next arrows + crimson progress bar).
  *
  * Data is the SAME DB-backed source as the rest of the site (published endorsements +
  * testimonials). Each block renders NOTHING when its list is empty — the page is never
@@ -28,7 +28,8 @@ type WallNode = {
   verified: boolean;
 };
 
-const SPEED = 0.5;
+const SPEED = 0.7;  // px per frame
+const REPS = 4;     // copies of the list for a seamless, always-overflowing loop
 
 function initials(n: string) {
   return n.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
@@ -69,9 +70,7 @@ function toNodes(endorsements: Endorsement[], testimonials: Testimonial[]): Wall
 }
 
 const css = `
-.ew-track { scrollbar-width: none; -ms-overflow-style: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent); }
+.ew-track { scrollbar-width: none; -ms-overflow-style: none; }
 .ew-track::-webkit-scrollbar { display: none; }
 .ew-card { transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s ease, border-color .28s ease; }
 .ew-card:hover { transform: translateY(-8px) scale(1.035);
@@ -96,11 +95,12 @@ export default function EndorsementWall({
   const [items, setItems] = useState<WallNode[] | null>(
     endorsements || testimonials ? toNodes(endorsements ?? [], testimonials ?? []) : null,
   );
-  const [progress, setProgress] = useState(0);
 
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const barRef = useRef<HTMLSpanElement | null>(null);
   const pausedRef = useRef(false);
   const manualUntilRef = useRef(0);
+  const posRef = useRef(0); // float scroll accumulator (scrollLeft rounds, so we track our own)
 
   useEffect(() => {
     if (endorsements || testimonials) return;
@@ -118,18 +118,18 @@ export default function EndorsementWall({
 
   useEffect(() => {
     if (!items) return;
-    const testisLen = items.filter((n) => n.type === 'testimonial').length;
-    if (testisLen === 0) return;
+    if (items.filter((n) => n.type === 'testimonial').length === 0) return;
     let raf = 0;
     const step = () => {
       const el = trackRef.current;
       if (el) {
-        const half = el.scrollWidth / 2;
-        if (half > 0) {
-          if (!pausedRef.current && Date.now() > manualUntilRef.current) el.scrollLeft += SPEED;
-          if (el.scrollLeft >= half) el.scrollLeft -= half;
-          else if (el.scrollLeft < 0) el.scrollLeft += half;
-          setProgress(((el.scrollLeft % half) / half) * 100);
+        const one = el.scrollWidth / REPS; // width of a single copy of the list
+        if (one > 0) {
+          if (!pausedRef.current && Date.now() > manualUntilRef.current) posRef.current += SPEED;
+          if (posRef.current >= one) posRef.current -= one;
+          else if (posRef.current < 0) posRef.current += one;
+          el.scrollLeft = posRef.current;
+          if (barRef.current) barRef.current.style.width = `${Math.max(14, (posRef.current / one) * 100)}%`;
         }
       }
       raf = requestAnimationFrame(step);
@@ -141,8 +141,9 @@ export default function EndorsementWall({
   const nudge = (dir: 1 | -1) => {
     const el = trackRef.current;
     if (!el) return;
-    manualUntilRef.current = Date.now() + 1400;
-    el.scrollBy({ left: dir * 372, behavior: 'smooth' });
+    manualUntilRef.current = Date.now() + 1500;
+    const one = el.scrollWidth / REPS || 1;
+    posRef.current = (((posRef.current + dir * 360) % one) + one) % one;
   };
 
   if (items === null) return null;
@@ -151,7 +152,7 @@ export default function EndorsementWall({
   const testis = items.filter((n) => n.type === 'testimonial');
   if (endos.length === 0 && testis.length === 0) return null;
 
-  const loop = [...testis, ...testis];
+  const loop = Array.from({ length: REPS }).flatMap(() => testis);
 
   return (
     <>
@@ -256,10 +257,7 @@ export default function EndorsementWall({
                   <ArrowLeft className="h-4 w-4" />
                 </button>
                 <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-border">
-                  <span
-                    className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width] duration-150"
-                    style={{ width: `${Math.max(14, progress)}%` }}
-                  />
+                  <span ref={barRef} className="absolute inset-y-0 left-0 rounded-full bg-primary" style={{ width: '14%' }} />
                 </div>
                 <button
                   type="button"
@@ -280,7 +278,7 @@ export default function EndorsementWall({
                 onMouseLeave={() => (pausedRef.current = false)}
                 onTouchStart={() => (pausedRef.current = true)}
                 onTouchEnd={() => {
-                  manualUntilRef.current = Date.now() + 1400;
+                  manualUntilRef.current = Date.now() + 1500;
                   pausedRef.current = false;
                 }}
               >
