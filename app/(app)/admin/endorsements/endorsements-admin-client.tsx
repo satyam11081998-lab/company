@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { BadgeCheck, Eye, EyeOff, Trash2, Plus, Loader2, Upload, Pencil } from 'lucide-react';
 import type { EndorsementRow } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   createEndorsement,
   updateEndorsement,
@@ -14,6 +15,22 @@ import {
 
 const field =
   'h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary';
+
+function initials(n: string) {
+  return n.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
+}
+
+/** Photo thumbnail with initials fallback — used in list rows and form previews. */
+function PhotoThumb({ src, name, size = 'h-10 w-10' }: { src?: string | null; name: string; size?: string }) {
+  return (
+    <Avatar className={`${size} shrink-0 border border-border`}>
+      {src && <AvatarImage src={src} alt={name} className="object-cover" />}
+      <AvatarFallback className="bg-navy text-xs font-semibold text-navy-foreground">
+        {initials(name) || '?'}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
 
 export function EndorsementsAdminClient({ initialRows }: { initialRows: EndorsementRow[] }) {
   const [rows, setRows] = useState<EndorsementRow[]>(initialRows);
@@ -120,6 +137,7 @@ export function EndorsementsAdminClient({ initialRows }: { initialRows: Endorsem
           placeholder="Quote * — keep it specific (what changed, a number, a moment)."
         />
         <div className="mt-3 flex flex-wrap items-center gap-3">
+          <PhotoThumb src={avatar} name={name || 'New'} />
           <label className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 h-10 text-sm cursor-pointer hover:bg-muted">
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             <span>Upload photo</span>
@@ -151,6 +169,7 @@ export function EndorsementsAdminClient({ initialRows }: { initialRows: Endorsem
               />
             ) : (
               <div className="flex items-start gap-4">
+                <PhotoThumb src={row.avatar_url} name={row.name} size="h-12 w-12" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-foreground">{row.name}</span>
@@ -249,6 +268,7 @@ function EndorsementEditForm({ row, onSaved, onCancel }: {
         rows={3} value={quote} onChange={(e) => setQuote(e.target.value)} placeholder="Quote *"
       />
       <div className="mt-3 flex flex-wrap items-center gap-3">
+        <PhotoThumb src={avatar} name={name || row.name} />
         <label className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 h-10 text-sm cursor-pointer hover:bg-muted">
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           <span>{avatar ? 'Change photo' : 'Upload photo'}</span>

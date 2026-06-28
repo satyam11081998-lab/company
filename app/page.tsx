@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/theme-toggle';
-import TestimonialsCarousel from '@/components/testimonials-carousel';
-import EndorsementsSection from '@/components/endorsements-section';
+import EndorsementWall from '@/components/endorsement-wall';
 import Logo from '@/components/logo';
 import Footer from '@/components/footer';
 import AuthCTA from '@/components/auth-cta';
@@ -178,25 +177,15 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Social proof: testimonials (top of page for focus) ───────── */}
-      <section className="py-16 px-6" data-reveal>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
-              WHAT MBA ASPIRANTS SAY
-            </p>
-            <h2 className="mt-2 text-h2 text-foreground">
-              From students who used MECE in their placement journey.
-            </h2>
-          </div>
-          <TestimonialsCarousel />
-          <div className="mt-8 text-center">
-            <Link href="/testimonials" className="text-small font-semibold text-primary hover:underline">
-              Read all stories &rarr;
-            </Link>
-          </div>
+      {/* ── Social proof: living endorsement wall (top of page for focus) ── */}
+      <div data-reveal>
+        <EndorsementWall />
+        <div className="-mt-8 mb-8 text-center">
+          <Link href="/testimonials" className="text-small font-semibold text-primary hover:underline">
+            Read all stories &rarr;
+          </Link>
         </div>
-      </section>
+      </div>
 
       {/* ── Feature 1: Scoring (left text + right card) ───────────────── */}
       <section id="scoring" className="max-w-6xl mx-auto px-6 py-12 md:py-20" data-reveal>
@@ -380,9 +369,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-
-      {/* Endorsements — curated, credibility-first; hides itself when empty */}
-      <EndorsementsSection />
 
       {/* ── Feature 3: GD Briefs (right text + left card) ─────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-12 md:py-20">
