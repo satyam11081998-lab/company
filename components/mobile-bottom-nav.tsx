@@ -73,7 +73,7 @@ export default function MobileBottomNav() {
   const moreActive = SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
   const moreLinks = [
-    { href: '/resume', icon: FileText, label: 'Bullet Lab' },
+    { href: '/resume', icon: FileText, label: 'CV Pointer Lab' },
     { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { href: '/skeletons', icon: Library, label: 'Deck Vault' },
     { href: '/learn/casebook/case-competitions/why-they-matter', icon: Medal, label: 'Case Competitions' },

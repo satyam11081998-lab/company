@@ -298,7 +298,27 @@ export const generateBullets = (
 export const fitBullet = (bullet: string, maxChars: number, token?: string) =>
   resumeAi('fit-bullet', { bullet, max_chars: maxChars }, token);
 
-/** Achievement -> strict-fit one-line bullets (95-100% of the limit, never over). */
-export const generatePoints = (
-  achievement: string, domain: string, maxChars: number, count = 3, token?: string,
-) => resumeAi('point', { achievement, domain, max_chars: maxChars, count }, token);
+export interface PointResult { options: ResumeBulletOption[]; clarify?: string }
+
+/** Achievement (+ optional instructions) -> strict-fit bullets, or a clarifying question. */
+export async function generatePoints(
+  achievement: string, domain: string, maxChars: number, instructions = '', count = 3, token?: string,
+): Promise<PointResult> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/resume/point`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ achievement, domain, max_chars: maxChars, count, instructions }),
+      signal: AbortSignal.timeout(90000),
+    });
+  } catch (e: any) {
+    throw new Error(e?.name === 'TimeoutError' ? 'The AI is taking longer than usual — please retry.' : (e?.message || 'Could not reach the AI service.'));
+  }
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`Generation failed (${res.status}): ${t || res.statusText}`);
+  }
+  const json = await res.json();
+  return { options: (json.options || []) as ResumeBulletOption[], clarify: json.clarify || undefined };
+}
