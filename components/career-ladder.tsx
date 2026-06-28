@@ -108,7 +108,7 @@ export default function CareerLadder({ points }: Props) {
                     isCurrent ? 'text-primary font-semibold' : 'text-muted-foreground'
                   }`}
                 >
-                  {tier.threshold}
+                  {tier.threshold.toLocaleString()} pts
                 </span>
               </div>
             </div>
