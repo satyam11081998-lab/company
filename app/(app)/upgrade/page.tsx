@@ -286,7 +286,6 @@ export default function UpgradePage() {
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
                 </li>
                 <FeatureItem text="CV Pointer Lab — strict-fit AI resume bullet writer (free)" />
-                <FeatureItem text="One-page B-school format, ATS-ready, PDF export" />
                 <FeatureItem text="Unlimited practice bank" />
                 <FeatureItem text="Live AI hints & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
