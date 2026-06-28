@@ -285,7 +285,7 @@ export default function UpgradePage() {
                   <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
                 </li>
-                <FeatureItem text="Resume Lab — AI résumé builder & refiner" />
+                <FeatureItem text="Bullet Lab — strict-fit AI resume bullet writer (free)" />
                 <FeatureItem text="One-page B-school format, ATS-ready, PDF export" />
                 <FeatureItem text="Unlimited practice bank" />
                 <FeatureItem text="Live AI hints & model Q&A" />

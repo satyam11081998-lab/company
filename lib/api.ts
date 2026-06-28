@@ -298,24 +298,7 @@ export const generateBullets = (
 export const fitBullet = (bullet: string, maxChars: number, token?: string) =>
   resumeAi('fit-bullet', { bullet, max_chars: maxChars }, token);
 
-
-/** Rebuild a full résumé from pasted raw text into the MECE ResumeData shape (Pro). */
-export async function rebuildResume(text: string, token?: string): Promise<import('@/lib/resume/schema').ResumeData> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}/resume/rebuild`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ text }),
-      signal: AbortSignal.timeout(90000),
-    });
-  } catch (e: any) {
-    throw new Error(e?.name === 'TimeoutError' ? 'The AI is taking longer than usual — please retry.' : (e?.message || 'Could not reach the AI service.'));
-  }
-  if (!res.ok) {
-    const t = await res.text().catch(() => '');
-    throw new Error(`Rebuild failed (${res.status}): ${t || res.statusText}`);
-  }
-  const json = await res.json();
-  return json.data as import('@/lib/resume/schema').ResumeData;
-}
+/** Achievement -> strict-fit one-line bullets (95-100% of the limit, never over). */
+export const generatePoints = (
+  achievement: string, domain: string, maxChars: number, count = 3, token?: string,
+) => resumeAi('point', { achievement, domain, max_chars: maxChars, count }, token);

@@ -59,7 +59,7 @@ export default function AppNav() {
     { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
     { href: '/practice', label: 'Practice' },
     { href: '/gd-briefs', label: 'GD Briefs' },
-    { href: '/resume', label: 'Resume Lab' },
+    { href: '/resume', label: 'Bullet Lab' },
   ];
   const MORE_LINKS: NavLink[] = [
     { href: '/leaderboard', label: 'Leaderboard' },
