@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/theme-toggle';
 import EndorsementWall from '@/components/endorsement-wall';
+import { createClient } from '@/lib/supabase/server';
+import { getPublishedTestimonials } from '@/lib/testimonials';
+import { getPublishedEndorsements } from '@/lib/endorsements';
 import Logo from '@/components/logo';
 import Footer from '@/components/footer';
 import AuthCTA from '@/components/auth-cta';
@@ -44,7 +47,14 @@ const HOMEPAGE_FAQS = [
 
 const faqJsonLd = faqPageJsonLd(HOMEPAGE_FAQS);
 
-export default function LandingPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function LandingPage() {
+  const supabase = createClient();
+  const [testimonials, endorsements] = await Promise.all([
+    getPublishedTestimonials(supabase),
+    getPublishedEndorsements(supabase),
+  ]);
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
@@ -179,7 +189,7 @@ export default function LandingPage() {
 
       {/* ── Social proof: living endorsement wall (top of page for focus) ── */}
       <div data-reveal>
-        <EndorsementWall />
+        <EndorsementWall endorsements={endorsements} testimonials={testimonials} />
         <div className="-mt-8 mb-8 text-center">
           <Link href="/testimonials" className="text-small font-semibold text-primary hover:underline">
             Read all stories &rarr;
