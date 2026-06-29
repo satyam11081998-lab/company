@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Trophy, Medal, Crown, Flame, Copy, Check, ArrowUp, ArrowDown,
-  Sparkles, Users, Globe2, GraduationCap, Zap, Linkedin,
+  Sparkles, Users, Globe2, GraduationCap, Zap, Linkedin, Star,
 } from 'lucide-react';
 import { fetchDailyLeaderboard, type DailyLeaderboardResponse } from '@/lib/api';
 import type { LeaderboardView, LbRow } from '@/lib/dashboard/leaderboards';
+import { currentTier } from '@/lib/career-tiers';
 
 type Tab = 'all' | 'daily' | 'cohort';
 
@@ -34,6 +35,15 @@ function etaLabel(days: number | null) {
   if (days < 14) return `in ~${days} days`;
   if (days < 60) return `in ~${Math.round(days / 7)} weeks`;
   return 'eventually';
+}
+
+function TierChip({ points, className = '' }: { points: number; className?: string }) {
+  const t = currentTier(points);
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border border-navy/10 bg-navy/5 px-2 py-0.5 text-[10.5px] font-semibold leading-none text-navy ${className}`}>
+      <Star className="h-3 w-3 text-primary" /> {t.name}
+    </span>
+  );
 }
 
 export default function LeaderboardClient({ userId, allTime, cohort, cohortName, initialTab = 'all' }: Props) {
@@ -135,6 +145,7 @@ function StandingCard({ view, unit }: { view: LeaderboardView; unit: string }) {
             {you.weeklyGain > 0 && (
               <p className="mt-0.5 text-micro font-semibold text-success">+{you.weeklyGain} this week</p>
             )}
+            <div className="mt-1.5 flex justify-end"><TierChip points={you.points} /></div>
           </div>
         </div>
 
@@ -184,6 +195,13 @@ function BoardView({ view, userId, unit }: { view: LeaderboardView; userId: stri
   return (
     <div className="space-y-6 animate-slide-up">
       <StandingCard view={view} unit={unit} />
+      {view.rows.length === 0 && (
+        <div className="ui-card p-10 text-center">
+          <Trophy className="mx-auto h-10 w-10 text-primary/30" />
+          <p className="mt-3 font-semibold text-foreground">The board is just warming up</p>
+          <p className="mt-1 text-small text-muted-foreground">Solve a case to put the first name on it — yours.</p>
+        </div>
+      )}
       {top3.length > 0 && <Podium top3={top3} unit={unit} />}
 
       {rest.length > 0 && (
@@ -239,9 +257,12 @@ function Row({ u, unit }: { u: LbRow; unit: string }) {
           </p>
         </div>
       </div>
-      <div className="flex items-baseline gap-1 shrink-0">
-        <span className="font-mono text-base font-bold tabular-nums text-foreground">{u.points.toLocaleString()}</span>
-        <span className="text-xs text-muted-foreground">{unit}</span>
+      <div className="flex flex-col items-end gap-1 shrink-0">
+        <div className="flex items-baseline gap-1">
+          <span className="font-mono text-base font-bold tabular-nums text-foreground">{u.points.toLocaleString()}</span>
+          <span className="text-xs text-muted-foreground">{unit}</span>
+        </div>
+        {unit === 'pts' && <TierChip points={u.points} />}
       </div>
     </div>
   );
@@ -288,6 +309,7 @@ function Podium({ top3, unit }: { top3: LbRow[]; unit: string }) {
             </div>
             {u.college && <p className="max-w-[14ch] truncate text-center text-[11px] text-muted-foreground">{u.college}</p>}
             <p className="font-mono text-sm font-bold tabular-nums text-primary">{u.points.toLocaleString()} {unit}</p>
+            {unit === 'pts' && <TierChip points={u.points} className="mt-1" />}
             <div className={`mt-1.5 w-16 rounded-t-md ${u.rank === 1 ? 'h-12 bg-primary/15' : u.rank === 2 ? 'h-8 bg-muted' : 'h-5 bg-muted'} border border-border`} />
             <div className="w-16 rounded-b-sm border border-t-0 border-border bg-muted/60 py-0.5 text-center text-[11px] font-bold text-muted-foreground">
               {u.rank === 1 ? '1st' : u.rank === 2 ? '2nd' : '3rd'}
