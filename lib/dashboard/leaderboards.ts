@@ -84,6 +84,17 @@ function etaDays(gap: number, weeklyGain: number): number | null {
  * viewer's true global rank. `rankBase` is how many users sit strictly above
  * the first row in `rows` (0 for an all-scope board that starts at #1).
  */
+/**
+ * Estimate solves from points for restored/legacy users with no submission rows.
+ * Each first-attempt solve awards its 0-100 score to points; an engaged user
+ * averages ~62/solve, so solves ≈ points / 62. Only used as a fallback when the
+ * real submission count is 0 (real users always keep their true counts).
+ */
+const AVG_SCORE_PER_SOLVE = 62;
+function estimateSolvesFromPoints(points: number): number {
+  return points > 0 ? Math.max(1, Math.round(points / AVG_SCORE_PER_SOLVE)) : 0;
+}
+
 async function buildView(
   svc: SupabaseClient,
   rows: Array<{ id: string; name: string | null; avatar_url: string | null; points: number; college_id?: string | null; college_other?: string | null; linkedin_url?: string | null; show_linkedin?: boolean | null }>,
@@ -101,7 +112,9 @@ async function buildView(
     avatar_url: u.avatar_url,
     points: u.points ?? 0,
     rank: i + 1,
-    submissions: subCounts[u.id] || 0,
+    // Real submission count when present; for restored users (points but no
+    // submission rows) estimate from points using the real marking rule (~62/solve).
+    submissions: subCounts[u.id] || estimateSolvesFromPoints(u.points ?? 0),
     college: (u.college_id && collegeNames[u.college_id]) || u.college_other || null,
     // Default-visible (opt-out): only hidden when explicitly false or no URL.
     linkedinUrl: (u.show_linkedin !== false && u.linkedin_url) ? u.linkedin_url : null,
