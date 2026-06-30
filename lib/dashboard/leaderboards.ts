@@ -95,6 +95,37 @@ function estimateSolvesFromPoints(points: number): number {
   return points > 0 ? Math.max(1, Math.round(points / AVG_SCORE_PER_SOLVE)) : 0;
 }
 
+/**
+ * A user is only RANKED (shown on the board / counted as a rival) once they have
+ * solved at least this many questions. Keeps brand-new accounts with 0-2 solves
+ * off the public board.
+ */
+export const MIN_SOLVES_TO_RANK = 3;
+
+/**
+ * Effective solves used for both the display count and the ranking gate: the real
+ * submission count when present, else estimated from points for seeded/restored
+ * users (who carry points but no submission rows). Matches the `submissions`
+ * value shown on each row, so the gate and the displayed count never disagree.
+ */
+function effectiveSolves(realCount: number, points: number): number {
+  return realCount > 0 ? realCount : estimateSolvesFromPoints(points);
+}
+
+/**
+ * Drop users below the solve gate, then keep the top `limit` by points. Rows are
+ * already points-desc, so slicing after the filter preserves rank order.
+ */
+function gateAndSlice<T extends { id: string; points: number }>(
+  rows: T[],
+  subCounts: Record<string, number>,
+  limit: number,
+): T[] {
+  return rows
+    .filter((u) => effectiveSolves(subCounts[u.id] || 0, u.points ?? 0) >= MIN_SOLVES_TO_RANK)
+    .slice(0, limit);
+}
+
 async function buildView(
   svc: SupabaseClient,
   rows: Array<{ id: string; name: string | null; avatar_url: string | null; points: number; college_id?: string | null; college_other?: string | null; linkedin_url?: string | null; show_linkedin?: boolean | null }>,
@@ -114,7 +145,7 @@ async function buildView(
     rank: i + 1,
     // Real submission count when present; for restored users (points but no
     // submission rows) estimate from points using the real marking rule (~62/solve).
-    submissions: subCounts[u.id] || estimateSolvesFromPoints(u.points ?? 0),
+    submissions: effectiveSolves(subCounts[u.id] || 0, u.points ?? 0),
     college: (u.college_id && collegeNames[u.college_id]) || u.college_other || null,
     // Default-visible (opt-out): only hidden when explicitly false or no URL.
     linkedinUrl: (u.show_linkedin !== false && u.linkedin_url) ? u.linkedin_url : null,
@@ -186,20 +217,24 @@ export async function getAllTimeLeaderboard(
   userId: string,
   limit = 50,
 ): Promise<LeaderboardView> {
-  const [{ data: topRows }, meRes, totalRes] = await Promise.all([
-    svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').order('points', { ascending: false }).limit(limit),
+  // Over-fetch: the solve gate drops users below it, so pull a generous pool and
+  // gate/slice down to `limit` qualifying rows (gated-out users sit at the tail).
+  const poolSize = Math.max(limit * 4, 200);
+  const [{ data: poolRows }, meRes, totalRes] = await Promise.all([
+    svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').order('points', { ascending: false }).limit(poolSize),
     svc.from('users').select('points').eq('id', userId).maybeSingle(),
     svc.from('users').select('id', { count: 'exact', head: true }),
   ]);
-  const rows = (topRows as any[]) || [];
+  const pool = (poolRows as any[]) || [];
+  const poolSubCounts = await subCountsFor(svc, pool.map((r) => r.id));
+  const rows = gateAndSlice(pool, poolSubCounts, limit);
   const myPoints = (meRes.data as any)?.points ?? 0;
   const { count: aboveCount } = await svc
     .from('users').select('id', { count: 'exact', head: true }).gt('points', myPoints);
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
-  const subCounts = await subCountsFor(svc, rows.map((r) => r.id));
   const collegeNames = await collegeNamesFor(svc, rows.map((r) => r.college_id));
-  return buildView(svc, rows, userId, myRank, myPoints, total, 'All India', subCounts, collegeNames);
+  return buildView(svc, rows, userId, myRank, myPoints, total, 'All India', poolSubCounts, collegeNames);
 }
 
 /** COHORT leaderboard — everyone at the viewer's college. */
@@ -219,19 +254,21 @@ export async function getCohortLeaderboard(
     collegeName = (c as any)?.short_name || (c as any)?.name || null;
   } catch { /* label only */ }
 
-  const [{ data: topRows }, totalRes] = await Promise.all([
+  const poolSize = Math.max(limit * 4, 200);
+  const [{ data: poolRows }, totalRes] = await Promise.all([
     svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('college_id', collegeId)
-      .order('points', { ascending: false }).limit(limit),
+      .order('points', { ascending: false }).limit(poolSize),
     svc.from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId),
   ]);
-  const rows = (topRows as any[]) || [];
+  const pool = (poolRows as any[]) || [];
+  const poolSubCounts = await subCountsFor(svc, pool.map((r) => r.id));
+  const rows = gateAndSlice(pool, poolSubCounts, limit);
   const myPoints = (me as any)?.points ?? 0;
   const { count: aboveCount } = await svc
     .from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId).gt('points', myPoints);
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
-  const subCounts = await subCountsFor(svc, rows.map((r) => r.id));
   const collegeNames = await collegeNamesFor(svc, rows.map((r) => r.college_id));
-  const view = await buildView(svc, rows, userId, myRank, myPoints, total, collegeName || 'Your college', subCounts, collegeNames);
+  const view = await buildView(svc, rows, userId, myRank, myPoints, total, collegeName || 'Your college', poolSubCounts, collegeNames);
   return { view, collegeName };
 }
