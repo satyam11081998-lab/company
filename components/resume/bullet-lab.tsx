@@ -10,11 +10,11 @@
  * clarifying question instead of inventing details. Enforced server-side (FastAPI + OpenAI).
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Sparkles, Copy, Check, Loader2, Ruler, Wand2, HelpCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { generatePoints, type ResumeBulletOption } from '@/lib/api';
-import DictationButton from '@/components/dictation-button';
+import DictationButton, { type DictationHandle } from '@/components/dictation-button';
 
 const DOMAINS = [
   'General Management', 'Consulting', 'Finance', 'Marketing', 'Product',
@@ -78,12 +78,20 @@ export default function BulletLab() {
   const [error, setError] = useState('');
   const [clarify, setClarify] = useState('');
   const [options, setOptions] = useState<ResumeBulletOption[]>([]);
+  const [recording, setRecording] = useState(false);
+  const dictRef = useRef<DictationHandle>(null);
 
   const clampedLimit = Math.max(40, Math.min(limit || 120, 160));
   const lo = Math.ceil(0.95 * clampedLimit);
 
   const run = async () => {
-    if (achievement.trim().length < 3) {
+    // If the mic is still recording, finalize it and fold the transcript in first.
+    let ach = achievement;
+    if (dictRef.current?.isRecording()) {
+      const t = await dictRef.current.finalize();
+      if (t) { ach = achievement.trim() ? `${achievement.trim()} ${t}` : t; setAchievement(ach); }
+    }
+    if (ach.trim().length < 3) {
       setError('Describe your achievement in a few words first.');
       return;
     }
@@ -93,7 +101,7 @@ export default function BulletLab() {
     setOptions([]);
     try {
       const token = await getToken();
-      const res = await generatePoints(achievement.trim(), domain, clampedLimit, instructions.trim(), 3, token);
+      const res = await generatePoints(ach.trim(), domain, clampedLimit, instructions.trim(), 3, token);
       if (res.clarify) {
         setClarify(res.clarify);
       } else {
@@ -153,6 +161,8 @@ export default function BulletLab() {
               <span className="flex items-center gap-2 text-micro text-muted-foreground">
                 Speak it
                 <DictationButton
+                  ref={dictRef}
+                  onRecordingChange={setRecording}
                   onTranscriptionCompleted={(t) => setAchievement((p) => (p.trim() ? p.trim() + ' ' : '') + t)}
                   disabled={loading}
                 />
@@ -192,7 +202,7 @@ export default function BulletLab() {
               className="btn-primary inline-flex items-center gap-2 disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-              {loading ? 'Crafting…' : 'Generate bullets'}
+              {loading ? 'Crafting…' : recording ? 'Stop & generate' : 'Generate bullets'}
             </button>
           </div>
 

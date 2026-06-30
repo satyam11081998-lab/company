@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import DictationButton from '@/components/dictation-button';
+import DictationButton, { type DictationHandle } from '@/components/dictation-button';
 import EngagingLoader from '@/components/engaging-loader';
 import { createClient } from '@/lib/supabase/client';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
@@ -81,6 +81,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
+  const micCancelledRef = useRef(false);
+  const micResolveRef = useRef<((t: string | null) => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,30 +165,69 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
-  async function toggleMic() {
-    if (recording === 'recording') { mediaRecorderRef.current?.stop(); return; }
+  // Mic flow: tap mic -> record; tap square -> CANCEL (discard); the Send button
+  // commits by calling finalizeMic() (stop + transcribe) and then send('voice').
+  async function startMic() {
     if (recording === 'transcribing' || sending) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
       audioChunksRef.current = [];
+      micCancelledRef.current = false;
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
+        const resolve = micResolveRef.current;
+        micResolveRef.current = null;
+        if (micCancelledRef.current) { audioChunksRef.current = []; setRecording('idle'); resolve?.(null); return; }
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (blob.size === 0) { setRecording('idle'); return; }
+        if (blob.size === 0) { setRecording('idle'); resolve?.(null); return; }
         setRecording('transcribing');
         try {
           const { text } = await transcribeAudio(blob);
-          if (text) await send('voice', text);
+          setRecording('idle');
+          resolve?.(text || null);
         } catch (e) {
           toast.error(e instanceof Error ? e.message : 'Transcription failed');
-        } finally { setRecording('idle'); }
+          setRecording('idle');
+          resolve?.(null);
+        }
       };
       mr.start();
       setRecording('recording');
     } catch { toast.error('Microphone permission denied'); }
+  }
+
+  function cancelMic() {
+    micCancelledRef.current = true;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') mediaRecorderRef.current.stop();
+    else setRecording('idle');
+  }
+
+  function micButtonClick() {
+    if (recording === 'recording') cancelMic();
+    else if (recording === 'idle') startMic();
+  }
+
+  function finalizeMic(): Promise<string | null> {
+    return new Promise((resolve) => {
+      if (recording !== 'recording' || !mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') { resolve(null); return; }
+      micCancelledRef.current = false;
+      micResolveRef.current = resolve;
+      mediaRecorderRef.current.stop();
+    });
+  }
+
+  // Composer Send: while recording, finalize (transcribe) and send as voice in one tap.
+  async function handleComposerSend() {
+    if (recording === 'recording') {
+      const t = await finalizeMic();
+      if (t) await send('voice', t);
+      return;
+    }
+    if (recording === 'transcribing') return;
+    send('text');
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -202,15 +243,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(overrideText?: string) {
     if (!attempt || !token || submitting) return;
-    if (finalRec.trim().length < 20) {
+    const rec = (overrideText ?? finalRec).trim();
+    if (rec.length < 20) {
       toast.error('Your recommendation should be at least a couple of sentences.');
       return;
     }
     setSubmitting(true);
     try {
-      const res = await submitAttempt(attempt.attempt_id, token, finalRec.trim());
+      const res = await submitAttempt(attempt.attempt_id, token, rec);
       router.push(`/results/${res.submission_id}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Submit failed');
@@ -468,10 +510,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 />
                 
                 <div className="flex items-center gap-1.5 pr-1 mb-0.5">
-                  <button type="button" onClick={toggleMic} disabled={recording === 'transcribing'} className={`shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 animate-pulse' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label="Voice input">
-                    {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : recording === 'recording' ? <Square className="h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}
+                  <button type="button" onClick={micButtonClick} disabled={recording === 'transcribing'} className={`relative shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label={recording === 'recording' ? 'Cancel recording' : 'Voice input'} title={recording === 'recording' ? 'Tap to cancel — use Send to submit' : 'Voice input'}>
+                    {recording === 'recording' && (
+                      <>
+                        <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-rose-400/60 animate-ping" />
+                        <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-rose-400/30 animate-ping [animation-delay:700ms]" />
+                      </>
+                    )}
+                    {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : recording === 'recording' ? <Square className="relative h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}
                   </button>
-                  <Button type="button" onClick={() => send('text')} disabled={!composer.trim() || sending || !attempt} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
+                  <Button type="button" onClick={handleComposerSend} disabled={sending || !attempt || recording === 'transcribing' || (recording === 'idle' && !composer.trim())} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
                     <Send className="h-4 w-4 ml-0.5" />
                   </Button>
                 </div>
@@ -598,9 +646,22 @@ function SubmitDialog({
   setFinalRec: (v: string) => void;
   submitting: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (text?: string) => void;
   onFileAttach: () => void;
 }) {
+  const dictRef = useRef<DictationHandle>(null);
+  const [recording, setRecording] = useState(false);
+
+  // While recording, Send finalizes (transcribe) and submits in one tap.
+  async function handleConfirm() {
+    let rec = finalRec;
+    if (dictRef.current?.isRecording()) {
+      const t = await dictRef.current.finalize();
+      if (t) { rec = finalRec ? finalRec + ' ' + t : t; setFinalRec(rec); }
+    }
+    onConfirm(rec);
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center">
       <Card className="w-full max-w-xl p-5">
@@ -619,6 +680,8 @@ function SubmitDialog({
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <DictationButton
+              ref={dictRef}
+              onRecordingChange={setRecording}
               onTranscriptionCompleted={(text) => setFinalRec(finalRec ? finalRec + ' ' + text : text)}
               disabled={submitting}
             />
@@ -636,7 +699,7 @@ function SubmitDialog({
         </div>
         <div className="mt-4 flex justify-end gap-2 border-t pt-4">
           <Button variant="ghost" onClick={onClose} disabled={submitting}>Cancel</Button>
-          <Button onClick={onConfirm} disabled={submitting || finalRec.trim().length < 20} className="bg-primary text-primary-foreground hover:bg-primary-hover">
+          <Button onClick={handleConfirm} disabled={submitting || (finalRec.trim().length < 20 && !recording)} className="bg-primary text-primary-foreground hover:bg-primary-hover">
             {submitting ? (<><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Scoring…</>) : 'Submit session'}
           </Button>
         </div>

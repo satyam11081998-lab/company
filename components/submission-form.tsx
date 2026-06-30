@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { MIN_ANSWER_CHARS } from '@/lib/constants';
 import { ANSWER_MAX_CHARS } from '@/lib/limits';
 import { Loader2 } from 'lucide-react';
-import DictationButton from '@/components/dictation-button';
+import DictationButton, { type DictationHandle } from '@/components/dictation-button';
 import CameraButton from '@/components/camera-button';
 
 /** Client form on /cases/[id] for submitting an answer to the scoring API. */
@@ -18,13 +18,23 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
   const router = useRouter();
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const dictRef = useRef<DictationHandle>(null);
 
   const charCount = answer.length;
   const isValid = charCount >= MIN_ANSWER_CHARS;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!isValid) {
+
+    // If the mic is still recording, finalize it first and fold the transcript in.
+    let text = answer;
+    if (dictRef.current?.isRecording()) {
+      const t = await dictRef.current.finalize();
+      if (t) text = answer ? `${answer}\n\n${t}` : t;
+    }
+
+    if (text.trim().length < MIN_ANSWER_CHARS) {
       toast.error(`Your answer needs at least ${MIN_ANSWER_CHARS} characters.`);
       return;
     }
@@ -32,7 +42,7 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      const { submission_id } = await submitCaseAnswer({ user_id: userId, case_id: caseId, answer_text: answer, token: session?.access_token });
+      const { submission_id } = await submitCaseAnswer({ user_id: userId, case_id: caseId, answer_text: text, token: session?.access_token });
       router.push(`/results/${submission_id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Submission failed';
@@ -65,14 +75,13 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Type out your structure, assumptions and final number. Aim for clear sub-bullets."
           className="resize-none text-base leading-relaxed min-h-[250px] md:min-h-[350px] pb-16"
-          required
           maxLength={ANSWER_MAX_CHARS}
         />
-        
+
         {/* Input tools positioned inside the textarea area */}
         <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2">
           <CameraButton onExtractionCompleted={handleInputExtracted} />
-          <DictationButton onTranscriptionCompleted={handleInputExtracted} />
+          <DictationButton ref={dictRef} onRecordingChange={setRecording} onTranscriptionCompleted={handleInputExtracted} />
         </div>
       </div>
 
@@ -80,7 +89,7 @@ export default function SubmissionForm({ userId, caseId }: { userId: string; cas
         <span className={`text-base font-medium ${isValid ? 'text-emerald-700' : 'text-muted-foreground'}`}>
           {charCount} / {ANSWER_MAX_CHARS} characters (min {MIN_ANSWER_CHARS})
         </span>
-        <Button type="submit" disabled={!isValid} className="bg-primary text-primary-foreground hover:bg-primary-hover">
+        <Button type="submit" disabled={!isValid && !recording} className="bg-primary text-primary-foreground hover:bg-primary-hover">
           Submit for feedback
         </Button>
       </div>

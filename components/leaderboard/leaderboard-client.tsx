@@ -310,9 +310,18 @@ function Podium({ top3, unit }: { top3: LbRow[]; unit: string }) {
             {u.college && <p className="max-w-[14ch] truncate text-center text-[11px] text-muted-foreground">{u.college}</p>}
             <p className="font-mono text-sm font-bold tabular-nums text-primary">{u.points.toLocaleString()} {unit}</p>
             {unit === 'pts' && <TierChip points={u.points} className="mt-1" />}
-            <div className={`mt-1.5 w-16 rounded-t-md ${u.rank === 1 ? 'h-12 bg-primary/15' : u.rank === 2 ? 'h-8 bg-muted' : 'h-5 bg-muted'} border border-border`} />
-            <div className="w-16 rounded-b-sm border border-t-0 border-border bg-muted/60 py-0.5 text-center text-[11px] font-bold text-muted-foreground">
-              {u.rank === 1 ? '1st' : u.rank === 2 ? '2nd' : '3rd'}
+            <div
+              className={`mt-2 flex w-20 items-end justify-center rounded-t-lg border border-b-0 border-border shadow-sm ${
+                u.rank === 1
+                  ? 'h-16 bg-gradient-to-b from-primary/30 to-primary/10'
+                  : u.rank === 2
+                  ? 'h-11 bg-gradient-to-b from-slate-300/50 to-muted'
+                  : 'h-8 bg-gradient-to-b from-amber-300/40 to-muted'
+              }`}
+            >
+              <span className="pb-1.5 text-xs font-bold tabular-nums text-foreground/70">
+                {u.rank === 1 ? '1st' : u.rank === 2 ? '2nd' : '3rd'}
+              </span>
             </div>
           </div>
         ))}
