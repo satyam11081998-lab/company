@@ -4,6 +4,17 @@ import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Mic, Square, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { transcribeAudio } from '@/lib/api';
+import { createClient } from '@/lib/supabase/client';
+import MicWaveform from '@/components/mic-waveform';
+
+async function _sessionToken(): Promise<string | undefined> {
+  try {
+    const { data } = await createClient().auth.getSession();
+    return data.session?.access_token;
+  } catch {
+    return undefined;
+  }
+}
 
 export interface DictationHandle {
   /** True while actively recording (read synchronously at click time). */
@@ -33,6 +44,7 @@ const DictationButton = forwardRef<DictationHandle, DictationButtonProps>(functi
   ref,
 ) {
   const [status, setStatus] = useState<Status>('idle');
+  const [waveStream, setWaveStream] = useState<MediaStream | null>(null);
   const statusRef = useRef<Status>('idle');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
@@ -50,6 +62,7 @@ const DictationButton = forwardRef<DictationHandle, DictationButtonProps>(functi
   function cleanupStream() {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setWaveStream(null); // hide the waveform the moment recording ends
   }
 
   function settle(text: string | null) {
@@ -62,6 +75,7 @@ const DictationButton = forwardRef<DictationHandle, DictationButtonProps>(functi
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+      setWaveStream(stream); // feed the live waveform
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -90,7 +104,8 @@ const DictationButton = forwardRef<DictationHandle, DictationButtonProps>(functi
 
         setS('transcribing');
         try {
-          const { text } = await transcribeAudio(audioBlob);
+          const token = await _sessionToken();
+          const { text } = await transcribeAudio(audioBlob, token);
           if (text) {
             onTranscriptionCompleted(text);
             setS('idle');
@@ -102,7 +117,8 @@ const DictationButton = forwardRef<DictationHandle, DictationButtonProps>(functi
           }
         } catch (err) {
           console.error('Transcription error:', err);
-          toast.error('Failed to transcribe audio. Please try again.');
+          // Surface the backend's friendly reason (e.g. daily voice limit reached).
+          toast.error(err instanceof Error ? err.message : 'Failed to transcribe audio. Please try again.');
           setS('idle');
           settle(null);
         }
@@ -161,30 +177,36 @@ const DictationButton = forwardRef<DictationHandle, DictationButtonProps>(functi
   }
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={disabled || status === 'transcribing'}
-      title={status === 'recording' ? 'Tap to cancel — use Send to submit' : 'Dictate answer with your voice'}
-      aria-label={status === 'recording' ? 'Cancel recording' : 'Record voice'}
-      type="button"
-      className={`
-        relative flex items-center justify-center h-10 w-10 shrink-0 rounded-full transition-all
-        ${status === 'idle' ? 'bg-primary/10 text-primary hover:bg-primary/20' : ''}
-        ${status === 'recording' ? 'bg-primary text-primary-foreground' : ''}
-        ${status === 'transcribing' ? 'bg-muted text-muted-foreground' : ''}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-      `}
-    >
+    <div className="flex items-center gap-2">
       {status === 'recording' && (
-        <>
-          <span className="pointer-events-none absolute -inset-1 rounded-full border-2 border-primary/60 animate-ping" />
-          <span className="pointer-events-none absolute -inset-1 rounded-full border-2 border-primary/30 animate-ping [animation-delay:700ms]" />
-        </>
+        // Live ChatGPT-style waveform — bars scroll right → left as you speak.
+        <div className="flex items-center gap-2 rounded-full bg-primary/10 pl-3 pr-1 py-1">
+          <MicWaveform stream={waveStream} className="h-6 w-20 text-primary" />
+          <span className="text-micro font-medium text-primary/80 tabular-nums">rec</span>
+        </div>
       )}
-      {status === 'idle' && <Mic className="h-5 w-5" />}
-      {status === 'recording' && <Square className="relative h-4 w-4 fill-current" />}
-      {status === 'transcribing' && <Loader2 className="h-5 w-5 animate-spin" />}
-    </button>
+      <button
+        onClick={handleClick}
+        disabled={disabled || status === 'transcribing'}
+        title={status === 'recording' ? 'Tap to cancel — use Send to submit' : 'Dictate answer with your voice'}
+        aria-label={status === 'recording' ? 'Cancel recording' : 'Record voice'}
+        type="button"
+        className={`
+          relative flex items-center justify-center h-10 w-10 shrink-0 rounded-full transition-all
+          ${status === 'idle' ? 'bg-primary/10 text-primary hover:bg-primary/20' : ''}
+          ${status === 'recording' ? 'bg-primary text-primary-foreground' : ''}
+          ${status === 'transcribing' ? 'bg-muted text-muted-foreground' : ''}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+      >
+        {status === 'recording' && (
+          <span className="pointer-events-none absolute -inset-1 rounded-full border-2 border-primary/40 animate-ping" />
+        )}
+        {status === 'idle' && <Mic className="h-5 w-5" />}
+        {status === 'recording' && <Square className="relative h-4 w-4 fill-current" />}
+        {status === 'transcribing' && <Loader2 className="h-5 w-5 animate-spin" />}
+      </button>
+    </div>
   );
 });
 

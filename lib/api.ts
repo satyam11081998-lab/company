@@ -194,21 +194,67 @@ export async function fetchDailyLeaderboard(): Promise<DailyLeaderboardResponse>
 }
 
 /**
- * Send an audio blob to the backend for Whisper transcription.
+ * Per-user daily AI-input quota (voice minutes + OCR images), by tier.
+ * Returned by the transcribe/extract endpoints and by GET /usage/ai-quota so the UI
+ * can show "≈X min voice · Y scans left" and disable inputs gracefully at 0.
  */
-export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }> {
+export interface AiQuota {
+  tier: 'free' | 'lite' | 'pro' | string;
+  voice: { used_min: number; limit_min: number; remaining_min: number };
+  images: { used: number; limit: number; remaining: number };
+}
+
+/** Pull a JSON `detail` (FastAPI error body) so users see the friendly reason, not raw JSON. */
+async function _detail(res: Response): Promise<string> {
+  try {
+    const j = await res.json();
+    if (j && typeof j.detail === 'string') return j.detail;
+  } catch {
+    /* not JSON */
+  }
+  return `${res.status} ${res.statusText}`;
+}
+
+function authHeader(token?: string): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** Fetch the caller's remaining voice minutes + OCR images for today. */
+export async function fetchAiQuota(token?: string): Promise<AiQuota | null> {
+  try {
+    const res = await fetch(`${API_URL}/usage/ai-quota`, {
+      method: 'GET',
+      headers: authHeader(token),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as AiQuota;
+  } catch {
+    return null; // never let a quota-display fetch break the page
+  }
+}
+
+/**
+ * Send an audio blob to the backend for Whisper transcription.
+ * Requires a signed-in session token; returns the text plus the updated quota.
+ */
+export async function transcribeAudio(
+  audioBlob: Blob,
+  token?: string,
+): Promise<{ text: string; quota?: AiQuota }> {
   const formData = new FormData();
   formData.append('file', audioBlob, 'recording.webm');
 
   const res = await fetch(`${API_URL}/transcribe`, {
     method: 'POST',
-    // Do NOT set Content-Type header when sending FormData, the browser will set it with the correct boundary
+    // Do NOT set Content-Type for FormData — the browser sets the boundary. Auth only.
+    headers: authHeader(token),
     body: formData,
   });
 
   if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Failed to transcribe audio: ${errText}`);
+    throw new Error(await _detail(res));
   }
 
   return res.json();
@@ -216,17 +262,20 @@ export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }
 
 /**
  * Send a base64 encoded image to the backend for handwriting OCR.
+ * Requires a signed-in session token; returns the text plus the updated quota.
  */
-export async function extractTextFromImage(base64Image: string): Promise<{ text: string }> {
+export async function extractTextFromImage(
+  base64Image: string,
+  token?: string,
+): Promise<{ text: string; quota?: AiQuota }> {
   const res = await fetch(`${API_URL}/extract-text`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeader(token) },
     body: JSON.stringify({ base64_image: base64Image }),
   });
 
   if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Failed to extract text from image: ${errText}`);
+    throw new Error(await _detail(res));
   }
 
   return res.json();

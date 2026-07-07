@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import DictationButton, { type DictationHandle } from '@/components/dictation-button';
+import MicWaveform from '@/components/mic-waveform';
 import EngagingLoader from '@/components/engaging-loader';
 import { createClient } from '@/lib/supabase/client';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
@@ -39,7 +40,7 @@ import {
   type AttemptMessage,
   type AttemptSummary,
 } from '@/lib/interview-api';
-import { transcribeAudio } from '@/lib/api';
+import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS, RECOMMENDATION_MAX_CHARS } from '@/lib/limits';
 
 interface Props {
@@ -72,6 +73,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [composer, setComposer] = useState('');
   const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState<'idle' | 'recording' | 'transcribing'>('idle');
+  const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  const [quota, setQuota] = useState<AiQuota | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [finalRec, setFinalRec] = useState('');
@@ -115,6 +118,15 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     const el = threadRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, draftAssistant?.text]);
+
+  // Load today's voice/scan allowance once we have a token, so the composer can
+  // show "≈X min voice left" and disable the mic gracefully at 0.
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    fetchAiQuota(token).then((q) => { if (alive && q) setQuota(q); });
+    return () => { alive = false; };
+  }, [token]);
 
   async function send(kind: 'text' | 'voice' = 'text', content?: string) {
     const text = (content ?? composer).trim();
@@ -171,6 +183,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     if (recording === 'transcribing' || sending) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicStream(stream); // drive the live waveform
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
       audioChunksRef.current = [];
@@ -178,6 +191,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
+        setMicStream(null);
         const resolve = micResolveRef.current;
         micResolveRef.current = null;
         if (micCancelledRef.current) { audioChunksRef.current = []; setRecording('idle'); resolve?.(null); return; }
@@ -185,7 +199,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         if (blob.size === 0) { setRecording('idle'); resolve?.(null); return; }
         setRecording('transcribing');
         try {
-          const { text } = await transcribeAudio(blob);
+          const { text, quota: q } = await transcribeAudio(blob, token || undefined);
+          if (q) setQuota(q); // refresh "minutes left" from the server's exact count
           setRecording('idle');
           resolve?.(text || null);
         } catch (e) {
@@ -206,8 +221,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   }
 
   function micButtonClick() {
-    if (recording === 'recording') cancelMic();
-    else if (recording === 'idle') startMic();
+    if (recording === 'recording') { cancelMic(); return; }
+    if (recording === 'idle') {
+      if (voiceOut) {
+        toast.error(`Daily voice limit reached (${quota?.voice.limit_min} min). Resets at midnight IST — you can still type.`);
+        return;
+      }
+      startMic();
+    }
   }
 
   function finalizeMic(): Promise<string | null> {
@@ -269,6 +290,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const hasClarifications = (attempt?.clarification_quota ?? 0) > 0;
   const remaining = attempt?.clarification_remaining || 0;
   const quotaExhausted = hasClarifications && remaining <= 0;
+
+  // Voice-input allowance (per-tier, resets midnight IST). null while still loading.
+  const voiceLeft = quota?.voice.remaining_min ?? null;
+  const voiceOut = voiceLeft !== null && voiceLeft <= 0;
 
   // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND
   // inside the mobile drawer (opened from the chat bar) so the phone is chat-first.
@@ -493,24 +518,41 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 </p>
               )}
               
+              {voiceLeft !== null && (
+                <div className="mb-2 flex items-center justify-end gap-1.5 px-2 text-micro text-muted-foreground">
+                  <Mic className="h-3 w-3" />
+                  {voiceOut
+                    ? <span className="text-rose-600 dark:text-rose-400">Daily voice limit reached — type your answer</span>
+                    : <span>≈{voiceLeft} min voice left today</span>}
+                </div>
+              )}
+
               <div className="flex items-end gap-2 rounded-[24px] border bg-card p-1.5 pl-3 shadow-md focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="shrink-0 rounded-full p-2 mb-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Attach a file">
                   <Paperclip className="h-5 w-5" />
                 </button>
                 <input ref={fileInputRef} type="file" className="hidden" accept="image/*,application/pdf,.doc,.docx,.txt" onChange={handleFile} />
-                
-                <textarea
-                  value={composer}
-                  onChange={(e) => setComposer(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send('text'); } }}
-                  placeholder={!hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Add notes or assumptions…' : 'Ask a clarification or share your structure…'}
-                  className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
-                  rows={1}
-                  maxLength={MESSAGE_MAX_CHARS}
-                />
-                
+
+                {recording === 'recording' ? (
+                  // Live waveform replaces the text field while recording (ChatGPT-style).
+                  <div className="flex flex-1 items-center gap-3 py-2 px-1">
+                    <MicWaveform stream={micStream} className="h-8 flex-1 text-primary" />
+                    <span className="shrink-0 text-small font-medium text-primary/80">Listening…</span>
+                  </div>
+                ) : (
+                  <textarea
+                    value={composer}
+                    onChange={(e) => setComposer(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send('text'); } }}
+                    placeholder={!hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Add notes or assumptions…' : 'Ask a clarification or share your structure…'}
+                    className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
+                    rows={1}
+                    maxLength={MESSAGE_MAX_CHARS}
+                  />
+                )}
+
                 <div className="flex items-center gap-1.5 pr-1 mb-0.5">
-                  <button type="button" onClick={micButtonClick} disabled={recording === 'transcribing'} className={`relative shrink-0 rounded-full p-2 transition-colors ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label={recording === 'recording' ? 'Cancel recording' : 'Voice input'} title={recording === 'recording' ? 'Tap to cancel — use Send to submit' : 'Voice input'}>
+                  <button type="button" onClick={micButtonClick} disabled={recording === 'transcribing' || (recording === 'idle' && voiceOut)} className={`relative shrink-0 rounded-full p-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label={recording === 'recording' ? 'Cancel recording' : 'Voice input'} title={recording === 'recording' ? 'Tap to cancel — use Send to submit' : voiceOut ? 'Daily voice limit reached' : 'Voice input'}>
                     {recording === 'recording' && (
                       <>
                         <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-rose-400/60 animate-ping" />

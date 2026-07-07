@@ -86,8 +86,12 @@ export async function GET(req: Request) {
   }
 
   const warm = await warmBackend(api);
+  // NOTE: /cron/fetch-news is intentionally NOT kicked here. It is already run by
+  // the GitHub Actions `daily-news.yml` schedule; firing it from both at the same
+  // minute double-billed the (AI) classifier every day (audit F5). We keep only the
+  // schedule-daily kick as a redundant trigger — it is row-idempotent on
+  // daily_schedule.scheduled_date, so a double-fire is a cheap no-op.
   const results = await Promise.all([
-    kick(api, secret, '/cron/fetch-news'),
     kick(api, secret, '/cron/schedule-daily'),
   ]);
 

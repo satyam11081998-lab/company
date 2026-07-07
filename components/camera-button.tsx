@@ -4,6 +4,16 @@ import { useState, useRef } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractTextFromImage } from '@/lib/api';
+import { createClient } from '@/lib/supabase/client';
+
+async function _sessionToken(): Promise<string | undefined> {
+  try {
+    const { data } = await createClient().auth.getSession();
+    return data.session?.access_token;
+  } catch {
+    return undefined;
+  }
+}
 
 interface CameraButtonProps {
   onExtractionCompleted: (text: string) => void;
@@ -80,10 +90,11 @@ export default function CameraButton({ onExtractionCompleted, disabled }: Camera
       
       // 1. Compress image client-side to save bandwidth and token cost
       const base64Image = await compressImage(file);
-      
-      // 2. Send to backend OCR
-      const { text } = await extractTextFromImage(base64Image);
-      
+
+      // 2. Send to backend OCR (auth token required; per-tier daily image quota applies)
+      const token = await _sessionToken();
+      const { text } = await extractTextFromImage(base64Image, token);
+
       if (text) {
         onExtractionCompleted(text);
         toast.success("Text extracted!");
@@ -92,7 +103,8 @@ export default function CameraButton({ onExtractionCompleted, disabled }: Camera
       }
     } catch (err) {
       console.error("OCR error:", err);
-      toast.error("Failed to analyze image. Please try again.");
+      // Surface the backend's friendly reason (e.g. daily image-scan limit reached).
+      toast.error(err instanceof Error ? err.message : "Failed to analyze image. Please try again.");
     } finally {
       setIsProcessing(false);
     }
