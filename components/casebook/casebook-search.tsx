@@ -29,7 +29,7 @@ function filterTree(nodes: NavNode[], query: string): NavNode[] {
   }).filter(Boolean) as NavNode[];
 }
 
-export function CasebookSearch() {
+export function CasebookSearch({ defaultCollapsed = false }: { defaultCollapsed?: boolean }) {
   const [query, setQuery] = useState('');
 
   const filteredTree = useMemo(() => {
@@ -57,7 +57,7 @@ export function CasebookSearch() {
       
       <div className="flex-1 overflow-y-auto p-3">
         {filteredTree.length > 0 ? (
-          <NavTree tree={filteredTree} searchQuery={query} />
+          <NavTree tree={filteredTree} searchQuery={query} defaultCollapsed={defaultCollapsed} />
         ) : (
           <div className="text-center py-10 px-4">
             <p className="text-muted-foreground text-small">No results found for "{query}"</p>

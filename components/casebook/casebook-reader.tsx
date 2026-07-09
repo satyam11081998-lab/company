@@ -14,6 +14,7 @@ import type { Page } from '@/lib/casebook/types';
 import { getPrimerBySlug } from '@/lib/primers';
 import { PrimerEmbed } from './primer-embed';
 import { PrimerWorkspace } from './primer-workspace';
+import { PageIntro } from './page-intro';
 
 interface CasebookReaderProps {
   page: Page;
@@ -28,6 +29,7 @@ export function CasebookReader({ page }: CasebookReaderProps) {
     return (
       <PrimerWorkspace
         nav={<CasebookSearch />}
+        mobileNav={<CasebookSearch defaultCollapsed />}
         breadcrumbs={<Breadcrumbs slug={page.slug} />}
       >
         <header className="mb-6">
@@ -54,11 +56,15 @@ export function CasebookReader({ page }: CasebookReaderProps) {
         <article className="w-full max-w-[720px] xl:max-w-none ml-0 lg:ml-8 xl:ml-16 xl:mr-[88px]">
           <div className="flex items-center gap-4 mb-6">
             <Sheet>
-              <SheetTrigger className="lg:hidden shrink-0 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 h-10 text-small font-medium text-foreground shadow-sm hover:bg-muted active:scale-95 transition">
-                <Menu className="w-5 h-5 text-primary" /> Contents
+              <SheetTrigger
+                aria-label="Open contents"
+                className="lg:hidden shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95 transition"
+              >
+                <Menu className="w-5 h-5" />
+                <span className="sr-only">Contents</span>
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
-                <CasebookSearch />
+                <CasebookSearch defaultCollapsed />
               </SheetContent>
             </Sheet>
             <div className="flex-1">
@@ -66,18 +72,10 @@ export function CasebookReader({ page }: CasebookReaderProps) {
             </div>
           </div>
           
-          <header className="mb-6">
-            <h1 className="text-h1 text-foreground mb-4">{page.title}</h1>
-            {page.subtitle && (
-              <p className="text-h3 font-normal text-muted-foreground leading-relaxed">
-                {page.subtitle}
-              </p>
-            )}
-          </header>
-
-          <EEATSignals lastUpdated="2026-06-01" showMethodology={!!page.meta} />
-
-          {page.meta && <PageMetaBar meta={page.meta} hasKeyTakeaways={page.blocks.some(b => b.type === 'keyTakeaways')} />}
+          <PageIntro title={page.title} subtitle={page.subtitle}>
+            <EEATSignals lastUpdated="2026-06-01" showMethodology={!!page.meta} />
+            {page.meta && <PageMetaBar meta={page.meta} hasKeyTakeaways={page.blocks.some(b => b.type === 'keyTakeaways')} />}
+          </PageIntro>
 
           <div className="space-y-6">
             {(() => {

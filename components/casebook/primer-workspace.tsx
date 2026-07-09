@@ -7,6 +7,8 @@ import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 interface PrimerWorkspaceProps {
   /** Left-hand Casebook navigation (rendered in both the desktop rail and the mobile sheet). */
   nav: React.ReactNode;
+  /** Optional variant for the mobile sheet (e.g. fully collapsed tree). Falls back to `nav`. */
+  mobileNav?: React.ReactNode;
   /** Breadcrumb trail shown in the top bar of the reading column. */
   breadcrumbs: React.ReactNode;
   /** Primer header + embed. */
@@ -21,7 +23,7 @@ interface PrimerWorkspaceProps {
  * the full reading width. Collapsing reflows the grid template; an "Contents"
  * button brings the rail back. Mobile is unchanged — the nav lives in a sheet.
  */
-export function PrimerWorkspace({ nav, breadcrumbs, children }: PrimerWorkspaceProps) {
+export function PrimerWorkspace({ nav, mobileNav, breadcrumbs, children }: PrimerWorkspaceProps) {
   const [collapsed, setCollapsed] = React.useState(false);
 
   return (
@@ -56,11 +58,15 @@ export function PrimerWorkspace({ nav, breadcrumbs, children }: PrimerWorkspaceP
         <div className="flex items-center gap-3 mb-5">
           {/* Mobile: nav in a sheet */}
           <Sheet>
-            <SheetTrigger className="lg:hidden shrink-0 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 h-10 text-small font-medium text-foreground shadow-sm hover:bg-muted active:scale-95 transition">
-              <Menu className="w-5 h-5 text-primary" /> Contents
+            <SheetTrigger
+              aria-label="Open contents"
+              className="lg:hidden shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95 transition"
+            >
+              <Menu className="w-5 h-5" />
+              <span className="sr-only">Contents</span>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
-              {nav}
+              {mobileNav ?? nav}
             </SheetContent>
           </Sheet>
 

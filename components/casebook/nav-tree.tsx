@@ -13,31 +13,38 @@ const ICON_MAP: Record<string, React.FC<any>> = {
 interface NavTreeSectionProps {
   node: NavNode;
   searchQuery: string;
+  /** When true (mobile drawer), every section starts collapsed on each mount
+   *  and toggles are NOT persisted — so the drawer always opens compact. */
+  defaultCollapsed?: boolean;
 }
 
-function NavTreeSection({ node, searchQuery }: NavTreeSectionProps) {
+function NavTreeSection({ node, searchQuery, defaultCollapsed = false }: NavTreeSectionProps) {
   // Initial open state is data-driven via `node.defaultOpen` (set in the
   // casebook tree). Previously this compared `node.title === 'Getting Started'`,
   // but section titles are prefixed ('A · Getting Started', …) so the check
   // never matched and EVERY section loaded collapsed — including the one a
   // newcomer should see first. sessionStorage (below) still overrides this
   // once the user manually toggles a section.
-  const [isOpen, setIsOpen] = useState(!!node.defaultOpen);
+  // In the mobile drawer (`defaultCollapsed`) we skip both the data-driven
+  // default AND sessionStorage: every open of the sheet starts fully collapsed.
+  const [isOpen, setIsOpen] = useState(defaultCollapsed ? false : !!node.defaultOpen);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('nav_tree_' + node.title);
-    if (saved !== null) {
-      setIsOpen(saved === 'true');
+    if (!defaultCollapsed) {
+      const saved = sessionStorage.getItem('nav_tree_' + node.title);
+      if (saved !== null) {
+        setIsOpen(saved === 'true');
+      }
     }
     setIsMounted(true);
-  }, [node.title]);
+  }, [node.title, defaultCollapsed]);
 
   useEffect(() => {
-    if (isMounted) {
+    if (isMounted && !defaultCollapsed) {
       sessionStorage.setItem('nav_tree_' + node.title, String(isOpen));
     }
-  }, [isOpen, node.title, isMounted]);
+  }, [isOpen, node.title, isMounted, defaultCollapsed]);
 
   const Icon = node.icon ? ICON_MAP[node.icon] : null;
 
@@ -74,14 +81,15 @@ function NavTreeSection({ node, searchQuery }: NavTreeSectionProps) {
 interface NavTreeProps {
   tree: NavNode[];
   searchQuery: string;
+  defaultCollapsed?: boolean;
 }
 
-export function NavTree({ tree, searchQuery }: NavTreeProps) {
+export function NavTree({ tree, searchQuery, defaultCollapsed = false }: NavTreeProps) {
   return (
     <div className="w-full">
       {tree.map((node, i) => {
         if (node.kind === 'section') {
-          return <NavTreeSection key={i} node={node} searchQuery={searchQuery} />;
+          return <NavTreeSection key={i} node={node} searchQuery={searchQuery} defaultCollapsed={defaultCollapsed} />;
         }
         return <NavTreeItem key={i} node={node} level={0} />;
       })}
