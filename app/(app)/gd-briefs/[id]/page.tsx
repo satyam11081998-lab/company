@@ -11,6 +11,7 @@ import { useUser } from '@/components/user-context';
 import { AddToCheatSheetButton } from '@/components/cheat-sheet/add-to-cheat-sheet-button';
 import EngagingLoader from '@/components/engaging-loader';
 import { createClient } from '@/lib/supabase/client';
+import { BriefOnThisPage } from '@/components/news/brief-on-this-page';
 
 export default function BriefDetailPage() {
   const params = useParams();
@@ -127,7 +128,7 @@ export default function BriefDetailPage() {
 
   return (
     <div className="min-h-screen bg-muted">
-      <main className="container max-w-4xl py-10">
+      <main className="container max-w-6xl py-10">
         <Link
           href="/gd-briefs"
           className="inline-flex items-center gap-1 text-small font-medium text-muted-foreground hover:text-foreground mb-6 animate-fade-in"
@@ -152,7 +153,14 @@ export default function BriefDetailPage() {
             </div>
           </Card>
         ) : brief ? (
-          <BriefContent brief={brief} freeUnlocked={locked} />
+          <div className="flex gap-8 items-start">
+            {/* Main content */}
+            <div className="flex-1 min-w-0">
+              <BriefContent brief={brief} freeUnlocked={locked} />
+            </div>
+            {/* Right Rail: On This Page sidebar (hidden on small screens) */}
+            <BriefOnThisPage brief={brief} />
+          </div>
         ) : null}
       </main>
     </div>
@@ -201,7 +209,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
       </Card>
 
       {/* Summary */}
-      <Card className="p-6 animate-slide-up" style={{ animationDelay: '60ms' }}>
+      <Card id="brief-summary" className="p-6 animate-slide-up scroll-mt-24" style={{ animationDelay: '60ms' }}>
         <SectionHeading icon={<MessageSquare className="h-4 w-4" />}>
           Summary
         </SectionHeading>
@@ -210,7 +218,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
 
       {/* Likely Questions */}
       {b.likely_questions.length > 0 ? (
-        <Card className="p-6 animate-slide-up" style={{ animationDelay: '120ms' }}>
+        <Card id="brief-likely-questions" className="p-6 animate-slide-up scroll-mt-24" style={{ animationDelay: '120ms' }}>
           <SectionHeading icon={<Quote className="h-4 w-4" />}>
             Likely GD questions
           </SectionHeading>
@@ -227,7 +235,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
 
       {/* Smart Angles */}
       {b.smart_angles.length > 0 ? (
-        <Card className="p-6 animate-slide-up" style={{ animationDelay: '180ms' }}>
+        <Card id="brief-smart-angles" className="p-6 animate-slide-up scroll-mt-24" style={{ animationDelay: '180ms' }}>
           <SectionHeading icon={<Lightbulb className="h-4 w-4" />}>
             Smart angles
           </SectionHeading>
@@ -247,7 +255,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
 
       {/* Data Points */}
       {b.data_points.length > 0 ? (
-        <Card className="p-6 animate-slide-up" style={{ animationDelay: '240ms' }}>
+        <Card id="brief-data-points" className="p-6 animate-slide-up scroll-mt-24" style={{ animationDelay: '240ms' }}>
           <SectionHeading icon={<BarChart3 className="h-4 w-4" />}>
             Data points to cite
           </SectionHeading>
@@ -273,7 +281,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
 
       {/* Opening Lines */}
       {b.opening_lines.length > 0 ? (
-        <Card className="p-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
+        <Card id="brief-opening-lines" className="p-6 animate-slide-up scroll-mt-24" style={{ animationDelay: '300ms' }}>
           <SectionHeading icon={<Quote className="h-4 w-4" />}>
             Opening lines
           </SectionHeading>
@@ -292,7 +300,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
 
       {/* Counter Arguments */}
       {b.counter_arguments.length > 0 ? (
-        <Card className="p-6 animate-slide-up" style={{ animationDelay: '360ms' }}>
+        <Card id="brief-counter-arguments" className="p-6 animate-slide-up scroll-mt-24" style={{ animationDelay: '360ms' }}>
           <SectionHeading icon={<AlertTriangle className="h-4 w-4" />}>
             Counter-arguments
           </SectionHeading>
@@ -312,7 +320,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
 
       {/* Closing Lines */}
       {b.closing_lines.length > 0 ? (
-        <Card className="p-6 animate-slide-up" style={{ animationDelay: '420ms' }}>
+        <Card id="brief-closing-lines" className="p-6 animate-slide-up scroll-mt-24" style={{ animationDelay: '420ms' }}>
           <SectionHeading icon={<Quote className="h-4 w-4" />}>
             Closing lines
           </SectionHeading>
