@@ -40,24 +40,36 @@ export const TIER_LIMITS = {
   free: {
     maxReattempts: 0,         // free users can attempt each case once
     maxHintQuestions: 0,       // no hint chatbot
-    maxBookmarks: 0,           // no bookmarking
+    maxBookmarks: 0,           // legacy key (cheat-sheet access now via `cheatSheet`)
     learnExamplesPerDomain: 2, // first 2 examples visible
     newsScope: 'all' as const,
     practiceQuestionsPerDay: 3,
     dailyExtraCases: 0,
     dailyExtraGuesstimates: 0,
-    gdBriefs: false,
+    // ONE-TIME taste of the bank: 1 extra case + 1 extra guesstimate EVER,
+    // on top of the dailies. Mirrors backend services/access_guard.py.
+    lifetimeExtraCases: 1,
+    lifetimeExtraGuesstimates: 1,
+    gdBriefs: false,           // no unlimited generation…
+    gdBriefsLifetime: 1,       // …but ONE lifetime brief (view + cheat-sheet + PDF)
+    cheatSheet: 'unlocked-brief' as const, // saves only from their 1 free brief
+    cvLabTrialUses: 2,         // CV Pointer Lab: 2 lifetime free generations
   },
   lite: {
     maxReattempts: Infinity,
     maxHintQuestions: 5,       // 5 canned Q&A per case
-    maxBookmarks: 0,           // bookmarks/cheat-sheet are Pro-only (matches pricing page)
+    maxBookmarks: Infinity,    // cheat-sheet is Lite+ since the free-tier rework
     learnExamplesPerDomain: 2,
     newsScope: 'mba-relevant' as const,
     practiceQuestionsPerDay: Infinity,
     dailyExtraCases: 2,
     dailyExtraGuesstimates: 2,
+    lifetimeExtraCases: Infinity,
+    lifetimeExtraGuesstimates: Infinity,
     gdBriefs: true,
+    gdBriefsLifetime: Infinity,
+    cheatSheet: 'full' as const,
+    cvLabTrialUses: 2,         // CV Pointer Lab is Pro; Lite gets the same 2-try preview
   },
   pro: {
     maxReattempts: Infinity,
@@ -68,7 +80,12 @@ export const TIER_LIMITS = {
     practiceQuestionsPerDay: Infinity,
     dailyExtraCases: Infinity,
     dailyExtraGuesstimates: Infinity,
+    lifetimeExtraCases: Infinity,
+    lifetimeExtraGuesstimates: Infinity,
     gdBriefs: true,
+    gdBriefsLifetime: Infinity,
+    cheatSheet: 'full' as const,
+    cvLabTrialUses: Infinity,
   },
 } as const;
 

@@ -17,8 +17,32 @@ export default function GdBriefsPage() {
   const [error, setError] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [slow, setSlow] = useState(false);
-  const { hasTierAccess } = useUser();
+  const { user, hasTierAccess } = useUser();
   const locked = !hasTierAccess('lite');
+
+  // Free-tier rework: a free user gets ONE lifetime GD brief. The backend records
+  // the pick in gd_brief_unlocks (service role); we read it to render the right CTA.
+  const [unlockedId, setUnlockedId] = useState<string | null>(null);
+  const [unlockChecked, setUnlockChecked] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!locked || !user) { setUnlockChecked(true); return; }
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('gd_brief_unlocks')
+        .select('headline_id')
+        .eq('user_id', user.id)
+        .limit(1);
+      if (!mounted) return;
+      setUnlockedId((data?.[0] as { headline_id: string } | undefined)?.headline_id ?? null);
+      setUnlockChecked(true);
+    })();
+    return () => { mounted = false; };
+  }, [locked, user]);
+
+  const freeCredit = locked && unlockChecked && !unlockedId;
 
   useEffect(() => {
     let mounted = true;
@@ -44,14 +68,24 @@ export default function GdBriefsPage() {
     return () => { mounted = false; clearTimeout(slowTimer); };
   }, [locked]);
 
-  async function handleGenerate(headlineId: string) {
-    if (locked) { router.push('/upgrade'); return; }
-    setGeneratingId(headlineId);
+  async function handleGenerate(h: NewsHeadline) {
+    if (locked) {
+      const isMine = h.id === unlockedId;
+      if (!isMine && !freeCredit) { router.push('/upgrade'); return; }
+      // Using the one free brief on an already-generated headline: just view it —
+      // the backend records the unlock on first free view.
+      if (h.has_brief) { router.push('/gd-briefs/' + h.id); return; }
+    } else if (h.has_brief) {
+      router.push('/gd-briefs/' + h.id);
+      return;
+    }
+    setGeneratingId(h.id);
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      await generateBrief(headlineId, session?.access_token);
-      router.push('/gd-briefs/' + headlineId);
+      await generateBrief(h.id, session?.access_token);
+      if (locked) setUnlockedId(h.id); // credit consumed (backend recorded it)
+      router.push('/gd-briefs/' + h.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not generate brief');
       setGeneratingId(null);
@@ -67,7 +101,11 @@ export default function GdBriefsPage() {
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">GD Briefs</h1>
           <p className="mt-1 text-muted-foreground">
-            Today&apos;s most debate-worthy stories. {locked ? 'Browse the news free; generate a GD brief on Lite/Pro.' : 'Click any headline to generate a full GD brief.'}
+            Today&apos;s most debate-worthy stories. {locked
+              ? (freeCredit
+                  ? 'Pick any ONE headline for your free GD brief — unlimited briefs on Lite/Pro.'
+                  : 'Browse the news free; unlimited GD briefs on Lite/Pro.')
+              : 'Click any headline to generate a full GD brief.'}
           </p>
           <Link
             href="/gd-briefs/abstract"
@@ -82,7 +120,13 @@ export default function GdBriefsPage() {
             <div className="flex items-start gap-2.5">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <p className="text-small text-muted-foreground">
-                You can browse today&apos;s GD-worthy news for free. <span className="font-medium text-foreground">Generating a GD brief</span> — angles, likely questions, opening &amp; closing lines — is a Lite/Pro feature.
+                {freeCredit ? (
+                  <>You can browse today&apos;s GD-worthy news for free, and <span className="font-medium text-foreground">unlock ONE full GD brief</span> — angles, likely questions, opening &amp; closing lines, cheat-sheet included. Unlimited briefs and source links are Lite/Pro.</>
+                ) : unlockedId ? (
+                  <>You&apos;ve used your free brief — it stays yours below. <span className="font-medium text-foreground">Unlimited briefs and source links</span> are a Lite/Pro feature.</>
+                ) : (
+                  <>You can browse today&apos;s GD-worthy news for free. <span className="font-medium text-foreground">Generating a GD brief</span> — angles, likely questions, opening &amp; closing lines — is a Lite/Pro feature.</>
+                )}
               </p>
             </div>
             <Link href="/upgrade" className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary px-4 text-small font-semibold text-white transition-colors hover:bg-primary-hover">
@@ -137,8 +181,10 @@ export default function GdBriefsPage() {
               <StarHeadlineCard
                 headline={star}
                 generating={generatingId === star.id}
-                onGenerate={() => handleGenerate(star.id)}
+                onGenerate={() => handleGenerate(star)}
                 locked={locked}
+                unlocked={star.id === unlockedId}
+                freeCredit={freeCredit}
               />
             ) : null}
             {regulars.length > 0 ? (
@@ -148,8 +194,10 @@ export default function GdBriefsPage() {
                     key={h.id}
                     headline={h}
                     generating={generatingId === h.id}
-                    onGenerate={() => handleGenerate(h.id)}
+                    onGenerate={() => handleGenerate(h)}
                     locked={locked}
+                    unlocked={h.id === unlockedId}
+                    freeCredit={freeCredit}
                   />
                 ))}
               </div>
@@ -166,10 +214,14 @@ interface CardProps {
   generating: boolean;
   onGenerate: () => void;
   locked?: boolean;
+  /** free tier: this headline is the user's one unlocked brief */
+  unlocked?: boolean;
+  /** free tier: the one lifetime brief is still unspent */
+  freeCredit?: boolean;
 }
 
 function StarHeadlineCard(props: CardProps) {
-  const { headline, generating, onGenerate, locked } = props;
+  const { headline, generating, onGenerate, locked, unlocked, freeCredit } = props;
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-slide-up">
       <div className="grid md:grid-cols-[2fr_3fr]">
@@ -200,15 +252,25 @@ function StarHeadlineCard(props: CardProps) {
             <span>·</span>
             <span>{formatRelativeTime(headline.published_at)}</span>
           </div>
-          <a
-            href={headline.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 text-xl font-bold leading-tight text-foreground hover:text-primary transition-colors group"
-          >
-            {headline.title}
-            <ExternalLink className="ml-1 inline h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </a>
+          {locked ? (
+            // Free tier: headline visible, source click-through is Lite/Pro.
+            <span
+              title="Reading the source article is a Lite/Pro feature"
+              className="mt-2 text-xl font-bold leading-tight text-foreground cursor-default"
+            >
+              {headline.title}
+            </span>
+          ) : (
+            <a
+              href={headline.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 text-xl font-bold leading-tight text-foreground hover:text-primary transition-colors group"
+            >
+              {headline.title}
+              <ExternalLink className="ml-1 inline h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </a>
+          )}
           {headline.description ? (
             <p className="mt-2 line-clamp-3 text-base text-muted-foreground">{headline.description}</p>
           ) : null}
@@ -225,7 +287,30 @@ function StarHeadlineCard(props: CardProps) {
             </div>
           ) : null}
           <div className="mt-auto pt-4">
-            {locked ? (
+            {locked && unlocked ? (
+              <Link href={'/gd-briefs/' + headline.id} className="btn-primary inline-flex items-center gap-1.5">
+                View your free brief
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : locked && freeCredit ? (
+              <button
+                onClick={onGenerate}
+                disabled={generating}
+                className="btn-primary inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Unlocking your brief...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Use your 1 free brief
+                  </>
+                )}
+              </button>
+            ) : locked ? (
               <Link href="/upgrade" className="btn-primary inline-flex items-center gap-1.5">
                 <Lock className="h-4 w-4" />
                 Unlock GD briefs
@@ -265,7 +350,7 @@ function StarHeadlineCard(props: CardProps) {
 }
 
 function HeadlineCard(props: CardProps) {
-  const { headline, generating, onGenerate, locked } = props;
+  const { headline, generating, onGenerate, locked, unlocked, freeCredit } = props;
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-video bg-navy">
@@ -291,14 +376,23 @@ function HeadlineCard(props: CardProps) {
           <span>·</span>
           <span>{formatRelativeTime(headline.published_at)}</span>
         </div>
-        <a
-          href={headline.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1.5 line-clamp-3 text-sm font-semibold leading-snug text-foreground hover:text-primary transition-colors"
-        >
-          {headline.title}
-        </a>
+        {locked ? (
+          <span
+            title="Reading the source article is a Lite/Pro feature"
+            className="mt-1.5 line-clamp-3 text-sm font-semibold leading-snug text-foreground cursor-default"
+          >
+            {headline.title}
+          </span>
+        ) : (
+          <a
+            href={headline.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1.5 line-clamp-3 text-sm font-semibold leading-snug text-foreground hover:text-primary transition-colors"
+          >
+            {headline.title}
+          </a>
+        )}
         {headline.keywords.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-1">
             {headline.keywords.slice(0, 3).map((kw) => (
@@ -312,7 +406,33 @@ function HeadlineCard(props: CardProps) {
           </div>
         ) : null}
         <div className="mt-auto pt-2">
-          {locked ? (
+          {locked && unlocked ? (
+            <Link
+              href={'/gd-briefs/' + headline.id}
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              View your free brief
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : locked && freeCredit ? (
+            <button
+              onClick={onGenerate}
+              disabled={generating}
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Unlocking...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Use your 1 free brief
+                </>
+              )}
+            </button>
+          ) : locked ? (
             <Link
               href="/upgrade"
               className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"

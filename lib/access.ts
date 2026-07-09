@@ -5,7 +5,7 @@ function todayIst(): string {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-export type AttemptReason = 'ok' | 'free-non-daily' | 'free-reattempt' | 'lite-quota';
+export type AttemptReason = 'ok' | 'free-non-daily' | 'free-extra-used' | 'free-reattempt' | 'lite-quota';
 
 export interface AttemptAccess {
   allowed: boolean;
@@ -56,7 +56,33 @@ export async function getAttemptAccess(
     return { allowed: true, reason: 'ok', bucket, remaining: null };
   }
 
-  if (tier === 'free') return { allowed: false, reason: 'free-non-daily', bucket, remaining: 0 };
+  if (tier === 'free') {
+    // Free-tier rework (2026-07): ONE-TIME extras — a free account can attempt
+    // ONE non-daily case and ONE non-daily guesstimate EVER (on top of the
+    // dailies). Mirrors backend services/access_guard.py — keep in sync.
+    if (!user) return { allowed: false, reason: 'free-non-daily', bucket, remaining: 0 };
+    const { data: firstRows } = await supabase
+      .from('case_attempts')
+      .select('case_id, counted_for_daily')
+      .eq('user_id', uid)
+      .eq('is_first_attempt', true);
+    const candidateIds = (firstRows || [])
+      .filter((r: any) => !r.counted_for_daily && !dailyRefs.has(r.case_id))
+      .map((r: any) => r.case_id);
+    let used = 0;
+    if (candidateIds.length) {
+      const { data: types } = await supabase.from('cases').select('id, type').in('id', candidateIds);
+      used = (types || []).filter(
+        (t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket,
+      ).length;
+    }
+    const cap = bucket === 'guesstimate'
+      ? (TIER_LIMITS.free.lifetimeExtraGuesstimates as number)
+      : (TIER_LIMITS.free.lifetimeExtraCases as number);
+    return used >= cap
+      ? { allowed: false, reason: 'free-extra-used', bucket, remaining: 0 }
+      : { allowed: true, reason: 'ok', bucket, remaining: cap - used };
+  }
 
   // lite, non-daily
   if (!isFirst) return { allowed: true, reason: 'ok', bucket, remaining: null };

@@ -16,14 +16,19 @@ export function AddToCheatSheetButton({
   sourceTopic,
   sourceHeadlineId,
   sourceKind = 'data_point',
+  freeUnlocked = false,
 }: {
   content: string;
   sourceTopic: string;
   sourceHeadlineId?: string | null;
   sourceKind?: CheatSheetItemKind;
+  /** free tier: this point comes from the user's one unlocked GD brief, so saving is allowed */
+  freeUnlocked?: boolean;
 }) {
   const { user, hasTierAccess } = useUser();
-  const isPro = hasTierAccess('pro');
+  // Free-tier rework: cheat sheet is Lite+ (was Pro-only); free users can save
+  // points from THEIR one unlocked brief. RLS (migration 0038) is the real gate.
+  const canSave = hasTierAccess('lite') || freeUnlocked;
   const [state, setState] = useState<'idle' | 'input' | 'saving' | 'added' | 'already_added'>('idle');
   const [tag, setTag] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,12 +39,12 @@ export function AddToCheatSheetButton({
     }
   }, [state]);
 
-  if (!isPro) {
+  if (!canSave) {
     return (
       <Link
         href="/upgrade"
-        title="Saving to your cheat sheet is a Pro feature"
-        aria-label="Saving to your cheat sheet is a Pro feature"
+        title="Saving to your cheat sheet is a Lite/Pro feature"
+        aria-label="Saving to your cheat sheet is a Lite/Pro feature"
         className="shrink-0 text-muted-foreground/50 transition-colors hover:text-muted-foreground"
       >
         <Lock className="h-4 w-4" />
@@ -77,6 +82,10 @@ export function AddToCheatSheetButton({
         if (error.code === '23505') {
           setState('already_added');
           toast.info('Already on your cheat sheet in this domain');
+        } else if (error.code === '42501') {
+          // RLS refused: free tier saving outside their unlocked brief
+          setState('idle');
+          toast.error('Free plan saves points from your one free GD brief — upgrade for unlimited');
         } else {
           setState('idle');
           toast.error('Failed to save to cheat sheet');

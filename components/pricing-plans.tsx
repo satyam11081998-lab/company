@@ -72,10 +72,11 @@ export default function PricingPlans() {
             <ul className="space-y-3">
               <PlanFeature text="Full Learn & Casebook library" />
               <PlanFeature text="Today's daily case & guesstimate" />
+              <PlanFeature text="+1 bank case & +1 guesstimate (one-time)" />
+              <PlanFeature text="1 GD brief with cheat-sheet & PDF" />
+              <PlanFeature text="CV Pointer Lab — 2 free tries" />
               <PlanFeature text="Leaderboard & badges" />
-              <PlanFeature muted text="No extra bank practice" cross />
-              <PlanFeature muted text="No re-attempts or GD briefs" cross />
-              <PlanFeature muted text="No hints or AI features" cross />
+              <PlanFeature muted text="No re-attempts, hints or source links" cross />
             </ul>
             <Link href="/signup" className="mt-auto">
               <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors">
@@ -103,9 +104,9 @@ export default function PricingPlans() {
               </li>
               <PlanFeature text="2 extra cases & guesstimates / day" />
               <PlanFeature text="Unlimited re-attempts" />
-              <PlanFeature text="GD Briefs unlocked" />
+              <PlanFeature text="Unlimited GD briefs + source links" />
+              <PlanFeature text="Full cheat sheet (save & download)" />
               <PlanFeature text="5 AI hints per case" />
-              <PlanFeature muted text="No bookmarks or cheat-sheet" cross />
             </ul>
             <Link href="/signup" className="mt-auto">
               <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
@@ -138,7 +139,7 @@ export default function PricingPlans() {
               </li>
               <PlanFeature text="Unlimited practice bank" />
               <PlanFeature text="Live AI hints & model Q&A" />
-              <PlanFeature text="Bookmarks & personal cheat-sheet" />
+              <PlanFeature text="CV Pointer Lab — unlimited" />
               <PlanFeature text="AI interviewer chatbot" />
               <PlanFeature text="Deck Vault lifetime access" />
             </ul>

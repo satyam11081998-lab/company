@@ -11,7 +11,8 @@
  */
 
 import { useState, useRef } from 'react';
-import { Sparkles, Copy, Check, Loader2, Ruler, Wand2, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, Copy, Check, Loader2, Ruler, Wand2, HelpCircle, LockKeyhole } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { generatePoints, type ResumeBulletOption } from '@/lib/api';
 import DictationButton, { type DictationHandle } from '@/components/dictation-button';
@@ -69,7 +70,13 @@ function OptionCard({ opt, limit }: { opt: ResumeBulletOption; limit: number }) 
   );
 }
 
-export default function BulletLab() {
+export default function BulletLab({
+  trial = null,
+}: {
+  /** Non-Pro preview: lifetime free generations left. null = unlimited (Pro). */
+  trial?: { remaining: number; limit: number } | null;
+} = {}) {
+  const exhausted = trial !== null && trial.remaining <= 0;
   const [achievement, setAchievement] = useState('');
   const [instructions, setInstructions] = useState('');
   const [domain, setDomain] = useState(DOMAINS[0]);
@@ -85,6 +92,10 @@ export default function BulletLab() {
   const lo = Math.ceil(0.95 * clampedLimit);
 
   const run = async () => {
+    if (exhausted) {
+      setError('You have used your free tries — upgrade to Pro for unlimited bullets.');
+      return;
+    }
     // If the mic is still recording, finalize it and fold the transcript in first.
     let ach = achievement;
     if (dictRef.current?.isRecording()) {
@@ -121,6 +132,11 @@ export default function BulletLab() {
           <span className="badge-pill badge-pill-red">
             <Sparkles className="h-3.5 w-3.5" /> CV Pointer Lab
           </span>
+          {trial && trial.remaining > 0 && (
+            <span className="badge-pill ml-2" title="CV Pointer Lab is a Pro feature — this is your free preview">
+              Free preview · {trial.remaining} of {trial.limit} {trial.remaining === 1 ? 'try' : 'tries'} left
+            </span>
+          )}
           <h1 className="mt-4 text-h1 text-foreground">Resume bullets that fit the line, exactly.</h1>
           <p className="mx-auto mt-3 max-w-xl text-body text-muted-foreground">
             Tell us what you did and the character limit your placement portal allows. The engine writes a
@@ -128,7 +144,27 @@ export default function BulletLab() {
           </p>
         </div>
 
-        <div className="ui-card mt-10 rounded-2xl border border-border p-6">
+        <div className="ui-card relative mt-10 rounded-2xl border border-border p-6">
+          {exhausted && (
+            // Visible but locked: the full UI stays readable underneath so free
+            // users see exactly what they'd get. Backend enforces the cap too.
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/70 backdrop-blur-[2px]">
+              <div className="mx-4 max-w-sm rounded-xl border border-primary/20 bg-card p-6 text-center shadow-2xl">
+                <LockKeyhole className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                <h2 className="text-h3 mb-2 text-foreground">Your free tries are used</h2>
+                <p className="mb-5 text-body text-muted-foreground">
+                  CV Pointer Lab is a Pro feature — you&apos;ve used your {trial?.limit ?? 2} free
+                  generations. Upgrade for unlimited, portal-perfect bullets.
+                </p>
+                <Link
+                  href="/upgrade"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-body font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+                >
+                  Upgrade to Pro
+                </Link>
+              </div>
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
             <label className="block">
               <span className="text-micro font-semibold uppercase tracking-wide text-muted-foreground">Domain</span>
@@ -198,7 +234,7 @@ export default function BulletLab() {
             <button
               type="button"
               onClick={run}
-              disabled={loading}
+              disabled={loading || exhausted}
               className="btn-primary inline-flex items-center gap-2 disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}

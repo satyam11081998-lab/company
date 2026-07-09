@@ -104,20 +104,25 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
   let lockedOverlay = null;
 
   if (!access.allowed) {
+    const bucketWord = access.bucket === 'guesstimate' ? 'guesstimate' : 'case';
     const lockTitle =
       access.reason === 'free-non-daily'
         ? 'This case is for Lite & Pro'
+        : access.reason === 'free-extra-used'
+        ? `You've used your free bank ${bucketWord}`
         : access.reason === 'lite-quota'
         ? `You've used today's extra ${access.bucket === 'guesstimate' ? 'guesstimates' : 'cases'}`
         : "You've already attempted this case";
     const lockBody =
       access.reason === 'free-non-daily'
         ? "Free covers today's daily case and guesstimate. Upgrade to Lite to practise the full bank — plus 2 extra cases and 2 extra guesstimates every day."
+        : access.reason === 'free-extra-used'
+        ? `Free includes the dailies plus ONE ${bucketWord} from the bank as a taste — and you've used yours. Upgrade to Lite for 2 extra cases and 2 extra guesstimates every day.`
         : access.reason === 'lite-quota'
         ? `Lite includes 2 extra ${access.bucket === 'guesstimate' ? 'guesstimates' : 'cases'} per day beyond the daily ones. Upgrade to Pro for unlimited practice.`
         : 'Free tier allows one attempt per case. Upgrade to Lite or Pro for unlimited re-attempts.';
     const lockCta =
-      access.reason === 'free-non-daily'
+      access.reason === 'free-non-daily' || access.reason === 'free-extra-used'
         ? 'Upgrade to Lite'
         : access.reason === 'lite-quota'
         ? 'Upgrade to Pro'

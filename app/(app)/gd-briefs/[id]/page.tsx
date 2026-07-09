@@ -19,12 +19,36 @@ export default function BriefDetailPage() {
   const [brief, setBrief] = useState<GeneratedBriefData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { hasTierAccess } = useUser();
+  const { user, hasTierAccess } = useUser();
   const locked = !hasTierAccess('lite');
+
+  // Free-tier rework: ONE lifetime brief. 'checking' → read gd_brief_unlocks;
+  // allowed if this headline is their unlock OR the credit is unspent (the
+  // backend records the unlock on first free generate/view — it is the
+  // authoritative gate; this is UX).
+  const [gate, setGate] = useState<'checking' | 'allowed' | 'denied'>(locked ? 'checking' : 'allowed');
 
   useEffect(() => {
     let mounted = true;
-    if (locked) { setLoading(false); return; }
+    if (!locked) { setGate('allowed'); return; }
+    if (!user) { setGate('denied'); return; }
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('gd_brief_unlocks')
+        .select('headline_id')
+        .eq('user_id', user.id)
+        .limit(1);
+      if (!mounted) return;
+      const mine = (data?.[0] as { headline_id: string } | undefined)?.headline_id ?? null;
+      setGate(mine === null || mine === headlineId ? 'allowed' : 'denied');
+    })();
+    return () => { mounted = false; };
+  }, [locked, user, headlineId]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (gate !== 'allowed') { if (gate === 'denied') setLoading(false); return; }
 
     // Two-step fetch: try the cached GET first (fast), and if the backend
     // returns 404 because no brief has been generated yet, transparently
@@ -71,18 +95,19 @@ export default function BriefDetailPage() {
 
     load();
     return () => { mounted = false; };
-  }, [headlineId, locked]);
+  }, [headlineId, gate]);
 
-  if (locked) {
+  if (gate === 'denied') {
     return (
       <div className="min-h-screen bg-muted">
         <main className="container max-w-3xl py-16">
           <Card className="p-10 text-center">
             <Lock className="h-10 w-10 text-muted-foreground/60 mx-auto" />
-            <h1 className="mt-4 text-h2 text-foreground">Full GD briefs are a Lite feature</h1>
+            <h1 className="mt-4 text-h2 text-foreground">You&apos;ve used your free GD brief</h1>
             <p className="mt-2 text-body text-muted-foreground max-w-md mx-auto">
-              You can browse today&apos;s GD news for free. The full brief — smart angles, likely
-              questions, and opening &amp; closing lines — is included with Lite and Pro.
+              Free includes ONE full brief of your choice — yours is saved under GD Briefs.
+              Unlimited briefs — smart angles, likely questions, opening &amp; closing lines —
+              are included with Lite and Pro.
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/upgrade" className="inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors">
@@ -127,14 +152,14 @@ export default function BriefDetailPage() {
             </div>
           </Card>
         ) : brief ? (
-          <BriefContent brief={brief} />
+          <BriefContent brief={brief} freeUnlocked={locked} />
         ) : null}
       </main>
     </div>
   );
 }
 
-function BriefContent(props: { brief: GeneratedBriefData }) {
+function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean }) {
   const b = props.brief;
   return (
     <article className="space-y-6">
@@ -238,6 +263,7 @@ function BriefContent(props: { brief: GeneratedBriefData }) {
                   content={dp}
                   sourceTopic={b.headline_title}
                   sourceHeadlineId={b.headline_id}
+                  freeUnlocked={props.freeUnlocked}
                 />
               </li>
             ))}
