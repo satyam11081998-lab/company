@@ -4,7 +4,6 @@ import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
 import PDFViewer from '@/components/pdf-viewer';
-import { effectiveTier } from '@/lib/tier';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +15,9 @@ export default async function DeckViewerPage({ params }: { params: { id: string 
   // Verify entitlement
   const { data: userRow } = await supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).maybeSingle();
   
-  if (effectiveTier(userRow as any) !== 'pro' && !userRow?.is_admin) {
-    redirect('/skeletons'); // Boot them back to the paywall
+  // Deck Vault in development: admin-only.
+  if (!userRow?.is_admin) {
+    redirect('/skeletons');
   }
 
   const { data: deck } = await supabase

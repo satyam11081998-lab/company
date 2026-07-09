@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import DeckVault, { type VaultDeck } from '@/components/skeleton-library';
-import { effectiveTier } from '@/lib/tier';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +20,8 @@ export default async function DeckVaultPage() {
   ]);
 
   const decks = (decksRes.data as VaultDeck[] | null) || [];
-  const hasAccess = effectiveTier(userRowRes.data as any) === 'pro' || !!userRowRes.data?.is_admin;
+  // Deck Vault is in development: locked to admins only (Pro users see the dev message).
+  const hasAccess = !!userRowRes.data?.is_admin;
 
   return (
     <div className="min-h-screen bg-muted">

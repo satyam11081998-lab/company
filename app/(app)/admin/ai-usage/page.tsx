@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { getAiUsageReport } from '@/lib/ai-usage-report';
+import { getCreditMonitorStatus } from '@/lib/ai-credit';
+import { AiCreditMonitor } from '@/components/admin/ai-credit-monitor';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -20,7 +22,7 @@ export default async function AiUsagePage({
   searchParams: { days?: string };
 }) {
   const days = WINDOWS.includes(Number(searchParams.days)) ? Number(searchParams.days) : 14;
-  const r = await getAiUsageReport(days);
+  const [r, credit] = await Promise.all([getAiUsageReport(days), getCreditMonitorStatus()]);
 
   const maxDayCost = Math.max(0.0001, ...r.byDay.map((d) => d.cost));
   const errorRate = r.overall.calls > 0 ? (r.overall.errors / r.overall.calls) * 100 : 0;
@@ -50,6 +52,9 @@ export default async function AiUsagePage({
           ))}
         </div>
       </div>
+
+      {/* Credit monitor + Telegram alerts */}
+      <AiCreditMonitor status={credit} />
 
       {/* Overall cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

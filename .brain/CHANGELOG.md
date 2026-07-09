@@ -11,6 +11,26 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-07-10 — daily-tile-fallback — <pending commit>
+Dashboard daily case/guesstimate tiles no longer dead-link to /practice before the morning cron: lib/daily-server.ts + lib/access.ts now take the MOST RECENT daily_schedule row on/before today (was exact-date match → no row between IST midnight and the cron → both tiles fell back). Access gate uses the same row so free users aren't charged their one-time credit for clicking the shown daily. Backend must mirror (routes/daily.py, access_guard.py) — see handoff.
+touches: lib/daily-server.ts, lib/access.ts
+breaking: no   affects: Dashboard daily tiles, Case solve UX (free gating), Daily content
+
+## 2026-07-10 — ai-credit-telegram-alert — <pending commit + DB run 0037 + env>
+Admin → AI usage gains a Credit monitor: owner records their OpenAI balance; est. remaining counts down from ai_usage_log; Telegram alerts when < threshold (default $2, re-alert ≤ every 20h) and at 80% of AI_DAILY_BUDGET_USD (once/IST day). Test-message + check-now buttons, hourly GH Actions watch + daily Vercel cron on /api/cron/ai-credit-watch. NOTE: run 0037, set TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID (Vercel) + SITE_URL/CRON_SECRET (GH secrets).
+touches: lib/telegram.ts (new), lib/ai-credit.ts (new), app/api/cron/ai-credit-watch/route.ts (new), app/(app)/admin/ai-usage/{page.tsx,actions.ts (new)}, components/admin/ai-credit-monitor.tsx (new), vercel.json, .github/workflows/ai-credit-watch.yml (new), .env.example, supabase/migrations/0037_ai_credit_monitor.sql (new)
+breaking: no   affects: Admin (AI usage)
+
+## 2026-07-10 — free-tier-rework — c96e952 (2 repos; backend pending)
+Free tier = taste of everything: dailies + ONE lifetime bank case + ONE guesstimate ('free-extra-used' lock after); ONE lifetime GD brief (gd_brief_unlocks) incl. cheat-sheet save + PDF; news list visible but source links dead for free; cheat sheet now Lite+ full (was Pro; client-only RLS hole closed in 0038); CV Pointer Lab = Pro with 2 lifetime free tries (feature_trials); pricing page updated. NOTE: run 0038; BACKEND SPEC PENDING (access_guard mirror, news.py unlock logic + source_url strip, resume trial counter) — see handoff.
+touches: lib/{tier,access}.ts, app/(app)/cases/[id]/page.tsx, app/(app)/gd-briefs/{page,[id]/page}.tsx, components/cheat-sheet/add-to-cheat-sheet-button.tsx, app/(app)/cheat-sheet/page.tsx, app/(app)/resume/page.tsx, components/resume/bullet-lab.tsx, components/pricing-plans.tsx, supabase/migrations/0038_free_tier_rework.sql
+breaking: TIER-SURFACE change (cross-repo). affects: Case solve UX, Practice hub, GD Briefs, Cheat Sheet, Resume Lab, Pricing
+
+## 2026-07-10 — casebook-mobile-ux — 7b8457a
+Mobile casebook UX: red icon-only hamburger (was ☰ Contents pill), drawer nav tree fully collapsed on every open, headline-first page header with Read more (dek/byline/meta collapsed on mobile). Desktop pixel-unchanged.
+touches: components/casebook/{casebook-reader,page-intro (new),casebook-search,nav-tree,primer-workspace}.tsx
+breaking: no   affects: Casebook (mobile)
+
 ## 2026-06-27 — direct-pdf-download — pending
 direct-pdf-download — Resume Lab + Cheat Sheet download a real text PDF directly via @react-pdf/renderer (no print dialog / headers)
 touches: package.json, next.config.js, components/resume/resume-pdf.tsx, components/resume/resume-editor.tsx, components/cheat-sheet/cheat-sheet-pdf.tsx, components/cheat-sheet/cheat-sheet-client.tsx

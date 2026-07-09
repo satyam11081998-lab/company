@@ -38,13 +38,13 @@ const ALL_TYPES = '__all__';
 const PRICE_INR = 500;
 
 export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
-  const { user, isPro } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const [kindTab, setKindTab] = useState<KindTab>('all');
   const [typeFilter, setTypeFilter] = useState<string>(ALL_TYPES);
 
-  // We check BOTH the server prop (for admins) and the client context (for up-to-date Pro status)
-  const isVaultUnlocked = hasAccess || isPro;
+  // Deck Vault is in development: unlocked for admins only (hasAccess is admin-only server-side).
+  const isVaultUnlocked = hasAccess;
 
   const caseTypes = useMemo(
     () => Array.from(new Set(decks.map((d) => d.case_type))).sort((a, b) => a.localeCompare(b)),

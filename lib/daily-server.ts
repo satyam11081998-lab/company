@@ -45,11 +45,18 @@ export async function getDailyTodayServerSide(): Promise<DailyContentResponse> {
   try {
     const supabase = createClient();
 
-    // today's schedule row
+    // Today's schedule row — falling back to the MOST RECENT one on/before
+    // today. Between IST midnight and the morning cron (or on a cron-failure
+    // day) there is no row for `today` yet; the old exact-date match returned
+    // nothing and BOTH tiles fell back to /practice. Yesterday's picks are a
+    // strictly better experience than dead tiles, and the tiles auto-heal the
+    // moment the new schedule lands. Keep in sync with lib/access.ts, which
+    // uses the same fallback so "the daily" means the same row for gating.
     const { data: schedRows } = await supabase
       .from('daily_schedule')
-      .select('case_id, guesstimate_code')
-      .eq('scheduled_date', today)
+      .select('case_id, guesstimate_code, scheduled_date')
+      .lte('scheduled_date', today)
+      .order('scheduled_date', { ascending: false })
       .limit(1);
     const sched = schedRows?.[0] ?? null;
 

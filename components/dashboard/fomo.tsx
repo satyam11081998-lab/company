@@ -407,7 +407,7 @@ export const ProofRail: React.FC<{ u?: { proofRail?: import('@/lib/dashboard/pro
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--ink-3)' }}>
         <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--green)' }} />
-        <span>Be the first to solve today&apos;s case.</span>
+        <span>Solve today&apos;s case</span>
       </div>
     );
   }

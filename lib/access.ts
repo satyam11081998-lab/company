@@ -28,10 +28,16 @@ export async function getAttemptAccess(
   if (tier === 'pro') return { allowed: true, reason: 'ok', bucket, remaining: null };
 
   const today = todayIst();
+  // Most recent schedule on/before today — NOT an exact-date match. Before the
+  // morning cron writes today's row, the dashboard (lib/daily-server.ts, same
+  // fallback) shows yesterday's dailies; this gate must treat those as the
+  // dailies too, or a free user clicking the tile would burn their one-time
+  // bank credit / hit a lock. Keep both call sites in sync.
   const { data: schedRows } = await supabase
     .from('daily_schedule')
-    .select('case_id, guesstimate_code')
-    .eq('scheduled_date', today)
+    .select('case_id, guesstimate_code, scheduled_date')
+    .lte('scheduled_date', today)
+    .order('scheduled_date', { ascending: false })
     .limit(1);
   const sched = schedRows?.[0] as { case_id?: string; guesstimate_code?: string } | undefined;
   // guesstimate_code may hold a UUID id OR a short code — match either so the

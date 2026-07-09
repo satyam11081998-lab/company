@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { fetchFileStream, isDrivePath, driveFileId } from '@/lib/google-drive';
-import { effectiveTier } from '@/lib/tier';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -30,8 +29,9 @@ export async function GET(
 
     // Entitlement: buyer or admin.
     const { data: userRow } = await supabase.from('users').select('subscription_tier, subscription_expires_at, is_admin').eq('id', user.id).maybeSingle();
-    if (effectiveTier(userRow as any) !== 'pro' && !userRow?.is_admin) {
-      return NextResponse.json({ error: 'Deck Vault access required' }, { status: 403 });
+    // Deck Vault in development: admin-only.
+    if (!userRow?.is_admin) {
+      return NextResponse.json({ error: 'Deck Vault is in development' }, { status: 403 });
     }
 
     const { data: deck } = await supabase
