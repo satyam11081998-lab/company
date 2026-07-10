@@ -1,7 +1,6 @@
 {
   "regions": ["bom1"],
   "crons": [
-    { "path": "/api/cron/refresh", "schedule": "30 0 * * *" },
-    { "path": "/api/cron/ai-credit-watch", "schedule": "30 13 * * *" }
+    { "path": "/api/cron/refresh", "schedule": "30 0 * * *" }
   ]
 }

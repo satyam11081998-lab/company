@@ -16,9 +16,9 @@ Dashboard daily case/guesstimate tiles no longer dead-link to /practice before t
 touches: lib/daily-server.ts, lib/access.ts
 breaking: no   affects: Dashboard daily tiles, Case solve UX (free gating), Daily content
 
-## 2026-07-10 — ai-credit-telegram-alert — <pending commit + DB run 0037 + env>
-Admin → AI usage gains a Credit monitor: owner records their OpenAI balance; est. remaining counts down from ai_usage_log; Telegram alerts when < threshold (default $2, re-alert ≤ every 20h) and at 80% of AI_DAILY_BUDGET_USD (once/IST day). Test-message + check-now buttons, hourly GH Actions watch + daily Vercel cron on /api/cron/ai-credit-watch. NOTE: run 0037, set TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID (Vercel) + SITE_URL/CRON_SECRET (GH secrets).
-touches: lib/telegram.ts (new), lib/ai-credit.ts (new), app/api/cron/ai-credit-watch/route.ts (new), app/(app)/admin/ai-usage/{page.tsx,actions.ts (new)}, components/admin/ai-credit-monitor.tsx (new), vercel.json, .github/workflows/ai-credit-watch.yml (new), .env.example, supabase/migrations/0037_ai_credit_monitor.sql (new)
+## 2026-07-10 — ai-credit-monitor-card — <pending commit>
+Admin → AI usage gains a Credit monitor card (display-only, simplified from the original Telegram-alert design): today's IST spend from ai_usage_log vs AI_DAILY_BUDGET_USD with progress bar + within/exceeded badge, and a Telegram configured/not-configured indicator (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID env). NOTE: actual Telegram SENDING (low-credit ping, cron watch, migration 0037) was dropped in the simplification — rebuild pending if owner wants the alert itself.
+touches: lib/ai-credit.ts (new), components/admin/ai-credit-monitor.tsx (new), app/(app)/admin/ai-usage/page.tsx, .env.example
 breaking: no   affects: Admin (AI usage)
 
 ## 2026-07-10 — free-tier-rework — c96e952 (2 repos; backend pending)
