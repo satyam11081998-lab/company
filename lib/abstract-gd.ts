@@ -7,6 +7,17 @@
  * briefs are generated on demand by the backend (POST /news/abstract-brief).
  */
 
+export interface AbstractPerspective {
+  /** e.g. "The economist's view", "The sociologist's view" */
+  title: string;
+  /** one-line stance, like an editorial standfirst */
+  stance: string;
+  /** 80–120 word editorial-style argument */
+  argument: string;
+  /** 2–3 citable facts/figures supporting this perspective */
+  data_points: string[];
+}
+
 export interface AbstractBrief {
   topic: string;
   interpretations: string[];
@@ -19,6 +30,16 @@ export interface AbstractBrief {
   pitfalls: string[];
   opening_lines: string[];
   closing_lines: string[];
+  /** Editorial-style perspectives (newer briefs; optional for cached older ones). */
+  perspectives?: AbstractPerspective[];
+}
+
+/**
+ * Topic → cache key. MUST mirror the backend's normalisation for
+ * `abstract_briefs.topic_key`: lowercase, trimmed, whitespace collapsed.
+ */
+export function topicKey(topic: string): string {
+  return topic.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
 export interface PrimerStep {

@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-07-10 — abstract-gd-library — <pending commit; backend prompt upgrade pending>
+Abstract GD page rebuilt: generated briefs now land in a SHARED cross-user library (left rail on desktop, collapsible card on mobile) read from the abstract_briefs cache via new /api/abstract-briefs (list = any signed-in; full view = Lite/Pro, server-checked). Fixes the "Generating… but where?" bug — the viewer now sits directly under the generator and we scroll TO it (was: scroll-to-top with the result buried below the topic bank). Topic chips show ✓ when already generated and open instantly (zero tokens); topic-bank categories are collapsible (first open) so mobile is no longer cluttered. Renders optional `perspectives` (editorial-style, 3-4 views with data) when the backend starts emitting it — see handoff for the prompt spec.
+touches: app/(app)/gd-briefs/abstract/page.tsx, lib/abstract-gd.ts, app/api/abstract-briefs/route.ts (new)
+breaking: no   affects: GD Briefs (abstract)
+
 ## 2026-07-10 — daily-tile-fallback — <pending commit>
 Dashboard daily case/guesstimate tiles no longer dead-link to /practice before the morning cron: lib/daily-server.ts + lib/access.ts now take the MOST RECENT daily_schedule row on/before today (was exact-date match → no row between IST midnight and the cron → both tiles fell back). Access gate uses the same row so free users aren't charged their one-time credit for clicking the shown daily. Backend must mirror (routes/daily.py, access_guard.py) — see handoff.
 touches: lib/daily-server.ts, lib/access.ts
