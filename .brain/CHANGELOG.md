@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-07-10 — hero-interview-demo — <pending commit>
+Landing hero right column replaced: static dashboard mockup → auto-playing typed AI case-interview demo (interviewer Q → structured answer → pushback → answer → score card with animated dimension bars + "Would advance"), looping, chat-style, pure DOM/CSS (no video). Respects prefers-reduced-motion (renders finished state). Shows the core product loop to visitors who never explore features.
+touches: components/hero-interview-demo.tsx (new), app/page.tsx
+breaking: no   affects: Landing page
+
 ## 2026-07-10 — abstract-gd-library — <pending commit; backend prompt upgrade pending>
 Abstract GD page rebuilt: generated briefs now land in a SHARED cross-user library (left rail on desktop, collapsible card on mobile) read from the abstract_briefs cache via new /api/abstract-briefs (list = any signed-in; full view = Lite/Pro, server-checked). Fixes the "Generating… but where?" bug — the viewer now sits directly under the generator and we scroll TO it (was: scroll-to-top with the result buried below the topic bank). Topic chips show ✓ when already generated and open instantly (zero tokens); topic-bank categories are collapsible (first open) so mobile is no longer cluttered. Renders optional `perspectives` (editorial-style, 3-4 views with data) when the backend starts emitting it — see handoff for the prompt spec.
 touches: app/(app)/gd-briefs/abstract/page.tsx, lib/abstract-gd.ts, app/api/abstract-briefs/route.ts (new)

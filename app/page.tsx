@@ -10,6 +10,7 @@ import AuthCTA from '@/components/auth-cta';
 import LandingMobileNav from '@/components/landing-mobile-nav';
 import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle } from 'lucide-react';
 import ScrollAnimations from '@/components/scroll-animations';
+import HeroInterviewDemo from '@/components/hero-interview-demo';
 import { faqPageJsonLd } from '@/lib/seo';
 
 export const metadata = {
@@ -127,38 +128,8 @@ export default async function LandingPage() {
             <div className="relative">
               {/* Geometric outline shapes behind card */}
               <GeoShapes />
-              {/* Main floating card */}
-              <div className="ui-card-floating p-5 relative z-10">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-bold text-xs">M</span>
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-semibold text-foreground">Your Dashboard</p>
-                    <p className="text-[11px] text-muted-foreground">Live score overview</p>
-                  </div>
-                </div>
-                {/* Mini KPI row */}
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  {[['248', 'Points'], ['#12', 'Rank'], ['71', 'Avg Score']].map(([v, l]) => (
-                    <div key={l} className="bg-muted rounded-lg p-2.5">
-                      <p className="text-[18px] font-bold text-foreground leading-none">{v}</p>
-                      <p className="text-[11px] text-muted-foreground mt-1">{l}</p>
-                    </div>
-                  ))}
-                </div>
-                {/* Score bars */}
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Score breakdown</p>
-                {[['Structure', 82, 'bg-primary'], ['Quantitative', 65, 'bg-warning'], ['Synthesis', 78, 'bg-success'], ['Business Judgment', 55, 'bg-primary/60']].map(([dim, pct, color]) => (
-                  <div key={dim as string} className="flex items-center gap-2.5 mb-2">
-                    <span className="text-[12px] text-muted-foreground w-20 flex-shrink-0 whitespace-nowrap overflow-hidden text-ellipsis">{dim as string}</span>
-                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
-                    </div>
-                    <span className="text-[12px] font-mono text-muted-foreground w-6 text-right">{pct}</span>
-                  </div>
-                ))}
-              </div>
+              {/* Main floating card — the product, performing live */}
+              <HeroInterviewDemo />
               {/* Second floating card */}
               <div className="ui-card absolute -bottom-6 right-0 sm:-bottom-8 sm:-right-4 p-3.5 w-44 sm:w-52 animate-float" style={{ animationDelay: '0.5s' }}>
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Today's case</p>
