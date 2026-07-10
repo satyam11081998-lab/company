@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-07-10 — landing-vignettes — <pending commit>
+Scroll-triggered play-once vignettes on the landing page (shared IntersectionObserver hook, reduced-motion safe): GD-brief card now assembles itself (summary → smart angles stagger in → data-point chip → opening line types out); leaderboard rows slide in with points counting up and "You" highlighted; hero stats (6 dimensions / 60s) count up. CV-lab vignette skipped per owner. Nothing loops in parallel with the hero demo.
+touches: components/landing-vignettes.tsx (new), app/page.tsx
+breaking: no   affects: Landing page
+
 ## 2026-07-10 — hero-interview-demo — <pending commit>
 Landing hero right column replaced: static dashboard mockup → auto-playing typed AI case-interview demo (interviewer Q → structured answer → pushback → answer → score card with animated dimension bars + "Would advance"), looping, chat-style, pure DOM/CSS (no video). Respects prefers-reduced-motion (renders finished state). Shows the core product loop to visitors who never explore features.
 touches: components/hero-interview-demo.tsx (new), app/page.tsx

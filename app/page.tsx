@@ -11,6 +11,7 @@ import LandingMobileNav from '@/components/landing-mobile-nav';
 import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle } from 'lucide-react';
 import ScrollAnimations from '@/components/scroll-animations';
 import HeroInterviewDemo from '@/components/hero-interview-demo';
+import { GdBriefVignette, LeaderboardVignette, CountUp } from '@/components/landing-vignettes';
 import { faqPageJsonLd } from '@/lib/seo';
 
 export const metadata = {
@@ -114,12 +115,18 @@ export default async function LandingPage() {
               <AuthCTA variant="hero" />
             </div>
             <div className="mt-8 flex items-center gap-6">
-              {[['6', 'Scoring dimensions'], ['60s', 'Feedback time'], ['Instant', 'Access']].map(([val, label]) => (
-                <div key={label}>
-                  <p className="text-xl font-bold text-foreground">{val}</p>
-                  <p className="text-[12px] text-muted-foreground mt-0.5">{label}</p>
-                </div>
-              ))}
+              <div>
+                <p className="text-xl font-bold text-foreground"><CountUp to={6} duration={900} /></p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Scoring dimensions</p>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-foreground"><CountUp to={60} suffix="s" duration={1200} /></p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Feedback time</p>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-foreground">Instant</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Access</p>
+              </div>
             </div>
           </div>
 
@@ -354,38 +361,8 @@ export default async function LandingPage() {
       {/* ── Feature 3: GD Briefs (right text + left card) ─────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-12 md:py-20">
         <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
-          {/* Left: GD brief card mockup */}
-          <div className="ui-card-floating overflow-hidden">
-            <div className="bg-muted/50 px-5 py-3 border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">GD Brief</span>
-              </div>
-              <span className="text-[11px] text-muted-foreground">24 May 2025</span>
-            </div>
-            <div className="p-5">
-              <span className="tag tag-navy mb-3 inline-flex">Policy & Economy</span>
-              <h3 className="text-[15px] font-bold text-foreground leading-snug mb-2">
-                India&apos;s AI policy and its impact on the startup ecosystem
-              </h3>
-              <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">
-                The government&apos;s new AI regulatory framework has sparked debate across industry leaders.
-                Key angles include data sovereignty, startup compliance costs, and global competitiveness.
-              </p>
-              <div className="space-y-2.5">
-                <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Smart angles to open with</p>
-                {[
-                  'Compare India\'s approach to EU AI Act — what can we borrow?',
-                  'Startups face 3x compliance cost — innovation penalty or necessary guardrail?',
-                  'Data localisation creates moat for Indian AI companies.',
-                ].map(angle => (
-                  <div key={angle} className="flex items-start gap-2 text-[13px] text-foreground">
-                    <ChevronRight className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
-                    {angle}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* Left: GD brief card — assembles itself on scroll */}
+          <GdBriefVignette />
 
           {/* Right */}
           <div>
@@ -452,46 +429,8 @@ export default async function LandingPage() {
               </ul>
             </div>
 
-            {/* Leaderboard card */}
-            <div className="ui-card-floating overflow-hidden">
-              <div className="bg-muted/50 px-5 py-3 border-b border-border flex items-center justify-between">
-                <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Leaderboard</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[11px] text-muted-foreground">Live · 37 students</span>
-                </div>
-              </div>
-              <div className="overflow-x-auto table-scroll-mobile">
-                <table className="data-table min-w-[500px]">
-                  <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Points</th>
-                    <th>Streak</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ['🥇', 'Arjun S.', '612', '14d', true],
-                    ['🥈', 'Priya M.', '589', '9d', false],
-                    ['🥉', 'Rohit K.', '541', '7d', false],
-                    ['#4', 'Sneha T.', '498', '5d', false],
-                    ['#12', 'You', '248', '3d', true],
-                  ].map(([rank, name, pts, streak, highlight]) => (
-                    <tr key={name as string} className={highlight ? 'bg-primary/5' : 'hover:bg-muted/30'}>
-                      <td className="font-mono font-semibold text-[13px]">{rank as string}</td>
-                      <td className={`text-[13px] font-medium ${highlight ? 'text-primary' : 'text-foreground'}`}>
-                        {name as string}
-                      </td>
-                      <td className="font-mono font-bold text-[14px] text-foreground">{pts as string}</td>
-                      <td className="text-[12px] text-muted-foreground">{streak as string}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            {/* Leaderboard card — rows slide in, points count up */}
+            <LeaderboardVignette />
           </div>
         </div>
       </section>
