@@ -1,5 +1,5 @@
 /**
- * Testimonials + team ("brains behind") shown on the landing and /about pages.
+ * Testimonials + team ("Who builds MECE") shown on the landing and /about pages.
  *
  * These are now DB-backed (supabase: `testimonials`, `team_members`). The two
  * arrays below are the verified real profiles, kept ONLY as a render fallback
@@ -54,15 +54,6 @@ export const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
-/** Same two, as the team fallback. */
-export const TEAM_FALLBACK: TeamMember[] = TESTIMONIALS.map((t) => ({
-  id: `team-${t.id}`,
-  name: t.name,
-  school: t.school,
-  placement: t.placement,
-  avatar_url: t.avatar_url,
-  linkedin_url: t.linkedin_url,
-}));
 
 function mapTestimonial(r: TestimonialRow): Testimonial {
   return {
@@ -100,7 +91,7 @@ export async function getPublishedTestimonials(supabase: SupabaseClient): Promis
   return rows.length ? rows.map(mapTestimonial) : TESTIMONIALS;
 }
 
-/** Team members, ordered. Falls back to the verified two if empty. */
+/** Team members, ordered. Falls back to empty array if empty. */
 export async function getTeamMembers(supabase: SupabaseClient): Promise<TeamMember[]> {
   const { data } = await supabase
     .from('team_members')
@@ -108,5 +99,5 @@ export async function getTeamMembers(supabase: SupabaseClient): Promise<TeamMemb
     .order('position', { ascending: true })
     .order('created_at', { ascending: true });
   const rows = (data as TeamMemberRow[] | null) ?? [];
-  return rows.length ? rows.map(mapTeam) : TEAM_FALLBACK;
+  return rows.map(mapTeam);
 }

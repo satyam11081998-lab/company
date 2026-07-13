@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, BarChart3, Quote } from 'lucide-react';
+import { ChevronRight, BarChart3, Quote, Trophy } from 'lucide-react';
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -145,6 +145,80 @@ export function GdBriefVignette() {
               <span className="ml-0.5 inline-block h-3 w-[2px] animate-pulse rounded-full bg-foreground align-middle" />
             )}
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Deck Vault vignette — a winning deck's storyline builds slide by slide ─ */
+
+const SLIDES: [string, string][] = [
+  ['01', 'Cover & the ask'],
+  ['02', 'Problem framing'],
+  ['03', 'Insight engine'],
+  ['04', 'Recommendation'],
+  ['05', 'Impact & roadmap'],
+];
+
+export function DeckVaultVignette() {
+  const [ref, inView] = useInView<HTMLDivElement>(0.4);
+  const reduced = usePrefersReducedMotion();
+  const [shown, setShown] = useState(0); // slides shown; SLIDES.length+1 = badge
+
+  useEffect(() => {
+    if (!inView) return;
+    if (reduced) { setShown(SLIDES.length + 1); return; }
+    if (shown > SLIDES.length) return;
+    const t = setTimeout(() => setShown((s) => s + 1), shown === 0 ? 300 : shown === SLIDES.length ? 550 : 380);
+    return () => clearTimeout(t);
+  }, [inView, shown, reduced]);
+
+  return (
+    <div ref={ref} className="ui-card-floating overflow-hidden">
+      <div className="bg-muted/50 px-5 py-3 border-b border-border flex items-center justify-between">
+        <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Deck Vault · winning-deck skeleton</span>
+        <span className="text-[11px] text-muted-foreground">5 slides · 8 min study</span>
+      </div>
+      <div className="p-5">
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
+          {SLIDES.map(([no, label], i) => {
+            const visible = reduced || i < shown;
+            return (
+              <div
+                key={no}
+                className={`transition-all duration-500 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95'}`}
+              >
+                <div className={`aspect-[4/3] rounded-md border p-1.5 ${i === 3 ? 'border-primary/50 bg-primary/5' : 'border-border bg-muted/60'}`}>
+                  <div className={`mb-1 h-1 w-3/4 rounded-full ${i === 3 ? 'bg-primary/70' : 'bg-foreground/25'}`} />
+                  <div className="mb-0.5 h-0.5 w-full rounded-full bg-foreground/15" />
+                  <div className="mb-0.5 h-0.5 w-5/6 rounded-full bg-foreground/15" />
+                  <div className="h-0.5 w-2/3 rounded-full bg-foreground/15" />
+                  {i === 2 && (
+                    <div className="mt-1 flex items-end gap-0.5">
+                      {[40, 65, 50, 85].map((h, j) => (
+                        <span key={j} className="w-1.5 rounded-sm bg-primary/50" style={{ height: `${h / 10}px` }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-center text-[10px] font-medium leading-tight text-muted-foreground">
+                  <span className="font-mono text-foreground/60">{no}</span> {label}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+        <div
+          className={`mt-4 flex items-center justify-between rounded-lg bg-muted px-3 py-2.5 transition-all duration-500 ${
+            reduced || shown > SLIDES.length ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+          }`}
+        >
+          <p className="flex items-center gap-2 text-[12px] text-foreground">
+            <Trophy className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <span><span className="font-semibold">National finalist deck</span> — FMCG growth case, corporate flagship</span>
+          </p>
+          <span className="tag tag-red shrink-0">Study it</span>
         </div>
       </div>
     </div>

@@ -9,7 +9,6 @@ import {
   Shield, Trophy, BookOpen, Newspaper, Building2,
   GraduationCap, Layers, CheckCircle2, ArrowRight, ChevronRight, HelpCircle,
 } from 'lucide-react';
-import TeamGrid from '@/components/team-grid';
 import {
   genericArticleJsonLd, genericBreadcrumbJsonLd, faqPageJsonLd,
 } from '@/lib/seo';
@@ -17,17 +16,17 @@ import {
 export const metadata = {
   title: 'About us',
   description:
-    'MECE (mece.in) is an independent online MBA & PGDM placement-interview prep platform for Indian students — free casebook, AI-scored case & guesstimate practice, daily GD briefs, and a national leaderboard. Here is who builds it and why.',
+    'MECE (mece.in) is an independent online MBA & PGDM placement-interview prep platform for Indian students — free casebook, AI-scored case & guesstimate practice, daily GD briefs, and a national leaderboard. The story and the method behind it.',
   alternates: { canonical: '/about' },
 };
 
 const articleJsonLd = genericArticleJsonLd({
   title: 'About MECE',
   description:
-    'What MECE is, who it is for, and who builds it — India’s structured placement-interview prep platform for MBA and PGDM students.',
+    'What MECE is, who it is for, and the method behind it — India\'s structured placement-interview prep platform for MBA and PGDM students.',
   url: '/about',
   datePublished: '2025-01-01',
-  dateModified: '2026-06-12',
+  dateModified: '2026-07-14',
 });
 
 const breadcrumbJsonLd = genericBreadcrumbJsonLd([
@@ -47,9 +46,14 @@ const ABOUT_FAQS = [
       'No. MECE is an independent educational platform. It is not affiliated with, endorsed by, or connected to any consulting firm or business school referenced on the site. All trademarks belong to their respective owners.',
   },
   {
+    question: 'Who runs MECE?',
+    answer:
+      'A small, independent team that went through the Indian B-school placement circuit themselves. MECE is deliberately presented at the organisation level rather than around individuals: the methodology, rubric, and casebook are fully public, and the platform asks to be judged on those. It is not run by, or affiliated with, any consulting firm or business school.',
+  },
+  {
     question: 'Who is MECE for?',
     answer:
-      'Indian MBA and PGDM students at institutes such as the IIMs, FMS, XLRI, MDI, SPJIMR, TISS, NMIMS, and IMI who are preparing for summer-internship and final placements in consulting, finance, marketing, product, and operations.',
+      'Indian MBA and PGDM students at institutes such as the IIMs, FMS, XLRI, MDI, SPJIMR, NMIMS, and others who are preparing for summer-internship and final placements in consulting, finance, marketing, product, and operations.',
   },
   {
     question: 'Do I need to pay to use it?',
@@ -131,13 +135,10 @@ export default function AboutPage() {
         <header className="max-w-3xl mx-auto text-center mb-12" data-reveal>
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">About MECE</p>
           <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
-            An MBA placement-interview prep platform, built for India
+            Built from inside the placement grind
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            <strong className="text-foreground">MECE</strong> (<span className="text-foreground">mece.in</span>) is an
-            independent, AI-powered platform that helps Indian MBA and PGDM students prepare for placement interviews —
-            consulting, finance, marketing, product, and operations. A free casebook to learn from, scored practice to
-            improve with, and a national leaderboard to measure against.
+            <strong className="text-foreground">MECE</strong> (<span className="text-foreground">mece.in</span>) began the way most placement prep does: 2 AM peer mocks, seniors' PDFs passed down like heirlooms, and feedback that changed depending on who was across the table. It is now an independent, AI-scored prep platform for Indian MBA and PGDM students — a free 145+ page casebook, practice graded on a fixed 100-point rubric, and a leaderboard that tells you where you actually stand.
           </p>
           <p className="mt-3 text-sm text-muted-foreground/80">
             The name is a nod to the consulting principle <strong className="text-foreground/70">MECE</strong> —
@@ -212,10 +213,7 @@ export default function AboutPage() {
             <div className="relative z-10 max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold mb-6 text-white">The problem we solve</h2>
               <p className="text-lg leading-relaxed text-navy-foreground/80 mb-8">
-                Preparing for summer internships and final placements at firms like McKinsey, BCG, Bain, Goldman Sachs,
-                P&amp;G, and HUL is hard, and the help is uneven. Students rely on ad-hoc peer mocks, scheduling
-                headaches, subjective feedback, or expensive bootcamps — and rarely get a consistent read on whether
-                they are actually improving.
+                Every placement season runs on the same quiet unfairness. Two equally hardworking students walk into the same shortlist — one had seniors who ran drills with them all term, the other had a WhatsApp group and hope. Peer mocks go easy on you. Bootcamps charge a month's stipend. And nobody can tell you, consistently, whether you are actually getting better. The stakes are a career; the feedback is a lottery.
               </p>
               <div className="bg-white/10 p-8 rounded-xl border border-white/20">
                 <p className="text-lg leading-relaxed text-white">
@@ -263,15 +261,45 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* ── Team ───────────────────────────────────────────────────── */}
+        {/* ── Who builds MECE ────────────────────────────────────────── */}
         <section className="mb-20" data-reveal>
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold text-foreground">Built by MBA candidates, for MBA candidates</h2>
-            <p className="mt-3 text-lg text-muted-foreground">
-              The people who went through the placement grind and decided to build the tool they wished they had.
-            </p>
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h2 className="text-3xl font-bold text-foreground">Who builds MECE</h2>
           </div>
-          <TeamGrid />
+          <Card className="p-8 md:p-12 max-w-3xl mx-auto">
+            <p className="text-body leading-relaxed text-foreground/80 mb-5">
+              MECE is built and run by a small, independent team that went through the Indian
+              B-school placement circuit — the shortlists, the case mocks, the guesstimate
+              drills — and came out convinced that preparation shouldn&apos;t depend on how
+              lucky you got with seniors, schedules, or feedback.
+            </p>
+            <p className="text-body leading-relaxed text-foreground/80 mb-5">
+              We keep this page deliberately free of faces and bios. Not because there is
+              anything to hide, but because names are the wrong proof. In a case interview,
+              nobody cares who taught you — they care whether your structure holds. We hold
+              ourselves to the same standard we score you on.
+            </p>
+            <p className="text-body leading-relaxed text-foreground/80 mb-8">
+              So instead of credentials, here is what we stake the platform on — all of it
+              public, all of it checkable:
+            </p>
+            <ul className="space-y-3">
+              {[
+                'A fully public methodology — the exact 100-point, six-dimension rubric is documented on the methodology page for anyone to read.',
+                'The same rubric for every student, every submission, every time. No moods, no favourites, no easy graders.',
+                'An arithmetic backstop that independently re-checks the math in every guesstimate, so confident nonsense cannot score well.',
+                'A free, openly readable casebook — 145+ pages of frameworks, worked cases, and guesstimates, no account required.',
+              ].map((point) => (
+                <li key={point} className="flex items-start gap-2.5 text-body text-foreground leading-relaxed">
+                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-1" />
+                  {point}
+                </li>
+              ))}
+            </ul>
+            <p className="text-body leading-relaxed text-foreground/80 mt-8">
+              Judge us the way an interviewer judges you — on the work, not the signalling.
+            </p>
+          </Card>
         </section>
 
         {/* ── FAQ ────────────────────────────────────────────────────── */}

@@ -13,7 +13,7 @@ const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: stri
   { href: '/admin/ai-usage', label: 'AI usage', icon: BarChart3 },
   { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
   { href: '/admin/endorsements', label: 'Endorsements', icon: BadgeCheck },
-  { href: '/admin/team', label: 'Brains behind', icon: Users },
+  { href: '/admin/team', label: 'Who builds MECE', icon: Users },
   { href: '/admin/cases', label: 'Cases', icon: Sparkles },
   { href: '/admin/broadcast', label: 'Broadcast', icon: Megaphone },
   { href: '/admin/decks', label: 'Deck Vault', icon: FolderLock },

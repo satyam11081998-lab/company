@@ -17,7 +17,7 @@ export default async function AdminTeamPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Brains behind MECE</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Who builds MECE</h1>
         <p className="text-muted-foreground mt-1">
           The team shown on the About page. Add or remove people — paste a LinkedIn URL, upload a photo, and add their college / internship.
         </p>

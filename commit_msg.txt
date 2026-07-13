@@ -1,55 +1,7 @@
-feat(dashboard+onboarding): mobile responsive + dark-mode parity + onboarding/profile/college-verify
+feat(about): rewrite About page — anonymous org-level story, remove team grid and individual identities
 
-Mobile responsiveness
-- hooks/use-is-mobile.tsx — viewport hook (<768px)
-- dashboard-client stacks News+Guesstimate / Consistency+Recent on mobile,
-  reduces padding 24/36 → 14/12
-- Hero stacks HeroCase / HeroStreak / HeroReadiness vertically
-- StreakMonument flips left-border to top-border in stacked mode
-- Constellation: map+side-panel stack, map fixed 420px height on mobile
-- Command panel: 3 cols → 1 col, dividers flip horizontal
-- Consistency heatmap: horizontal scroll with momentum + edge-fade mask
-- News card: image rail (160px wide) → top strip (72px tall)
-
-Dark mode
-- HeroShell gradient: hardcoded #FAF9F6/#F3EFE5 → var(--hero-grad-{1,2})
-- Constellation map spotlight: #FFFFFF → var(--map-center)
-- --card-hex added (var(--card) was HSL → invalid in inline styles)
-- Swept inline 'var(--card)' → 'var(--card-hex)' across 5 components
-- Cluster colors via vars (--cluster-prof/size/pri/ent/ma/ops/soft) so
-  navy + dark greys flip to readable variants on dark bg
-
-Brand red restoration
-- .dark --red was #E04060 (salmon) → forced to #C8102E (cardinal)
-- .dark --primary 356 74% 55% → 356 84% 43% (cardinal red, no hue shift)
-- --cluster-prof in dark from #FF5C77 → #C8102E
-- Added --red-rgb 200,16,46 in both modes for rgba() consistency
-
-Onboarding flow
-- supabase/migrations/0005_user_onboarding.sql: user columns
-  (full_name, college_id FK, college_other, batch_year, placement_focus,
-  college_email + verified_at, onboarding_completed_at, linkedin_url,
-  referral_source, weekly_hours_target, goal_text, avatar_uploaded_at)
-- colleges table seeded with all 20 IIMs + ~60 top MBA/eng colleges
-- college_email_verifications table + RLS
-- avatars Storage bucket + owner-write/public-read policies
-- lib/types-onboarding.ts: form types, college rows, validators
-- /onboarding page + components/onboarding/onboarding-form.tsx
-  (single-scroll, red required indicators, scroll-into-view on miss)
-- /api/onboarding/complete: server-side re-validate + persist
-- (app)/layout.tsx: if !onboarding_completed_at, redirect /onboarding
-- middleware adds x-pathname header for the layout gate
-
-Profile rebuild
-- /profile page + components/profile/profile-client.tsx
-- Identity card (avatar upload to Supabase Storage), college, points
-- College email verify section (send / verified state)
-- Editable form mirroring onboarding fields
-- Badges + 20 recent submissions
-
-College email verification
-- /api/college-email/send: SHA-256 token, 24h expiry, calls
-  supabase.auth.admin.generateLink → email via Supabase SMTP
-- /api/college-email/verify: token-hash match, marks verified, redirects
-  to /profile?college=verified
-- lib/types.ts UserRow extended with all new nullable columns
+- New hero + problem narrative (grind-first storyline)
+- Replace TeamGrid with 'Who builds MECE' manifesto section
+- Add 'Who runs MECE?' FAQ; org-level EEAT consistent with lib/seo.ts
+- Remove TEAM_FALLBACK; delete team-grid component
+- No individual names, colleges, or claimed affiliations anywhere on /about

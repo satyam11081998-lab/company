@@ -8,10 +8,10 @@ import Logo from '@/components/logo';
 import Footer from '@/components/footer';
 import AuthCTA from '@/components/auth-cta';
 import LandingMobileNav from '@/components/landing-mobile-nav';
-import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle, Award } from 'lucide-react';
 import ScrollAnimations from '@/components/scroll-animations';
 import HeroInterviewDemo from '@/components/hero-interview-demo';
-import { GdBriefVignette, LeaderboardVignette, CountUp } from '@/components/landing-vignettes';
+import { GdBriefVignette, LeaderboardVignette, DeckVaultVignette, CountUp } from '@/components/landing-vignettes';
 import { faqPageJsonLd } from '@/lib/seo';
 
 export const metadata = {
