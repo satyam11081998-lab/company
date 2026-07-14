@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { ALL_PAGE_SLUGS, getPage } from '@/lib/casebook/content';
 import { CasebookReader } from '@/components/casebook/casebook-reader';
+import { BackToTop } from '@/components/casebook/back-to-top';
 import {
   absoluteUrl,
   extractPageDescription,
@@ -99,6 +100,7 @@ export default function CasebookRoute({ params }: PageProps) {
         />
       )}
       <CasebookReader page={page} />
+      <BackToTop />
     </>
   );
 }
