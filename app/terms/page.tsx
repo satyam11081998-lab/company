@@ -47,7 +47,7 @@ export default async function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold text-foreground mb-4">2. Description of Service</h2>
             <p className="leading-relaxed mb-4">
-              MECE is an AI-powered placement-interview preparation platform tailored for Indian MBA and PGDM students. The Platform provides case studies, guesstimates, group discussion briefs, and an automated evaluation rubric.
+              MECE is a technology-driven placement-interview preparation platform with automated rubric evaluation tailored for Indian MBA and PGDM students. The Platform provides case studies, guesstimates, group discussion briefs, and an automated evaluation rubric.
             </p>
             <p className="leading-relaxed">
               <strong>Disclaimer of Affiliation:</strong> MECE is an independent educational tool. We are not affiliated with, endorsed by, or connected to McKinsey & Company, Boston Consulting Group (BCG), Bain & Company, or any specific firm, university, or business school referenced on the Platform. Trademarks belong to their respective owners.

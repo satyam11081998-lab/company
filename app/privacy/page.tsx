@@ -40,7 +40,7 @@ export default async function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-bold text-foreground mb-4">1. Introduction</h2>
             <p className="leading-relaxed">
-              Welcome to MECE ("we," "our," or "us"). We are committed to protecting your personal data and respecting your privacy. This Privacy Policy governs your use of the MECE.in website and the associated AI-powered placement-interview preparation services (the "Platform").
+              Welcome to MECE ("we," "our," or "us"). We are committed to protecting your personal data and respecting your privacy. This Privacy Policy governs your use of the MECE.in website and the associated technology-driven placement-interview preparation services, with automated rubric evaluation (the "Platform").
               By using our Platform, you agree to the collection and use of information in accordance with this Privacy Policy.
             </p>
           </section>

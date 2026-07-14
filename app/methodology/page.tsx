@@ -32,7 +32,7 @@ const METHODOLOGY_FAQS = [
   {
     question: 'Is the scoring done by AI or by a human?',
     answer:
-      'By an AI engine, against a fixed 100-point rubric. For guesstimates and quantitative cases an independent arithmetic backstop re-checks the numbers, so a confident but wrong answer cannot quietly score well. The same rubric runs on every submission, so scores are comparable over time.',
+      'By MECE\'s evaluation engine — software, not a human panel — against a fixed 100-point rubric. For guesstimates and quantitative cases an independent arithmetic backstop re-checks the numbers, so a confident but wrong answer cannot quietly score well. Because the same rubric runs on every submission, your scores are comparable over time and against every other aspirant — something ad-hoc human mocks can\'t offer.',
   },
   {
     question: 'What are the six dimensions?',
@@ -168,7 +168,7 @@ export default function MethodologyPage() {
           <h2 className="text-2xl font-bold text-foreground">The arithmetic backstop</h2>
           <Card className="mt-6 p-6 space-y-4 text-body leading-relaxed text-foreground/80">
             <p>
-              A common failure mode in AI scoring is rewarding an answer that <em>sounds</em> rigorous but whose numbers
+              A common failure mode in automated scoring is rewarding an answer that <em>sounds</em> rigorous but whose numbers
               do not add up. MECE guards against this with an independent arithmetic backstop: for guesstimates and
               quantitative cases, it recomputes the chain of estimates from your stated assumptions and checks each
               derived step.

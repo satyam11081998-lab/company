@@ -215,7 +215,7 @@ export default function BulletLab({
 
           <label className="mt-4 block">
             <span className="text-micro font-semibold uppercase tracking-wide text-muted-foreground">
-              Notes / instructions for the AI <span className="font-normal normal-case text-muted-foreground/70">(optional — it follows these strictly)</span>
+              Notes / instructions <span className="font-normal normal-case text-muted-foreground/70">(optional — it follows these strictly)</span>
             </span>
             <textarea
               value={instructions}

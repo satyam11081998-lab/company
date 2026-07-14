@@ -223,7 +223,7 @@ export default async function GlossaryTermPage({
               Ready to put {term.term} into practice?
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              MECE has worked cases, frameworks, and AI-graded practice — all free.
+              MECE has worked cases, frameworks, and rubric-scored practice — all free.
             </p>
             <div className="mt-4 flex items-center justify-center gap-3">
               <Link href="/signup">

@@ -106,7 +106,7 @@ export default function PricingPlans() {
               <PlanFeature text="Unlimited re-attempts" />
               <PlanFeature text="Unlimited GD briefs + source links" />
               <PlanFeature text="Full cheat sheet (save & download)" />
-              <PlanFeature text="5 AI hints per case" />
+              <PlanFeature text="5 interviewer hints per case" />
             </ul>
             <Link href="/signup" className="mt-auto">
               <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
@@ -128,7 +128,7 @@ export default function PricingPlans() {
               <Star className="h-4 w-4 text-primary" />
               <h2 className="text-lg font-bold text-foreground tracking-tight">Pro</h2>
             </div>
-            <p className="text-xs text-muted-foreground">Unlimited practice and AI prep.</p>
+            <p className="text-xs text-muted-foreground">Unlimited practice and scored prep.</p>
             <PriceBlock tier="pro" period={period} />
           </div>
           <div className="p-6 flex-1 flex flex-col justify-between gap-8 bg-primary/[0.01]">
@@ -138,9 +138,9 @@ export default function PricingPlans() {
                 <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
               </li>
               <PlanFeature text="Unlimited practice bank" />
-              <PlanFeature text="Live AI hints & model Q&A" />
+              <PlanFeature text="Live interviewer hints & model Q&A" />
               <PlanFeature text="CV Pointer Lab — unlimited" />
-              <PlanFeature text="AI interviewer chatbot" />
+              <PlanFeature text="Interviewer simulator" />
               <PlanFeature text="Deck Vault lifetime access" />
             </ul>
             <Link href="/signup" className="mt-auto">

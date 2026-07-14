@@ -125,7 +125,7 @@ export default function HeroInterviewDemo() {
             <span className="text-xs font-bold text-primary">M</span>
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-foreground">AI Case Interview</p>
+            <p className="text-[13px] font-semibold text-foreground">Case Interview — scored live</p>
             <p className="text-[11px] text-muted-foreground">This is the real product</p>
           </div>
         </div>

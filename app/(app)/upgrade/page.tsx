@@ -211,7 +211,7 @@ export default function UpgradePage() {
                 <FeatureItem text="Leaderboard & badges" />
                 <FeatureItem muted text="No extra bank practice" cross />
                 <FeatureItem muted text="No re-attempts or GD briefs" cross />
-                <FeatureItem muted text="No hints or AI features" cross />
+                <FeatureItem muted text="No hints or premium tools" cross />
               </ul>
               <button
                 disabled
@@ -242,7 +242,7 @@ export default function UpgradePage() {
                 <FeatureItem text="2 extra cases & guesstimates / day" />
                 <FeatureItem text="Unlimited re-attempts" />
                 <FeatureItem text="GD Briefs unlocked" />
-                <FeatureItem text="5 AI hints per case" />
+                <FeatureItem text="5 interviewer hints per case" />
                 <FeatureItem muted text="No bookmarks or cheat-sheet" cross />
               </ul>
               <button
@@ -276,7 +276,7 @@ export default function UpgradePage() {
                 <h2 className="text-lg font-bold text-foreground tracking-tight">Pro</h2>
                 {isCurrentPlan("pro") && <CurrentTag />}
               </div>
-              <p className="text-xs text-muted-foreground">Unlimited practice and AI prep.</p>
+              <p className="text-xs text-muted-foreground">Unlimited practice and scored prep.</p>
               <PriceBlock tier="pro" period={period} />
             </div>
             <div className="p-6 flex-1 flex flex-col justify-between gap-8 bg-primary/[0.01]">
@@ -285,11 +285,11 @@ export default function UpgradePage() {
                   <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
                 </li>
-                <FeatureItem text="CV Pointer Lab — strict-fit AI resume bullet writer (free)" />
+                <FeatureItem text="CV Pointer Lab — strict-fit resume bullet writer (free)" />
                 <FeatureItem text="Unlimited practice bank" />
-                <FeatureItem text="Live AI hints & model Q&A" />
+                <FeatureItem text="Live interviewer hints & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
-                <FeatureItem text="AI interviewer chatbot" />
+                <FeatureItem text="Interviewer simulator" />
                 <FeatureItem muted text="Deck Vault — coming soon" />
               </ul>
               <button

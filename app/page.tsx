@@ -23,7 +23,7 @@ const HOMEPAGE_FAQS = [
   {
     question: 'What is MECE?',
     answer:
-      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for Indian students. It offers a free case-interview casebook, AI-scored case and guesstimate practice across six dimensions, daily group-discussion (GD) briefs, and a national leaderboard.',
+      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for Indian students. It offers a free case-interview casebook, case and guesstimate practice scored on a six-dimension consulting rubric, daily group-discussion (GD) briefs, and a national leaderboard.',
   },
   {
     question: 'Is mece.in the same as the MECE framework?',

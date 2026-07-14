@@ -59,7 +59,7 @@ const FAQS = [
   {
     question: 'What happens when my subscription expires?',
     answer:
-      'You automatically revert to the Free tier. All your past scores, leaderboard rank, and Casebook access remain intact — you just lose access to paid features like extra practice and AI hints.',
+      'You automatically revert to the Free tier. All your past scores, leaderboard rank, and Casebook access remain intact — you just lose access to paid features like extra practice and guided hints.',
   },
   {
     question: 'Do you offer refunds?',
@@ -72,9 +72,9 @@ const FAQS = [
       'Yes. The entire Learn & Casebook library — concepts, frameworks, worked cases, guesstimates, and industry primers — is free for everyone. No paywall, no sign-up wall.',
   },
   {
-    question: 'How does the AI interviewer chatbot work?',
+    question: 'How does the interviewer simulator work?',
     answer:
-      'Available on Pro, the AI chatbot simulates a live case interviewer. It asks follow-up questions, challenges your assumptions, and provides real-time guidance — just like a real mock interview partner.',
+      'Available on Pro, the interviewer simulator runs your case the way a live interviewer would — asking follow-up questions, challenging your assumptions, and guiding you in real time, like a good mock partner.',
   },
   {
     question: 'What is Deck Vault?',
@@ -88,10 +88,10 @@ const FEATURES = [
   { name: 'Practice bank access', free: false, lite: true, pro: true },
   { name: 'Unlimited re-attempts', free: false, lite: true, pro: true },
   { name: 'GD Briefs', free: false, lite: true, pro: true },
-  { name: 'AI Hints', free: false, lite: '5 per case', pro: 'Unlimited' },
+  { name: 'Interviewer Hints', free: false, lite: '5 per case', pro: 'Unlimited' },
   { name: 'Bookmarks', free: false, lite: false, pro: true },
   { name: 'Personal cheat-sheet', free: false, lite: false, pro: true },
-  { name: 'AI interviewer chatbot', free: false, lite: false, pro: true },
+  { name: 'Interviewer simulator', free: false, lite: false, pro: true },
   { name: 'Deck Vault (lifetime)', free: false, lite: false, pro: true },
 ];
 
@@ -99,8 +99,8 @@ const FEATURES = [
 
 const productJsonLd = pricingProductJsonLd([
   { name: 'Free', description: 'Full Casebook library, daily case & guesstimate, leaderboard & badges.', price: 0 },
-  { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 5 AI hints per case.', price: 199 },
-  { name: 'Pro', description: 'Everything in Lite plus unlimited practice bank, live AI hints, bookmarks, cheat-sheet, AI chatbot, and Deck Vault lifetime access.', price: 499 },
+  { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 5 interviewer hints per case.', price: 199 },
+  { name: 'Pro', description: 'Everything in Lite plus unlimited practice bank, live interviewer hints, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
 ]);
 
 const faqJsonLd = faqPageJsonLd(FAQS);
@@ -156,7 +156,7 @@ export default function PricingPage() {
           <p className="mt-5 text-[15px] text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             MECE offers three tiers — Free, Lite, and Pro — so you can start practising
             MBA placement interviews at zero cost and upgrade when you need the full practice
-            bank, GD briefs, AI hints, and unlimited re-attempts. Pick the plan that fits
+            bank, GD briefs, interviewer hints, and unlimited re-attempts. Pick the plan that fits
             your prep stage.
           </p>
         </section>
@@ -274,7 +274,7 @@ export default function PricingPage() {
             </h2>
             <p className="mt-4 text-[15px] text-white/50 leading-relaxed">
               Start with the free tier today. No credit card required. Upgrade when you&apos;re ready
-              for the full practice bank and AI-powered prep.
+              for the full practice bank and every scored-prep feature.
             </p>
             <div className="mt-7 flex items-center justify-center gap-3">
               <Link href="/signup">

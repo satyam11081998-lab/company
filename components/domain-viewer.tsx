@@ -309,7 +309,7 @@ function PracticeMoreCTA({ domainCount, domainSlug, tab = 'cases' }: { domainCou
         {domainCount} more example{domainCount !== 1 ? 's' : ''} available
       </p>
       <p className="text-body text-foreground mb-3">
-        Practice the rest with real-time AI scoring.
+        Practice the rest with instant rubric scoring.
       </p>
       <Link 
         href={`/practice?tab=${tab}&focus=${domainSlug}`}
