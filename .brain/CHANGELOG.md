@@ -11,6 +11,13 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-07-14: Landing Deck Vault & ISR Migration
+- **Feature**: Added Deck Vault section to landing page (`DeckVaultVignette`).
+- **Perf**: Migrated `/` to ISR (`revalidate = 300`) with static Supabase client.
+- **A11y**: Flattened `<Link><button>` nesting across landing and auth CTAs.
+- **Motion**: `EndorsementWall` and `HeroInterviewDemo` now respect `prefers-reduced-motion` and pause off-screen.
+- **UI**: Fixed dark-mode inversion on geometric shapes and auth page logos.
+
 ## 2026-07-10 — landing-vignettes — <pending commit>
 Scroll-triggered play-once vignettes on the landing page (shared IntersectionObserver hook, reduced-motion safe): GD-brief card now assembles itself (summary → smart angles stagger in → data-point chip → opening line types out); leaderboard rows slide in with points counting up and "You" highlighted; hero stats (6 dimensions / 60s) count up. CV-lab vignette skipped per owner. Nothing loops in parallel with the hero demo.
 touches: components/landing-vignettes.tsx (new), app/page.tsx

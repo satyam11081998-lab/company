@@ -29,7 +29,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="mb-8 flex justify-center">
           <Link href="/" className="inline-block">
-            <Logo full variant="dark" />
+            <Logo full variant="auto" />
           </Link>
         </div>
 

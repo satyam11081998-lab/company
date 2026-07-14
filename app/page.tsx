@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/theme-toggle';
 import EndorsementWall from '@/components/endorsement-wall';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import { getPublishedTestimonials } from '@/lib/testimonials';
 import { getPublishedEndorsements } from '@/lib/endorsements';
 import Logo from '@/components/logo';
@@ -49,10 +49,16 @@ const HOMEPAGE_FAQS = [
 
 const faqJsonLd = faqPageJsonLd(HOMEPAGE_FAQS);
 
-export const dynamic = 'force-dynamic';
+/**
+ * ISR, not force-dynamic: the landing page is the highest-traffic SEO surface
+ * and everything on it is public. Testimonials/endorsements come from a
+ * cookie-less anon client (RLS = logged-out visitor); auth-dependent CTAs
+ * resolve client-side in <AuthCTA/>. Fresh social proof within 5 minutes.
+ */
+export const revalidate = 300;
 
 export default async function LandingPage() {
-  const supabase = createClient();
+  const supabase = createStaticClient();
   const [testimonials, endorsements] = await Promise.all([
     getPublishedTestimonials(supabase),
     getPublishedEndorsements(supabase),
@@ -203,8 +209,8 @@ export default async function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/signup" className="mt-6 inline-flex">
-              <button className="btn-primary">Start practising</button>
+            <Link href="/signup" className="btn-primary mt-6 inline-flex">
+              Start practising
             </Link>
           </div>
           {/* Scoring card mockup */}
@@ -263,7 +269,7 @@ export default async function LandingPage() {
               style={{
                 position: 'absolute',
                 width: s.w, height: s.h,
-                border: `1px solid rgba(0,0,0,${s.opacity})`,
+                border: `1px solid hsl(var(--foreground) / ${s.opacity})`,
                 borderRadius: 24,
                 transform: `rotate(${s.rotate}deg)`,
                 left: s.left, top: s.top, right: (s as any).right, bottom: (s as any).bottom,
@@ -390,8 +396,8 @@ export default async function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/signup" className="mt-6 inline-flex">
-              <button className="btn-primary">Browse GD Briefs</button>
+            <Link href="/signup" className="btn-primary mt-6 inline-flex">
+              Browse GD Briefs
             </Link>
           </div>
         </div>
@@ -435,6 +441,45 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ── Feature 5: Deck Vault (left card + right text) ────────────── */}
+      <section className="max-w-6xl mx-auto px-6 py-12 md:py-20" data-reveal>
+        <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
+          {/* Left: winning deck skeleton — slides build in on scroll */}
+          <DeckVaultVignette />
+
+          {/* Right */}
+          <div className="order-first md:order-none">
+            <div className="badge-pill mb-4">
+              <Award className="h-3.5 w-3.5" />
+              Deck Vault
+            </div>
+            <h2 className="text-4xl font-bold text-foreground leading-tight">
+              Study decks that<br />actually won
+            </h2>
+            <p className="mt-4 text-[15px] text-muted-foreground leading-relaxed">
+              Real case-competition decks — <span className="text-primary font-medium">national winners and finalists</span>{' '}
+              from corporate flagships and B-school competitions. See the storyline, then build your own.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {[
+                'Winning decks and problem statements, not textbook samples.',
+                'Slide-by-slide skeletons: framing, insight, recommendation, roadmap.',
+                'Tagged by case type and round so you can study what you face next.',
+                'Steal the structure, never the slides.',
+              ].map(item => (
+                <li key={item} className="flex items-start gap-2.5 text-[14px] text-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup" className="btn-primary mt-6 inline-flex">
+              Open the vault
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── Methodology strip ─────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-16" data-reveal>
         <div className="text-center mb-10">
@@ -466,10 +511,8 @@ export default async function LandingPage() {
           ))}
         </div>
         <div className="text-center mt-6">
-          <Link href="/methodology">
-            <button className="btn-ghost">
-              Read full methodology <ArrowRight className="h-4 w-4" />
-            </button>
+          <Link href="/methodology" className="btn-ghost">
+            Read full methodology <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
@@ -494,7 +537,7 @@ export default async function LandingPage() {
                 {faq.question}
                 <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
               </summary>
-              <p className="mt-3 text-[14px] text-muted-foreground leading-relaxed">{faq.answer}</p>
+              <p className="animate-slide-up mt-3 text-[14px] text-muted-foreground leading-relaxed">{faq.answer}</p>
             </details>
           ))}
         </div>
@@ -557,7 +600,7 @@ function GeoShapes() {
         <div key={i} style={{
           position: 'absolute',
           width: s.w, height: s.h,
-          border: `1px solid rgba(0,0,0,${s.op})`,
+          border: `1px solid hsl(var(--foreground) / ${s.op})`,
           borderRadius: 16,
           transform: `rotate(${s.rotate}deg)`,
           left: s.left, top: s.top,

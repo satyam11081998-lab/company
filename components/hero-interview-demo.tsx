@@ -51,7 +51,9 @@ export default function HeroInterviewDemo() {
   const [showScore, setShowScore] = useState(false);
   const [scoreBars, setScoreBars] = useState(false);
   const [reduced, setReduced] = useState(false);
+  const [inView, setInView] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -63,8 +65,21 @@ export default function HeroInterviewDemo() {
     }
   }, []);
 
+  // Pause the loop while the card is scrolled out of view — no point typing
+  // to nobody, and it keeps timers/CPU quiet on long reads further down.
   useEffect(() => {
-    if (reduced) return;
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      (entries) => setInView(entries[0]?.isIntersecting ?? true),
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (reduced || !inView) return;
     let timer: ReturnType<typeof setTimeout>;
 
     if (msg < SCRIPT.length) {
@@ -91,7 +106,7 @@ export default function HeroInterviewDemo() {
       }, SCORE_HOLD_MS);
     }
     return () => clearTimeout(timer);
-  }, [msg, chars, showScore, reduced]);
+  }, [msg, chars, showScore, reduced, inView]);
 
   // keep the newest line in view
   useEffect(() => {
@@ -102,7 +117,7 @@ export default function HeroInterviewDemo() {
   const total = Math.round(SCORES.reduce((s, [, v]) => s + v, 0) / SCORES.length);
 
   return (
-    <div className="ui-card-floating relative z-10 overflow-hidden p-0">
+    <div ref={rootRef} className="ui-card-floating relative z-10 overflow-hidden p-0">
       {/* header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2.5">

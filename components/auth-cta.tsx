@@ -57,15 +57,11 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
   if (variant === 'hero') {
     return (
       <div className="flex items-center gap-3">
-        <Link href={state === 'authed' ? '/dashboard' : '/signup'}>
-          <button className="btn-primary">
-            {state === 'authed' ? 'Open MECE' : 'Start now'} <ArrowRight className="h-4 w-4" />
-          </button>
+        <Link href={state === 'authed' ? '/dashboard' : '/signup'} className="btn-primary">
+          {state === 'authed' ? 'Open MECE' : 'Start now'} <ArrowRight className="h-4 w-4" />
         </Link>
-        <Link href="/methodology">
-          <button className="btn-ghost">
-            How it works
-          </button>
+        <Link href="/methodology" className="btn-ghost">
+          How it works
         </Link>
       </div>
     );
@@ -74,38 +70,31 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
   /* ── CTA variant ────────────────────────────────────────────────── */
   if (variant === 'cta') {
     return state === 'authed' ? (
-      <Link href="/dashboard">
-        <button className="btn-primary">Open MECE</button>
-      </Link>
+      <Link href="/dashboard" className="btn-primary">Open MECE</Link>
     ) : (
-      <Link href="/signup">
-        <button className="btn-primary">Get started</button>
-      </Link>
+      <Link href="/signup" className="btn-primary">Get started</Link>
     );
   }
 
   /* ── Nav variant (default) ──────────────────────────────────────── */
   if (state === 'authed') {
     return (
-      <Link href="/dashboard">
-        <button className="btn-primary text-sm md:text-[15px] py-1.5 px-3 md:py-2 md:px-6 whitespace-nowrap">
-          Open MECE
-        </button>
+      <Link href="/dashboard" className="btn-primary text-sm md:text-[15px] py-1.5 px-3 md:py-2 md:px-6 whitespace-nowrap">
+        Open MECE
       </Link>
     );
   }
 
   return (
     <>
-      <Link href="/login" className="hidden sm:block">
-        <button className="text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors">
-          Login
-        </button>
+      <Link
+        href="/login"
+        className="hidden sm:inline-block text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors"
+      >
+        Login
       </Link>
-      <Link href="/signup">
-        <button className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap">
-          Get started
-        </button>
+      <Link href="/signup" className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap">
+        Get started
       </Link>
     </>
   );

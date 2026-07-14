@@ -132,6 +132,13 @@ export default function EndorsementWall({
   const trackRef = useRef<HTMLDivElement | null>(null);
   const offsetRef = useRef(0);
   const pausedRef = useRef(false);
+  // Respect prefers-reduced-motion: the marquee holds still (arrows still work).
+  const reducedRef = useRef(false);
+  useEffect(() => {
+    reducedRef.current =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
 
   useEffect(() => {
     if (endorsements || testimonials) return;
@@ -153,7 +160,7 @@ export default function EndorsementWall({
       if (el) {
         const one = el.scrollWidth / 2; // one copy of the duplicated list
         if (one > 0) {
-          if (!pausedRef.current) offsetRef.current += SPEED;
+          if (!pausedRef.current && !reducedRef.current) offsetRef.current += SPEED;
           const m = ((offsetRef.current % one) + one) % one;
           el.style.transform = `translateX(${-m}px)`;
         }
