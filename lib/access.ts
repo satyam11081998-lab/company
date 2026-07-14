@@ -1,5 +1,6 @@
 import type { CaseRow, UserRow } from '@/lib/types';
 import { effectiveTier, TIER_LIMITS } from '@/lib/tier';
+import { LINKEDIN_FOLLOW_PERK } from '@/lib/constants';
 
 function todayIst(): string {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -82,9 +83,17 @@ export async function getAttemptAccess(
         (t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket,
       ).length;
     }
-    const cap = bucket === 'guesstimate'
+    // LinkedIn follow perk (2026-07): a one-time claim permanently raises the
+    // free bank by +1 case and +1 guesstimate. Authoritative twin lives in
+    // backend services/access_guard.py — keep in sync.
+    const perkBonus = user?.linkedin_follow_claimed_at
+      ? (bucket === 'guesstimate'
+          ? LINKEDIN_FOLLOW_PERK.extraGuesstimates
+          : LINKEDIN_FOLLOW_PERK.extraCases)
+      : 0;
+    const cap = (bucket === 'guesstimate'
       ? (TIER_LIMITS.free.lifetimeExtraGuesstimates as number)
-      : (TIER_LIMITS.free.lifetimeExtraCases as number);
+      : (TIER_LIMITS.free.lifetimeExtraCases as number)) + perkBonus;
     return used >= cap
       ? { allowed: false, reason: 'free-extra-used', bucket, remaining: 0 }
       : { allowed: true, reason: 'ok', bucket, remaining: cap - used };

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { LinkedInFollowPrompt } from '@/components/linkedin-follow-unlock';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,11 +26,13 @@ export default async function ResultPage({ params }: { params: { id: string } })
   if (!user) redirect('/login');
   const authUser = user;
 
-  const [submissionRes, userBadgesRes] = await Promise.all([
+  const [submissionRes, userBadgesRes, attemptRes] = await Promise.all([
     // Ownership filter (defense-in-depth alongside RLS): a user may only ever
     // read their OWN submission — prevents IDOR via a guessed/!shared id.
     supabase.from('submissions').select('*').eq('id', params.id).eq('user_id', authUser.id).maybeSingle(),
     supabase.from('user_badges').select('*, badges(*)').eq('trigger_submission_id', params.id),
+    // Was this attempt today's daily? Drives the LinkedIn follow-unlock popup.
+    supabase.from('case_attempts').select('counted_for_daily').eq('submission_id', params.id).eq('user_id', authUser.id).maybeSingle(),
   ]);
   const submission = submissionRes.data as SubmissionRow | null;
   if (!submission) notFound();
@@ -55,6 +58,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const isGuesstimate = feedback.rubric === 'guesstimate';
   const backstop = feedback.backstop;
   const newBadges = (userBadgesRes.data || []) as Array<{ id: string; badges: BadgeRow }>;
+  const wasDaily = !!(attemptRes.data as { counted_for_daily?: boolean } | null)?.counted_for_daily;
 
   // The worked solution lives on the case (shown only after submitting).
   let solution: string | null = null;
@@ -206,6 +210,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
             <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">Try another case</Button>
           </Link>
         </div>
+        <LinkedInFollowPrompt wasDaily={wasDaily} />
       </main>
     </div>
   );

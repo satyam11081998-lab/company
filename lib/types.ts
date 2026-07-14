@@ -33,6 +33,11 @@ export interface UserRow {
   weekly_hours_target?: number | null;
   goal_text?: string | null;
   avatar_uploaded_at?: string | null;
+  // LinkedIn follow perk (migration 0040, 2026-07). NULL = never claimed.
+  // Set once via POST /api/linkedin-follow; grants free users +1 lifetime
+  // bank case and +1 lifetime bank guesstimate (see lib/access.ts and
+  // backend services/access_guard.py).
+  linkedin_follow_claimed_at?: string | null;
 }
 
 export interface PaymentRow {

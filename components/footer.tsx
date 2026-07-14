@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Logo from '@/components/logo';
+import { Linkedin } from 'lucide-react';
+import { LINKEDIN_COMPANY_URL } from '@/lib/constants';
 
 export default function Footer({ className = "" }: { className?: string }) {
   return (
@@ -15,6 +17,15 @@ export default function Footer({ className = "" }: { className?: string }) {
             <p className="text-sm text-navy-foreground/70 leading-relaxed max-w-sm mb-6">
               The premier platform for Indian MBA students to master consulting, finance, and product management interviews through structured, MECE-driven practice.
             </p>
+            <a
+              href={LINKEDIN_COMPANY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Follow MECE on LinkedIn"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-navy-mid/40 text-navy-foreground/70 transition-colors hover:border-white/40 hover:text-white"
+            >
+              <Linkedin className="h-4 w-4" aria-hidden="true" />
+            </a>
           </div>
 
           {/* Links Wrapper */}
@@ -47,6 +58,17 @@ export default function Footer({ className = "" }: { className?: string }) {
               <ul className="space-y-3.5">
                 <li><Link href="/about" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">About Us</Link></li>
                 <li><Link href="/testimonials" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Stories &amp; Reviews</Link></li>
+                <li>
+                  <a
+                    href={LINKEDIN_COMPANY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-navy-foreground/60 transition-colors hover:text-white"
+                  >
+                    <Linkedin className="h-3.5 w-3.5" aria-hidden="true" />
+                    Follow us on LinkedIn
+                  </a>
+                </li>
                 <li><a href="mailto:team@mece.in" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Contact Support</a></li>
                 <li><Link href="/privacy" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Terms of Service</Link></li>

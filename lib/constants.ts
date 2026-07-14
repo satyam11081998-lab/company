@@ -118,3 +118,16 @@ export const PUBLIC_ROUTES: string[] = [
 
 /** Auth pages — if logged in, user gets redirected away from these. */
 export const AUTH_ROUTES: string[] = ['/login', '/signup'];
+
+/** MECE company page on LinkedIn — footer link + follow-to-unlock target. */
+export const LINKEDIN_COMPANY_URL = 'https://www.linkedin.com/company/mece-in/';
+
+/**
+ * One-time reward for following the LinkedIn page (free tier only).
+ * Applied ON TOP of TIER_LIMITS.free.lifetimeExtra* in lib/access.ts and
+ * mirrored in backend services/access_guard.py — keep all three in sync.
+ */
+export const LINKEDIN_FOLLOW_PERK = {
+  extraCases: 1,
+  extraGuesstimates: 1,
+} as const;

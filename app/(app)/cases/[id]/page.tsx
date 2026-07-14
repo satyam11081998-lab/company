@@ -14,6 +14,7 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Card } from '@/components/ui/card';
+import { LinkedInFollowInline } from '@/components/linkedin-follow-unlock';
 import CaseAttemptHistory from '@/components/case-attempt-history';
 import CaseRatingPrompt from '@/components/case-rating-prompt';
 import ConversationalSolve from '@/components/solve/ConversationalSolve';
@@ -117,7 +118,7 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
       access.reason === 'free-non-daily'
         ? "Free covers today's daily case and guesstimate. Upgrade to Lite to practise the full bank — plus 2 extra cases and 2 extra guesstimates every day."
         : access.reason === 'free-extra-used'
-        ? `Free includes the dailies plus ONE ${bucketWord} from the bank as a taste — and you've used yours. Upgrade to Lite for 2 extra cases and 2 extra guesstimates every day.`
+        ? `Free includes the dailies plus a taste of the bank — and you've used your free ${bucketWord} unlocks. Upgrade to Lite for 2 extra cases and 2 extra guesstimates every day.`
         : access.reason === 'lite-quota'
         ? `Lite includes 2 extra ${access.bucket === 'guesstimate' ? 'guesstimates' : 'cases'} per day beyond the daily ones. Upgrade to Pro for unlimited practice.`
         : 'Free tier allows one attempt per case. Upgrade to Lite or Pro for unlimited re-attempts.';
@@ -140,6 +141,9 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
           {lockCta}
           <ArrowRight className="h-4 w-4" />
         </Link>
+        {access.reason === 'free-extra-used' && !fullUser?.linkedin_follow_claimed_at && (
+          <LinkedInFollowInline bucket={access.bucket} />
+        )}
       </Card>
     );
   }
