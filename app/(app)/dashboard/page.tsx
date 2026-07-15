@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { redirect } from 'next/navigation';
 import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
 import { computeReadiness, type ReadinessSubmission } from '@/lib/readiness';
 import { nextAction, computeFreeQuota } from '@/lib/next-action';
@@ -8,6 +7,8 @@ import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
 import { GUESSTIMATE_DIMENSIONS, type GuesstimateDimension } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
+import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
+import { buildGuestDashboardProps } from '@/lib/dashboard/guest-sample';
 import { getDailyTodayServerSide } from '@/lib/daily-server';
 import { getHeatmap } from '@/lib/dashboard/heatmap';
 import { getGrowthDeltas } from '@/lib/dashboard/growth-deltas';
@@ -22,17 +23,35 @@ import { getTodayMeta } from '@/lib/dashboard/today-meta';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
+  // Cached: layout already called this — React.cache() returns the prior
+  // result with zero extra Supabase calls.
+  const authUser = await getCachedAuthUser();
+  // ── Guest preview ────────────────────────────────────────────────────
+  // Logged-out visitors get a fully alive SAMPLE dashboard (no DB reads) so the
+  // product looks intriguing, wrapped in an inert frame where every action is
+  // gated behind "Sign in to continue". MUST return BEFORE any Supabase client
+  // is created — createServiceClient() needs SUPABASE_SERVICE_ROLE_KEY, which
+  // guests (and some local envs) don't have, so building it would throw.
+  if (!authUser) {
+    return (
+      <GuestPreviewFrame
+        next="/dashboard"
+        title="Sign in to unlock your dashboard"
+        message="Track your real readiness, streak, and rank across India."
+      >
+        <div className="container max-w-7xl py-6">
+          <DashboardClient {...buildGuestDashboardProps()} />
+        </div>
+      </GuestPreviewFrame>
+    );
+  }
+
   const supabase = createClient(); // real client is synchronous (Phase 1)
   // Service-role client for cross-user aggregates (cohort benchmark, peer
   // proximity, proof rail, global rank). users/submissions are owner-scoped
   // under RLS, so the cookie client cannot read other users' rows. These run
   // server-side only and never expose raw rows/PII to the client.
   const svc = createServiceClient();
-
-  // Cached: layout already called this — React.cache() returns the prior
-  // result with zero extra Supabase calls.
-  const authUser = await getCachedAuthUser();
-  if (!authUser) redirect('/login');
 
   // Same — layout already fetched this. We still type-coerce locally.
   const layoutUserRow = await getCachedUserRow(authUser.id);

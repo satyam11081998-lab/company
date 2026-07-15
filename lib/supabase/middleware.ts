@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { PUBLIC_ROUTES, AUTH_ROUTES } from '@/lib/constants';
+import { PUBLIC_ROUTES, AUTH_ROUTES, isPreviewPath } from '@/lib/constants';
 
 /**
  * Refresh the Supabase session on every request and guard protected routes.
@@ -40,8 +40,13 @@ export async function updateSession(request: NextRequest) {
 
   const isPublic = PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/'));
   const isAuthPage = AUTH_ROUTES.includes(pathname);
+  // Guest-previewable app routes (dashboard/practice/cases/leaderboard). These
+  // are NOT in PUBLIC_ROUTES so the onboarding gate below still fires for
+  // logged-in users; they only relax the "guest → /login" bounce so logged-out
+  // visitors can browse a read-only preview.
+  const isPreview = isPreviewPath(pathname);
 
-  if (!user && !isPublic) {
+  if (!user && !isPublic && !isPreview) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     loginUrl.searchParams.set('next', pathname);

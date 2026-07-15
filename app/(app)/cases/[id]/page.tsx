@@ -10,7 +10,7 @@
  * workspace itself sits inline as the primary surface.
  */
 
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Card } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { LinkedInFollowInline } from '@/components/linkedin-follow-unlock';
 import CaseAttemptHistory from '@/components/case-attempt-history';
 import CaseRatingPrompt from '@/components/case-rating-prompt';
 import ConversationalSolve from '@/components/solve/ConversationalSolve';
+import GuestCasePreview from '@/components/guest/guest-case-preview';
 import { getAttemptAccess } from '@/lib/access';
 import type { CaseRow, CaseAttemptRow, UserRow } from '@/lib/types';
 import { ArrowRight, Lock } from 'lucide-react';
@@ -30,7 +31,16 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+
+  // ── Guest preview ──────────────────────────────────────────────────────
+  // Logged-out visitors can READ the case (cases are public under RLS) but the
+  // live solve workspace is replaced by a sign-in wall. Fetch only the case.
+  if (!user) {
+    const { data } = await supabase.from('cases').select('*').eq('id', params.id).maybeSingle();
+    const guestCase = data as CaseRow | null;
+    if (!guestCase) notFound();
+    return <GuestCasePreview caseRow={guestCase} caseId={params.id} />;
+  }
   const authUser = user;
 
   const [caseRes, attemptsRes, ratingRes, userRes] = await Promise.all([

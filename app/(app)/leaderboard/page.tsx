@@ -1,8 +1,8 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getAllTimeLeaderboard, getCohortLeaderboard } from '@/lib/dashboard/leaderboards';
 import LeaderboardClient from '@/components/leaderboard/leaderboard-client';
+import GuestLeaderboardPreview from '@/components/guest/guest-leaderboard-preview';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +13,8 @@ export default async function LeaderboardPage({
 }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  // Guests can open the leaderboard, but the live rankings require an account.
+  if (!user) return <GuestLeaderboardPreview />;
 
   // All cross-user reads run via the service role (users/submissions are
   // owner-scoped under RLS). Only public display fields (name/avatar/points)

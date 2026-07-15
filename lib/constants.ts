@@ -116,6 +116,28 @@ export const PUBLIC_ROUTES: string[] = [
   '/manifest.webmanifest',
 ];
 
+/**
+ * Guest-PREVIEW routes. Logged-out visitors are allowed to *browse* these in a
+ * read-only "preview" mode (real content is visible; the actions that need an
+ * account — Start / Submit / personal data — are locked behind a sign-in wall).
+ *
+ * Kept SEPARATE from PUBLIC_ROUTES on purpose: PUBLIC_ROUTES also suppresses the
+ * logged-in onboarding gate in middleware. Preview routes must still run that
+ * gate for authenticated-but-not-onboarded users, so they live in their own
+ * list and are only used to relax the "guest → /login" redirect.
+ */
+export const PREVIEW_ROUTES: string[] = [
+  '/dashboard',
+  '/practice',
+  '/cases',
+  '/leaderboard',
+];
+
+/** True when `pathname` is (a prefix of) a guest-previewable route (read-only). */
+export function isPreviewPath(pathname: string): boolean {
+  return PREVIEW_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/'));
+}
+
 /** Auth pages — if logged in, user gets redirected away from these. */
 export const AUTH_ROUTES: string[] = ['/login', '/signup'];
 
