@@ -101,4 +101,9 @@ Python twin `services/gdrive.py` (backend) — the two MUST stay in lockstep.
   `deck-vault-submissions` when unconfigured.
 - **Rule:** changing the prefix, adding a new backend, or renaming the env vars =
   `BREAKING`. Affects: Deck Vault & DRM, Deck Vault Rewards, Admin.
+- **v2 note (0042, 2026-07-17):** `deck_skeletons` gained `year int null`,
+  `organizer text default ''`, `source_submission_id uuid null → deck_submissions`
+  (unique where not null — one catalogue row per submission). Written by BOTH the
+  admin uploader and the Rewards auto-publish; read by the /skeletons filter UI.
+  Additive; readers must treat year as nullable and organizer as possibly ''.
 

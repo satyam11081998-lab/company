@@ -45,6 +45,8 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
   const [title, setTitle] = useState('');
   const [sourceKind, setSourceKind] = useState('corporate');
   const [competition, setCompetition] = useState('');
+  const [organizer, setOrganizer] = useState('');
+  const [year, setYear] = useState('');
   const [result, setResult] = useState('National Finalist');
   const [caseType, setCaseType] = useState('strategy');
   const [roundType, setRoundType] = useState('finale');
@@ -110,6 +112,9 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
         description: description.trim(),
         storage_path: `gdrive:${uploaded.id}`,
         is_active: true,
+        // Structured filter fields (0042). Optional — null/'' render as "Unknown" in filters.
+        year: /^\d{4}$/.test(year.trim()) ? Number(year.trim()) : null,
+        organizer: organizer.trim(),
       });
       if (insertError) {
         throw new Error(`Catalogue insert failed: ${insertError.message} — the uploaded file is orphaned; re-upload after fixing.`);
@@ -188,6 +193,16 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
             <Label htmlFor="deck-competition">Competition</Label>
             <Input id="deck-competition" value={competition} onChange={(e) => setCompetition(e.target.value)}
               placeholder="HUL L.I.M.E. / Kritva 25 · Arthneeti" className="mt-1" />
+          </div>
+          <div>
+            <Label htmlFor="deck-organizer">Organizer (company / college)</Label>
+            <Input id="deck-organizer" value={organizer} onChange={(e) => setOrganizer(e.target.value)}
+              placeholder="Hindustan Unilever / IIM Lucknow" className="mt-1" />
+          </div>
+          <div>
+            <Label htmlFor="deck-year">Year</Label>
+            <Input id="deck-year" value={year} onChange={(e) => setYear(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+              placeholder="2026" inputMode="numeric" className="mt-1" />
           </div>
           <div>
             <Label>Category</Label>

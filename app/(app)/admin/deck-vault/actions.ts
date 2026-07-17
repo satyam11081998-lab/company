@@ -70,7 +70,7 @@ function generateCouponCode(): string {
 const POSITION_TO_RESULT: Record<string, string> = {
   winner: 'National Winner',
   runner_up: 'National Runner Up',
-  second_runner_up: 'National Semi Finalist',
+  second_runner_up: 'National 2nd Runner Up', // accurate label — these values drive the vault's Result filter
 };
 
 export async function approveDeckSubmission(
@@ -166,6 +166,10 @@ export async function approveDeckSubmission(
         description: `Verified ${resultLabel.toLowerCase()} deck from ${s.competition_name} (${s.year}).`,
         storage_path: s.deck_path,
         is_active: true,
+        // Structured filter fields (0042) + durable link back to the submission.
+        year: s.year,
+        organizer: s.organizer || '',
+        source_submission_id: s.id,
       });
     // Log but don't fail the approval if the skeleton insert fails — the
     // coupon is already issued and the submission is approved.

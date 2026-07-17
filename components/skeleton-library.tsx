@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trophy, ShieldCheck, Filter, Building2, GraduationCap, Layers, Eye, Rocket } from 'lucide-react';
+import { Trophy, ShieldCheck, Filter, Building2, GraduationCap, Layers, Eye, Rocket, Search, CalendarDays, Award } from 'lucide-react';
 
 export interface VaultDeck {
   id: string;
@@ -26,6 +26,8 @@ export interface VaultDeck {
   file_type: string;
   description: string;
   tags: string[];
+  year: number | null;    // 0042 — structured filters
+  organizer: string;      // company (corporate) or college (bschool); '' = unknown
 }
 
 interface DeckVaultProps {
@@ -42,6 +44,10 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
   const router = useRouter();
   const [kindTab, setKindTab] = useState<KindTab>('all');
   const [typeFilter, setTypeFilter] = useState<string>(ALL_TYPES);
+  const [yearFilter, setYearFilter] = useState<string>(ALL_TYPES);
+  const [orgFilter, setOrgFilter] = useState<string>(ALL_TYPES);
+  const [resultFilter, setResultFilter] = useState<string>(ALL_TYPES);
+  const [query, setQuery] = useState('');
 
   // Deck Vault is in development: unlocked for admins only (hasAccess is admin-only server-side).
   const isVaultUnlocked = hasAccess;
@@ -50,14 +56,47 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
     () => Array.from(new Set(decks.map((d) => d.case_type))).sort((a, b) => a.localeCompare(b)),
     [decks]
   );
-
-  const visible = useMemo(
-    () => decks.filter((d) =>
-      (kindTab === 'all' || d.source_kind === kindTab) &&
-      (typeFilter === ALL_TYPES || d.case_type === typeFilter)
-    ),
-    [decks, kindTab, typeFilter]
+  const years = useMemo(
+    () => Array.from(new Set(decks.map((d) => d.year).filter((y): y is number => !!y))).sort((a, b) => b - a),
+    [decks]
   );
+  const organizers = useMemo(
+    () => Array.from(new Set(decks.map((d) => d.organizer).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [decks]
+  );
+  const results = useMemo(
+    () => Array.from(new Set(decks.map((d) => d.result).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [decks]
+  );
+
+  const hasActiveFilters =
+    kindTab !== 'all' || typeFilter !== ALL_TYPES || yearFilter !== ALL_TYPES ||
+    orgFilter !== ALL_TYPES || resultFilter !== ALL_TYPES || query.trim() !== '';
+
+  const clearFilters = () => {
+    setKindTab('all');
+    setTypeFilter(ALL_TYPES);
+    setYearFilter(ALL_TYPES);
+    setOrgFilter(ALL_TYPES);
+    setResultFilter(ALL_TYPES);
+    setQuery('');
+  };
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return decks.filter((d) =>
+      (kindTab === 'all' || d.source_kind === kindTab) &&
+      (typeFilter === ALL_TYPES || d.case_type === typeFilter) &&
+      (yearFilter === ALL_TYPES || String(d.year ?? '') === yearFilter) &&
+      (orgFilter === ALL_TYPES || d.organizer === orgFilter) &&
+      (resultFilter === ALL_TYPES || d.result === resultFilter) &&
+      (q === '' ||
+        d.title.toLowerCase().includes(q) ||
+        d.competition.toLowerCase().includes(q) ||
+        d.organizer.toLowerCase().includes(q) ||
+        d.description.toLowerCase().includes(q))
+    );
+  }, [decks, kindTab, typeFilter, yearFilter, orgFilter, resultFilter, query]);
 
   const counts = useMemo(() => ({
     corporate: decks.filter((d) => d.source_kind === 'corporate').length,
@@ -114,26 +153,101 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
             B-School ({counts.bschool})
           </KindButton>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            {/* @ts-ignore */}
-            <SelectTrigger className="h-10 w-full sm:w-44" aria-label="Filter by domain">
-              <div className="flex items-center gap-2 truncate">
-                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="All domains" />
-              </div>
-            </SelectTrigger>
-            {/* @ts-ignore */}
-            <SelectContent>
-              {/* @ts-ignore */}
-              <SelectItem value={ALL_TYPES}>All domains</SelectItem>
-              {caseTypes.map((t) => (
-                // @ts-ignore
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="relative w-full sm:w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search competition, company, college…"
+            aria-label="Search decks"
+            className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary"
+          />
         </div>
+      </div>
+
+      {/* Structured filters — Year / Organizer / Result / Domain (0042) */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Select value={yearFilter} onValueChange={setYearFilter}>
+          {/* @ts-ignore */}
+          <SelectTrigger className="h-10 w-[130px]" aria-label="Filter by year">
+            <div className="flex items-center gap-2 truncate">
+              <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="All years" />
+            </div>
+          </SelectTrigger>
+          {/* @ts-ignore */}
+          <SelectContent>
+            {/* @ts-ignore */}
+            <SelectItem value={ALL_TYPES}>All years</SelectItem>
+            {years.map((y) => (
+              // @ts-ignore
+              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={orgFilter} onValueChange={setOrgFilter}>
+          {/* @ts-ignore */}
+          <SelectTrigger className="h-10 w-[210px]" aria-label="Filter by company or college">
+            <div className="flex items-center gap-2 truncate">
+              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="All companies & colleges" />
+            </div>
+          </SelectTrigger>
+          {/* @ts-ignore */}
+          <SelectContent>
+            {/* @ts-ignore */}
+            <SelectItem value={ALL_TYPES}>All companies &amp; colleges</SelectItem>
+            {organizers.map((o) => (
+              // @ts-ignore
+              <SelectItem key={o} value={o}>{o}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={resultFilter} onValueChange={setResultFilter}>
+          {/* @ts-ignore */}
+          <SelectTrigger className="h-10 w-[190px]" aria-label="Filter by result">
+            <div className="flex items-center gap-2 truncate">
+              <Award className="h-4 w-4 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="All results" />
+            </div>
+          </SelectTrigger>
+          {/* @ts-ignore */}
+          <SelectContent>
+            {/* @ts-ignore */}
+            <SelectItem value={ALL_TYPES}>All results</SelectItem>
+            {results.map((r) => (
+              // @ts-ignore
+              <SelectItem key={r} value={r}>{r}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          {/* @ts-ignore */}
+          <SelectTrigger className="h-10 w-[160px]" aria-label="Filter by domain">
+            <div className="flex items-center gap-2 truncate">
+              <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="All domains" />
+            </div>
+          </SelectTrigger>
+          {/* @ts-ignore */}
+          <SelectContent>
+            {/* @ts-ignore */}
+            <SelectItem value={ALL_TYPES}>All domains</SelectItem>
+            {caseTypes.map((t) => (
+              // @ts-ignore
+              <SelectItem key={t} value={t}>{t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {hasActiveFilters && (
+          <Button variant="link" onClick={clearFilters} className="h-10 px-2 text-primary">
+            Clear all
+          </Button>
+        )}
       </div>
 
       {decks.length === 0 ? (
@@ -161,7 +275,7 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
                   <h3 className="text-strong font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">{d.title}</h3>
                   <p className="text-small text-muted-foreground mb-2 flex items-center gap-1.5">
                     <Trophy className="h-3.5 w-3.5 text-primary shrink-0" />
-                    {d.competition}{d.result ? ` · ${d.result}` : ''}
+                    {d.competition}{d.result ? ` · ${d.result}` : ''}{d.year ? ` · ${d.year}` : ''}
                   </p>
                   {d.description && (
                     <p className="text-body text-muted-foreground line-clamp-2">{d.description}</p>
@@ -181,7 +295,7 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
           {visible.length === 0 && (
             <div className="col-span-full py-12 text-center">
               <p className="text-body text-muted-foreground">No decks match these filters.</p>
-              <Button variant="link" onClick={() => { setKindTab('all'); setTypeFilter(ALL_TYPES); }} className="mt-2 text-primary">
+              <Button variant="link" onClick={clearFilters} className="mt-2 text-primary">
                 Clear filters
               </Button>
             </div>

@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-07-17 — deck-vault-filters + approved-backfill — <pending commit>
+Deck Vault catalogue gains structured filters + the full approved→vault pipeline. Migration 0042: `deck_skeletons` + `year`, `organizer`, `source_submission_id` (unique-linked to deck_submissions); links rows auto-published before linkage existed (storage_path match) and BACKFILL-inserts every approved submission missing from the catalogue (ext whitelist, result-label normalization). Auto-publish + admin uploader now write year/organizer; result labels corrected ('National 2nd Runner Up', filter-accurate). /skeletons library: search box (title/competition/organizer/description) + Year / Company-College / Result / Domain selects, year on cards, unified Clear-all. RUN 0042 AFTER 0041.
+touches: supabase/migrations/0042_deck_vault_filters.sql (new), app/(app)/admin/deck-vault/actions.ts, components/admin/deck-upload-manager.tsx, components/skeleton-library.tsx, app/(app)/skeletons/page.tsx
+breaking: no — C8 additive (catalogue schema v2)   affects: Deck Vault & DRM, Deck Vault Rewards, Admin
+
 ## 2026-07-17 — deck-vault-rewards-auto-publish + drive file_type fix — 1f49694 + <pending commit>
 Approving a rewards submission now ALSO auto-publishes the deck into the public Deck Vault library (`deck_skeletons` insert: title "<comp> <year> — <result> Deck", result via POSITION_TO_RESULT map, case_type 'strategy' / round_type 'finale' defaults, is_active true, storage_path shared with the submission — non-fatal on failure, coupon still issued). PENDING COMMIT on top: file_type derivation fixed for Drive-stored decks — `deck_path.split('.')` wrote garbage for `gdrive:<id>` paths; new `deckFileType()` asks Drive for the stored filename (`fetchFileName()` added to lib/google-drive.ts) and clamps to pdf/pptx/ppt.
 touches: app/(app)/admin/deck-vault/actions.ts, lib/google-drive.ts

@@ -12,7 +12,7 @@ export default async function DeckVaultPage() {
   const [decksRes, userRowRes] = await Promise.all([
     supabase
       .from('deck_skeletons')
-      .select('id, title, source_kind, competition, result, case_type, round_type, file_type, description, tags')
+      .select('id, title, source_kind, competition, result, case_type, round_type, file_type, description, tags, year, organizer')
       .eq('is_active', true)
       .order('sort', { ascending: true })
       .order('created_at', { ascending: false }),
