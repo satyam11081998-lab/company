@@ -6,6 +6,15 @@ import { sendUpgradeReceipt } from '@/lib/email/send';
 
 export const dynamic = 'force-dynamic';
 
+/** discount_coupons row as loaded during webhook reconciliation. */
+type CouponRow = {
+  id: string;
+  user_id: string;
+  discount_pct: number;
+  status: string;
+  redeemed_payment_id: string | null;
+};
+
 /**
  * Razorpay webhook — asynchronous payment reconciliation.
  *
@@ -71,7 +80,7 @@ export async function POST(req: Request) {
         // notes.coupon is server-set at order creation; the DB row is the source
         // of truth for ownership + %. Expiry is gated at order time, not here.
         const couponCode = typeof notes.coupon === 'string' ? notes.coupon : '';
-        let couponRow: { id: string; user_id: string; discount_pct: number; status: string; redeemed_payment_id: string | null } | null = null;
+        let couponRow: CouponRow | null = null;
         let expectedPaise = priceFor(tier, period) * 100;
         if (couponCode) {
           const { data: c } = await supabase
@@ -79,7 +88,7 @@ export async function POST(req: Request) {
             .select('id, user_id, discount_pct, status, redeemed_payment_id')
             .eq('code', couponCode)
             .maybeSingle();
-          couponRow = c as typeof couponRow;
+          couponRow = c as CouponRow | null;
           const okOwner = !!couponRow && couponRow.user_id === uid;
           const okState = !!couponRow && (
             couponRow.status === 'active' ||

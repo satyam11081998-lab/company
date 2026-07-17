@@ -6,6 +6,15 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
 import { sendUpgradeReceipt } from '@/lib/email/send';
 
+/** discount_coupons row as loaded during verification. */
+type CouponRow = {
+  id: string;
+  user_id: string;
+  discount_pct: number;
+  status: string;
+  redeemed_payment_id: string | null;
+};
+
 export async function POST(req: Request) {
   try {
     const supabase = createClient();
@@ -61,7 +70,7 @@ export async function POST(req: Request) {
       // deliberately gated at order time, not here: the user already paid the
       // discounted amount in good faith.
       const couponCode = typeof order?.notes?.coupon === 'string' ? order.notes.coupon : '';
-      let couponRow: { id: string; user_id: string; discount_pct: number; status: string; redeemed_payment_id: string | null } | null = null;
+      let couponRow: CouponRow | null = null;
       let expectedPaise = priceFor(tier, period) * 100;
       if (couponCode) {
         const { data: c } = await createServiceClient()
@@ -69,7 +78,7 @@ export async function POST(req: Request) {
           .select('id, user_id, discount_pct, status, redeemed_payment_id')
           .eq('code', couponCode)
           .maybeSingle();
-        couponRow = c as typeof couponRow;
+        couponRow = c as CouponRow | null;
         const okOwner = !!couponRow && couponRow.user_id === user.id;
         const okState = !!couponRow && (
           couponRow.status === 'active' ||

@@ -4,8 +4,6 @@ import DeckVaultAdminClient, { type AdminSubmission } from './deck-vault-admin-c
 // Admin gating happens in the parent admin layout (users.is_admin).
 export const dynamic = 'force-dynamic';
 
-const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1h — enough for a review session
-
 interface SubmissionRow {
   id: string;
   user_id: string;
@@ -46,41 +44,31 @@ export default async function AdminDeckVaultPage() {
     }
   }
 
-  // Short-lived signed URLs into the PRIVATE bucket — only this admin page
-  // (service role) can mint them; the files are unreachable otherwise.
-  const storage = svc.storage.from('deck-vault-submissions');
-  const submissions: AdminSubmission[] = await Promise.all(
-    rows.map(async (r) => {
-      let deckUrl: string | null = null;
-      let certUrl: string | null = null;
-      if (r.status === 'pending') {
-        const [deckRes, certRes] = await Promise.all([
-          storage.createSignedUrl(r.deck_path, SIGNED_URL_TTL_SECONDS),
-          storage.createSignedUrl(r.certificate_path, SIGNED_URL_TTL_SECONDS),
-        ]);
-        deckUrl = deckRes.data?.signedUrl ?? null;
-        certUrl = certRes.data?.signedUrl ?? null;
-      }
-      const who = usersById.get(r.user_id);
-      return {
-        id: r.id,
-        userName: who?.name || '—',
-        userEmail: who?.email || '—',
-        competitionName: r.competition_name,
-        organizer: r.organizer,
-        competitionType: r.competition_type,
-        position: r.position,
-        year: r.year,
-        status: r.status,
-        adminNote: r.admin_note,
-        discountPct: r.discount_pct,
-        createdAt: r.created_at,
-        reviewedAt: r.reviewed_at,
-        deckUrl,
-        certUrl,
-      };
-    }),
-  );
+  // Files are opened through the admin-only door at /api/admin/deck-vault/file,
+  // which streams Drive-backed files (gdrive:<id>) through our domain and
+  // redirects legacy bucket rows to a short-lived signed URL. No provider
+  // details or long-lived URLs ever reach the page.
+  const submissions: AdminSubmission[] = rows.map((r) => {
+    const who = usersById.get(r.user_id);
+    const canOpen = r.status === 'pending';
+    return {
+      id: r.id,
+      userName: who?.name || '—',
+      userEmail: who?.email || '—',
+      competitionName: r.competition_name,
+      organizer: r.organizer,
+      competitionType: r.competition_type,
+      position: r.position,
+      year: r.year,
+      status: r.status,
+      adminNote: r.admin_note,
+      discountPct: r.discount_pct,
+      createdAt: r.created_at,
+      reviewedAt: r.reviewed_at,
+      deckUrl: canOpen ? `/api/admin/deck-vault/file/${r.id}?kind=deck` : null,
+      certUrl: canOpen ? `/api/admin/deck-vault/file/${r.id}?kind=cert` : null,
+    };
+  });
 
   return (
     <div className="space-y-6">

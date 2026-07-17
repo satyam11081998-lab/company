@@ -513,7 +513,7 @@ function FilePick({
   file: File | null;
   onPick: (f: File | null) => void;
   icon: React.ReactNode;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: React.RefObject<HTMLInputElement>;
 }) {
   return (
     <div>
