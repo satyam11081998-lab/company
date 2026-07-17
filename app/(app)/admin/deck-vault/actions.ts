@@ -46,6 +46,13 @@ function generateCouponCode(): string {
   return `MECE-DECK-${suffix}`;
 }
 
+/** Map submission position to a human-readable result label for the Deck Vault library. */
+const POSITION_TO_RESULT: Record<string, string> = {
+  winner: 'National Winner',
+  runner_up: 'National Runner Up',
+  second_runner_up: 'National Semi Finalist',
+};
+
 export async function approveDeckSubmission(
   submissionId: string,
   discountPct: number,
@@ -59,12 +66,20 @@ export async function approveDeckSubmission(
     }
 
     const svc = createServiceClient();
+
+    // Fetch full submission data — we need deck_path and competition details
+    // to auto-publish into the public Deck Vault library.
     const { data: sub } = await svc
       .from('deck_submissions')
-      .select('id, user_id, status')
+      .select('id, user_id, status, competition_name, organizer, competition_type, position, year, deck_path')
       .eq('id', submissionId)
       .maybeSingle();
-    const s = sub as { id: string; user_id: string; status: string } | null;
+    const s = sub as {
+      id: string; user_id: string; status: string;
+      competition_name: string; organizer: string;
+      competition_type: 'corporate' | 'bschool';
+      position: string; year: number; deck_path: string;
+    } | null;
     if (!s) return { success: false, error: 'Submission not found' };
     if (s.status !== 'pending') return { success: false, error: `Already ${s.status}` };
 
@@ -107,7 +122,38 @@ export async function approveDeckSubmission(
       .eq('status', 'pending'); // race-safe vs a double-click / second tab
     if (subError) return { success: false, error: subError.message };
 
+    // ── Auto-publish to the public Deck Vault library ──────────────
+    // Extract file extension from the stored path for file_type.
+    const ext = (s.deck_path.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+    const resultLabel = POSITION_TO_RESULT[s.position] || 'Other';
+    const competitionLabel = s.organizer
+      ? `${s.competition_name} · ${s.organizer}`
+      : s.competition_name;
+    const title = `${s.competition_name} ${s.year} — ${resultLabel} Deck`;
+
+    const { error: skeletonError } = await svc
+      .from('deck_skeletons')
+      .insert({
+        title,
+        source_kind: s.competition_type,
+        competition: competitionLabel,
+        result: resultLabel,
+        case_type: 'strategy',      // safe default; admin can edit later
+        round_type: 'finale',       // winners typically submit finale decks
+        file_type: ext,
+        description: `Verified ${resultLabel.toLowerCase()} deck from ${s.competition_name} (${s.year}).`,
+        storage_path: s.deck_path,
+        is_active: true,
+      });
+    // Log but don't fail the approval if the skeleton insert fails — the
+    // coupon is already issued and the submission is approved.
+    if (skeletonError) {
+      console.error('Auto-publish to Deck Vault failed:', skeletonError.message);
+    }
+
     revalidatePath('/admin/deck-vault');
+    revalidatePath('/admin/decks');
+    revalidatePath('/skeletons');
     return { success: true, couponCode: code };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
