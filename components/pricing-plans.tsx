@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Minus, Star, Zap, Sparkles, ShieldCheck } from "lucide-react";
+import { Check, Minus, Star, Zap, Sparkles, ShieldCheck, Trophy, ArrowRight } from "lucide-react";
 import {
   BILLING_PERIODS,
   BILLING_PERIOD_LABELS,
@@ -151,6 +151,20 @@ export default function PricingPlans() {
           </div>
         </div>
       </div>
+
+      {/* Deck Vault Rewards — competition winners get a personal discount */}
+      <Link
+        href="/deck-vault"
+        className="group mt-6 flex items-center justify-center gap-2.5 rounded-xl border border-primary/25 bg-primary/[0.04] px-4 py-3 transition-colors hover:bg-primary/[0.08]"
+      >
+        <Trophy className="h-4 w-4 shrink-0 text-primary" />
+        <span className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">Won a case competition?</span>{" "}
+          Upload your winning deck &amp; certificate — get up to{" "}
+          <span className="font-semibold text-primary">60% off Pro</span>.
+        </span>
+        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
+      </Link>
     </>
   );
 }

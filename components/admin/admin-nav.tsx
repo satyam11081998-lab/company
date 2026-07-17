@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, MessageSquareQuote, Users, Megaphone, FileText,
-  FolderLock, Flag, Sparkles, Activity, BadgeCheck, BarChart3,
+  FolderLock, Flag, Sparkles, Activity, BadgeCheck, BarChart3, Ticket,
 } from 'lucide-react';
 
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -17,6 +17,7 @@ const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: stri
   { href: '/admin/cases', label: 'Cases', icon: Sparkles },
   { href: '/admin/broadcast', label: 'Broadcast', icon: Megaphone },
   { href: '/admin/decks', label: 'Deck Vault', icon: FolderLock },
+  { href: '/admin/deck-vault', label: 'Deck Rewards', icon: Ticket },
   { href: '/admin/feedback', label: 'Feedback', icon: Flag },
 ];
 

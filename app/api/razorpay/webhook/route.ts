@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServiceClient } from '@/lib/supabase/service';
-import { priceFor, periodDays, isBillingPeriod, BILLING_PERIOD_LABELS } from '@/lib/tier';
+import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
 import { sendUpgradeReceipt } from '@/lib/email/send';
 
 export const dynamic = 'force-dynamic';
@@ -66,7 +66,31 @@ export async function POST(req: Request) {
         if (existing) return NextResponse.json({ ok: true, dedup: true });
 
         const period = isBillingPeriod(notes.period) ? notes.period : 'monthly';
-        const expectedPaise = priceFor(tier, period) * 100;
+
+        // Coupon-aware expected amount — mirrors /api/razorpay/verify exactly.
+        // notes.coupon is server-set at order creation; the DB row is the source
+        // of truth for ownership + %. Expiry is gated at order time, not here.
+        const couponCode = typeof notes.coupon === 'string' ? notes.coupon : '';
+        let couponRow: { id: string; user_id: string; discount_pct: number; status: string; redeemed_payment_id: string | null } | null = null;
+        let expectedPaise = priceFor(tier, period) * 100;
+        if (couponCode) {
+          const { data: c } = await supabase
+            .from('discount_coupons')
+            .select('id, user_id, discount_pct, status, redeemed_payment_id')
+            .eq('code', couponCode)
+            .maybeSingle();
+          couponRow = c as typeof couponRow;
+          const okOwner = !!couponRow && couponRow.user_id === uid;
+          const okState = !!couponRow && (
+            couponRow.status === 'active' ||
+            couponRow.status === 'expired' ||
+            (couponRow.status === 'redeemed' && couponRow.redeemed_payment_id === paymentId)
+          );
+          if (!okOwner || !okState) {
+            return NextResponse.json({ ok: false, reason: 'coupon mismatch' }, { status: 200 });
+          }
+          expectedPaise = discountedPaise(tier, period, couponRow!.discount_pct);
+        }
         if (Number(order.amount) !== expectedPaise) {
           return NextResponse.json({ ok: false, reason: 'amount mismatch' }, { status: 200 });
         }
@@ -88,6 +112,15 @@ export async function POST(req: Request) {
           status: 'paid',
           paid_at: now.toISOString(),
         });
+
+        // Burn the coupon exactly once (race-safe vs /verify via .eq status guard).
+        if (couponRow && couponRow.status === 'active') {
+          await supabase
+            .from('discount_coupons')
+            .update({ status: 'redeemed', redeemed_at: now.toISOString(), redeemed_payment_id: paymentId })
+            .eq('id', couponRow.id)
+            .eq('status', 'active');
+        }
 
         // Branded upgrade receipt (transactional). Non-blocking; first-time only
         // (the dedup guard above returns for repeats), so verify + webhook won't double-send.

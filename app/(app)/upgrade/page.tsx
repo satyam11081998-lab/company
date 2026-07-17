@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import Script from "next/script";
-import { Check, Star, Zap, ShieldCheck, Sparkles, Minus } from "lucide-react";
+import { Check, Star, Zap, ShieldCheck, Sparkles, Minus, Ticket, X } from "lucide-react";
 import { useUser } from "@/components/user-context";
 import TeamsContactBanner from "@/components/teams-contact-banner";
+import { DeckVaultBanner, DeckVaultPopup } from "@/components/deck-vault/deck-vault-promo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -13,8 +14,17 @@ import {
   BILLING_PERIOD_SUFFIX,
   priceFor,
   perMonthEquivalent,
+  discountedPaise,
+  couponCoversTier,
   type BillingPeriod,
 } from "@/lib/tier";
+
+/** A validated coupon as returned by POST /api/coupons/validate. */
+interface AppliedCoupon {
+  code: string;
+  pct: number;
+  tierScope: string;
+}
 
 // Required for TS to know about Razorpay on window object
 declare global {
@@ -28,6 +38,7 @@ export default function UpgradePage() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
 
   const handleUpgrade = async (target: "lite" | "pro") => {
     if (!user) {
@@ -36,13 +47,21 @@ export default function UpgradePage() {
       return;
     }
 
+    // Only send the coupon when it covers the tier being bought — applying a
+    // Pro coupon and then clicking Lite must not error the Lite purchase.
+    const activeCoupon = coupon && couponCoversTier(coupon.tierScope, target) ? coupon : null;
+
     try {
       setLoading(target);
       // 1. Create order on the backend
       const res = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier: target, period }),
+        body: JSON.stringify({
+          tier: target,
+          period,
+          ...(activeCoupon ? { coupon: activeCoupon.code } : {}),
+        }),
       });
 
       const data = await res.json();
@@ -146,6 +165,9 @@ export default function UpgradePage() {
       {/* Load Razorpay SDK */}
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
+      {/* One-time Deck Vault nudge for non-Pro visitors */}
+      <DeckVaultPopup surface="upgrade" />
+
       <main className="container max-w-5xl mx-auto space-y-10">
         {/* Header */}
         <div className="flex flex-col items-center justify-center text-center animate-fade-in">
@@ -160,6 +182,9 @@ export default function UpgradePage() {
             practice bank, GD briefs, and unlimited re-attempts.
           </p>
         </div>
+
+        {/* Deck Vault Rewards — won a case comp? up to 60% off */}
+        {tier !== "pro" && <DeckVaultBanner className="max-w-2xl mx-auto -mt-4" />}
 
         {/* Billing period toggle */}
         <div className="flex justify-center -mt-4">
@@ -187,6 +212,9 @@ export default function UpgradePage() {
             })}
           </div>
         </div>
+
+        {/* Coupon code (Deck Vault Rewards & co.) */}
+        <CouponBox coupon={coupon} onChange={setCoupon} />
 
         {/* Pricing Cards — Free / Lite / Pro */}
         <div className="grid md:grid-cols-3 gap-5 items-stretch">
@@ -231,7 +259,7 @@ export default function UpgradePage() {
                 {isCurrentPlan("lite") && <CurrentTag />}
               </div>
               <p className="text-xs text-muted-foreground">Practise beyond the daily pair.</p>
-              <PriceBlock tier="lite" period={period} />
+              <PriceBlock tier="lite" period={period} coupon={coupon} />
             </div>
             <div className="p-6 flex-1 flex flex-col justify-between gap-8">
               <ul className="space-y-3">
@@ -277,7 +305,7 @@ export default function UpgradePage() {
                 {isCurrentPlan("pro") && <CurrentTag />}
               </div>
               <p className="text-xs text-muted-foreground">Unlimited practice and scored prep.</p>
-              <PriceBlock tier="pro" period={period} />
+              <PriceBlock tier="pro" period={period} coupon={coupon} />
             </div>
             <div className="p-6 flex-1 flex flex-col justify-between gap-8 bg-primary/[0.01]">
               <ul className="space-y-3">
@@ -316,20 +344,137 @@ export default function UpgradePage() {
   );
 }
 
-function PriceBlock({ tier, period }: { tier: "lite" | "pro"; period: BillingPeriod }) {
+function PriceBlock({
+  tier,
+  period,
+  coupon,
+}: {
+  tier: "lite" | "pro";
+  period: BillingPeriod;
+  coupon?: AppliedCoupon | null;
+}) {
+  const applies = !!coupon && couponCoversTier(coupon.tierScope, tier);
+  const finalInr = applies
+    ? Math.round(discountedPaise(tier, period, coupon!.pct) / 100)
+    : priceFor(tier, period);
+
   return (
     <div className="mt-6">
-      <div className="flex items-baseline gap-1">
-        <span className="font-mono text-3xl font-bold tabular-nums text-foreground tracking-tight">
-          ₹{priceFor(tier, period).toLocaleString("en-IN")}
+      <div className="flex items-baseline gap-1.5 flex-wrap">
+        {applies && (
+          <span className="font-mono text-base font-semibold tabular-nums text-muted-foreground/70 line-through">
+            ₹{priceFor(tier, period).toLocaleString("en-IN")}
+          </span>
+        )}
+        <span className={`font-mono text-3xl font-bold tabular-nums tracking-tight ${applies ? "text-primary" : "text-foreground"}`}>
+          ₹{finalInr.toLocaleString("en-IN")}
         </span>
         <span className="text-xs text-muted-foreground">{BILLING_PERIOD_SUFFIX[period]}</span>
       </div>
-      {period !== "monthly" && (
+      {applies && (
+        <p className="mt-1 text-[11px] font-semibold text-success">
+          {coupon!.pct}% off applied — coupon {coupon!.code}
+        </p>
+      )}
+      {period !== "monthly" && !applies && (
         <p className="mt-1 text-[11px] text-muted-foreground">
           ≈ ₹{perMonthEquivalent(tier, period).toLocaleString("en-IN")}/mo · billed{" "}
           quarterly
         </p>
+      )}
+    </div>
+  );
+}
+
+/** "Have a coupon?" box — validates via /api/coupons/validate and shows an applied chip. */
+function CouponBox({
+  coupon,
+  onChange,
+}: {
+  coupon: AppliedCoupon | null;
+  onChange: (c: AppliedCoupon | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [checking, setChecking] = useState(false);
+
+  const apply = async () => {
+    const trimmed = code.trim().toUpperCase();
+    if (trimmed.length < 4) {
+      toast.error("Enter your full coupon code.");
+      return;
+    }
+    setChecking(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: trimmed }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not validate the coupon");
+      if (!data.valid) {
+        toast.error(data.reason || "Invalid coupon code.");
+        return;
+      }
+      onChange({ code: data.code, pct: data.pct, tierScope: data.tierScope });
+      toast.success(`Coupon applied — ${data.pct}% off ${String(data.tierScope).toUpperCase()}!`);
+      setOpen(false);
+      setCode("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not validate the coupon.");
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  if (coupon) {
+    return (
+      <div className="flex justify-center -mt-6">
+        <span className="inline-flex items-center gap-2 rounded-full border border-success/40 bg-success/10 py-1.5 pl-3 pr-1.5 text-xs font-semibold text-success">
+          <Ticket className="h-3.5 w-3.5" />
+          {coupon.code} · {coupon.pct}% off {coupon.tierScope === "any" ? "" : coupon.tierScope.toUpperCase()}
+          <button
+            onClick={() => onChange(null)}
+            aria-label="Remove coupon"
+            className="flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-success/20"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-center -mt-6">
+      {open ? (
+        <div className="flex w-full max-w-sm items-center gap-2">
+          <input
+            autoFocus
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onKeyDown={(e) => e.key === "Enter" && !checking && apply()}
+            placeholder="MECE-DECK-XXXXXX"
+            maxLength={32}
+            className="h-10 flex-1 rounded-md border border-border bg-background px-3 font-mono text-sm tracking-wider text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary"
+          />
+          <button
+            onClick={apply}
+            disabled={checking}
+            className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+          >
+            {checking ? "Checking…" : "Apply"}
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
+        >
+          <Ticket className="h-3.5 w-3.5" />
+          Have a coupon code?
+        </button>
       )}
     </div>
   );

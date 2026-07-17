@@ -159,6 +159,27 @@ export function periodDays(period: BillingPeriod = 'monthly'): number {
   return BILLING_PERIOD_DAYS[isBillingPeriod(period) ? period : 'monthly'];
 }
 
+/**
+ * Discounted price in PAISE for a tier + period + coupon percentage.
+ * Single source of truth shared by order creation, verify and the webhook —
+ * all three MUST agree to the paisa or legitimate discounted payments fail.
+ * Clamped to Razorpay's ₹1 minimum order amount.
+ */
+export function discountedPaise(
+  tier: Exclude<SubscriptionTier, 'free'>,
+  period: BillingPeriod,
+  discountPct: number,
+): number {
+  const base = priceFor(tier, period) * 100;
+  const pct = Math.min(90, Math.max(0, Math.round(discountPct)));
+  return Math.max(100, Math.round((base * (100 - pct)) / 100));
+}
+
+/** Whether a coupon's tier_scope covers the tier being purchased. */
+export function couponCoversTier(scope: string, tier: 'lite' | 'pro'): boolean {
+  return scope === 'any' || scope === tier;
+}
+
 /** Effective per-month price (for "≈ ₹X/mo" subtext on prepay options). */
 export function perMonthEquivalent(
   tier: Exclude<SubscriptionTier, 'free'>,
