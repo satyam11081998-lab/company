@@ -165,6 +165,22 @@ export async function createUploadSession(
   return location;
 }
 
+/** Fetch a file's stored NAME (metadata only). Returns null on any failure. */
+export async function fetchFileName(fileId: string): Promise<string | null> {
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=name&supportsAllDrives=true`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data?.name === 'string' ? data.name : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch a file's bytes as a streaming Response (alt=media). */
 export async function fetchFileStream(fileId: string): Promise<Response> {
   const token = await getAccessToken();

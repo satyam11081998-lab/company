@@ -17,9 +17,29 @@ import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { isDrivePath, driveFileId, fetchFileName } from '@/lib/google-drive';
 import type { UserRow } from '@/lib/types';
 
 const COUPON_VALID_DAYS = 30;
+
+/** file_type values the Deck Vault library understands for decks. */
+const DECK_EXTS = ['pdf', 'pptx', 'ppt'];
+
+/**
+ * Derive the deck's file type for the library row. Bucket paths carry a real
+ * extension; Drive paths (`gdrive:<id>`) don't — ask Drive for the stored
+ * filename (submission_<id>_deck.<ext>) instead. Unknown -> 'pdf'.
+ */
+async function deckFileType(deckPath: string): Promise<string> {
+  let candidate = '';
+  if (isDrivePath(deckPath)) {
+    const name = await fetchFileName(driveFileId(deckPath));
+    candidate = (name || '').split('.').pop()?.toLowerCase() || '';
+  } else {
+    candidate = (deckPath.split('.').pop() || '').toLowerCase();
+  }
+  return DECK_EXTS.includes(candidate) ? candidate : 'pdf';
+}
 
 async function requireAdmin() {
   const supabase = createClient();
@@ -123,8 +143,10 @@ export async function approveDeckSubmission(
     if (subError) return { success: false, error: subError.message };
 
     // ── Auto-publish to the public Deck Vault library ──────────────
-    // Extract file extension from the stored path for file_type.
-    const ext = (s.deck_path.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+    // NOTE: deck_path may be `gdrive:<fileId>` (no extension) — deckFileType()
+    // resolves the real type via Drive metadata; naive split('.') would write
+    // garbage into file_type and break the vault viewer's content-type mapping.
+    const ext = await deckFileType(s.deck_path);
     const resultLabel = POSITION_TO_RESULT[s.position] || 'Other';
     const competitionLabel = s.organizer
       ? `${s.competition_name} · ${s.organizer}`
