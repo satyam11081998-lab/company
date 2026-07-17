@@ -11,6 +11,27 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-07-17 — deck-vault-rewards-auto-publish + drive file_type fix — 1f49694 + <pending commit>
+Approving a rewards submission now ALSO auto-publishes the deck into the public Deck Vault library (`deck_skeletons` insert: title "<comp> <year> — <result> Deck", result via POSITION_TO_RESULT map, case_type 'strategy' / round_type 'finale' defaults, is_active true, storage_path shared with the submission — non-fatal on failure, coupon still issued). PENDING COMMIT on top: file_type derivation fixed for Drive-stored decks — `deck_path.split('.')` wrote garbage for `gdrive:<id>` paths; new `deckFileType()` asks Drive for the stored filename (`fetchFileName()` added to lib/google-drive.ts) and clamps to pdf/pptx/ppt.
+touches: app/(app)/admin/deck-vault/actions.ts, lib/google-drive.ts
+breaking: no   affects: Deck Vault & DRM (library gets user-sourced rows), Admin
+
+## 2026-07-17 — deck-vault-rewards-drive-storage — 6a7f496 (backend)
+Reward submissions now store deck+certificate in the Google Drive vault (same folder + `gdrive:<fileId>` convention as the library — see C8): new `services/gdrive.py` (Python twin of lib/google-drive.ts; OAuth-refresh OR service-account JWT, SAME env names; server-side resumable upload; delete). Supabase bucket `deck-vault-submissions` remains as automatic fallback when Drive env is absent. telegram_notify now accepts TELEGRAM_CHAT_ID or TELEGRAM_ADMIN_CHAT_ID. OPS GATE: backend host (Render) needs the Google + Telegram env vars copied from Vercel or alerts no-op + storage falls back to bucket.
+touches: services/gdrive.py (new), routes/deck_vault.py, services/telegram_notify.py, .env.example (backend)
+breaking: no (C8 additive)   affects: Deck Vault Rewards, Admin file door
+
+## 2026-07-17 — deck-vault-rewards — 849a0dc + 47764c2 (frontend) · 41a5f50 (backend) — cross-repo, landed direct-to-main
+NEW FEATURE: "Won a case competition? Get up to 60% off Pro." Users upload winning deck + certificate (+T&C rights grant) at /deck-vault → private storage → Telegram ping to admin → manual review at /admin/deck-vault (default corporate 60% / bschool 40%, editable) → approval mints single-use, user-locked, 30-day, Pro-scope coupon MECE-DECK-XXXXXX → applied on /upgrade (coupon box; discounted PriceBlock) and enforced SERVER-SIDE in razorpay order/verify/webhook via shared `discountedPaise()` (see C7). Surfaces: pricing-page strip (public), upgrade banner, one-time popups (dashboard+upgrade, non-Pro, localStorage), admin nav "Deck Rewards", admin file door /api/admin/deck-vault/file/[id] (streams Drive, signs bucket legacy). Backend: /deck-vault/submit (multipart, magic-byte+size+enum validation, rate-limited, one-pending + no-repeat-after-approval) + /deck-vault/status. DB: migration 0041 (deck_submissions, discount_coupons, RLS select-own, partial unique indexes, private bucket). 47764c2 fixed two build breakers (React18 RefObject; CouponRow `as typeof` never-narrowing).
+touches: supabase/migrations/0041_deck_vault_rewards.sql, lib/{tier,deck-vault-api}.ts, app/api/razorpay/{order,verify,webhook}/route.ts, app/api/coupons/validate/route.ts, app/api/admin/deck-vault/file/[submissionId]/route.ts, app/(app)/deck-vault/page.tsx, app/(app)/admin/deck-vault/*, app/(app)/{upgrade,dashboard}/page.tsx, components/deck-vault/deck-vault-promo.tsx, components/{pricing-plans,admin/admin-nav}.tsx; backend routes/deck_vault.py, services/telegram_notify.py, main.py
+breaking: no — new contracts C7 + C8 (additive); razorpay order accepts optional `coupon` (C4 note)   affects: Payments, Deck Vault & DRM, Admin, Pricing/Upgrade
+GATES: run 0041 in Supabase; Vercel prod build currently FAILING at prerender on missing NEXT_PUBLIC_SUPABASE_* (see STATE.md blockers) — feature not visible on live site until resolved.
+
+## 2026-07-17 — cv-pointer-lab-prompt-fix — 7adc9d2 (backend)
+CV Pointer Lab engine (services/resume_ai.py /resume/point): missing NUMBERS are no longer a reason to ask a clarifying question — bullets are written with natural placeholders (XX%, XX+, ₹XX, XX Cr, XX clients…); clarify is reserved for genuine role/function ambiguity only. _SHARED_RULES upgraded: impact-first structure (Action + Impact → Method → Context), expanded verb list, full placeholder set; band-expand step emits XX-style placeholders.
+touches: services/resume_ai.py (backend)
+breaking: no   affects: Resume Lab / CV Pointer Lab
+
 ## 2026-07-14: Landing Deck Vault & ISR Migration
 - **Feature**: Added Deck Vault section to landing page (`DeckVaultVignette`).
 - **Perf**: Migrated `/` to ISR (`revalidate = 300`) with static Supabase client.

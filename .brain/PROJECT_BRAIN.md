@@ -2692,3 +2692,119 @@ Two UX refinements in the same upload.
 - **`components/practice-hub.tsx`:** the "Attempted" indicator was restyled and **relocated** — it is now a bold success pill (`text-success bg-success/15 … uppercase tracking-widest` with a `<Check>` icon) sitting in a flex row **next to the difficulty chip** at the top of each case card (removed from its old mid-card position); the scored-card attempted marker was likewise upgraded from `text-green-600` to the same `text-success` pill treatment. Purely visual — the `attemptedCaseIds.includes(c.id)` logic is unchanged.
 - **Blast radius:** 2 files, presentational/state only. No data or contract change.
 - **Status:** IN TREE. Gate: `npm run build`; verify accordion state survives navigation within a session, long answers scroll inside the card, and Attempted pills render in the new position on both the scored and guesstimate tabs.
+
+---
+
+## 21. DECK VAULT REWARDS — winning-deck → discount coupon (2026-07-17, Cowork session, landed direct-to-main)
+
+### 21.1 Product
+"Won a case competition? Get up to 60% off Pro." A free/lite user uploads their winning
+competition deck + certificate; after manual admin verification (~5–6h) they receive a
+single-use personal coupon for Pro. Approved decks additionally feed the public Deck
+Vault library (21.6). Discount matrix (defaults, admin-editable per approval):
+**corporate competition podium = 60%, b-school podium = 40%** (podium = winner /
+runner-up / 2nd runner-up; certificate mandatory; T&C rights-grant mandatory).
+
+### 21.2 Data (migration `0041_deck_vault_rewards.sql`)
+- `deck_submissions`: competition fields (name/organizer/type/position/year 2015–2035),
+  `deck_path`, `certificate_path`, `tnc_accepted_at` + `tnc_version` ('2026-07-17'),
+  status pending|approved|rejected, `admin_note`, `discount_pct`, `coupon_id`.
+  Partial unique `deck_submissions_one_pending (user_id) where status='pending'`.
+- `discount_coupons`: `code` unique (MECE-DECK-XXXXXX, unambiguous alphabet),
+  user-locked, `discount_pct` 1–90, `tier_scope` pro|lite|any (issued as 'pro'),
+  source 'deck_vault', status active|redeemed|expired|revoked, `expires_at` (30d),
+  `redeemed_payment_id`. Partial unique: ONE active deck-vault coupon per user.
+- RLS on both: **select own rows only; zero insert/update policies** — every write is
+  service-role (FastAPI submit, admin server actions, razorpay routes).
+- Private storage bucket `deck-vault-submissions` (no storage policies at all).
+
+### 21.3 Storage — Drive-first with bucket fallback (contract C8)
+Primary: files go to the SAME Google Drive vault as the library, named
+`submission_<id>_deck.<ext>` / `..._certificate.<ext>`, recorded as `gdrive:<fileId>`
+(the library's existing path convention). Backend twin `services/gdrive.py` mirrors
+`lib/google-drive.ts`: same env names, both auth options (OAuth refresh trio or
+GOOGLE_SA_* / GOOGLE_SA_CREDENTIALS), server-side RESUMABLE upload (no multipart size
+ceiling), delete for cleanup; folder = GDRIVE_SUBMISSIONS_FOLDER_ID || GDRIVE_FOLDER_ID.
+If Drive env is absent the backend silently falls back to the private bucket — a
+submission must never fail on ops setup. Cleanup on partial failure handles both
+backends (`_cleanup(stored)`).
+
+### 21.4 Backend surface (FastAPI)
+- `POST /deck-vault/submit` (multipart): JWT-verified uid only; rate-limit 4/h;
+  field validation (enums, year, lengths, tnc_accepted=='true'); file validation =
+  extension whitelist + declared content-type + **magic bytes** (pdf %PDF-, pptx PK,
+  ppt OLE, png/jpg/webp) + size caps (deck 20MB, cert 10MB); state guards: 409 if a
+  pending exists or a previous approval exists (reward is one-per-member). Inserts the
+  row, then fire-and-forget Telegram ping (`services/telegram_notify.py`, daemon
+  thread, 8s timeout, accepts TELEGRAM_ADMIN_CHAT_ID **or** TELEGRAM_CHAT_ID).
+- `GET /deck-vault/status`: latest submission + live coupon for the caller (drives the
+  /deck-vault page states).
+
+### 21.5 Payment integration (contract C7 — the one that can cost money)
+- `lib/tier.ts` gains `discountedPaise(tier, period, pct)` (rounds, clamps to ₹1 min)
+  and `couponCoversTier(scope, tier)`. **Single source of truth** shared by order,
+  verify AND webhook — all three must agree to the paisa.
+- `order`: optional `coupon` in body → service-role revalidation (owner, active,
+  unexpired, scope) → discounted amount + server-set `notes.coupon`. Invalid coupon =
+  hard 400 (never silently charge full). No coupon → byte-identical legacy behavior.
+- `verify` + `webhook`: recompute expected amount from the DB coupon row when
+  `notes.coupon` present (owner check; status active OR expired-after-order OR
+  redeemed-by-this-payment for idempotent retries); after granting tier, burn the
+  coupon with a race-safe conditional update (`.eq('status','active')`).
+- Redemption marks `redeemed_payment_id`; refund flow untouched (existing webhook
+  refund → tier downgrade still applies).
+
+### 21.6 Admin flow (`/admin/deck-vault`, server actions)
+- Review list (pending + reviewed); deck/cert open through the admin-only door
+  `/api/admin/deck-vault/file/[submissionId]?kind=deck|cert` — streams `gdrive:` files
+  through our domain (mirrors /api/skeletons/file), 307s to a 5-min signed URL for
+  legacy bucket rows. is_admin enforced at the route (API routes don't inherit the
+  admin layout gate).
+- Approve(pct): mints the coupon (insert first — the one-active index makes
+  double-issue impossible), flips the submission (race-safe `.eq status pending`), then
+  **auto-publishes to `deck_skeletons`** (2026-07-17 addition): title
+  "<comp> <year> — <result> Deck", result via POSITION_TO_RESULT, case_type 'strategy'
+  + round_type 'finale' defaults, `storage_path` = the submission's path (works because
+  the library reader speaks `gdrive:` — C8), is_active immediately. Skeleton-insert
+  failure is logged, non-fatal (coupon already issued). `file_type` derives via
+  `deckFileType()` → Drive filename metadata (`fetchFileName` in lib/google-drive.ts),
+  clamped to pdf/pptx/ppt — naive `split('.')` on a `gdrive:<id>` path is a bug.
+- Reject(note ≥5 chars): note is shown to the user; resubmission allowed.
+
+### 21.7 Growth surfaces
+/pricing strip (public, unconditional) · /upgrade banner + coupon box + discounted
+PriceBlock (banner hidden for Pro) · one-time popups on dashboard + upgrade
+(localStorage `mece-deck-vault-popup-<surface>`, non-Pro only, 1.2s delay) ·
+/deck-vault page with 4 states (form / pending / approved+code / rejected+resubmit).
+T&C constant lives in the page (tnc_version '2026-07-17'); legal review PENDING.
+
+### 21.8 Gotchas learned this build (write these on your hand)
+- **`x = y as typeof x` narrows to the CURRENT control-flow type** — after
+  `let x: T | null = null`, `typeof x` is `null` → everything downstream is `never`.
+  Name the type (`CouponRow`) and cast to `CouponRow | null`. (Broke verify+webhook.)
+- **React 18 typings:** `useRef<T>(null)` → `RefObject<T>`; a prop typed
+  `RefObject<T | null>` is NOT assignable to an input's ref. Type props as
+  `React.RefObject<HTMLInputElement>` until React 19.
+- **`gdrive:<fileId>` paths carry no extension** — any `split('.')`-based file_type
+  or content-type logic must special-case them (Drive metadata or stored default).
+- **Vercel "Sensitive" env vars cannot be read back** (dashboard or CLI) — losing a
+  secret means re-minting at the provider. NEXT_PUBLIC_* values are public by
+  definition; storing them as Sensitive has no upside and is the prime suspect when
+  prerender dies on "supabaseUrl is required" while the dashboard "shows" the vars.
+- **Rotating a Google OAuth client secret invalidates the old secret immediately**
+  (breaks every deployed consumer until updated) but does NOT invalidate refresh
+  tokens. Refresh tokens must be minted by the account that OWNS the Drive folder —
+  MECE uses separate login vs deck-storage Google accounts.
+- **Stale `.git/index.lock`** blocks all git writes; cause here was external tooling
+  running `git status` against the working tree without cleanup rights. Fix: delete
+  the lock. Prevention: `git --no-optional-locks status` for read-only checks.
+- Backend repo has a dormant CRLF/LF churn: ~20 files show fully-rewritten diffs from
+  line endings alone. Needs a `.gitattributes` + renormalize pass someday; until then
+  never `git add -A` in consilio-backend — add files explicitly.
+
+### 21.9 CV Pointer Lab prompt policy (same day, 7adc9d2)
+/resume/point never asks for missing NUMBERS — placeholders (XX%, XX+, ₹XX, XX Cr,
+XX clients, XX team members…) are mandatory instead; ONE clarifying question allowed
+only when the role/function itself is ambiguous. Bullets are impact-first
+(Action + Impact → Method → Context). Options must differ by angle (consulting /
+business-impact / leadership / analytics / product).
