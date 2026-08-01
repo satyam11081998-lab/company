@@ -5,7 +5,7 @@
  *
  * Upload a winning case-competition deck + certificate -> manual verification
  * (typically 5–6 hours, admin gets a Telegram ping) -> personal single-use
- * coupon: corporate comp podium 60% off Pro, b-school podium 40% off Pro.
+ * coupon: corporate comp podium 35% off Pro, b-school podium 25% off Pro.
  *
  * The page is state-driven off GET /deck-vault/status:
  *   none      -> submission form
@@ -48,7 +48,7 @@ const TERMS = `By submitting materials to MECE's Deck Vault Rewards programme yo
 
 3. Licence to MECE — you retain ownership of your work, and you grant MECE a worldwide, royalty-free, perpetual, irrevocable, non-exclusive, sublicensable and transferable licence to store, reproduce, adapt, edit, anonymise, translate, publish, distribute and create derivative works from the submitted deck, in whole or in part, for any purpose — including the MECE Deck Vault library, teaching material, product features, research and marketing. Personal details on the certificate are used for verification only and are not published.
 
-4. Verification & discounts — verification is manual and typically takes 5–6 hours. Approval, the discount percentage (up to 60% for corporate competitions, up to 40% for B-school competitions) and coupon issuance are at MECE's sole discretion. Coupons are single-use, non-transferable, tied to your account, and expire 30 days after issue.
+4. Verification & discounts — verification is manual and typically takes 5–6 hours. Approval, the discount percentage (up to 35% for corporate competitions, up to 25% for B-school competitions) and coupon issuance are at MECE's sole discretion. Coupons are single-use, non-transferable, tied to your account, and expire 30 days after issue.
 
 5. No compensation — other than the discount coupon, no payment or royalty is due for the submission or its use.`;
 
@@ -103,13 +103,13 @@ export default function DeckVaultPage() {
             Deck Vault Rewards
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Turn your winning deck into up to 60% off Pro.
+            Turn your winning deck into up to 35% off Pro.
           </h1>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
             Placed in a case competition? Upload your deck and certificate. We verify it
             (typically 5–6 hours) and send a personal coupon —{' '}
-            <span className="font-semibold text-foreground">60% off</span> for corporate
-            competitions, <span className="font-semibold text-foreground">40% off</span> for
+            <span className="font-semibold text-foreground">35% off</span> for corporate
+            competitions, <span className="font-semibold text-foreground">25% off</span> for
             B-school competitions.
           </p>
         </div>

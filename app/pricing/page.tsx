@@ -99,8 +99,8 @@ const FEATURES = [
 
 const productJsonLd = pricingProductJsonLd([
   { name: 'Free', description: 'Full Casebook library, daily case & guesstimate, leaderboard & badges.', price: 0 },
-  { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 5 interviewer hints per case.', price: 199 },
-  { name: 'Pro', description: 'Everything in Lite plus unlimited practice bank, live interviewer hints, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
+  { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 12 interviewer hints per case.', price: 199 },
+  { name: 'Pro', description: 'Everything in Lite plus unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
 ]);
 
 const faqJsonLd = faqPageJsonLd(FAQS);

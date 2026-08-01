@@ -13,7 +13,7 @@ section. Deduplicated and consolidated into the single table below; no row delet
 |---|---|---|---|---|---|
 | **Dashboard** | A | feat/dashboard | **Wired to live data + perf + mobile + dark-mode BUILT & LIVE (2026-06-08)** | `components/dashboard/*`, `lib/readiness.ts`, `lib/next-action.ts`, `lib/personal-stats.ts`, `components/dashboard-client.tsx` | DB:`cases`/`attempts`, Scoring-contract (reads `total`/`dimensions`) |
 | **Casebook** | C | feat/casebook | Core+Toolkit BUILT; Misc BUILT; **Guesstimates section real + promoted to B, Pain&Promise page (§9.38), method modules (P2-4) BUILT; P5 cheat sheet + P6 worked solve pending; clarifying-question dropdowns on all 52 worked examples BUILT; MECE page added as first Core Framework (2026-06-20)** | `lib/casebook/*`, `components/casebook/*`, `lib/casebook/content/**` | Casebook-Page-schema (C3) |
-| **Case solve UX** | A | feat/solve | **BUILT; free-tier clarification-counter fix 2026-06-20; practice-hub domains + read-only deep-links removed 2026-06-21** (unified workspace §9.39–9.41) | `app/(app)/cases/[id]/page.tsx`, `components/solve/*`, `components/case-attempt-history.tsx`, `components/practice-hub.tsx`, `components/casebook/nav-tree.tsx` | DB:`cases` (reader), Scoring-contract (reader) |
+| **Case solve UX** | A | feat/solve | **BUILT; free-tier clarification-counter fix 2026-06-20; practice-hub domains + read-only deep-links removed 2026-06-21; clarification-quota dead-end fixed 2026-08-01 (free 7 / lite 12 / pro 20, interviewer never goes silent, migration 0043)** (unified workspace §9.39–9.41) | `app/(app)/cases/[id]/page.tsx`, `components/solve/*`, `lib/interview-api.ts`, `components/case-attempt-history.tsx`, `components/practice-hub.tsx`, `components/casebook/nav-tree.tsx` | DB:`cases` (reader), Scoring-contract (reader), **clarification-quota tier surface (proposed C9)** |
 | **Guesstimate end-to-end** | B | feat/guesstimate | **BUILT & LIVE** (verified 2026-06-06) | `components/practice-hub.tsx`, `supabase/migrations/0001_baseline_schema.sql`, `lib/types.ts` | DB:`cases`, Scoring-contract |
 | **Scoring backstop** | B | feat/guesstimate | **BUILT & LIVE** (verified 2026-06-06) | `services/guesstimate_backstop.py`, `prompts/guesstimate_scoring_prompt.py` | Scoring-contract (must keep return keys) |
 | **Daily content + admin + keep-alive** | B | feat/daily | **BUILT** (daily scheduler live) | `services/content_generator.py`, `services/daily_scheduler.py`, `routes/daily.py`, `routes/cron.py`, `.github/workflows/*`, `app/(app)/admin/*` | DB:`cases`, API-contract (C4) |
@@ -47,6 +47,14 @@ section. Deduplicated and consolidated into the single table below; no row delet
 | **Free-tier rework** | C+B | feat/free-tier | **BUILT frontend (c96e952) + backend (f254eba)**; LinkedIn-follow perk (0040) live | `lib/{tier,access}.ts`, `services/access_guard.py`, `supabase/migrations/{0038,0040}*.sql` | TIER surface (cross-repo) |
 
 ## Collision watch (features that touch the same surface)
+- **Clarification quota** is THREE constants that must agree: backend
+  `routes/attempts.py CLARIFICATION_QUOTA`, frontend `lib/tier.ts
+  TIER_LIMITS.maxHintQuestions`, and the pricing copy (`components/pricing-plans.tsx`,
+  `app/(app)/upgrade/page.tsx`, `app/pricing/page.tsx`). They silently disagreed for
+  weeks (frontend said Pro = Infinity, backend capped at 15; frontend + pricing said
+  free = 0 hints while the solve UI still invited free users to ask) and that drift is
+  exactly what produced the 2026-08-01 P0. Change one → change all three, same commit.
+  Proposed as contract **C9** in `handoffs/ANTIGRAVITY_HANDOFF_clarification-quota.md`.
 - **DB:`cases`** is touched by Dashboard, Guesstimate, and Daily-content → any
   column add is a contract event; announce in CHANGELOG with `affects:` all three.
 - **Scoring-contract** is DEFINED by AI-evaluation-v2 and CONSUMED by Dashboard,

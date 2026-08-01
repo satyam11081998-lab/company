@@ -183,7 +183,7 @@ export default function UpgradePage() {
           </p>
         </div>
 
-        {/* Deck Vault Rewards — won a case comp? up to 60% off */}
+        {/* Deck Vault Rewards — won a case comp? up to 35% off */}
         {tier !== "pro" && <DeckVaultBanner className="max-w-2xl mx-auto -mt-4" />}
 
         {/* Billing period toggle */}
@@ -270,7 +270,7 @@ export default function UpgradePage() {
                 <FeatureItem text="2 extra cases & guesstimates / day" />
                 <FeatureItem text="Unlimited re-attempts" />
                 <FeatureItem text="GD Briefs unlocked" />
-                <FeatureItem text="5 interviewer hints per case" />
+                <FeatureItem text="12 interviewer hints per case" />
                 <FeatureItem muted text="No bookmarks or cheat-sheet" cross />
               </ul>
               <button
@@ -315,7 +315,7 @@ export default function UpgradePage() {
                 </li>
                 <FeatureItem text="CV Pointer Lab — strict-fit resume bullet writer (free)" />
                 <FeatureItem text="Unlimited practice bank" />
-                <FeatureItem text="Live interviewer hints & model Q&A" />
+                <FeatureItem text="20 interviewer hints per case & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
                 <FeatureItem text="Interviewer simulator" />
                 <FeatureItem muted text="Deck Vault — coming soon" />

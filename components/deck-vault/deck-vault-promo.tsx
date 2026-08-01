@@ -10,7 +10,7 @@
  *    dismiss or CTA click. Mirrors the LinkedInFollowPrompt pattern.
  *
  * Offer copy (defaults; admin can adjust per approval):
- *   corporate comp podium -> 60% off Pro, b-school podium -> 40% off Pro.
+ *   corporate comp podium -> 35% off Pro, b-school podium -> 25% off Pro.
  */
 
 import { useEffect, useState } from 'react';
@@ -38,10 +38,10 @@ export function DeckVaultBanner({ className = '' }: { className?: string }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-foreground leading-tight">
-          Won a case competition? Get up to 60% off Pro.
+          Won a case competition? Get up to 35% off Pro.
         </span>
         <span className="block text-xs text-muted-foreground mt-0.5">
-          Upload your winning deck &amp; certificate — corporate comps get 60% off, B-school comps 40%.
+          Upload your winning deck &amp; certificate — corporate comps get 35% off, B-school comps 25%.
         </span>
       </span>
       <span className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-primary whitespace-nowrap">
@@ -81,7 +81,7 @@ export function DeckVaultPopup({ surface }: { surface: 'dashboard' | 'upgrade' }
             <Trophy className="h-6 w-6 text-primary" />
           </div>
           <DialogTitle className="text-center">
-            Have a winning case deck? Get up to 60% off Pro.
+            Have a winning case deck? Get up to 35% off Pro.
           </DialogTitle>
           <DialogDescription className="text-center">
             Won or placed in a case competition? Upload your deck and certificate —
@@ -91,7 +91,7 @@ export function DeckVaultPopup({ surface }: { surface: 'dashboard' | 'upgrade' }
 
         <div className="grid grid-cols-2 gap-2.5">
           <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
-            <p className="font-mono text-xl font-bold text-primary">60%</p>
+            <p className="font-mono text-xl font-bold text-primary">35%</p>
             <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
               Corporate competition
               <br />
@@ -99,7 +99,7 @@ export function DeckVaultPopup({ surface }: { surface: 'dashboard' | 'upgrade' }
             </p>
           </div>
           <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
-            <p className="font-mono text-xl font-bold text-primary">40%</p>
+            <p className="font-mono text-xl font-bold text-primary">25%</p>
             <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
               B-school competition
               <br />

@@ -10,8 +10,8 @@ export type DeckPosition = 'winner' | 'runner_up' | 'second_runner_up';
 
 /** Default discount matrix — mirrors backend routes/deck_vault.py DEFAULT_PCT. */
 export const DECK_VAULT_PCT: Record<DeckCompetitionType, number> = {
-  corporate: 60,
-  bschool: 40,
+  corporate: 35,
+  bschool: 25,
 };
 
 export interface DeckSubmissionStatus {

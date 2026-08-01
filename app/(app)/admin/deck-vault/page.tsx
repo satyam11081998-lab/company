@@ -76,7 +76,7 @@ export default async function AdminDeckVaultPage() {
         <h1 className="text-xl font-bold tracking-tight text-foreground">Deck Rewards</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Verify competition-deck submissions. Approving mints a single-use, 30-day coupon
-          (defaults: corporate 60% · B-school 40% — editable per case) and automatically publishes
+          (defaults: corporate 35% · B-school 25% — editable per case) and automatically publishes
           the deck to the public Deck Vault library. You can edit or hide it from the Decks section.
         </p>
       </div>

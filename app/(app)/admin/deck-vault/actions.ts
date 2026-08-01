@@ -5,7 +5,7 @@
  *
  * approveDeckSubmission: marks the submission approved and mints the user's
  *   single-use coupon (MECE-DECK-XXXXXX, 30-day expiry, Pro scope). The %
- *   defaults to the matrix (corporate 60 / bschool 40) but the admin can
+ *   defaults to the matrix (corporate 35 / bschool 25) but the admin can
  *   override per case from the review UI.
  * rejectDeckSubmission: marks it rejected with a note shown to the user
  *   (resubmission is allowed).

@@ -31,7 +31,7 @@ export interface AdminSubmission {
   certUrl: string | null;
 }
 
-const DEFAULT_PCT: Record<'corporate' | 'bschool', number> = { corporate: 60, bschool: 40 };
+const DEFAULT_PCT: Record<'corporate' | 'bschool', number> = { corporate: 35, bschool: 25 };
 
 const POSITION_LABEL: Record<string, string> = {
   winner: 'Winner',

@@ -2702,8 +2702,12 @@ Two UX refinements in the same upload.
 competition deck + certificate; after manual admin verification (~5–6h) they receive a
 single-use personal coupon for Pro. Approved decks additionally feed the public Deck
 Vault library (21.6). Discount matrix (defaults, admin-editable per approval):
-**corporate competition podium = 60%, b-school podium = 40%** (podium = winner /
+**corporate competition podium = 35%, b-school podium = 25%** (podium = winner /
 runner-up / 2nd runner-up; certificate mandatory; T&C rights-grant mandatory).
+Launched 2026-07-17 at 60/40; revised to 35/25 by owner on 2026-07-18 (constants in
+routes/deck_vault.py DEFAULT_PCT + lib/deck-vault-api.ts DECK_VAULT_PCT + admin
+client DEFAULT_PCT; T&C version bumped to 2026-07-18). Already-minted coupons keep
+the % they were issued with — the coupon row is the source of truth at redemption.
 
 ### 21.2 Data (migration `0041_deck_vault_rewards.sql`)
 - `deck_submissions`: competition fields (name/organizer/type/position/year 2015–2035),

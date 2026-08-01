@@ -39,7 +39,12 @@ export function effectiveTier(user: UserRow | null): SubscriptionTier {
 export const TIER_LIMITS = {
   free: {
     maxReattempts: 0,         // free users can attempt each case once
-    maxHintQuestions: 0,       // no hint chatbot
+    // Clarification questions asked of the live interviewer, PER ATTEMPT.
+    // Mirrors backend routes/attempts.py CLARIFICATION_QUOTA — keep in sync.
+    // Was 0 until 2026-08-01: free tier is gated on case ACCESS (daily pair +
+    // 1 lifetime extra), not on conversation quality. A 0 here made a free
+    // user's first question dead-end with no interviewer reply at all.
+    maxHintQuestions: 7,
     maxBookmarks: 0,           // legacy key (cheat-sheet access now via `cheatSheet`)
     learnExamplesPerDomain: 2, // first 2 examples visible
     newsScope: 'all' as const,
@@ -57,7 +62,7 @@ export const TIER_LIMITS = {
   },
   lite: {
     maxReattempts: Infinity,
-    maxHintQuestions: 5,       // 5 canned Q&A per case
+    maxHintQuestions: 12,      // interviewer clarifications per attempt
     maxBookmarks: Infinity,    // cheat-sheet is Lite+ since the free-tier rework
     learnExamplesPerDomain: 2,
     newsScope: 'mba-relevant' as const,
@@ -73,7 +78,10 @@ export const TIER_LIMITS = {
   },
   pro: {
     maxReattempts: Infinity,
-    maxHintQuestions: Infinity, // live chatbot
+    // Was `Infinity`, which silently contradicted the backend's hard cap of 15
+    // — Pro users hit a wall the frontend claimed did not exist. Now a real,
+    // honest number matching CLARIFICATION_QUOTA.
+    maxHintQuestions: 20,
     maxBookmarks: Infinity,
     learnExamplesPerDomain: 2,
     newsScope: 'mba-relevant' as const,

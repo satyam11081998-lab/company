@@ -163,10 +163,19 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       const detail = await getAttempt(attempt.attempt_id, token);
       setMessages(detail.messages);
       setAttempt(detail.attempt);
-      if (result.quotaRemaining === 0 && result.assistantText === '') {
-        toast.message('Clarification quota used up', {
-          description: 'You can keep building notes; submit when you have a recommendation.',
-        });
+      // Fire ONLY when the backend actually declined this turn's clarification.
+      // The old condition (`quotaRemaining === 0 && assistantText === ''`) also
+      // fired when a free user asked their FIRST question (quota was 0 by
+      // design) and whenever a stream errored out on the last question — which
+      // is how a brand-new user got "Clarification quota used up" before they
+      // had asked anything.
+      if (result.clarificationsSpent) {
+        toast.message(
+          attempt.clarification_quota
+            ? `You've used all ${attempt.clarification_quota} clarification questions`
+            : "You've used all your clarification questions",
+          { description: 'The interviewer will keep responding — state your assumption and walk through your structure.' },
+        );
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Send failed');
@@ -283,10 +292,13 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
 
   // No full-screen blocker: the case prompt (initialCase) renders immediately on
   // the left while the live session boots — the engaging loader fills the chat.
-  // Clarification Q&A is a Lite/Pro feature. Free tier gets a 0 quota by
-  // design — that is NOT an 'exhausted' state, so we must not render the
-  // alarming red 'Questions remaining: 0' counter or the 'you've used them
-  // all' banner for free users on their (fully working) daily case/guesstimate.
+  // Every tier now carries a real per-attempt clarification quota (free 7 /
+  // lite 12 / pro 20 — see backend CLARIFICATION_QUOTA + TIER_LIMITS), so the
+  // counter renders for everyone. The 2026-06-20 fix hid it whenever the quota
+  // was 0 to avoid an alarming red "Questions remaining: 0"; that was the right
+  // call then but it left free users with NO signal at all. The guard stays
+  // only for legacy in-flight attempts that still carry a 0 quota baked in at
+  // tier_at_start (migration 0043 backfills those).
   const hasClarifications = (attempt?.clarification_quota ?? 0) > 0;
   const remaining = attempt?.clarification_remaining || 0;
   const quotaExhausted = hasClarifications && remaining <= 0;
@@ -514,7 +526,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             <div className="mx-auto max-w-3xl">
               {quotaExhausted && (
                 <p className="mb-3 rounded-lg border bg-card px-4 py-2 text-small text-foreground/80 shadow-sm text-center">
-                  You&rsquo;ve used all your clarification questions. Hit <span className="font-semibold text-primary cursor-pointer hover:underline" onClick={() => setSubmitOpen(true)}>Submit</span> when ready.
+                  You&rsquo;ve used all {attempt?.clarification_quota} clarification questions. Keep sharing your
+                  structure and calculations &mdash; the interviewer still responds. Hit <span className="font-semibold text-primary cursor-pointer hover:underline" onClick={() => setSubmitOpen(true)}>Submit</span> when ready.
                 </p>
               )}
               
@@ -544,7 +557,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                     value={composer}
                     onChange={(e) => setComposer(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send('text'); } }}
-                    placeholder={!hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Add notes or assumptions…' : 'Ask a clarification or share your structure…'}
+                    placeholder={!hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Share your structure, notes or calculations…' : 'Ask a clarification or share your structure…'}
                     className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
                     rows={1}
                     maxLength={MESSAGE_MAX_CHARS}

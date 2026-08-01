@@ -72,13 +72,38 @@ function authHeaders(token?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/**
+ * FastAPI errors come back as `{"detail": "..."}`. Surfacing the raw body meant
+ * users saw `post message failed (400): {"detail":"Message limit reached for
+ * this attempt"}` in a toast — JSON braces and all. Pull the human sentence out
+ * and fall back to something readable rather than a status dump.
+ */
+async function errorMessage(res: Response, fallback: string): Promise<string> {
+  let body = '';
+  try {
+    body = await res.text();
+  } catch {
+    return fallback;
+  }
+  try {
+    const parsed = JSON.parse(body);
+    const detail = parsed?.detail;
+    if (typeof detail === 'string' && detail.trim()) return detail;
+    if (Array.isArray(detail) && typeof detail[0]?.msg === 'string') return detail[0].msg;
+  } catch {
+    /* not JSON — fall through */
+  }
+  const trimmed = body.trim();
+  return trimmed && trimmed.length < 200 && !trimmed.startsWith('<') ? trimmed : fallback;
+}
+
 export async function startAttempt(caseId: string, token: string): Promise<AttemptSummary> {
   const res = await fetch(`${API_URL}/attempts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ case_id: caseId }),
   });
-  if (!res.ok) throw new Error(`start attempt failed (${res.status}): ${await res.text()}`);
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't start this session. Please refresh and try again."));
   return res.json();
 }
 
@@ -87,7 +112,7 @@ export async function getAttempt(attemptId: string, token: string): Promise<Atte
     headers: { ...authHeaders(token) },
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`get attempt failed (${res.status}): ${await res.text()}`);
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't load this session. Please refresh and try again."));
   return res.json();
 }
 
@@ -102,24 +127,36 @@ export async function postMessageStream(
   token: string,
   payload: { content: string; kind: MessageKind },
   callbacks: {
-    onMeta?: (meta: { clarification_remaining: number; is_clarification: boolean }) => void;
+    onMeta?: (meta: {
+      clarification_remaining: number;
+      is_clarification: boolean;
+      /** True when THIS turn's question was declined because the quota is spent. */
+      clarifications_spent?: boolean;
+    }) => void;
     onToken?: (text: string) => void;
     onDone?: (info: { message_id: string | null }) => void;
     onError?: (err: string) => void;
   } = {},
-): Promise<{ assistantText: string; quotaRemaining: number | null }> {
+): Promise<{ assistantText: string; quotaRemaining: number | null; clarificationsSpent: boolean }> {
   const res = await fetch(`${API_URL}/attempts/${attemptId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`post message failed (${res.status}): ${await res.text()}`);
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't send that message. Please try again."));
 
   const ct = res.headers.get('content-type') || '';
-  // Quota-exhausted path returns plain JSON instead of SSE.
+  // Legacy quota-exhausted path: older backends returned plain JSON with no
+  // assistant reply at all. The current backend always streams (the
+  // interviewer declines the clarification in-character instead of going
+  // silent) — this branch stays only so a stale backend degrades gracefully.
   if (ct.includes('application/json')) {
     const json = await res.json();
-    return { assistantText: '', quotaRemaining: json.clarification_remaining ?? 0 };
+    return {
+      assistantText: '',
+      quotaRemaining: json.clarification_remaining ?? 0,
+      clarificationsSpent: Boolean(json.quota_exhausted),
+    };
   }
 
   if (!res.body) throw new Error('No response stream');
@@ -129,6 +166,7 @@ export async function postMessageStream(
   let buffer = '';
   let assistantText = '';
   let quotaRemaining: number | null = null;
+  let clarificationsSpent = false;
 
   while (true) {
     const { value, done } = await reader.read();
@@ -144,6 +182,7 @@ export async function postMessageStream(
         try {
           const meta = JSON.parse(data);
           quotaRemaining = meta.clarification_remaining ?? null;
+          clarificationsSpent = Boolean(meta.clarifications_spent);
           callbacks.onMeta?.(meta);
         } catch {
           /* ignore */
@@ -163,7 +202,7 @@ export async function postMessageStream(
       }
     }
   }
-  return { assistantText, quotaRemaining };
+  return { assistantText, quotaRemaining, clarificationsSpent };
 }
 
 export async function uploadAttemptFile(
@@ -180,7 +219,7 @@ export async function uploadAttemptFile(
     headers: { ...authHeaders(token) },
     body: form,
   });
-  if (!res.ok) throw new Error(`upload failed (${res.status}): ${await res.text()}`);
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't upload that file. Please try again."));
   return res.json();
 }
 
@@ -194,6 +233,6 @@ export async function submitAttempt(
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ final_recommendation: finalRecommendation }),
   });
-  if (!res.ok) throw new Error(`submit failed (${res.status}): ${await res.text()}`);
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't submit your recommendation. Please try again."));
   return res.json();
 }

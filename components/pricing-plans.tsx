@@ -75,8 +75,9 @@ export default function PricingPlans() {
               <PlanFeature text="+1 bank case & +1 guesstimate (one-time)" />
               <PlanFeature text="1 GD brief with cheat-sheet & PDF" />
               <PlanFeature text="CV Pointer Lab — 2 free tries" />
+              <PlanFeature text="7 interviewer hints per case" />
               <PlanFeature text="Leaderboard & badges" />
-              <PlanFeature muted text="No re-attempts, hints or source links" cross />
+              <PlanFeature muted text="No re-attempts or source links" cross />
             </ul>
             <Link href="/signup" className="mt-auto">
               <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors">
@@ -106,7 +107,7 @@ export default function PricingPlans() {
               <PlanFeature text="Unlimited re-attempts" />
               <PlanFeature text="Unlimited GD briefs + source links" />
               <PlanFeature text="Full cheat sheet (save & download)" />
-              <PlanFeature text="5 interviewer hints per case" />
+              <PlanFeature text="12 interviewer hints per case" />
             </ul>
             <Link href="/signup" className="mt-auto">
               <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
@@ -138,7 +139,7 @@ export default function PricingPlans() {
                 <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
               </li>
               <PlanFeature text="Unlimited practice bank" />
-              <PlanFeature text="Live interviewer hints & model Q&A" />
+              <PlanFeature text="20 interviewer hints per case & model Q&A" />
               <PlanFeature text="CV Pointer Lab — unlimited" />
               <PlanFeature text="Interviewer simulator" />
               <PlanFeature text="Deck Vault lifetime access" />
@@ -161,7 +162,7 @@ export default function PricingPlans() {
         <span className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">Won a case competition?</span>{" "}
           Upload your winning deck &amp; certificate — get up to{" "}
-          <span className="font-semibold text-primary">60% off Pro</span>.
+          <span className="font-semibold text-primary">35% off Pro</span>.
         </span>
         <ArrowRight className="h-3.5 w-3.5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
       </Link>
