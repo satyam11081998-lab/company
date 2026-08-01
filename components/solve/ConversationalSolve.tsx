@@ -81,6 +81,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [submitting, setSubmitting] = useState(false);
 
   const threadRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
+  // Measured height of the composer block. The composer is absolutely
+  // positioned OVER the thread, so the thread needs bottom padding equal to it
+  // or the last messages sit underneath and cannot be scrolled into view. This
+  // used to be a hard-coded `pb-32` (128px), which broke the moment the
+  // composer grew — the clarification-quota banner, the voice-allowance line
+  // and a multi-line textarea each add height and hid the newest turn.
+  const [composerH, setComposerH] = useState(128);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
@@ -117,7 +125,23 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   useEffect(() => {
     const el = threadRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length, draftAssistant?.text]);
+  }, [messages.length, draftAssistant?.text, composerH]);
+
+  // Track the composer's real height so the thread's bottom padding always
+  // clears it. ResizeObserver catches every cause of growth: the quota banner
+  // appearing, the textarea wrapping to a second line, the mic waveform
+  // swapping in, and mobile viewport changes.
+  useEffect(() => {
+    const el = composerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([entry]) => {
+      const h = entry?.contentRect?.height ?? el.offsetHeight;
+      // +24px breathing room so the last bubble never kisses the composer.
+      setComposerH(Math.ceil(h) + 24);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [lockedOverlay]);
 
   // Load today's voice/scan allowance once we have a token, so the composer can
   // show "≈X min voice left" and disable the mic gracefully at 0.
@@ -460,7 +484,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         </div>
 
         {/* Chat Thread */}
-        <div ref={threadRef} className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 pb-32">
+        <div
+          ref={threadRef}
+          className="flex-1 overflow-y-auto px-4 lg:px-8 py-6"
+          style={{ paddingBottom: composerH }}
+        >
           <div className="mx-auto max-w-3xl space-y-4">
             {lockedOverlay ? (
               <div className="space-y-4 opacity-40 blur-[2px] pointer-events-none select-none">
@@ -522,7 +550,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         {/* 3. Composer                */}
         {/* ------------------------- */}
         {!lockedOverlay && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] bg-gradient-to-t from-muted/50 via-muted/30 to-transparent">
+          <div ref={composerRef} className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] bg-gradient-to-t from-muted/50 via-muted/30 to-transparent">
             <div className="mx-auto max-w-3xl">
               {quotaExhausted && (
                 <p className="mb-3 rounded-lg border bg-card px-4 py-2 text-small text-foreground/80 shadow-sm text-center">

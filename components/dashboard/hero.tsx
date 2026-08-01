@@ -5,6 +5,109 @@ import { useRouter } from 'next/navigation';
 import { Flame, Play, Arrow } from './icons';
 import { StreakExpiry, ProofRail, PeerProximity } from './fomo';
 import { useIsMobile } from '@/hooks/use-is-mobile';
+import type { DailyItemProgress } from '@/lib/dashboard/daily-progress';
+
+/* ─────────────── daily-case done state ───────────────
+ *
+ * All three hero variants used to render an unconditional "Start the case"
+ * button. A user who had already solved today's daily was invited to start it
+ * again — and on free tier that CTA walks straight into the one-attempt-per-case
+ * lock screen (services/access_guard.py). These two pieces give every variant
+ * the same done state: a tick + score, "View your score", and a way to keep
+ * practising.
+ */
+
+function DoneTick({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.16" />
+      <path d="M6 10.5l2.6 2.6L14.2 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function DailyDoneBadge({ progress }: { progress?: DailyItemProgress }) {
+  if (!progress?.attempted) return null;
+  return (
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '3px 10px 3px 8px', borderRadius: 999,
+        background: 'rgba(23,128,61,0.12)', color: 'var(--green, #17803d)',
+        fontSize: 11, fontWeight: 700, letterSpacing: '0.03em',
+      }}
+    >
+      <DoneTick /> Attempted today
+      {progress.score != null && (
+        <span className="mono tnum" style={{ fontSize: 11.5 }}>· {progress.score}</span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * Primary + secondary CTA for today's daily case. `size` matches the differing
+ * button scales the three variants already use, so nothing shifts visually for
+ * a user who has NOT yet attempted.
+ */
+export function DailyCaseCta({
+  progress, startHref, startLabel, size = 'md', pulse = false, children,
+}: {
+  progress?: DailyItemProgress;
+  startHref: string;
+  startLabel: React.ReactNode;
+  size?: 'md' | 'lg';
+  pulse?: boolean;
+  /** Extra secondary controls rendered only in the not-yet-attempted state. */
+  children?: React.ReactNode;
+}) {
+  const router = useRouter();
+  const done = !!progress?.attempted;
+  const resultHref = progress?.submissionId ? `/results/${progress.submissionId}` : null;
+  const pad = size === 'lg' ? '12px 20px' : '10px 18px';
+  const font = size === 'lg' ? 13.5 : 13;
+  const radius = size === 'lg' ? 10 : 9;
+
+  if (!done) {
+    return (
+      <>
+        <button
+          type="button"
+          className={`btn primary${pulse ? ' pulse-soft' : ''}`}
+          style={{ padding: pad, fontSize: font, fontWeight: 600, borderRadius: radius }}
+          onClick={() => router.push(startHref)}
+        >
+          {startLabel}
+        </button>
+        {children}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="btn primary"
+        style={{ padding: pad, fontSize: font, fontWeight: 600, borderRadius: radius }}
+        onClick={() => router.push(resultHref ?? startHref)}
+      >
+        {resultHref ? <>View your score <Arrow className="ico-sm" /></> : <>Finish today&apos;s case <Arrow className="ico-sm" /></>}
+      </button>
+      <button
+        type="button"
+        className="btn"
+        style={{
+          padding: pad, fontSize: font, fontWeight: 600, borderRadius: radius,
+          background: 'var(--card-hex)', color: 'var(--ink)', borderColor: 'var(--line-2)',
+        }}
+        onClick={() => router.push('/practice?tab=scored')}
+      >
+        Practice more
+      </button>
+    </>
+  );
+}
 
 /* ─────────────── types ─────────────── */
 
@@ -258,11 +361,12 @@ export function StreakMonument({ u, big = true, stacked = false }: { u: UserVari
 }
 
 export function HeroCase({
-  u, proofRail, today
+  u, proofRail, today, progress
 }: {
   u: UserVariant;
   proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData;
-  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick']
+  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick'];
+  progress?: DailyItemProgress;
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -310,23 +414,25 @@ export function HeroCase({
             </>
           )}
         </p>
+        {progress?.attempted && (
+          <div style={{ marginTop: 12 }}><DailyDoneBadge progress={progress} /></div>
+        )}
         <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn primary pulse-soft"
-            style={{ padding: '10px 18px', fontSize: 13, fontWeight: 600, borderRadius: 9 }}
-            onClick={() => router.push(primaryHref)}
+          <DailyCaseCta
+            progress={progress}
+            startHref={primaryHref}
+            startLabel={<><Play className="ico-sm" /> Start the case</>}
+            pulse
           >
-            <Play className="ico-sm" /> Start the case
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            style={{ color: 'var(--ink-2)', fontSize: 12.5 }}
-            onClick={() => router.push(drillHref)}
-          >
-            {newcomer ? 'Tour first' : '10-min drill instead'}
-          </button>
+            <button
+              type="button"
+              className="btn ghost"
+              style={{ color: 'var(--ink-2)', fontSize: 12.5 }}
+              onClick={() => router.push(drillHref)}
+            >
+              {newcomer ? 'Tour first' : '10-min drill instead'}
+            </button>
+          </DailyCaseCta>
           <span style={{ marginLeft: 6 }}>
             <ProofRail u={{ ...(u as any), proofRail }} />
           </span>
@@ -353,10 +459,11 @@ export function HeroCase({
 }
 
 export function HeroStreak({
-  u, today
+  u, today, progress
 }: {
   u: UserVariant;
-  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick']
+  today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick'];
+  progress?: DailyItemProgress;
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -387,14 +494,18 @@ export function HeroStreak({
             <>You&apos;re <b>{u.bestStreak - u.streak} days</b> from your longest run. Tomorrow makes it real.</>
           )}
         </p>
-        <button
-          type="button"
-          className="btn primary pulse-soft"
-          style={{ marginTop: 10, padding: '12px 20px', fontSize: 13.5, fontWeight: 600, borderRadius: 10 }}
-          onClick={() => router.push(primaryHref)}
-        >
-          Keep it alive — start today&apos;s case <Arrow className="ico-sm" />
-        </button>
+        {progress?.attempted && (
+          <div style={{ marginTop: 10 }}><DailyDoneBadge progress={progress} /></div>
+        )}
+        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <DailyCaseCta
+            progress={progress}
+            startHref={primaryHref}
+            startLabel={<>Keep it alive — start today&apos;s case <Arrow className="ico-sm" /></>}
+            size="lg"
+            pulse
+          />
+        </div>
       </div>
       <div style={{ background: 'var(--card-hex)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
         <div className="eyebrow" style={{ marginBottom: 8 }}>TODAY&apos;S CASE</div>
@@ -412,9 +523,11 @@ export function HeroStreak({
 export function HeroReadiness({
   u,
   today,
+  progress,
 }: {
   u: UserVariant;
   today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick'];
+  progress?: DailyItemProgress;
 }) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -465,15 +578,16 @@ export function HeroReadiness({
             </>
           )}
         </p>
+        {progress?.attempted && (
+          <div style={{ marginTop: 14 }}><DailyDoneBadge progress={progress} /></div>
+        )}
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn primary"
-            style={{ padding: '12px 20px', fontSize: 13.5, fontWeight: 600, borderRadius: 10 }}
-            onClick={() => router.push(primaryHref)}
-          >
-            Start today&apos;s case <Arrow className="ico-sm" />
-          </button>
+          <DailyCaseCta
+            progress={progress}
+            startHref={primaryHref}
+            startLabel={<>Start today&apos;s case <Arrow className="ico-sm" /></>}
+            size="lg"
+          />
           <button className="btn ghost" style={{ color: 'var(--ink-2)', fontSize: 13 }}>How is readiness calculated?</button>
         </div>
       </div>
@@ -481,22 +595,23 @@ export function HeroReadiness({
   );
 }
 
-export function Hero({ 
-  u, variant, proofRail, today 
-}: { 
-  u: UserVariant; 
+export function Hero({
+  u, variant, proofRail, today, progress
+}: {
+  u: UserVariant;
   variant: 'case' | 'streak' | 'readiness';
   proofRail?: import('@/lib/dashboard/proof-rail').ProofRailData;
   today?: import('@/lib/dashboard/today-meta').TodayMeta['casePick'];
+  progress?: DailyItemProgress;
 }) {
   return (
     <HeroShell>
       {variant === 'streak' ? (
-        <HeroStreak u={u} today={today} />
+        <HeroStreak u={u} today={today} progress={progress} />
       ) : variant === 'readiness' ? (
-        <HeroReadiness u={u} today={today} />
+        <HeroReadiness u={u} today={today} progress={progress} />
       ) : (
-        <HeroCase u={u} proofRail={proofRail} today={today} />
+        <HeroCase u={u} proofRail={proofRail} today={today} progress={progress} />
       )}
     </HeroShell>
   );

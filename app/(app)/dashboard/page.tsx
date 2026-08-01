@@ -20,6 +20,7 @@ import { getProofRail } from '@/lib/dashboard/proof-rail';
 import { getSkillGraph } from '@/lib/dashboard/skill-graph';
 import { getNodeOpenTargets } from '@/lib/dashboard/node-to-case';
 import { getTodayMeta } from '@/lib/dashboard/today-meta';
+import { getDailyProgress } from '@/lib/dashboard/daily-progress';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +114,16 @@ export default async function DashboardPage() {
     case_difficulty: s.cases?.difficulty ?? null,
     is_first_attempt: firstByesSub.get(s.id) ?? true,
   }));
+
+  // Has today's daily case / guesstimate already been done? Derived from the
+  // submissions we just mapped — no extra query. Drives the "Attempted · 85"
+  // state on the dashboard cards instead of inviting a re-start the free tier
+  // isn't even allowed to make.
+  const dailyProgress = getDailyProgress(
+    submissions,
+    dailyToday.case?.id ?? null,
+    dailyToday.guesstimate?.id ?? null,
+  );
 
   const tier = userRow?.subscription_tier ?? 'free';
   const streak = userRow?.streak_count ?? 0;
@@ -223,6 +234,7 @@ export default async function DashboardPage() {
         skillGraph={skillGraph}
         nodeTargets={nodeTargets}
         todayMeta={todayMeta}
+        dailyProgress={dailyProgress}
       />
       {/* Deck Vault Rewards — one-time nudge (client component, localStorage-gated,
           renders nothing for Pro users or after first view). */}

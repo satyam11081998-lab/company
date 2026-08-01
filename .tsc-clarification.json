@@ -21,8 +21,13 @@
     "global.d.ts",
     "lib/interview-api.ts",
     "lib/tier.ts",
+    "lib/dashboard/daily-progress.ts",
     "components/solve/ConversationalSolve.tsx",
     "components/pricing-plans.tsx",
+    "components/dashboard-client.tsx",
+    "components/dashboard/hero.tsx",
+    "components/dashboard/guesstimate-card.tsx",
+    "app/(app)/dashboard/page.tsx",
     "app/(app)/upgrade/page.tsx",
     "app/pricing/page.tsx"
   ]

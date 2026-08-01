@@ -63,6 +63,23 @@
 
 <!-- HAND-MAINTAINED BELOW THIS LINE — sync.mjs preserves everything under this marker -->
 
+## 🔧 IN FLIGHT #2 (2026-08-01, Cowork brain — uncommitted, owner will push)
+**interviewer-voice + solve-scroll + daily-done-state** — three UX fixes from owner
+testing right after the quota fix. See CHANGELOG top entry +
+`handoffs/ANTIGRAVITY_HANDOFF_interviewer-voice-and-daily-state.md`.
+- Interviewer stopped sounding like a template ("Let's assume X" on every turn):
+  prompt rewrite in BOTH system prompts + `INTERVIEWER_TEMPERATURE 0.4 → 0.75`.
+- Solve thread no longer hides its newest turns behind the composer.
+- Dashboard daily case + guesstimate show tick/score once attempted.
+- **No migration.** Scoped tsc EXIT 0, py_compile EXIT 0. Deploy both repos together.
+
+## ✅ LANDED (local, unpushed at time of writing)
+**fix-clarification-quota-dead-end** — backend `9d80195`, frontend `2c3da6f`.
+Migration `0043_clarification_quota_uplift.sql` is committed but **still needs to be
+RUN in Supabase** — until it does, anyone with an ACTIVE attempt keeps the old 0
+quota stamped at `tier_at_start`. Contract **C9** (clarification-quota tier surface)
+is now WRITTEN into CONTRACTS.md (v1) — the three constants must move together.
+
 ## 🔧 IN FLIGHT (2026-08-01, Cowork brain — uncommitted in the working tree)
 **fix-clarification-quota-dead-end** (cross-repo, see CHANGELOG top entry +
 `handoffs/ANTIGRAVITY_HANDOFF_clarification-quota.md`). A free user's FIRST question

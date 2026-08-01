@@ -101,6 +101,35 @@ Python twin `services/gdrive.py` (backend) — the two MUST stay in lockstep.
   `deck-vault-submissions` when unconfigured.
 - **Rule:** changing the prefix, adding a new backend, or renaming the env vars =
   `BREAKING`. Affects: Deck Vault & DRM, Deck Vault Rewards, Admin.
+
+---
+
+## C9 · Clarification quota — tier surface, cross-repo   (v1, 2026-08-01)
+Source of truth: **`routes/attempts.py CLARIFICATION_QUOTA`** (backend).
+Mirrored in `lib/tier.ts TIER_LIMITS.maxHintQuestions`, and STATED TO USERS in
+`components/pricing-plans.tsx`, `app/(app)/upgrade/page.tsx`, `app/pricing/page.tsx`.
+- Current ladder, PER ATTEMPT: **free 7 · lite 12 · pro 20**. Must stay monotonic.
+- The quota is stamped ONCE per attempt from `tier_at_start`, so changing the constant
+  does NOT reach attempts already in flight — a change needs a backfill migration over
+  `attempts where status = 'active'` (pattern: `0043_clarification_quota_uplift.sql`,
+  which only ever RAISES via `greatest()`).
+- `clarification_used` must always be clamped to `clarification_quota` on write —
+  `count_clarifications()` counts every `?`, so one packed turn can otherwise overshoot
+  and drive `remaining` negative in the DB.
+- Free tier is gated on case ACCESS (daily pair + 1 lifetime extra, enforced in
+  `services/access_guard.py` and mirrored in `lib/access.ts`) — **not** on conversation
+  quality. Do not "limit" free tier by shrinking this quota; limit it by access.
+- Exhaustion must NEVER mean silence. The interviewer still streams a reply, told by
+  `CLARIFICATIONS_EXHAUSTED_DIRECTIVE` to decline in character. The SSE `meta` event
+  carries `clarifications_spent` so the client can distinguish "declined this turn"
+  from "stream failed".
+- **Rule:** the number lives in three places (backend constant, frontend TIER_LIMITS,
+  user-facing pricing copy) and they must move together in ONE commit train, plus a
+  backfill migration. They silently disagreed for weeks — frontend claimed Pro was
+  `Infinity` while the backend capped at 15, and free was 0 while the solve UI still
+  invited free users to ask — and that drift is exactly what produced the 2026-08-01
+  P0 (a new user's first question got no interviewer reply at all).
+  Affects: Case solve UX, Free-tier rework, Payments/Pricing copy.
 - **v2 note (0042, 2026-07-17):** `deck_skeletons` gained `year int null`,
   `organizer text default ''`, `source_submission_id uuid null → deck_submissions`
   (unique where not null — one catalogue row per submission). Written by BOTH the

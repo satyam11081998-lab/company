@@ -52,6 +52,8 @@ export interface DashboardClientProps {
   skillGraph: SkillGraphData;
   nodeTargets: Map<string, import('@/lib/dashboard/node-to-case').NodeOpenTarget>;
   todayMeta: import('@/lib/dashboard/today-meta').TodayMeta;
+  /** Whether today's daily case/guesstimate are already done, + their scores. */
+  dailyProgress?: import('@/lib/dashboard/daily-progress').DailyProgress;
 }
 
 export default function DashboardClient(props: DashboardClientProps) {
@@ -155,6 +157,7 @@ export default function DashboardClient(props: DashboardClientProps) {
         variant={heroVariant}
         proofRail={proofRail}
         today={todayMeta.casePick}
+        progress={props.dailyProgress?.case}
       />
 
       {/* NEWS + GUESSTIMATE */}
@@ -166,7 +169,11 @@ export default function DashboardClient(props: DashboardClientProps) {
         }}
       >
         <NewsCard u={u} brief={props.initialDaily?.brief || undefined} />
-        <GuesstimateCard u={u} daily={props.initialDaily?.guesstimate || undefined} />
+        <GuesstimateCard
+          u={u}
+          daily={props.initialDaily?.guesstimate || undefined}
+          progress={props.dailyProgress?.guesstimate}
+        />
       </div>
 
       {/* CONSTELLATION SKILL TREE */}

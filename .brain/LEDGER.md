@@ -53,8 +53,9 @@ section. Deduplicated and consolidated into the single table below; no row delet
   `app/(app)/upgrade/page.tsx`, `app/pricing/page.tsx`). They silently disagreed for
   weeks (frontend said Pro = Infinity, backend capped at 15; frontend + pricing said
   free = 0 hints while the solve UI still invited free users to ask) and that drift is
-  exactly what produced the 2026-08-01 P0. Change one → change all three, same commit.
-  Proposed as contract **C9** in `handoffs/ANTIGRAVITY_HANDOFF_clarification-quota.md`.
+  exactly what produced the 2026-08-01 P0. Change one → change all three, same commit,
+  plus a backfill migration for in-flight attempts. Now formalised as contract **C9**
+  in CONTRACTS.md (v1, 2026-08-01).
 - **DB:`cases`** is touched by Dashboard, Guesstimate, and Daily-content → any
   column add is a contract event; announce in CHANGELOG with `affects:` all three.
 - **Scoring-contract** is DEFINED by AI-evaluation-v2 and CONSUMED by Dashboard,
