@@ -108,6 +108,9 @@ export const PUBLIC_ROUTES: string[] = [
   '/pricing',
   '/glossary',
   '/learn',
+  // Shared cheat sheets: mece.in/s/<id>. The entire point is that a stranger
+  // with the link can open the PDF, so this must resolve logged-out.
+  '/s',
   // SEO/crawler surfaces — extensionless URLs the middleware matcher doesn't
   // skip, so they must be explicitly public or link previews break.
   '/og', // dynamic Open Graph image generator

@@ -3,17 +3,14 @@ import crypto from 'crypto';
 import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
 import { sendUpgradeReceipt } from '@/lib/email/send';
+import {
+  loadCoupon,
+  couponHonouredAtPayment,
+  redeemCoupon,
+  type CouponRow,
+} from '@/lib/coupons';
 
 export const dynamic = 'force-dynamic';
-
-/** discount_coupons row as loaded during webhook reconciliation. */
-type CouponRow = {
-  id: string;
-  user_id: string;
-  discount_pct: number;
-  status: string;
-  redeemed_payment_id: string | null;
-};
 
 /**
  * Razorpay webhook — asynchronous payment reconciliation.
@@ -81,21 +78,11 @@ export async function POST(req: Request) {
         // of truth for ownership + %. Expiry is gated at order time, not here.
         const couponCode = typeof notes.coupon === 'string' ? notes.coupon : '';
         let couponRow: CouponRow | null = null;
-        let expectedPaise = priceFor(tier, period) * 100;
+        const listPaise = priceFor(tier, period) * 100;
+        let expectedPaise = listPaise;
         if (couponCode) {
-          const { data: c } = await supabase
-            .from('discount_coupons')
-            .select('id, user_id, discount_pct, status, redeemed_payment_id')
-            .eq('code', couponCode)
-            .maybeSingle();
-          couponRow = c as CouponRow | null;
-          const okOwner = !!couponRow && couponRow.user_id === uid;
-          const okState = !!couponRow && (
-            couponRow.status === 'active' ||
-            couponRow.status === 'expired' ||
-            (couponRow.status === 'redeemed' && couponRow.redeemed_payment_id === paymentId)
-          );
-          if (!okOwner || !okState) {
+          couponRow = await loadCoupon(supabase, couponCode);
+          if (!couponHonouredAtPayment(couponRow, uid, paymentId)) {
             return NextResponse.json({ ok: false, reason: 'coupon mismatch' }, { status: 200 });
           }
           expectedPaise = discountedPaise(tier, period, couponRow!.discount_pct);
@@ -122,13 +109,20 @@ export async function POST(req: Request) {
           paid_at: now.toISOString(),
         });
 
-        // Burn the coupon exactly once (race-safe vs /verify via .eq status guard).
-        if (couponRow && couponRow.status === 'active') {
-          await supabase
-            .from('discount_coupons')
-            .update({ status: 'redeemed', redeemed_at: now.toISOString(), redeemed_payment_id: paymentId })
-            .eq('id', couponRow.id)
-            .eq('status', 'active');
+        // Burn the coupon + book the commission exactly once. Race-safe vs
+        // /verify: coupon_redemptions has UNIQUE(razorpay_payment_id), so
+        // whichever handler gets there first books the sale and the other
+        // no-ops instead of double-crediting the influencer.
+        if (couponRow) {
+          await redeemCoupon(supabase, couponRow, {
+            userId: uid,
+            tier,
+            period,
+            listPricePaise: listPaise,
+            paidPaise: Number(order.amount),
+            razorpayOrderId: order.id,
+            razorpayPaymentId: paymentId,
+          });
         }
 
         // Branded upgrade receipt (transactional). Non-blocking; first-time only

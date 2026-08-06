@@ -2,7 +2,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { CheatsheetPointRow } from '@/lib/types';
-import { Trash2, Menu, Download } from 'lucide-react';
+import { Trash2, Menu, Download, Share2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import TierGate from '@/components/tier-gate';
 
@@ -10,13 +10,16 @@ type Item = CheatsheetPointRow;
 
 const ALL = 'all';
 
-export function CheatSheetClient() {
+export function CheatSheetClient({ ownerName }: { ownerName?: string | null } = {}) {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<string>(ALL);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  
+  const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -40,17 +43,60 @@ export function CheatSheetClient() {
     if (error) setItems(prev);
   }
 
+  const asPoints = () =>
+    items.map((i) => ({ tag: i.tag, point_text: i.point_text, source: i.source }));
+
   async function handleDownloadPdf() {
     if (downloading) return;
     if (!items.length) return;
     setDownloading(true);
     try {
       const { downloadCheatSheetPdf } = await import('./cheat-sheet-pdf');
-      await downloadCheatSheetPdf(items.map((i) => ({ tag: i.tag, point_text: i.point_text, source: i.source })));
+      // Stamp an existing share link into the footer so a downloaded copy
+      // still points back to the live page.
+      await downloadCheatSheetPdf(asPoints(), { shareUrl: shareUrl, ownerName });
     } catch (e) {
       console.error('cheat-sheet pdf failed', e);
     } finally {
       setDownloading(false);
+    }
+  }
+
+  /**
+   * Publish: render the branded PDF, upload it, then re-render ONCE more with
+   * the minted link baked into the footer and replace the stored file. Two
+   * renders is the honest cost of a self-referencing document — the alternative
+   * is a PDF whose footer link points nowhere.
+   */
+  async function handleShare() {
+    if (sharing || !items.length) return;
+    setSharing(true);
+    setShareError(null);
+    try {
+      const { buildCheatSheetPdf } = await import('./cheat-sheet-pdf');
+      const draft = await buildCheatSheetPdf(asPoints(), { ownerName });
+
+      const form = new FormData();
+      form.append('file', new File([draft], 'cheat-sheet.pdf', { type: 'application/pdf' }));
+      form.append('pointCount', String(items.length));
+
+      const res = await fetch('/api/cheat-sheet/share', { method: 'POST', body: form });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Could not publish the sheet.');
+
+      // Second pass: same document, now carrying its own public link.
+      const final = await buildCheatSheetPdf(asPoints(), { shareUrl: json.url, ownerName });
+      const replace = new FormData();
+      replace.append('file', new File([final], 'cheat-sheet.pdf', { type: 'application/pdf' }));
+      replace.append('id', json.id);
+      await fetch('/api/cheat-sheet/share', { method: 'PUT', body: replace }).catch(() => {});
+
+      setShareUrl(json.url);
+      try { await navigator.clipboard?.writeText(json.url); } catch { /* clipboard is optional */ }
+    } catch (e: any) {
+      setShareError(e?.message || 'Could not publish the sheet.');
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -87,6 +133,40 @@ export function CheatSheetClient() {
 
   const activeLabel = buckets.find(b => b.id === active)?.label ?? 'All points';
 
+  // Export block reused by the desktop rail and the mobile drawer.
+  const exportControls = (
+    <div className="space-y-2">
+      <button
+        onClick={handleDownloadPdf}
+        disabled={downloading}
+        className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-60"
+      >
+        <Download className="h-4 w-4" /> {downloading ? 'Generating…' : 'Download PDF'}
+      </button>
+      <button
+        onClick={handleShare}
+        disabled={sharing}
+        className="w-full flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
+      >
+        <Share2 className="h-4 w-4" /> {sharing ? 'Publishing…' : shareUrl ? 'Re-publish' : 'Get shareable link'}
+      </button>
+      {shareUrl && (
+        <div className="rounded-md border border-border bg-muted/40 p-2">
+          <p className="text-[11px] text-muted-foreground">Link copied. Anyone can open this:</p>
+          <a
+            href={shareUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-0.5 block break-all text-xs font-medium text-primary hover:underline"
+          >
+            {shareUrl}
+          </a>
+        </div>
+      )}
+      {shareError && <p className="text-xs text-destructive">{shareError}</p>}
+    </div>
+  );
+
   const rail = (
     <div className="flex flex-col py-2">
       {buckets.map((b) => (
@@ -108,15 +188,7 @@ export function CheatSheetClient() {
       <aside className="hidden lg:block">
         <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-hidden rounded-xl border border-border bg-card/50 flex flex-col">
           <div className="p-3 border-b border-border bg-card">
-            <TierGate required="pro">
-              <button
-                onClick={handleDownloadPdf}
-                disabled={downloading}
-                className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-60"
-              >
-                <Download className="h-4 w-4" /> {downloading ? 'Generating…' : 'Download PDF'}
-              </button>
-            </TierGate>
+            <TierGate required="pro">{exportControls}</TierGate>
           </div>
           <div className="overflow-y-auto">
             {rail}
@@ -134,15 +206,7 @@ export function CheatSheetClient() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
               <div className="p-4 border-b border-border">
-                <TierGate required="pro">
-                  <button
-                    onClick={handleDownloadPdf}
-                    disabled={downloading}
-                    className="w-full flex items-center justify-center gap-2 rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-60"
-                  >
-                    <Download className="h-4 w-4" /> {downloading ? 'Generating…' : 'Download PDF'}
-                  </button>
-                </TierGate>
+                <TierGate required="pro">{exportControls}</TierGate>
               </div>
               <div className="overflow-y-auto flex-1">
                 {rail}

@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getDemoUserIdsCached, notInList } from './demo-users';
 
 export interface PeerInfo {
   name: string;
@@ -35,13 +36,16 @@ export async function getPeerProximity(supabase: SupabaseClient, userId: string)
   const myPoints = (me as any).points ?? 0;
 
   // The aspirant directly behind you — the one who could overtake.
-  const { data: behind } = await supabase
+  // Demo/showcase accounts are skipped: naming a seeded account as your
+  // real rival is the kind of detail that destroys trust in the number.
+  const excl = notInList(await getDemoUserIdsCached());
+  const behindQ = supabase
     .from('users')
     .select('id, name, points')
     .lt('points', myPoints)
     .order('points', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  const { data: behind } = await (excl ? behindQ.not('id', 'in', excl) : behindQ).maybeSingle();
   if (!behind) return { competitor: null, newAspirantsThisWeek };
 
   const ptsBehind = myPoints - ((behind as any).points ?? 0);

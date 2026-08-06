@@ -9,7 +9,9 @@ import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import FeedbackLauncher from '@/components/feedback/feedback-launcher';
 import GuestPreviewNav from '@/components/guest/guest-preview-nav';
-import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
+import { getCachedAuthUser, getCachedUserRow, getCachedSessionId } from '@/lib/supabase/auth-cached';
+import { createServiceClient } from '@/lib/supabase/service';
+import { touchSession } from '@/lib/sessions';
 import { isPreviewPath } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
 
@@ -96,7 +98,34 @@ export default async function AppLayout({
     redirect('/login');
   }
 
+  // ── One active device ────────────────────────────────────────────────
+  // Registers this login and bounces to /session-conflict when another
+  // device already holds the account. Enforced HERE rather than in
+  // middleware because this runs on the Node runtime (service-role client)
+  // and leaves the existing auth + onboarding path completely untouched.
+  //
+  // Fail-open by design: `touchSession` swallows every error and returns
+  // 'untracked' if migration 0044 hasn't run or the query fails, so a
+  // bookkeeping problem can never lock a paying user out of the product.
+  // Both calls below are React.cache()-memoised, so fetching the row first
+  // costs nothing extra downstream.
   const userRow = await getCachedUserRow(authUser.id);
+
+  let sessionConflict = false;
+  // Demo/showcase accounts are exempt: they are handed to creators and press
+  // who will open them on a phone and a laptop at the same time, and a device
+  // lock mid-shoot would be the worst possible moment to enforce it.
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY && !userRow?.is_demo) {
+    const sessionState = await touchSession(
+      createServiceClient(),
+      authUser.id,
+      await getCachedSessionId(),
+    );
+    sessionConflict = sessionState.status === 'conflict';
+  }
+  // redirect() throws a control-flow signal, so it must sit OUTSIDE any
+  // try/catch or env guard that could swallow it.
+  if (sessionConflict) redirect('/session-conflict');
 
   // NOTE: the onboarding redirect now lives in middleware (lib/supabase/
   // middleware.ts), where the request pathname is reliable. Doing it here via

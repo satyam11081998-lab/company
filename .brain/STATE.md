@@ -63,6 +63,17 @@
 
 <!-- HAND-MAINTAINED BELOW THIS LINE — sync.mjs preserves everything under this marker -->
 
+## 🔧 IN FLIGHT (2026-08-06, Cowork brain — uncommitted, owner will push)
+**influencer-growth-kit** — 5 components for influencer marketing launch:
+1. Demo/showcase account (`users.is_demo = true`, excluded from leaderboards/activity, session-lock exempt, 77% constellation seeded, skill-graph fallback fixed).
+2. Admin Users panel (`/admin/users`, 30-day signup chart, filters, drawer with sessions & IP/city, demo toggle, sign out everywhere).
+3. Influencer coupons (C7 v2, public unlimited/capped, list-price commission, ANUSHKA10 seeded, `/admin/coupons` with payout tracking).
+4. Single active session lock (Netflix-style `user_sessions`, `/session-conflict` takeover valve).
+5. Watermarked PDF cheat sheet with shareable links (`/s/[id]` viewer & file stream).
+- **Contract:** C7 bumped v1 → v2 in CONTRACTS.md.
+- **Gates:** `tsc --noEmit` EXIT 0, `npm run build` EXIT 0 (286/286 pages), Postgres grammar validated.
+- **Migration:** Run `supabase/migrations/0044_growth_kit.sql` after 0041–0043.
+
 ## 🔧 IN FLIGHT #2 (2026-08-01, Cowork brain — uncommitted, owner will push)
 **interviewer-voice + solve-scroll + daily-done-state** — three UX fixes from owner
 testing right after the quota fix. See CHANGELOG top entry +

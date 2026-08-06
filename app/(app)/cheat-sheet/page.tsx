@@ -36,7 +36,7 @@ export default async function CheatSheetPage() {
           to save points from every brief.
         </div>
       )}
-      <CheatSheetClient />
+      <CheatSheetClient ownerName={(profile as { name?: string | null } | null)?.name?.split(' ')[0] ?? null} />
     </div>
   );
 }

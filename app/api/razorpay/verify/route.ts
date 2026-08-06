@@ -5,15 +5,12 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
 import { sendUpgradeReceipt } from '@/lib/email/send';
-
-/** discount_coupons row as loaded during verification. */
-type CouponRow = {
-  id: string;
-  user_id: string;
-  discount_pct: number;
-  status: string;
-  redeemed_payment_id: string | null;
-};
+import {
+  loadCoupon,
+  couponHonouredAtPayment,
+  redeemCoupon,
+  type CouponRow,
+} from '@/lib/coupons';
 
 export async function POST(req: Request) {
   try {
@@ -71,21 +68,12 @@ export async function POST(req: Request) {
       // discounted amount in good faith.
       const couponCode = typeof order?.notes?.coupon === 'string' ? order.notes.coupon : '';
       let couponRow: CouponRow | null = null;
-      let expectedPaise = priceFor(tier, period) * 100;
+      const listPaise = priceFor(tier, period) * 100;
+      let expectedPaise = listPaise;
       if (couponCode) {
-        const { data: c } = await createServiceClient()
-          .from('discount_coupons')
-          .select('id, user_id, discount_pct, status, redeemed_payment_id')
-          .eq('code', couponCode)
-          .maybeSingle();
-        couponRow = c as CouponRow | null;
-        const okOwner = !!couponRow && couponRow.user_id === user.id;
-        const okState = !!couponRow && (
-          couponRow.status === 'active' ||
-          couponRow.status === 'expired' || // expired AFTER the order was created — still honor the paid order
-          (couponRow.status === 'redeemed' && couponRow.redeemed_payment_id === razorpay_payment_id)
-        );
-        if (!okOwner || !okState) {
+        couponRow = await loadCoupon(createServiceClient(), couponCode);
+        const ok = couponHonouredAtPayment(couponRow, user.id, razorpay_payment_id);
+        if (!ok) {
           return NextResponse.json({ error: 'The coupon on this order is not valid' }, { status: 400 });
         }
         expectedPaise = discountedPaise(tier, period, couponRow!.discount_pct);
@@ -153,19 +141,19 @@ export async function POST(req: Request) {
         console.error("Failed to insert payment record:", paymentError);
       }
 
-      // Burn the coupon exactly once (replay guard above returns early for
-      // repeats; the .eq('status','active') makes this race-safe vs the webhook).
-      if (couponRow && couponRow.status === 'active') {
-        const { error: couponError } = await db
-          .from('discount_coupons')
-          .update({
-            status: 'redeemed',
-            redeemed_at: now.toISOString(),
-            redeemed_payment_id: razorpay_payment_id,
-          })
-          .eq('id', couponRow.id)
-          .eq('status', 'active');
-        if (couponError) console.error('Failed to mark coupon redeemed:', couponError);
+      // Burn the coupon and write the commission ledger exactly once. The
+      // ledger's UNIQUE(razorpay_payment_id) makes this race-safe against the
+      // webhook, so an influencer can never be credited twice for one sale.
+      if (couponRow) {
+        await redeemCoupon(db, couponRow, {
+          userId: user.id,
+          tier,
+          period,
+          listPricePaise: listPaise,
+          paidPaise: amountPaise,
+          razorpayOrderId: razorpay_order_id,
+          razorpayPaymentId: razorpay_payment_id,
+        });
       }
 
       // Branded upgrade receipt (transactional, via Google Workspace SMTP).

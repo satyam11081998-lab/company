@@ -38,6 +38,13 @@ export interface UserRow {
   // bank case and +1 lifetime bank guesstimate (see lib/access.ts and
   // backend services/access_guard.py).
   linkedin_follow_claimed_at?: string | null;
+  // Growth kit (migration 0044, 2026-08). `is_demo` marks a seeded showcase
+  // account: fully functional, but excluded from the public leaderboard,
+  // headcounts, cohort benchmark and the live activity tape. Service-role
+  // write only (guarded by trg_guard_user_cols). `phone` is optional contact
+  // captured for admin support — never displayed to other users.
+  is_demo?: boolean | null;
+  phone?: string | null;
 }
 
 export interface PaymentRow {

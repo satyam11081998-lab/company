@@ -10,6 +10,12 @@ export default function SignOutButton({ variant = 'nav' }: { variant?: 'nav' | '
   const supabase = createClient();
 
   async function handleSignOut() {
+    // Release this browser's single-session slot BEFORE the token is dropped,
+    // so the account is immediately free on another device. Never blocks the
+    // sign-out: any failure here is swallowed.
+    try {
+      await fetch('/api/session/end', { method: 'POST', keepalive: true });
+    } catch { /* sign out regardless */ }
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();

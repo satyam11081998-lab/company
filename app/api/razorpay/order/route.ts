@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { priceFor, isBillingPeriod, discountedPaise, couponCoversTier } from '@/lib/tier';
+import { priceFor, isBillingPeriod, discountedPaise } from '@/lib/tier';
+import { loadCoupon, checkCoupon, normalizeCode, isValidCodeShape } from '@/lib/coupons';
 
 const rateLimit = new Map<string, number>();
 
@@ -36,39 +37,33 @@ export async function POST(req: Request) {
     }
     let amount = priceFor(tier as 'lite' | 'pro', period) * 100; // INR -> paise, single source of truth
 
-    // Optional coupon (Deck Vault Rewards). Fully backward-compatible: a missing
-    // coupon leaves the flow exactly as before. An INVALID coupon is a hard 400 —
-    // never silently charge full price when the user believes a discount applies.
-    const couponCode = typeof body.coupon === 'string'
-      ? body.coupon.trim().toUpperCase()
-      : '';
+    // Optional coupon. Fully backward-compatible: a missing coupon leaves the
+    // flow exactly as before. An INVALID coupon is a hard 400 — never silently
+    // charge full price when the user believes a discount applies.
+    //
+    // Both coupon shapes go through lib/coupons (C7 v2): user-locked deck-vault
+    // rewards behave exactly as they did, public influencer codes are usable by
+    // any signed-in buyer up to their redemption cap.
+    const couponCode = normalizeCode(body.coupon);
     const notes: Record<string, string> = { tier, period, user_id: user.id };
     if (couponCode) {
-      if (!/^[A-Z0-9-]{4,32}$/.test(couponCode)) {
+      if (!isValidCodeShape(couponCode)) {
         return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 });
       }
       const svc = createServiceClient();
-      const { data: coupon } = await svc
-        .from('discount_coupons')
-        .select('id, code, user_id, discount_pct, tier_scope, status, expires_at')
-        .eq('code', couponCode)
-        .maybeSingle();
-      const c = coupon as {
-        id: string; code: string; user_id: string; discount_pct: number;
-        tier_scope: string; status: string; expires_at: string;
-      } | null;
-      if (!c || c.user_id !== user.id || c.status !== 'active') {
-        return NextResponse.json({ error: 'Invalid or already used coupon' }, { status: 400 });
-      }
-      if (new Date(c.expires_at).getTime() < Date.now()) {
+      const c = await loadCoupon(svc, couponCode);
+      if (c && c.status === 'active' && new Date(c.expires_at).getTime() < Date.now()) {
         await svc.from('discount_coupons').update({ status: 'expired' }).eq('id', c.id);
         return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 });
       }
-      if (!couponCoversTier(c.tier_scope, tier as 'lite' | 'pro')) {
-        return NextResponse.json({ error: `This coupon applies to the ${c.tier_scope.toUpperCase()} plan` }, { status: 400 });
+      const check = checkCoupon(c, user.id, tier as 'lite' | 'pro');
+      if (!check.ok) {
+        return NextResponse.json({ error: check.reason }, { status: 400 });
       }
-      amount = discountedPaise(tier as 'lite' | 'pro', period, c.discount_pct);
-      notes.coupon = c.code;
+      amount = discountedPaise(tier as 'lite' | 'pro', period, check.coupon.discount_pct);
+      // notes.coupon is server-set and is the ONLY channel a coupon reaches
+      // verify/webhook — the client can never inject one.
+      notes.coupon = check.coupon.code;
     }
 
     const instance = new Razorpay({

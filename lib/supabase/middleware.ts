@@ -67,7 +67,16 @@ export async function updateSession(request: NextRequest) {
   // via headers() — that proved unreliable on Vercel and caused an infinite
   // redirect loop → 503 blank page for not-yet-onboarded users. We skip API
   // and auth routes (they must not be redirected to an HTML page).
-  if (user && !isPublic && !pathname.startsWith('/api') && !pathname.startsWith('/auth')) {
+  // /session-conflict is exempt: the (app) layout redirects here when another
+  // device holds the account, and it lives OUTSIDE the (app) group. Without
+  // this carve-out a not-yet-onboarded user would ping-pong
+  // /session-conflict -> /onboarding -> /session-conflict forever.
+  if (
+    user && !isPublic &&
+    !pathname.startsWith('/api') &&
+    !pathname.startsWith('/auth') &&
+    !pathname.startsWith('/session-conflict')
+  ) {
     const onOnboarding = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
     const { data: profile } = await supabase
       .from('users')

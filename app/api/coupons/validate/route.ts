@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { loadCoupon, checkCoupon, normalizeCode, isValidCodeShape } from '@/lib/coupons';
 
 /**
- * POST /api/coupons/validate — { code } -> { valid, pct, tierScope, code } | { valid: false, reason }.
+ * POST /api/coupons/validate — { code, tier? } -> { valid, pct, tierScope, code }
+ *                                              | { valid: false, reason }.
  *
  * Display-time check only: the /upgrade page calls it so the user sees the
  * discounted price BEFORE Razorpay opens. It grants nothing — order creation
- * re-validates from scratch and verify/webhook re-validate again. Coupons are
- * user-locked, so this never confirms the existence of someone else's code.
+ * re-validates from scratch and verify/webhook re-validate again.
+ *
+ * Handles both coupon shapes (C7 v2): user-locked deck-vault rewards, which
+ * never confirm the existence of someone else's code, and public influencer
+ * codes, which anyone signed in may use. The owner's commission is NEVER part
+ * of this response — buyers must not see what a creator earns.
  */
 
 const rateLimit = new Map<string, number>();
@@ -29,45 +35,34 @@ export async function POST(req: Request) {
     rateLimit.set(user.id, now);
 
     const body = await req.json().catch(() => ({}));
-    const code = typeof body.code === 'string' ? body.code.trim().toUpperCase() : '';
-    if (!/^[A-Z0-9-]{4,32}$/.test(code)) {
+    const code = normalizeCode(body.code);
+    if (!isValidCodeShape(code)) {
       return NextResponse.json({ valid: false, reason: 'That doesn’t look like a valid code.' });
     }
+    // Tier is advisory here (the real gate is at order creation). Default to
+    // 'pro' so a scope-limited code still reports honestly on the upgrade page.
+    const tier = body.tier === 'lite' ? 'lite' : 'pro';
 
     const svc = createServiceClient();
-    const { data } = await svc
-      .from('discount_coupons')
-      .select('id, code, user_id, discount_pct, tier_scope, status, expires_at')
-      .eq('code', code)
-      .maybeSingle();
-    const c = data as {
-      id: string; code: string; user_id: string; discount_pct: number;
-      tier_scope: string; status: string; expires_at: string;
-    } | null;
+    const coupon = await loadCoupon(svc, code);
 
-    // Same message for "doesn't exist" and "not yours" — no oracle for guessing codes.
-    if (!c || c.user_id !== user.id) {
-      return NextResponse.json({ valid: false, reason: 'Invalid coupon code.' });
-    }
-    if (c.status === 'redeemed') {
-      return NextResponse.json({ valid: false, reason: 'This coupon has already been used.' });
-    }
-    if (c.status === 'revoked') {
-      return NextResponse.json({ valid: false, reason: 'This coupon is no longer valid.' });
-    }
-    if (c.status === 'expired' || new Date(c.expires_at).getTime() < Date.now()) {
-      if (c.status === 'active') {
-        await svc.from('discount_coupons').update({ status: 'expired' }).eq('id', c.id);
-      }
+    // Lazily mark a lapsed coupon so the admin list stays truthful.
+    if (coupon && coupon.status === 'active' && new Date(coupon.expires_at).getTime() < Date.now()) {
+      await svc.from('discount_coupons').update({ status: 'expired' }).eq('id', coupon.id);
       return NextResponse.json({ valid: false, reason: 'This coupon has expired.' });
+    }
+
+    const check = checkCoupon(coupon, user.id, tier);
+    if (!check.ok) {
+      return NextResponse.json({ valid: false, reason: check.reason });
     }
 
     return NextResponse.json({
       valid: true,
-      code: c.code,
-      pct: c.discount_pct,
-      tierScope: c.tier_scope,
-      expiresAt: c.expires_at,
+      code: check.coupon.code,
+      pct: check.coupon.discount_pct,
+      tierScope: check.coupon.tier_scope,
+      expiresAt: check.coupon.expires_at,
     });
   } catch (err) {
     console.error('coupon validate error:', err);

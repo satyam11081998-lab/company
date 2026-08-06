@@ -112,11 +112,20 @@ export async function getSkillGraph(
     incomingCount.set(node.id, 0);
   }
   const edges: SkillEdgeData[] = [];
-  for (const edge of edgesRes.data as Array<{ src: string; dst: string }>) {
-    edges.push([edge.src, edge.dst]);
-    const out = adjacency.get(edge.src);
-    if (out) out.push(edge.dst);
-    incomingCount.set(edge.dst, (incomingCount.get(edge.dst) ?? 0) + 1);
+  for (const edge of edgesRes.data as Array<Record<string, string>>) {
+    // Column-name tolerance: the shipped schema (migration 0004 +
+    // seed-skill-graph.sql) names these `source_id` / `target_id`. An earlier
+    // draft of this reader assumed `src` / `dst`, which silently produced
+    // `[undefined, undefined]` edges and NaN node coordinates — the whole
+    // constellation then rendered blank behind a mock fallback. Accept both so
+    // the reader works against either shape and can never regress that way again.
+    const src = edge.src ?? edge.source_id;
+    const dst = edge.dst ?? edge.target_id;
+    if (!src || !dst) continue;
+    edges.push([src, dst]);
+    const out = adjacency.get(src);
+    if (out) out.push(dst);
+    incomingCount.set(dst, (incomingCount.get(dst) ?? 0) + 1);
   }
 
   // 4. State per node: done → active → next → locked.
@@ -224,10 +233,14 @@ export async function getSkillGraph(
     const state = states.get(n.id) ?? 'locked';
     counts[state] += 1;
     const stats = nodeStats.get(n.id);
+    // Same column-name tolerance as the edges above: the live table uses
+    // `x_pos` / `y_pos`. A NaN here pushed every node off-canvas.
+    const x = Number(n.display_x ?? n.x_pos ?? 0);
+    const y = Number(n.display_y ?? n.y_pos ?? 0);
     return {
       id: n.id,
-      x: Number(n.display_x),
-      y: Number(n.display_y),
+      x: Number.isFinite(x) ? x : 0,
+      y: Number.isFinite(y) ? y : 0,
       lbl: n.label,
       cluster: n.cluster,
       s: state,

@@ -65,24 +65,33 @@ Source of truth: `supabase/migrations/0005_user_onboarding.sql`, mirrored in `li
   + announce. Affects: Onboarding, Profile, Dashboard (auth-cached.ts reader),
   future GD-cohort feature.
 
-## C7 · Discount coupons & deck submissions   (v1, 2026-07-17)
-Source of truth: `supabase/migrations/0041_deck_vault_rewards.sql`; enforced across
+## C7 · Discount coupons & deck submissions   (v2, 2026-08-06)
+Source of truth: `supabase/migrations/0041_deck_vault_rewards.sql`, `0044_growth_kit.sql`; enforced across
 `app/api/razorpay/{order,verify,webhook}/route.ts`, `app/api/coupons/validate/route.ts`,
-`app/(app)/admin/deck-vault/actions.ts`, backend `routes/deck_vault.py`.
-- Tables: `deck_submissions` (one PENDING per user via partial unique index; states
-  pending→approved|rejected) and `discount_coupons` (user-locked, single-use, ONE
-  active deck-vault coupon per user via partial unique index, `tier_scope`, expiry).
-- RLS: **select-own only on both; no client write policies** — all writes are
-  service-role. Approval = coupon insert FIRST, then submission flip (both race-safe).
-- **Money rule:** the discounted amount is computed ONLY by `discountedPaise()` in
-  `lib/tier.ts`, and order, verify and webhook must all use it — a drift of one paisa
-  makes legitimate payments fail verification. `notes.coupon` is server-set at order
-  creation and is the only coupon channel into verify/webhook; the DB row (not notes)
-  is the source of truth for pct/ownership at redemption. Redemption burns the coupon
-  with `.eq('status','active')` and records `redeemed_payment_id` (idempotent retries
-  allowed via redeemed-by-this-payment).
-- **Rule:** any change to coupon states, the pct computation, notes schema, or either
-  table = `BREAKING`, bump version. Affects: Payments, Deck Vault Rewards, Admin.
+`app/(app)/admin/deck-vault/actions.ts`, `app/(app)/admin/coupons/*`, backend `routes/deck_vault.py`.
+A coupon is now one of two shapes:
+- `user_id NOT NULL` → **user-locked, single use** (Deck Vault Rewards). Behaviour is
+  byte-for-byte v1: only the owner may use it, redeeming flips `status` to `'redeemed'`.
+- `user_id NULL` → **public / influencer**. Any signed-in buyer may use it, capped by
+  `max_redemptions` (NULL = unlimited); redeeming increments `redemption_count` and only
+  flips `status` when the cap is hit.
+
+All four call sites (`/api/coupons/validate`, `/api/razorpay/{order,verify,webhook}`) now
+route through **`lib/coupons.ts`** — `loadCoupon` / `checkCoupon` /
+`couponHonouredAtPayment` / `redeemCoupon`. Do not re-implement coupon rules inline; that
+duplication is exactly what the money rule exists to prevent.
+
+**Money rule (extends v1):** the charged amount is still computed ONLY by
+`discountedPaise()`. Owner commission is computed ONLY by `commissionPaise()` and is based
+on **LIST price, not the amount paid** (owner decision, 2026-08-06) so a payout does not
+shrink as the discount grows. Every redemption is booked to `coupon_redemptions`, which has
+`UNIQUE(razorpay_payment_id)` — that unique index, not application logic, is what makes
+`/verify` and the webhook racing on the same payment safe. `coupon_redemptions` has RLS
+enabled with **zero policies** (deny-all): commission is service-role-only and must never
+reach a buyer-facing response.
+
+**Rule:** any change to coupon states, either pct computation, the notes schema, or any of
+the three tables = `BREAKING`. Affects: Payments, Deck Vault Rewards, Admin.
 
 ## C8 · Vault storage path convention   (v1, 2026-07-17)
 Source of truth: `lib/google-drive.ts` (GDRIVE_PREFIX/isDrivePath/driveFileId) and its

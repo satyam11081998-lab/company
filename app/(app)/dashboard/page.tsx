@@ -18,6 +18,7 @@ import { getCohortActivity } from '@/lib/dashboard/activity-feed';
 import { getPeerProximity } from '@/lib/dashboard/peer-proximity';
 import { getProofRail } from '@/lib/dashboard/proof-rail';
 import { getSkillGraph } from '@/lib/dashboard/skill-graph';
+import { getDemoUserIdsCached, notInList } from '@/lib/dashboard/demo-users';
 import { getNodeOpenTargets } from '@/lib/dashboard/node-to-case';
 import { getTodayMeta } from '@/lib/dashboard/today-meta';
 import { getDailyProgress } from '@/lib/dashboard/daily-progress';
@@ -58,6 +59,12 @@ export default async function DashboardPage() {
   // Same — layout already fetched this. We still type-coerce locally.
   const layoutUserRow = await getCachedUserRow(authUser.id);
 
+  // Demo/showcase account ids — excluded from every cross-user aggregate
+  // below (rank, headcount, cohort benchmark). Cheap (0-2 rows) and fails
+  // open to [] if migration 0044 hasn't run yet.
+  const demoIds = await getDemoUserIdsCached();
+  const exclDemo = notInList(demoIds);
+
   // Fetch daily content first since other queries (proof rail) depend on it
   const dailyToday = await getDailyTodayServerSide();
 
@@ -74,11 +81,17 @@ export default async function DashboardPage() {
       .from('case_attempts')
       .select('submission_id, is_first_attempt')
       .eq('user_id', authUser.id),
-    svc
-      .from('submissions')
-      .select('feedback_json')
-      .not('feedback_json', 'is', null)
-      .limit(100),
+    (() => {
+      // Cohort benchmark — the per-dimension averages every user is compared
+      // against on the radar. Demo submissions are excluded so a seeded
+      // account cannot move the bar for real users.
+      const q = svc
+        .from('submissions')
+        .select('feedback_json')
+        .not('feedback_json', 'is', null)
+        .limit(100);
+      return exclDemo ? q.not('user_id', 'in', exclDemo) : q;
+    })(),
     getHeatmap(supabase, authUser.id),
     getGrowthDeltas(supabase, authUser.id),
     getRecent(supabase, authUser.id),
@@ -131,9 +144,13 @@ export default async function DashboardPage() {
   const userName = (userRow?.name ?? authUser.email ?? 'there').split(' ')[0];
 
   // --- peer comparison (O(1) rank, restored from the original dashboard) ---
+  // Demo/showcase accounts are excluded so a seeded Pro history cannot push
+  // every real user down a rank or dilute the percentile (demoIds resolved above).
+  const rankQ = svc.from('users').select('id', { count: 'exact', head: true }).gt('points', points);
+  const totalQ = svc.from('users').select('id', { count: 'exact', head: true });
   const [rankCountRes, totalCountRes] = await Promise.all([
-    svc.from('users').select('id', { count: 'exact', head: true }).gt('points', points),
-    svc.from('users').select('id', { count: 'exact', head: true }),
+    exclDemo ? rankQ.not('id', 'in', exclDemo) : rankQ,
+    exclDemo ? totalQ.not('id', 'in', exclDemo) : totalQ,
   ]);
   const rankNum = (rankCountRes.count ?? 0) + 1;
   const totalUsers = totalCountRes.count ?? 0;

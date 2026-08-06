@@ -183,6 +183,29 @@ export function discountedPaise(
   return Math.max(100, Math.round((base * (100 - pct)) / 100));
 }
 
+/**
+ * Commission in PAISE owed to a coupon owner (influencer) for one sale.
+ *
+ * Computed on the LIST price, NOT on what the buyer actually paid — owner
+ * decision 2026-08-06. So a Pro monthly sale on a 10%-off code with a 5%
+ * commission pays out 5% of 59900 = 2995 paise, while the buyer paid 53910.
+ * Keeping the base at list price means the payout does not shrink when the
+ * discount grows, which is what was promised to the creator.
+ *
+ * Single source of truth: order creation records nothing, but /verify and the
+ * webhook both write the ledger and MUST agree to the paisa or a retry would
+ * credit a different amount.
+ */
+export function commissionPaise(
+  tier: Exclude<SubscriptionTier, 'free'>,
+  period: BillingPeriod,
+  commissionPct: number,
+): number {
+  const base = priceFor(tier, period) * 100;
+  const pct = Math.min(50, Math.max(0, Number(commissionPct) || 0));
+  return Math.round((base * pct) / 100);
+}
+
 /** Whether a coupon's tier_scope covers the tier being purchased. */
 export function couponCoversTier(scope: string, tier: 'lite' | 'pro'): boolean {
   return scope === 'any' || scope === tier;

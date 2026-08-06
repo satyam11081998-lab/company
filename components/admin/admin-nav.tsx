@@ -5,10 +5,13 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, MessageSquareQuote, Users, Megaphone, FileText,
   FolderLock, Flag, Sparkles, Activity, BadgeCheck, BarChart3, Ticket,
+  UsersRound, TicketPercent,
 } from 'lucide-react';
 
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
   { href: '/admin', label: 'Operations', icon: LayoutDashboard },
+  { href: '/admin/users', label: 'Users', icon: UsersRound },
+  { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
   { href: '/admin/status', label: 'Status', icon: Activity },
   { href: '/admin/ai-usage', label: 'AI usage', icon: BarChart3 },
   { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },

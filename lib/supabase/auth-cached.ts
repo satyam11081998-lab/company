@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
+import { sessionIdFromAccessToken } from '@/lib/sessions';
 import type { UserRow } from '@/lib/types';
 
 /**
@@ -34,6 +35,22 @@ export const getCachedAuthUser = cache(async () => {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
+});
+
+/**
+ * The `session_id` claim of the current login (device tracking, migration
+ * 0044). Read from the cookie session rather than re-hitting the auth server:
+ * identity is already proven by `getCachedAuthUser()`, this only answers
+ * "which login is this?". Request-scoped like the others, so at most one read.
+ */
+export const getCachedSessionId = cache(async (): Promise<string | null> => {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    return sessionIdFromAccessToken(data.session?.access_token ?? null);
+  } catch {
+    return null;
+  }
 });
 
 export const getCachedUserRow = cache(async (userId: string): Promise<UserRow | null> => {

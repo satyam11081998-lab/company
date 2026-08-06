@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getDemoUserIdsCached, notInList } from './demo-users';
 
 /**
  * Real leaderboard + rivalry data. Everything here is computed from live rows
@@ -220,17 +221,25 @@ export async function getAllTimeLeaderboard(
   // Over-fetch: the solve gate drops users below it, so pull a generous pool and
   // gate/slice down to `limit` qualifying rows (gated-out users sit at the tail).
   const poolSize = Math.max(limit * 4, 200);
+  // Demo/showcase accounts are seeded with a Pro-level history and would
+  // otherwise land at the top of the national board. Excluded from the pool,
+  // the headcount, AND the rank maths so all three agree.
+  const demoIds = await getDemoUserIdsCached();
+  const excl = notInList(demoIds);
+  const poolQ = svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').order('points', { ascending: false }).limit(poolSize);
+  const totalQ = svc.from('users').select('id', { count: 'exact', head: true });
   const [{ data: poolRows }, meRes, totalRes] = await Promise.all([
-    svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').order('points', { ascending: false }).limit(poolSize),
+    excl ? poolQ.not('id', 'in', excl) : poolQ,
     svc.from('users').select('points').eq('id', userId).maybeSingle(),
-    svc.from('users').select('id', { count: 'exact', head: true }),
+    excl ? totalQ.not('id', 'in', excl) : totalQ,
   ]);
   const pool = (poolRows as any[]) || [];
   const poolSubCounts = await subCountsFor(svc, pool.map((r) => r.id));
   const rows = gateAndSlice(pool, poolSubCounts, limit);
   const myPoints = (meRes.data as any)?.points ?? 0;
-  const { count: aboveCount } = await svc
+  const aboveQ = svc
     .from('users').select('id', { count: 'exact', head: true }).gt('points', myPoints);
+  const { count: aboveCount } = await (excl ? aboveQ.not('id', 'in', excl) : aboveQ);
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
   const collegeNames = await collegeNamesFor(svc, rows.map((r) => r.college_id));
@@ -255,17 +264,22 @@ export async function getCohortLeaderboard(
   } catch { /* label only */ }
 
   const poolSize = Math.max(limit * 4, 200);
+  const demoIds = await getDemoUserIdsCached();
+  const excl = notInList(demoIds);
+  const poolQ = svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('college_id', collegeId)
+    .order('points', { ascending: false }).limit(poolSize);
+  const totalQ = svc.from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId);
   const [{ data: poolRows }, totalRes] = await Promise.all([
-    svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('college_id', collegeId)
-      .order('points', { ascending: false }).limit(poolSize),
-    svc.from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId),
+    excl ? poolQ.not('id', 'in', excl) : poolQ,
+    excl ? totalQ.not('id', 'in', excl) : totalQ,
   ]);
   const pool = (poolRows as any[]) || [];
   const poolSubCounts = await subCountsFor(svc, pool.map((r) => r.id));
   const rows = gateAndSlice(pool, poolSubCounts, limit);
   const myPoints = (me as any)?.points ?? 0;
-  const { count: aboveCount } = await svc
+  const aboveQ = svc
     .from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId).gt('points', myPoints);
+  const { count: aboveCount } = await (excl ? aboveQ.not('id', 'in', excl) : aboveQ);
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
   const collegeNames = await collegeNamesFor(svc, rows.map((r) => r.college_id));

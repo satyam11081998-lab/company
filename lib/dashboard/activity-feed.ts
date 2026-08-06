@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { getDemoUserIdsCached, notInList } from './demo-users';
 
 export interface TapeEvent {
   who: string;
@@ -11,7 +12,10 @@ export interface TapeEvent {
 
 export async function getCohortActivity(supabase: SupabaseClient): Promise<TapeEvent[]> {
   // Query recent global submissions
-  const { data, error } = await supabase
+  // Demo/showcase accounts are filtered out — the live tape is social proof,
+  // so it must only ever show real aspirants.
+  const excl = notInList(await getDemoUserIdsCached());
+  const q = supabase
     .from('submissions')
     .select(`
       id,
@@ -23,6 +27,7 @@ export async function getCohortActivity(supabase: SupabaseClient): Promise<TapeE
     `)
     .order('created_at', { ascending: false })
     .limit(10);
+  const { data, error } = await (excl ? q.not('user_id', 'in', excl) : q);
 
   if (error || !data) return [];
 
