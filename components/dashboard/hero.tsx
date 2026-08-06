@@ -535,9 +535,13 @@ export function HeroReadiness({
   const ready = u.readiness ?? 0;
   return (
     <div style={{
+      // Three columns on desktop: readiness ring · copy · streak monument.
+      // The monument is the same right rail HeroCase renders — without it this
+      // variant left a third of the tile empty, which is what made an engaged
+      // user's dashboard look emptier than a brand-new one's.
       display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
-      gap: isMobile ? 16 : 36,
+      gridTemplateColumns: isMobile ? '1fr' : 'auto minmax(0, 1fr) auto',
+      gap: isMobile ? 16 : 28,
       alignItems: 'center',
       justifyItems: isMobile ? 'center' : 'start',
     }}>
@@ -557,10 +561,15 @@ export function HeroReadiness({
           </div>
         )}
       </div>
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
           <span className="chip red" style={{ fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', fontSize: 10 }}>
             READINESS · {u.greeting.split(',')[0].toUpperCase()}
+          </span>
+          {/* Same countdown HeroCase puts here — the streak deadline is the
+              thing that actually gets someone to open a case today. */}
+          <span style={{ marginLeft: 'auto' }}>
+            <StreakExpiry minimal />
           </span>
         </div>
         {/* Identical type scale to HeroCase's headline. All three hero variants
@@ -598,7 +607,25 @@ export function HeroReadiness({
           />
           <button className="btn ghost" style={{ color: 'var(--ink-2)', fontSize: 13 }}>How is readiness calculated?</button>
         </div>
+        {/* Same footer strip as HeroCase: today's case at a glance, plus the
+            peer line. Keeps the two variants reading as one tile. */}
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, fontSize: 11.5, color: 'var(--ink-3)' }}>
+            <b className="mono tnum" style={{ fontSize: 13, color: 'var(--ink)' }}>{today?.minutes || 25}</b> min
+          </span>
+          <span style={{ width: 1, height: 14, background: 'var(--line)' }} />
+          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, fontSize: 11.5, color: 'var(--ink-3)' }}>
+            <b className="mono tnum" style={{ fontSize: 13, color: 'var(--ink)' }}>+{today?.pointsReward || 85}</b> pts{' '}
+            <b style={{ color: 'var(--red)', marginLeft: 4 }}>+{today?.streakBoost || 25} streak</b>
+          </span>
+          <span style={{ width: 1, height: 14, background: 'var(--line)' }} />
+          <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{today?.firm || 'BCG'} · {today?.round || 'partner round'}</span>
+          <span style={{ marginLeft: 'auto' }}>
+            <PeerProximity u={u} />
+          </span>
+        </div>
       </div>
+      <StreakMonument u={u} big={!isMobile} stacked={isMobile} />
     </div>
   );
 }
