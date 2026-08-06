@@ -542,8 +542,13 @@ export function HeroReadiness({
       justifyItems: isMobile ? 'center' : 'start',
     }}>
       <div style={{ position: 'relative' }}>
-        <Ring value={ready} size={200} thick={14}>
-          <span className="serif" style={{ fontSize: 64, lineHeight: 0.9 }}>{u.readiness ?? '—'}</span>
+        {/* Sized to match the rest of the dashboard, not to shout. The ring and
+            its number were 200/64 — noticeably heavier than StreakMonument's
+            56px figure on the standard hero, which made an established user's
+            tile look like a different product from a new user's. 176/56 keeps
+            the same ring-to-number ratio at the shared scale. */}
+        <Ring value={ready} size={176} thick={12}>
+          <span className="serif" style={{ fontSize: 56, lineHeight: 0.9 }}>{u.readiness ?? '—'}</span>
           <span style={{ fontSize: 10, color: 'var(--ink-4)', letterSpacing: '0.1em', marginTop: 4 }}>/100 READINESS</span>
         </Ring>
         {u.readinessDelta != null && (
@@ -553,12 +558,15 @@ export function HeroReadiness({
         )}
       </div>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <span className="chip red" style={{ fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', fontSize: 10 }}>
             READINESS · {u.greeting.split(',')[0].toUpperCase()}
           </span>
         </div>
-        <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(26px, 3vw, 38px)', lineHeight: 1.15 }}>
+        {/* Identical type scale to HeroCase's headline. All three hero variants
+            are the same tile with different content — a returning user should
+            not get visibly larger typography than someone on day one. */}
+        <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(22px, 2.4vw, 30px)', lineHeight: 1.18, color: 'var(--ink)', maxWidth: 620 }}>
           {u.readiness == null
             ? 'A few more cases and your readiness score appears.'
             : u.readiness >= 85
@@ -567,7 +575,7 @@ export function HeroReadiness({
                 ? "You're in the strong middle. Today's case targets your weakest dim."
                 : "You're building. Today's case fills your biggest gap."}
         </h1>
-        <p style={{ marginTop: 12, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.5, maxWidth: 480 }}>
+        <p style={{ marginTop: 8, fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.55, maxWidth: 540 }}>
           {u.readiness == null ? (
             <>
               You&apos;ve solved <b>{u.casesSolved}</b> {u.casesSolved === 1 ? 'case' : 'cases'} so far. Readiness unlocks at 5 — we need a small sample before the number means anything.
@@ -579,9 +587,9 @@ export function HeroReadiness({
           )}
         </p>
         {progress?.attempted && (
-          <div style={{ marginTop: 14 }}><DailyDoneBadge progress={progress} /></div>
+          <div style={{ marginTop: 12 }}><DailyDoneBadge progress={progress} /></div>
         )}
-        <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <DailyCaseCta
             progress={progress}
             startHref={primaryHref}

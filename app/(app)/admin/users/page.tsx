@@ -7,6 +7,19 @@ export const dynamic = 'force-dynamic';
 const LIST_LIMIT = 1000;
 const CHART_DAYS = 30;
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+/**
+ * `YYYY-MM-DD` for the IST calendar day containing `t`.
+ *
+ * Shift into IST first, THEN read the UTC date parts — that gives the IST day
+ * regardless of what timezone the server happens to run in (UTC on Vercel,
+ * IST on a local dev machine). Never mix this with a raw `toISOString()` date.
+ */
+function istDayKey(t: string | number | Date): string {
+  return new Date(new Date(t).getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
+}
+
 export default async function AdminUsersPage() {
   const svc = createServiceClient();
 
@@ -56,17 +69,21 @@ export default async function AdminUsersPage() {
   // Signups per day for the last 30 days, computed from the rows we already
   // hold — no second query, and it stays correct if LIST_LIMIT truncates older
   // history (the window is 30 days, the list is the newest 1000 accounts).
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  //
+  // Bucketed by IST DAY on BOTH sides. The previous version mixed two clocks:
+  // bucket keys came from `setHours(0,0,0,0)` (server-local midnight) then
+  // `toISOString()` (UTC), while user keys were raw UTC. On an IST server the
+  // two are a day apart, so every bucket was shifted and TODAY's signups fell
+  // outside the map entirely — the chart rendered blank on the exact day you
+  // most want to look at it. IST is also the right unit: the rest of the app
+  // (daily_schedule, streaks) already runs on an IST day boundary.
   const buckets: SignupBucket[] = [];
   for (let i = CHART_DAYS - 1; i >= 0; i--) {
-    const d = new Date(today.getTime() - i * 86_400_000);
-    buckets.push({ date: d.toISOString().slice(0, 10), count: 0 });
+    buckets.push({ date: istDayKey(Date.now() - i * 86_400_000), count: 0 });
   }
   const byDate = new Map(buckets.map((b) => [b.date, b]));
   for (const u of users) {
-    const key = new Date(u.createdAt).toISOString().slice(0, 10);
-    const bucket = byDate.get(key);
+    const bucket = byDate.get(istDayKey(u.createdAt));
     if (bucket) bucket.count += 1;
   }
 

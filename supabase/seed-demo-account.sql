@@ -31,7 +31,10 @@
 do $$
 declare
   -- ── EDIT THIS ──────────────────────────────────────────────────────
-  v_email    text := 'demo@mece.in';
+  -- Reads the session setting `mece.demo_email` when present (RUN-ALL sets it
+  -- once at the top so there is a single edit point), otherwise falls back to
+  -- the literal below. Edit the literal for a standalone run.
+  v_email    text := coalesce(nullif(current_setting('mece.demo_email', true), ''), 'demo@mece.in');
   -- Only applied when the account has no name yet (e.g. created from the
   -- Supabase dashboard rather than /signup). An existing name is never overwritten.
   v_name     text := 'Ananya Rao';
@@ -61,6 +64,7 @@ declare
   v_missing  text[] := '{}';
   v_made     int := 0;
   v_hint     text;
+  v_guard_off boolean := false;
 begin
   ------------------------------------------------------------------
   -- 0. Resolve the account
@@ -74,7 +78,7 @@ begin
     raise exception 'No user with email %.', v_email
       using hint =
         'Sign that account up at /signup and finish onboarding, then re-run. '
-        || 'Or set v_email (line 34) to an existing account. Most recent signups: '
+        || 'Or point v_email (top of this block) at an existing account. Most recent signups: '
         || coalesce(v_hint, '(no users in this database yet)');
   end if;
 
@@ -82,6 +86,34 @@ begin
     raise exception
       'public.skill_nodes is empty — run supabase/seed-skill-graph.sql first, or the constellation will render its built-in mock and ignore this seed.';
   end if;
+
+  ------------------------------------------------------------------
+  -- 0b. Get past trg_guard_user_cols (migration 0006)
+  ------------------------------------------------------------------
+  -- That trigger SILENTLY reverts subscription_tier / subscription_*_at /
+  -- points / is_admin / is_demo for any caller whose auth.role() is not
+  -- 'service_role'. The Supabase SQL editor has no JWT, so auth.role() is
+  -- NULL and every privileged write below would report success and change
+  -- nothing. Transaction-local, so it resets the moment this block ends.
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  begin
+    perform set_config('request.jwt.claim.role', 'service_role', true);
+  exception when others then null;
+  end;
+
+  -- Belt and braces: if auth.role() still does not read back as service_role
+  -- (different GoTrue helper definition, or the function is absent), turn the
+  -- trigger off for THIS TRANSACTION. Safe: DDL is transactional in Postgres,
+  -- so if anything below raises, the disable rolls back with it and the guard
+  -- can never be left off. It is re-enabled explicitly before the assertion.
+  begin
+    if coalesce(auth.role(), '') is distinct from 'service_role' then
+      execute 'alter table public.users disable trigger trg_guard_user_cols';
+      v_guard_off := true;
+    end if;
+  exception when others then
+    null;   -- no rights or no auth.role(): the assertion at the end will catch it
+  end;
 
   ------------------------------------------------------------------
   -- 1. Wipe only what a previous run of THIS script created
@@ -104,7 +136,10 @@ begin
          subscription_tier        = 'pro',
          subscription_started_at  = now() - interval '84 days',
          subscription_expires_at  = now() + interval '365 days',
-         streak_count             = 31,
+         -- MUST stay under 31. dashboard-client.tsx:119 flips the hero to the
+         -- streak variant when streak > 30, which renders a 140px number that
+         -- swallows the tile. Below the line you get the readiness/case hero.
+         streak_count             = 18,
          streak_last_date         = (now() at time zone 'Asia/Kolkata')::date,
          onboarding_completed_at  = coalesce(onboarding_completed_at, now() - interval '90 days'),
          placement_focus          = coalesce(placement_focus, 'final'),
@@ -336,6 +371,33 @@ begin
     (v_user, 'Net revenue retention above 120% is the line that separates a land-and-expand story from a pure new-logo story.', 'MECE demo brief', 'SaaS', now() - interval '3 days'),
     (v_user, 'D2C brands typically hit a CAC wall around Rs 900 to 1,100 per order; past that, retention economics have to carry the model.', 'MECE demo brief', 'D2C', now() - interval '2 days')
   on conflict do nothing;
+
+  ------------------------------------------------------------------
+  -- 8a. Put the guard trigger back before we assert anything
+  ------------------------------------------------------------------
+  if v_guard_off then
+    execute 'alter table public.users enable trigger trg_guard_user_cols';
+    v_guard_off := false;
+  end if;
+
+  ------------------------------------------------------------------
+  -- 8b. ASSERT the privileged writes actually landed
+  ------------------------------------------------------------------
+  -- trg_guard_user_cols reverts silently: the UPDATE reports success and
+  -- changes nothing. Never trust a privileged write to public.users without
+  -- reading it back — this exact failure shipped a demo account that looked
+  -- brand new while every unguarded column was correct.
+  if not exists (
+    select 1 from public.users
+     where id = v_user
+       and points = v_points
+       and is_demo
+       and subscription_tier = 'pro'
+  ) then
+    raise exception
+      'Privileged columns were reverted by trg_guard_user_cols — points/tier/is_demo did not stick.'
+      using hint = 'Run supabase/fix-demo-privileged.sql, which disables the guard for one transaction.';
+  end if;
 
   ------------------------------------------------------------------
   -- 9. Report

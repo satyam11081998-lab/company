@@ -23,9 +23,12 @@
 
 do $$
 declare
-  -- ── EDIT THESE ─────────────────────────────────────────────────────
+  -- ── EDIT THESE, THEN DO NOT COMMIT THE PASSWORD ────────────────────
+  -- THIS REPOSITORY IS PUBLIC. Type the real password here, run the file,
+  -- then put the placeholder back before committing. A password committed
+  -- once is on GitHub forever, even if a later commit removes it.
   v_email    text := 'demo@mece.in';
-  v_password text := 'MeceDemo@2026';
+  v_password text := 'REPLACE_ME_BEFORE_RUNNING';
   v_name     text := 'Ananya Rao';
   -- ───────────────────────────────────────────────────────────────────
 
@@ -52,6 +55,12 @@ begin
   if v_crypto is null then
     raise exception 'pgcrypto is not installed.'
       using hint = 'Supabase → Database → Extensions → enable "pgcrypto", then re-run.';
+  end if;
+
+  -- Refuse to create an account with the placeholder as its password.
+  if v_password = 'REPLACE_ME_BEFORE_RUNNING' or length(v_password) < 10 then
+    raise exception 'Set a real password on line 27 before running (10+ characters).'
+      using hint = 'This repo is public — put the placeholder back before you commit.';
   end if;
 
   v_pwexpr := format('%I.crypt(%L, %I.gen_salt(%L))', v_crypto, v_password, v_crypto, 'bf');

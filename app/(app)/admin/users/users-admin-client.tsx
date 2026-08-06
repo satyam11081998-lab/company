@@ -86,15 +86,18 @@ export default function UsersAdminClient({
   const [log, setLog] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const stats = useMemo(() => {
-    const now = Date.now();
-    const since = (days: number) => now - days * 86_400_000;
+    // "Today" and "this week" are read straight off the SAME IST day buckets
+    // the chart draws, rather than from a rolling 24h/168h window. Two numbers
+    // on one screen that disagree because they use different clocks is worse
+    // than either number being slightly coarser.
+    const sum = (n: number) => signups.slice(-n).reduce((a, s) => a + s.count, 0);
     return {
       total: users.length,
-      today: users.filter((u) => new Date(u.createdAt).getTime() >= since(1)).length,
-      week: users.filter((u) => new Date(u.createdAt).getTime() >= since(7)).length,
+      today: sum(1),
+      week: sum(7),
       paid: users.filter((u) => u.tier === 'pro' || u.tier === 'lite').length,
     };
-  }, [users]);
+  }, [users, signups]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -112,6 +115,7 @@ export default function UsersAdminClient({
   }, [users, q, filter]);
 
   const peak = Math.max(1, ...signups.map((s) => s.count));
+  const windowTotal = signups.reduce((a, s) => a + s.count, 0);
 
   async function open(userId: string) {
     setDetailFor(userId);
@@ -185,25 +189,54 @@ export default function UsersAdminClient({
 
       {/* Signups per day */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-foreground">Signups, last 30 days</h2>
-        <div className="mt-5 flex h-32 items-end gap-1">
-          {signups.map((s) => (
-            <div key={s.date} className="group relative flex-1" title={`${dayLabel(s.date)} · ${s.count}`}>
-              <div
-                className="w-full rounded-t bg-primary/70 transition-colors group-hover:bg-primary"
-                style={{ height: `${Math.max(2, (s.count / peak) * 100)}%` }}
-              />
-              <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-1.5 py-0.5 text-[10px] text-background group-hover:block">
-                {s.count}
-              </span>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Signups, last 30 days</h2>
+          <span className="text-sm text-muted-foreground">
+            <b className="text-foreground tabular-nums">{windowTotal}</b> in this window
+          </span>
+        </div>
+
+        {windowTotal === 0 ? (
+          // An explicit empty state. A row of 2%-tall slivers is
+          // indistinguishable from a broken chart, which is exactly how this
+          // read before — say "nothing here" rather than draw nothing.
+          <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+            No signups in the last 30 days.
+            {stats.total > 0 && <> All {stats.total} accounts are older than that.</>}
+          </div>
+        ) : (
+          <>
+            <div className="mt-5 flex h-32 items-end gap-1">
+              {signups.map((s) => (
+                <div
+                  key={s.date}
+                  className="group relative flex h-full flex-1 items-end"
+                  title={`${dayLabel(s.date)} · ${s.count} signup${s.count === 1 ? '' : 's'}`}
+                >
+                  <div
+                    className={`w-full rounded-t transition-colors ${
+                      s.count > 0
+                        ? 'bg-primary/70 group-hover:bg-primary'
+                        : 'bg-border group-hover:bg-muted-foreground/40'
+                    }`}
+                    // Non-zero days get a floor of 8% so a single signup is
+                    // still visibly a bar; empty days keep a 2% baseline so the
+                    // axis stays readable.
+                    style={{ height: s.count > 0 ? `${Math.max(8, (s.count / peak) * 100)}%` : '2%' }}
+                  />
+                  <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-1.5 py-0.5 text-[10px] text-background group-hover:block">
+                    {s.count}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
-          <span>{dayLabel(signups[0]?.date ?? '')}</span>
-          <span>Peak {peak}/day</span>
-          <span>{dayLabel(signups[signups.length - 1]?.date ?? '')}</span>
-        </div>
+            <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+              <span>{dayLabel(signups[0]?.date ?? '')}</span>
+              <span>Peak {peak}/day</span>
+              <span>{dayLabel(signups[signups.length - 1]?.date ?? '')} (today)</span>
+            </div>
+          </>
+        )}
       </Card>
 
       {/* Search + filters */}
