@@ -71,8 +71,21 @@ export async function updateSession(request: NextRequest) {
   // device holds the account, and it lives OUTSIDE the (app) group. Without
   // this carve-out a not-yet-onboarded user would ping-pong
   // /session-conflict -> /onboarding -> /session-conflict forever.
+  // Guest (anonymous auth) users skip the onboarding gate entirely — they have
+  // no onboarding_completed_at and would infinite-redirect to /onboarding.
+  // GUEST MODE (0045): "/" is in PUBLIC_ROUTES, so it normally skips this gate.
+  // But "/" is rewritten to the dashboard for any signed-in user (see below),
+  // and a half-onboarded real user must not be shown a dashboard — they must
+  // still be sent to /onboarding. So "/" opts INTO the gate whenever a session
+  // exists. Logged-out "/" is untouched and stays static.
+  //
+  // Gated on the same flag as the rewrite it exists to protect: with guest mode
+  // off there is no rewrite, so opting "/" into the gate would only add a users
+  // query and a behaviour change to every logged-in homepage hit for no reason.
+  const isRootWithUser =
+    pathname === '/' && !!user && process.env.NEXT_PUBLIC_GUEST_MODE === 'true';
   if (
-    user && !isPublic &&
+    user && !user.is_anonymous && (!isPublic || isRootWithUser) &&
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/auth') &&
     !pathname.startsWith('/session-conflict')
@@ -97,6 +110,52 @@ export async function updateSession(request: NextRequest) {
       url.search = '';
       return NextResponse.redirect(url);
     }
+  }
+
+  // ── "/" serves the dashboard, without changing the URL ───────────────
+  // GUEST MODE (0045). The owner's requirement is that mece.in IS the
+  // dashboard — not a landing page that forwards to /dashboard. A client-side
+  // router.push() would have satisfied neither the requirement nor the SEO
+  // constraint:
+  //   • the address bar would read /dashboard, which is the "marketing page +
+  //     Try it now" shape that was explicitly rejected;
+  //   • /dashboard -> Back -> / -> pushed forward again = the user cannot
+  //     leave (a push/replace trap);
+  //   • the marketing content would flash before the jump, and that shift is
+  //     measured by CLS — degrading the Core Web Vitals the plan protects;
+  //   • and Googlebot RENDERS JavaScript. It has no cookie, so it would take
+  //     the guest branch, mint an anonymous user on every crawl, and index the
+  //     rendered "/" as a bounce to a URL that is not even in the sitemap.
+  //
+  // A REWRITE has none of those properties. The URL stays "/", the response
+  // body is the dashboard, and it is decided server-side on cookie presence.
+  // Crawlers never carry a session cookie, so they fall through to the static,
+  // ISR-cached "/" (revalidate = 300) with its <head>, H1, FAQ JSON-LD and
+  // proof sections intact. That is the whole SEO invariant, enforced here
+  // rather than hoped for in a useEffect.
+  //
+  // Onboarding is deliberately checked BEFORE this: a half-onboarded real user
+  // must still be sent to /onboarding rather than shown a dashboard at "/".
+  //
+  // FLAG-GATED. This is the one change in guest mode that would otherwise fire
+  // for REAL, existing users the moment it lands — it does not need an
+  // anonymous session, only any session at all. Landing it on main unflagged
+  // would silently change what every logged-in user sees at mece.in with no
+  // preview and no way back except a revert. Behind the flag, merging to main
+  // is inert and turning it on is an env var, which is also the rollback.
+  if (pathname === '/' && user && process.env.NEXT_PUBLIC_GUEST_MODE === 'true') {
+    const dashUrl = request.nextUrl.clone();
+    dashUrl.pathname = '/dashboard';
+    const rewritten = NextResponse.rewrite(dashUrl, { request: { headers: requestHeaders } });
+    // CRITICAL: `supabaseResponse` carries the refreshed auth cookies written
+    // by setAll() during getUser(). Returning a fresh NextResponse without
+    // copying them silently drops the rotated refresh token — the documented
+    // way to log every user out at random. Copy them across verbatim.
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      rewritten.cookies.set(cookie);
+    });
+    rewritten.headers.set('x-pathname', pathname);
+    return rewritten;
   }
 
   // Surface the current pathname as an internal header so the (app) layout

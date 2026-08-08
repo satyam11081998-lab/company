@@ -19,6 +19,7 @@ import CaseAttemptHistory from '@/components/case-attempt-history';
 import CaseRatingPrompt from '@/components/case-rating-prompt';
 import ConversationalSolve from '@/components/solve/ConversationalSolve';
 import GuestCasePreview from '@/components/guest/guest-case-preview';
+import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { getAttemptAccess } from '@/lib/access';
 import type { CaseRow, CaseAttemptRow, UserRow } from '@/lib/types';
 import { ArrowRight, Lock } from 'lucide-react';
@@ -139,7 +140,15 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
         ? 'Upgrade to Pro'
         : 'Upgrade for re-attempts';
 
-    lockedOverlay = (
+    // GUEST MODE (0045). A guest hitting a non-daily case is the ONE moment we
+    // ask for an account — and it is a save prompt, not an upsell. Sending a
+    // guest to /upgrade would be asking a stranger to pay before they have an
+    // account to pay with. GuestSaveWall converts the SAME anonymous auth row,
+    // so their two solves and score survive the sign-up.
+    lockedOverlay =
+      access.reason === 'guest-non-daily' ? (
+        <GuestSaveWall next={`/cases/${params.id}`} />
+      ) : (
       <Card className="bg-card p-6 text-center max-w-sm shadow-2xl border-primary/20">
         <Lock className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
         <h2 className="text-h3 mb-2 text-foreground">{lockTitle}</h2>
@@ -155,7 +164,7 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
           <LinkedInFollowInline bucket={access.bucket} />
         )}
       </Card>
-    );
+      );
   }
 
   return (

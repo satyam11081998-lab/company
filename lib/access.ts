@@ -6,7 +6,14 @@ function todayIst(): string {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-export type AttemptReason = 'ok' | 'free-non-daily' | 'free-extra-used' | 'free-reattempt' | 'lite-quota';
+export type AttemptReason =
+  | 'ok'
+  | 'free-non-daily'
+  | 'free-extra-used'
+  | 'free-reattempt'
+  | 'lite-quota'
+  /** Anonymous guest reaching past today's daily pair — the sign-up moment. */
+  | 'guest-non-daily';
 
 export interface AttemptAccess {
   allowed: boolean;
@@ -58,9 +65,27 @@ export async function getAttemptAccess(
     .limit(1);
   const isFirst = !(priorRows && priorRows.length);
 
+
+  // GUEST MODE (0045): checked BEFORE the isDaily branch so a guest re-opening
+  // today's case gets the save wall, not an upgrade pitch they cannot act on
+  // (and which /api/razorpay/order would 403 anyway). First attempts fall
+  // through untouched — the daily pair is exactly what a guest is entitled to.
+  if (user?.is_guest && !isFirst) {
+    return { allowed: false, reason: 'guest-non-daily', bucket, remaining: 0 };
+  }
+
   if (isDaily) {
     if (tier === 'free' && !isFirst) return { allowed: false, reason: 'free-reattempt', bucket, remaining: 0 };
     return { allowed: true, reason: 'ok', bucket, remaining: null };
+  }
+
+  // GUEST MODE (0045). A guest is a free-tier user whose one-time non-daily
+  // extras are zero: today's daily pair and nothing else. Placed AFTER the
+  // isDaily branch above so the daily pair is reached unchanged — there is no
+  // separate guest quota anywhere in the codebase, deliberately. Mirrors
+  // backend services/access_guard.py, which is the authoritative gate.
+  if (user?.is_guest) {
+    return { allowed: false, reason: 'guest-non-daily', bucket, remaining: 0 };
   }
 
   if (tier === 'free') {

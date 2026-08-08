@@ -43,7 +43,12 @@ function useInView<T extends HTMLElement>(threshold = 0.35): [React.RefObject<T>
 export function CountUp({ to, suffix = '', duration = 1100 }: { to: number; suffix?: string; duration?: number }) {
   const [ref, inView] = useInView<HTMLSpanElement>(0.6);
   const reduced = usePrefersReducedMotion();
-  const [val, setVal] = useState(0);
+  // Seed with the FINAL value, not 0. The server-rendered HTML is what
+  // Googlebot, GPTBot and every LLM fetcher actually read — seeding 0 meant
+  // the indexed homepage literally said "0 scoring dimensions / 0s feedback
+  // time". The animation is unaffected: the first requestAnimationFrame tick
+  // below sets val back to ~0 and counts up from there.
+  const [val, setVal] = useState(to);
 
   useEffect(() => {
     if (!inView) return;
@@ -279,8 +284,12 @@ export function LeaderboardVignette() {
                 >
                   <td className="font-mono font-semibold text-[13px]">{rank}</td>
                   <td className={`text-[13px] font-medium ${highlight ? 'text-primary' : 'text-foreground'}`}>{name}</td>
+                  {/* Always render CountUp — the row is already opacity-0 until
+                      `visible`, so the stagger is unchanged visually, but the
+                      SSR'd HTML now carries real points instead of a column of
+                      zeros for crawlers and LLM fetchers to read. */}
                   <td className="font-mono font-bold text-[14px] text-foreground">
-                    {visible ? <CountUp to={pts} duration={900} /> : 0}
+                    <CountUp to={pts} duration={900} />
                   </td>
                   <td className="text-[12px] text-muted-foreground">{streak}</td>
                 </tr>

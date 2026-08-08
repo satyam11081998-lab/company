@@ -226,8 +226,17 @@ export async function getAllTimeLeaderboard(
   // the headcount, AND the rank maths so all three agree.
   const demoIds = await getDemoUserIdsCached();
   const excl = notInList(demoIds);
-  const poolQ = svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').order('points', { ascending: false }).limit(poolSize);
-  const totalQ = svc.from('users').select('id', { count: 'exact', head: true });
+  // GUEST MODE (0045): guests are excluded in SQL with .eq('is_guest', false),
+  // NOT by materialising their ids the way demo accounts are. There are two
+  // demo accounts; guests are unbounded. Feeding them through notInList() would
+  // inline every guest uuid into a PostgREST `not.in.(…)` string on every
+  // dashboard render for every user — a query that grows without limit until it
+  // takes the board down. Keep demo ids materialised (2 rows) and guests in SQL.
+  // DEPLOY ORDER: 0045 must run BEFORE this ships, or `is_guest` does not exist
+  // and these queries error (unlike getDemoUserIdsCached, a column filter
+  // cannot fail open).
+  const poolQ = svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('is_guest', false).order('points', { ascending: false }).limit(poolSize);
+  const totalQ = svc.from('users').select('id', { count: 'exact', head: true }).eq('is_guest', false);
   const [{ data: poolRows }, meRes, totalRes] = await Promise.all([
     excl ? poolQ.not('id', 'in', excl) : poolQ,
     svc.from('users').select('points').eq('id', userId).maybeSingle(),
@@ -238,7 +247,7 @@ export async function getAllTimeLeaderboard(
   const rows = gateAndSlice(pool, poolSubCounts, limit);
   const myPoints = (meRes.data as any)?.points ?? 0;
   const aboveQ = svc
-    .from('users').select('id', { count: 'exact', head: true }).gt('points', myPoints);
+    .from('users').select('id', { count: 'exact', head: true }).eq('is_guest', false).gt('points', myPoints);
   const { count: aboveCount } = await (excl ? aboveQ.not('id', 'in', excl) : aboveQ);
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
@@ -266,9 +275,11 @@ export async function getCohortLeaderboard(
   const poolSize = Math.max(limit * 4, 200);
   const demoIds = await getDemoUserIdsCached();
   const excl = notInList(demoIds);
-  const poolQ = svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('college_id', collegeId)
+  // GUEST MODE (0045) — see the note in getAllTimeLeaderboard. Same reasoning:
+  // guests filtered in SQL, demo accounts materialised.
+  const poolQ = svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('college_id', collegeId).eq('is_guest', false)
     .order('points', { ascending: false }).limit(poolSize);
-  const totalQ = svc.from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId);
+  const totalQ = svc.from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId).eq('is_guest', false);
   const [{ data: poolRows }, totalRes] = await Promise.all([
     excl ? poolQ.not('id', 'in', excl) : poolQ,
     excl ? totalQ.not('id', 'in', excl) : totalQ,
@@ -278,7 +289,7 @@ export async function getCohortLeaderboard(
   const rows = gateAndSlice(pool, poolSubCounts, limit);
   const myPoints = (me as any)?.points ?? 0;
   const aboveQ = svc
-    .from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId).gt('points', myPoints);
+    .from('users').select('id', { count: 'exact', head: true }).eq('college_id', collegeId).eq('is_guest', false).gt('points', myPoints);
   const { count: aboveCount } = await (excl ? aboveQ.not('id', 'in', excl) : aboveQ);
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;

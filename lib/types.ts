@@ -45,6 +45,11 @@ export interface UserRow {
   // captured for admin support — never displayed to other users.
   is_demo?: boolean | null;
   phone?: string | null;
+  // Guest mode (migration 0045, 2026-08). `is_guest` mirrors
+  // `auth.users.is_anonymous`, set by `handle_new_user`. Guests are
+  // excluded from leaderboards, activity feeds, peer proximity and the
+  // session-lock — same treatment as `is_demo`.
+  is_guest?: boolean | null;
 }
 
 export interface PaymentRow {
