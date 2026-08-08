@@ -70,14 +70,28 @@ $$;
 
 create or replace function public.handle_user_converted()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_prev text;
 begin
-  -- Only touch rows where something we mirror actually changed.
   if new.is_anonymous is distinct from old.is_anonymous
      or new.email is distinct from old.email then
+
+    -- trg_guard_user_cols (0006 L57, BEFORE UPDATE on public.users) reverts
+    -- is_guest unless auth.role() = 'service_role'. auth.role() only reads
+    -- request.jwt.claims, and a GoTrue-initiated trigger carries NO claims, so
+    -- auth.role() is NULL, the guard fires, and this update is silently undone.
+    -- Exactly the failure 0033/0034 were written to work around. is_local = true
+    -- scopes the override to THIS transaction; we restore the previous value
+    -- immediately after so nothing leaks into the rest of GoTrue's work.
+    v_prev := current_setting('request.jwt.claims', true);
+    perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
     update public.users
        set is_guest = coalesce(new.is_anonymous, false),
            email    = coalesce(new.email, email, '')
      where id = new.id;
+
+    perform set_config('request.jwt.claims', coalesce(v_prev, ''), true);
   end if;
   return new;
 end;

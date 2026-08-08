@@ -13,6 +13,7 @@ import ScrollAnimations from '@/components/scroll-animations';
 import HeroInterviewDemo from '@/components/hero-interview-demo';
 import { GdBriefVignette, LeaderboardVignette, DeckVaultVignette, CountUp } from '@/components/landing-vignettes';
 import { faqPageJsonLd } from '@/lib/seo';
+import GuestStartButton from '@/components/guest/guest-start-button';
 
 export const metadata = {
   alternates: { canonical: '/' },
@@ -119,6 +120,15 @@ export default async function LandingPage() {
             </p>
             <div className="mt-7">
               <AuthCTA variant="hero" />
+            </div>
+            {/* GUEST MODE (0045): the only entry point into guest practice from
+                the homepage. GuestStartButton renders null when
+                NEXT_PUBLIC_GUEST_MODE is not 'true', so this is inert until the
+                flag is flipped and AuthCTA remains the sole CTA on rollback.
+                It mints the anonymous session on CLICK — never on mount — so
+                crawlers never trigger it and "/" stays statically renderable. */}
+            <div className="mt-3 max-w-xs">
+              <GuestStartButton label="Try today's case free" fullWidth />
             </div>
             <div className="mt-8 flex items-center gap-6">
               <div>
