@@ -21,6 +21,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // GUEST MODE (0045) — see /api/razorpay/order. Both doors must be shut:
+    // /order and /verify are independently reachable, and C7's money rule is
+    // enforced across all four coupon call sites, not just the first one.
+    if (user.is_anonymous) {
+      return NextResponse.json(
+        { error: 'Create an account before purchasing — your practice will carry over.' },
+        { status: 403 },
+      );
+    }
+
     const body = await req.json();
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, tier } = body;
 

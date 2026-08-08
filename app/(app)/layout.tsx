@@ -115,7 +115,9 @@ export default async function AppLayout({
   // Demo/showcase accounts are exempt: they are handed to creators and press
   // who will open them on a phone and a laptop at the same time, and a device
   // lock mid-shoot would be the worst possible moment to enforce it.
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY && !userRow?.is_demo) {
+  // Guest (anonymous auth) users are exempt alongside demo accounts: every
+  // guest contends for a session row and would storm /session-conflict.
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY && !userRow?.is_demo && !userRow?.is_guest) {
     const sessionState = await touchSession(
       createServiceClient(),
       authUser.id,
@@ -145,6 +147,7 @@ export default async function AppLayout({
     streak_count: 0,
     streak_last_date: null,
     is_admin: false,
+    is_guest: authUser.is_anonymous ?? false,
   };
 
   const user: UserRow = userRow ?? fallbackUser;

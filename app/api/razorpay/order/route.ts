@@ -16,6 +16,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // GUEST MODE (0045). Anonymous users hold the `authenticated` role, so
+    // every check written "is there a user?" silently starts admitting them.
+    // Money is the surface where that matters most: a guest could buy Pro
+    // against a throwaway identity they can never sign back into, and — worse —
+    // burn a capped influencer coupon's redemptions (C7 v2) while booking a
+    // commission to an account that evaporates. Refused server-side, not merely
+    // hidden in the UI.
+    if (user.is_anonymous) {
+      return NextResponse.json(
+        { error: 'Create an account before purchasing — your practice will carry over.' },
+        { status: 403 },
+      );
+    }
+
     const now = Date.now();
     const lastRequest = rateLimit.get(user.id);
     if (lastRequest && now - lastRequest < 5000) { // 5 seconds debounce

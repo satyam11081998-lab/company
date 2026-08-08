@@ -25,9 +25,15 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 export async function getPeerProximity(supabase: SupabaseClient, userId: string): Promise<PeerProximityData> {
   const since = new Date(Date.now() - WEEK_MS).toISOString();
 
+  // GUEST MODE (0045): "N new aspirants this week" is a social-proof number
+  // shown to real users. Every anonymous browser session creates a users row,
+  // so without this filter the figure would be dominated by guests who never
+  // signed up — inflating it by an order of magnitude and making it a lie.
+  // Filtered in SQL, not via a materialised id list (guests are unbounded).
   const { count: newCount } = await supabase
     .from('users')
     .select('id', { count: 'exact', head: true })
+    .eq('is_guest', false)
     .gte('created_at', since);
   const newAspirantsThisWeek = newCount || 0;
 
@@ -42,6 +48,7 @@ export async function getPeerProximity(supabase: SupabaseClient, userId: string)
   const behindQ = supabase
     .from('users')
     .select('id, name, points')
+    .eq('is_guest', false)   // never name a throwaway anonymous session as your rival
     .lt('points', myPoints)
     .order('points', { ascending: false })
     .limit(1);

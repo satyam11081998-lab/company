@@ -27,6 +27,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // GUEST MODE (0045). Validation is the reconnaissance step: without this a
+    // guest could brute-force coupon codes at zero cost and without an account
+    // to rate-limit meaningfully. Same 403 as the two Razorpay doors.
+    if (user.is_anonymous) {
+      return NextResponse.json(
+        { error: 'Create an account to use a coupon.' },
+        { status: 403 },
+      );
+    }
+
     const now = Date.now();
     const last = rateLimit.get(user.id);
     if (last && now - last < 1500) {

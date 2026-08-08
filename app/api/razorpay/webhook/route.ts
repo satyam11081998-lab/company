@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
 import { sendUpgradeReceipt } from '@/lib/email/send';
+import { notifyAdmin } from '@/lib/telegram';
 import {
   loadCoupon,
   couponHonouredAtPayment,
@@ -70,6 +71,30 @@ export async function POST(req: Request) {
         const { data: existing } = await supabase
           .from('payments').select('id').eq('razorpay_payment_id', paymentId).maybeSingle();
         if (existing) return NextResponse.json({ ok: true, dedup: true });
+
+        // GUEST MODE (0045). /order and /verify both 403 anonymous users, so a
+        // paid order whose buyer is STILL a guest at webhook time is one of two
+        // things — and they need opposite handling:
+        //   • a RACE: they converted between /order and this callback. By then
+        //     is_guest is false (handle_user_converted, 0045 §2b) and the
+        //     payment is legitimate — honour it. This is the common case.
+        //   • an ATTACK or a bug: still a guest. Do NOT grant Pro, but do NOT
+        //     silently drop either — money has been captured. Skipping quietly
+        //     produces a paid-but-not-upgraded user and no trace, and it breaks
+        //     C7's reasoning that UNIQUE(razorpay_payment_id) on
+        //     coupon_redemptions is what makes /verify and this handler safe to
+        //     race. Surface it loudly and leave it for manual review.
+        const { data: buyer } = await supabase
+          .from('users').select('is_guest').eq('id', uid).maybeSingle();
+        if ((buyer as { is_guest?: boolean } | null)?.is_guest) {
+          await notifyAdmin(
+            `⚠️ Razorpay order.paid for an ANONYMOUS user.\n` +
+            `user_id=${uid} payment_id=${paymentId} order_id=${order.id} ` +
+            `amount=${order.amount} tier=${tier}\n` +
+            `Pro was NOT granted. Investigate: attack, or a conversion that failed to sync.`,
+          );
+          return NextResponse.json({ ok: false, reason: 'anonymous buyer — flagged' }, { status: 200 });
+        }
 
         const period = isBillingPeriod(notes.period) ? notes.period : 'monthly';
 

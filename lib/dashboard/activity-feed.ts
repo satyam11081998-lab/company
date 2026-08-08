@@ -15,6 +15,11 @@ export async function getCohortActivity(supabase: SupabaseClient): Promise<TapeE
   // Demo/showcase accounts are filtered out — the live tape is social proof,
   // so it must only ever show real aspirants.
   const excl = notInList(await getDemoUserIdsCached());
+  // GUEST MODE (0045): guests solve the daily pair, so their submissions would
+  // otherwise flow straight into the public tape. Filtered on the JOINED users
+  // row — the embed is already `!inner`, which is what makes an embedded-column
+  // filter actually restrict the parent rows (a plain `users(...)` embed would
+  // make .eq('users.is_guest', …) a silent no-op).
   const q = supabase
     .from('submissions')
     .select(`
@@ -22,9 +27,10 @@ export async function getCohortActivity(supabase: SupabaseClient): Promise<TapeE
       score,
       created_at,
       user_id,
-      users!inner(name),
+      users!inner(name, is_guest),
       cases(title, type)
     `)
+    .eq('users.is_guest', false)
     .order('created_at', { ascending: false })
     .limit(10);
   const { data, error } = await (excl ? q.not('user_id', 'in', excl) : q);

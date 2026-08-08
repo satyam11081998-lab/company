@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Lightbulb, Lock } from 'lucide-react';
 import SignInWall from '@/components/guest/sign-in-wall';
+import GuestStartButton from '@/components/guest/guest-start-button';
 import type { CaseRow } from '@/lib/types';
 
 /** Strip the noisiest markdown so a prompt reads cleanly without a renderer. */
@@ -29,6 +30,9 @@ export default function GuestCasePreview({ caseRow, caseId }: { caseRow: CaseRow
   const isGuesstimate = caseRow.type === 'guesstimate';
   const next = `/cases/${caseId}`;
   const prompt = toReadable(caseRow.content);
+  // NEXT_PUBLIC_* is inlined at build time, so this is readable in a server
+  // component too — no client boundary needed just to branch on the flag.
+  const guestMode = process.env.NEXT_PUBLIC_GUEST_MODE === 'true';
 
   return (
     <div className="min-h-screen bg-muted">
@@ -84,16 +88,50 @@ export default function GuestCasePreview({ caseRow, caseId }: { caseRow: CaseRow
             <div className="mt-4 h-24 rounded-lg border border-border bg-muted/50" />
           </div>
           <div className="absolute inset-0 flex items-center justify-center p-3">
-            <SignInWall
-              title={isGuesstimate ? 'Sign in to solve' : 'Sign in to start the case'}
-              message={
-                isGuesstimate
-                  ? 'Work the guesstimate live, get scored on the 5-point rubric, and track your progress.'
-                  : 'Solve it live with the interviewer, get scored on 6 dimensions, and climb the leaderboard.'
-              }
-              next={next}
-              compact
-            />
+            {/* GUEST MODE (0045): this is the COLD-START path — a visitor who
+                landed on this URL directly (shared link, new tab, search) and
+                whose first server request therefore carried no cookie, because
+                the anonymous session is only ever minted on a click.
+                GuestStartButton mints it and refreshes in place; the server
+                components then re-run WITH the session and render the real
+                workspace. It renders null when NEXT_PUBLIC_GUEST_MODE is off,
+                so the sign-in wall below stays the only path on rollback. */}
+            {guestMode ? (
+              <div className="w-full max-w-sm rounded-xl border border-primary/20 bg-card p-5 text-center shadow-xl">
+                <h2 className="text-base font-bold text-foreground sm:text-lg">
+                  {isGuesstimate ? 'Solve this guesstimate' : 'Start the case'}
+                </h2>
+                <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed text-muted-foreground">
+                  {isGuesstimate
+                    ? 'Work it live, get scored on the 5-point rubric, and see where you stand.'
+                    : 'Solve it live with the interviewer and get scored on 6 dimensions.'}
+                </p>
+                <div className="mt-4">
+                  <GuestStartButton label={isGuesstimate ? 'Start solving' : 'Start the case'} />
+                </div>
+                <Link
+                  href={`/login?next=${encodeURIComponent(next)}`}
+                  className="mt-3 inline-block text-[12px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                >
+                  Already have an account? Log in
+                </Link>
+              </div>
+            ) : (
+              /* Flag off → the original sign-in wall, unchanged. Rolling back
+                 must restore the previous experience exactly, including the
+                 primary Sign-up CTA — not leave a half-migrated card whose only
+                 action is "log in". */
+              <SignInWall
+                title={isGuesstimate ? 'Sign in to solve' : 'Sign in to start the case'}
+                message={
+                  isGuesstimate
+                    ? 'Work the guesstimate live, get scored on the 5-point rubric, and track your progress.'
+                    : 'Solve it live with the interviewer, get scored on 6 dimensions, and climb the leaderboard.'
+                }
+                next={next}
+                compact
+              />
+            )}
           </div>
         </div>
       </main>

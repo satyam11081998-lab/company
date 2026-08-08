@@ -36,12 +36,19 @@ export default async function DashboardPage() {
   // is created — createServiceClient() needs SUPABASE_SERVICE_ROLE_KEY, which
   // guests (and some local envs) don't have, so building it would throw.
   if (!authUser) {
+    // GUEST MODE (0045): this branch is now the COLD START only — a visitor
+    // whose first server request carried no cookie, because anonymous sessions
+    // are minted on a click, never on mount (crawler safety). Once they click
+    // Start they have a real anon session and fall through to the live path
+    // below with their OWN data, so the sample numbers are never shown to
+    // someone who has actually practised.
+    //
+    // The old chrome is gone deliberately: no "you're exploring a live demo"
+    // banner, no sticky login bar, and nothing is `pointer-events-none`. The
+    // product decision was that this must not read as a demo or nag for a
+    // login — it offers the one action that matters and gets out of the way.
     return (
-      <GuestPreviewFrame
-        next="/dashboard"
-        title="Sign in to unlock your dashboard"
-        message="Track your real readiness, streak, and rank across India."
-      >
+      <GuestPreviewFrame next="/dashboard">
         <div className="container max-w-7xl py-6">
           <DashboardClient {...buildGuestDashboardProps()} />
         </div>
