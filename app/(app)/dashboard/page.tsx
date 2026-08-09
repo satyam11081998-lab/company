@@ -9,6 +9,7 @@ import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
 import { DeckVaultPopup } from '@/components/deck-vault/deck-vault-promo';
 import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
+import GuestPracticeActions from '@/components/guest/guest-practice-actions';
 import { buildGuestDashboardProps } from '@/lib/dashboard/guest-sample';
 import { getDailyTodayServerSide } from '@/lib/daily-server';
 import { getHeatmap } from '@/lib/dashboard/heatmap';
@@ -47,9 +48,26 @@ export default async function DashboardPage() {
     // banner, no sticky login bar, and nothing is `pointer-events-none`. The
     // product decision was that this must not read as a demo or nag for a
     // login — it offers the one action that matters and gets out of the way.
+    // Today's real pair — the same case a signed-in user sees, and the same
+    // one the landing page advertises. Guests must not be shown a different
+    // case from the one they were promised on "/".
+    const guestDaily = await getDailyTodayServerSide();
     return (
       <GuestPreviewFrame next="/dashboard">
-        <div className="container max-w-7xl py-6">
+        <div className="container max-w-7xl space-y-5 py-6">
+          {/* Above the sample dashboard on purpose: on a phone this is what a
+              visitor meets after one short scroll, and it is the only part of
+              this page that actually does anything. */}
+          <GuestPracticeActions
+            targets={{
+              caseId: guestDaily.case?.id ?? null,
+              caseTitle: guestDaily.case?.title ?? null,
+              guesstimateId: guestDaily.guesstimate?.id ?? null,
+              guesstimateTitle: guestDaily.guesstimate?.title ?? guestDaily.guesstimate_title ?? null,
+              briefId: guestDaily.brief?.id ?? null,
+              briefHeadline: guestDaily.brief?.title ?? null,
+            }}
+          />
           <DashboardClient {...buildGuestDashboardProps()} />
         </div>
       </GuestPreviewFrame>

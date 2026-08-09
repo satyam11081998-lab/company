@@ -28,6 +28,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import DictationButton, { type DictationHandle } from '@/components/dictation-button';
 import MicWaveform from '@/components/mic-waveform';
 import EngagingLoader from '@/components/engaging-loader';
+import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { createClient } from '@/lib/supabase/client';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
 import {
@@ -62,6 +63,12 @@ interface DraftAssistant {
   text: string;
 }
 
+/**
+ * Where a guest's finished recommendation is parked across an OAuth redirect.
+ * Per-case so two open tabs cannot clobber each other.
+ */
+const PENDING_REC_KEY = (caseId: string) => `mece:pending-rec:${caseId}`;
+
 export default function ConversationalSolve({ caseId, initialCase, historyPanel, lockedOverlay }: Props) {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
@@ -78,6 +85,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [submitOpen, setSubmitOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [finalRec, setFinalRec] = useState('');
+  // GUEST MODE (0045). `isGuest` is derived from the live Supabase session, not
+  // from a prop: an anonymous user can convert mid-session, and the component
+  // must stop gating the moment they do.
+  const [isGuest, setIsGuest] = useState(false);
+  const [saveWallOpen, setSaveWallOpen] = useState(false);
+  // The recommendation is held here across the conversion. See handleSubmit.
+  const [pendingRec, setPendingRec] = useState('');
+  // Set when we come back from an OAuth conversion with a parked answer; the
+  // effect below submits it once the attempt has finished loading.
+  const [resumeRec, setResumeRec] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const threadRef = useRef<HTMLDivElement>(null);
@@ -105,6 +122,33 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       const tok = session.access_token;
       if (cancelled) return;
       setToken(tok);
+      // GUEST MODE (0045): read it off the live session rather than a prop, so
+      // a mid-session conversion is picked up without a remount.
+      const anon = session.user?.is_anonymous === true;
+      setIsGuest(anon);
+
+      // Returning from a Google / LinkedIn conversion: the account is now
+      // permanent and a parked recommendation is waiting. They already pressed
+      // "See my score" before being redirected away, so finish that action
+      // rather than dropping them back on a case with no explanation.
+      if (!anon) {
+        let parked: string | null = null;
+        try {
+          parked = sessionStorage.getItem(PENDING_REC_KEY(caseId));
+        } catch {
+          /* storage unavailable */
+        }
+        if (parked && parked.trim().length >= 20) {
+          try {
+            sessionStorage.removeItem(PENDING_REC_KEY(caseId));
+          } catch {
+            /* ignore */
+          }
+          setFinalRec(parked);
+          // Defer so the attempt below is loaded before we submit against it.
+          setResumeRec(parked);
+        }
+      }
       try {
         const summary = await startAttempt(caseId, tok);
         if (cancelled) return;
@@ -297,6 +341,31 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
+  // Finish an OAuth-interrupted submit. Waits for `attempt` + `token` so it
+  // never fires against a half-loaded session, and clears `resumeRec` first so
+  // a re-render cannot double-submit and score the same answer twice.
+  useEffect(() => {
+    if (!resumeRec || !attempt || !token || isGuest || submitting) return;
+    const rec = resumeRec;
+    setResumeRec(null);
+    void (async () => {
+      setSubmitting(true);
+      try {
+        const res = await submitAttempt(attempt.attempt_id, token, rec);
+        const resultsPath = `/results/${res.submission_id}`;
+        try {
+          sessionStorage.setItem('mece:after-onboarding', resultsPath);
+        } catch {
+          /* ignore */
+        }
+        router.push(resultsPath);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Submit failed');
+        setSubmitting(false);
+      }
+    })();
+  }, [resumeRec, attempt, token, isGuest, submitting, router]);
+
   async function handleSubmit(overrideText?: string) {
     if (!attempt || !token || submitting) return;
     const rec = (overrideText ?? finalRec).trim();
@@ -304,10 +373,85 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       toast.error('Your recommendation should be at least a couple of sentences.');
       return;
     }
+
+    // ── GUEST MODE (0045): the wall lives HERE, at submit ──────────────
+    // A guest works the whole case — clarifications, structure, arithmetic,
+    // recommendation — with no account. The account is asked for at the single
+    // moment it is worth something to them: the score.
+    //
+    // This is only defensible because anonymous auth means conversion keeps the
+    // SAME auth.users row. The attempt, every message in it and the draft
+    // recommendation already belong to this user; signing up attaches an
+    // identity to the account rather than creating a new one. Nothing they
+    // typed is copied, re-parented or lost — which is exactly why a wall this
+    // late is safe to put here at all.
+    //
+    // We stash the recommendation first: the wall unmounts the composer, and
+    // losing 15 minutes of work to a state reset at the conversion moment would
+    // be the single worst bug in this feature.
+    if (isGuest) {
+      setPendingRec(rec);
+      // ALSO persist it. The Google / LinkedIn path is a full-page redirect to
+      // the provider and back, which destroys every piece of React state on
+      // this screen — including the recommendation the user just spent the
+      // session writing. React state alone is only safe for the email path.
+      // Keyed by case so two tabs on different cases cannot overwrite each
+      // other's draft.
+      try {
+        sessionStorage.setItem(PENDING_REC_KEY(caseId), rec);
+      } catch {
+        /* private mode — the email path still works from React state */
+      }
+      setSaveWallOpen(true);
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await submitAttempt(attempt.attempt_id, token, rec);
       router.push(`/results/${res.submission_id}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Submit failed');
+      setSubmitting(false);
+    }
+  }
+
+  /**
+   * Called by GuestSaveWall once an identity is attached. The Supabase session
+   * is the same one — only `is_anonymous` changed — but the ACCESS TOKEN in
+   * `token` is now stale (it still carries `is_anonymous: true`, which the
+   * backend reads). Refresh it before submitting or the server sees a guest and
+   * refuses the very submit the user just signed up to make.
+   */
+  async function handleConverted() {
+    setSaveWallOpen(false);
+    setIsGuest(false);
+    const supabase = createClient();
+    const { data } = await supabase.auth.refreshSession();
+    const freshToken = data.session?.access_token ?? token;
+    setToken(freshToken ?? null);
+
+    const rec = pendingRec;
+    setPendingRec('');
+    if (!attempt || !freshToken || !rec) return;
+
+    setSubmitting(true);
+    try {
+      const res = await submitAttempt(attempt.attempt_id, freshToken, rec);
+      const resultsPath = `/results/${res.submission_id}`;
+      // A just-converted guest has no onboarding row, so middleware will bounce
+      // them from the results page straight to /onboarding — and the gate
+      // strips query params, so `?next=` cannot survive it. Park the
+      // destination here and let the onboarding form pick it up, otherwise
+      // they finish onboarding on the dashboard and their analysis — the whole
+      // reason they signed up — is left behind a link they were never shown.
+      try {
+        sessionStorage.setItem('mece:after-onboarding', resultsPath);
+      } catch {
+        /* private mode / storage disabled — they land on the dashboard, which
+           still lists the submission. Never let this break the redirect. */
+      }
+      router.push(resultsPath);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Submit failed');
       setSubmitting(false);
@@ -621,6 +765,30 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           onConfirm={handleSubmit}
           onFileAttach={() => fileInputRef.current?.click()}
         />
+      )}
+
+      {/* GUEST MODE (0045): the single conversion moment. Deliberately NOT
+          dismissable by clicking away — the user has a finished answer held in
+          `pendingRec` and an accidental backdrop click would read as "my work
+          vanished". The explicit "keep working" button restores the composer
+          with everything intact. */}
+      {saveWallOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm">
+            <GuestSaveWall
+              next={`/cases/${caseId}`}
+              onConverted={handleConverted}
+              title="Your answer is ready"
+              message="Create a free account to see your score across all six dimensions, with written feedback on each. Everything you just wrote is already saved."
+            />
+            <button
+              onClick={() => setSaveWallOpen(false)}
+              className="mx-auto mt-3 block text-[12px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Not yet — keep working on my answer
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

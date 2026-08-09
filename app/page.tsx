@@ -13,7 +13,8 @@ import ScrollAnimations from '@/components/scroll-animations';
 import HeroInterviewDemo from '@/components/hero-interview-demo';
 import { GdBriefVignette, LeaderboardVignette, DeckVaultVignette, CountUp } from '@/components/landing-vignettes';
 import { faqPageJsonLd } from '@/lib/seo';
-import GuestStartButton from '@/components/guest/guest-start-button';
+import GuestPracticeActions from '@/components/guest/guest-practice-actions';
+import { getDailyTodayServerSide } from '@/lib/daily-server';
 
 export const metadata = {
   alternates: { canonical: '/' },
@@ -60,9 +61,17 @@ export const revalidate = 300;
 
 export default async function LandingPage() {
   const supabase = createStaticClient();
-  const [testimonials, endorsements] = await Promise.all([
+  // `daily` is fetched server-side and baked into the ISR snapshot, so the
+  // homepage advertises the same pair the pre-login dashboard opens. It reads
+  // no session — the anonymous sign-in is client-side and click-driven — so "/"
+  // stays static with revalidate = 300 and every crawler gets identical HTML.
+  const [testimonials, endorsements, daily] = await Promise.all([
     getPublishedTestimonials(supabase),
     getPublishedEndorsements(supabase),
+    // 'static' is REQUIRED here, not a preference: the default client reads
+    // cookies(), and a single cookies() read anywhere in this tree drops "/"
+    // out of static rendering into per-request rendering.
+    getDailyTodayServerSide('static'),
   ]);
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -85,7 +94,10 @@ export default async function LandingPage() {
               <Logo isLanding={true} className="" />
             </Link>
             <div className="hidden md:flex items-center gap-8">
-              {[['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['#features', 'Features'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
+              {/* "Try a case" points straight at the pre-login dashboard —
+                  that IS the explore experience. /explore-mece 308s here too
+                  (next.config) for anything that already picked up the URL. */}
+              {[['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['/dashboard', 'Try a case'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
                 <Link key={href} href={href} className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
                   {label}
                 </Link>
@@ -121,14 +133,28 @@ export default async function LandingPage() {
             <div className="mt-7">
               <AuthCTA variant="hero" />
             </div>
-            {/* GUEST MODE (0045): the only entry point into guest practice from
-                the homepage. GuestStartButton renders null when
-                NEXT_PUBLIC_GUEST_MODE is not 'true', so this is inert until the
-                flag is flipped and AuthCTA remains the sole CTA on rollback.
-                It mints the anonymous session on CLICK — never on mount — so
-                crawlers never trigger it and "/" stays statically renderable. */}
-            <div className="mt-3 max-w-xs">
-              <GuestStartButton label="Try today's case free" fullWidth />
+            {/* GUEST MODE (0045): the entry point into guest practice, showing
+                the SAME case as the pre-login dashboard. Each button routes
+                straight to /cases/[id] rather than via /dashboard — a visitor
+                who clicked "start the case" should land in the case, not on
+                another page asking them to click again.
+                Renders null when NEXT_PUBLIC_GUEST_MODE is off, so AuthCTA
+                above stays the sole CTA on rollback. The anonymous session is
+                minted on CLICK, never on mount, so "/" stays statically
+                renderable and crawlers never trigger it. */}
+            <div className="mt-5">
+              <GuestPracticeActions
+                targets={{
+                  caseId: daily.case?.id ?? null,
+                  caseTitle: daily.case?.title ?? null,
+                  guesstimateId: daily.guesstimate?.id ?? null,
+                  guesstimateTitle: daily.guesstimate?.title ?? daily.guesstimate_title ?? null,
+                  briefId: daily.brief?.id ?? null,
+                  briefHeadline: daily.brief?.title ?? null,
+                }}
+                heading="Try it right now — no sign-up"
+                subheading="Today's set is open to everyone. You only make an account when you want your score."
+              />
             </div>
             <div className="mt-8 flex items-center gap-6">
               <div>

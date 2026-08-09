@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { getCaptchaToken } from '@/lib/turnstile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,8 +20,14 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setIsLoading(true);
     const origin = window.location.origin;
+    // Supabase CAPTCHA protection gates password reset too. Without a token
+    // here, enabling the dashboard toggle silently breaks account recovery —
+    // the one flow whose users are already locked out and least able to
+    // report it. Single-use, so fetched per call.
+    const captchaToken = await getCaptchaToken();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/auth/callback?next=/reset-password`,
+      ...(captchaToken ? { captchaToken } : {}),
     });
     setIsLoading(false);
     if (error) {

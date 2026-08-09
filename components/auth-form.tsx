@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { getCaptchaToken } from '@/lib/turnstile';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -51,12 +52,23 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     setIsLoading(true);
 
     try {
+      // Supabase's CAPTCHA protection covers sign-in, sign-up AND password
+      // reset — not only anonymous sign-in. Once it is enabled in the
+      // dashboard, a call without a token is rejected outright, so these two
+      // must carry one or the toggle takes down signup and login for everyone.
+      // Fetched fresh per call: Turnstile tokens are single-use, and reusing
+      // one across two calls returns `timeout-or-duplicate`.
+      // Resolves to undefined when Turnstile is not configured, in which case
+      // the options object is omitted entirely and behaviour is unchanged.
+      const captchaToken = await getCaptchaToken();
+
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+            ...(captchaToken ? { captchaToken } : {}),
           },
         });
         if (error) throw error;
@@ -64,7 +76,11 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         router.push(nextPath);
         router.refresh();
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+          ...(captchaToken ? { options: { captchaToken } } : {}),
+        });
         if (error) throw error;
         router.push(nextPath);
         router.refresh();

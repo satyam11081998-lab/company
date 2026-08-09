@@ -94,6 +94,12 @@ export const SKELETON_LIBRARY_PRICE_INR = 500;
 /** Routes that are accessible without authentication. */
 export const PUBLIC_ROUTES: string[] = [
   '/',
+  // Non-branded acquisition page. MUST be public: it is in the sitemap and is
+  // the page most likely to be a stranger's first contact with MECE. Without
+  // this entry the middleware bounces every logged-out visitor — and every
+  // crawler — to /login with a 307, which means the page cannot be indexed at
+  // all and the sitemap advertises a redirect.
+  '/explore-mece',
   '/login',
   '/signup',
   '/forgot-password',
@@ -106,6 +112,12 @@ export const PUBLIC_ROUTES: string[] = [
   '/terms',
   '/refund',
   '/pricing',
+  // Added to the sitemap in f105830 but never to this list, so every crawler
+  // hitting it got a 307 to /login and the page could not be indexed. Any route
+  // added to app/sitemap.ts MUST also appear here — the sitemap's own comment
+  // says submitting redirecting URLs erodes trust with crawlers, and this is
+  // exactly that. Social proof; nothing on the page is user-specific.
+  '/testimonials',
   '/glossary',
   '/learn',
   // Shared cheat sheets: mece.in/s/<id>. The entire point is that a stranger

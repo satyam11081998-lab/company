@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import GeoPattern from '@/components/geo-pattern';
 import MobileDesktopBanner from '@/components/mobile-desktop-banner';
 import { Analytics } from "@vercel/analytics/next";
+import Script from 'next/script';
 import { SITE_URL, SITE_TITLE, SITE_DESC, siteGraphJsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = {
@@ -90,6 +91,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Toaster />
           <Analytics />
+          {/* Cloudflare Turnstile — loaded ONLY when a site key is configured,
+              so no third-party script reaches users until you actually turn the
+              protection on. `lazyOnload` keeps it off the critical path: it is
+              needed at the moment someone clicks "start practising", never at
+              first paint, so it must not compete with LCP on "/".
+              `render=explicit` stops it auto-attaching to the page; lib/guest.ts
+              renders an invisible widget on demand and reads the token. */}
+          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+            <Script
+              src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+              strategy="lazyOnload"
+            />
+          )}
         </ThemeProvider>
       </body>
     </html>

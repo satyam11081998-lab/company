@@ -246,6 +246,105 @@ export function faqPageJsonLd(faqs: { question: string; answer: string }[]) {
   };
 }
 
+/* ── SoftwareApplication / HowTo (AEO surfaces for /explore-mece) ───── */
+
+/**
+ * SoftwareApplication schema. Answer engines (ChatGPT, Perplexity, Google AI
+ * Overviews) lean on this type to decide *what a product is* and *what it
+ * costs* — it is the single highest-leverage schema for a SaaS product, and
+ * `/` cannot carry it because `/` is already the FAQPage + WebSite entity.
+ *
+ * `offers` deliberately advertises the ₹0 tier: the extractable fact we want
+ * cited is "free to start", not the paid price.
+ */
+export function softwareApplicationJsonLd(opts: {
+  name?: string;
+  description: string;
+  url: string;
+  ratingValue?: number;
+  ratingCount?: number;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: opts.name || 'MECE',
+    applicationCategory: 'EducationalApplication',
+    applicationSubCategory: 'Interview preparation',
+    operatingSystem: 'Web browser',
+    url: absoluteUrl(opts.url),
+    description: opts.description,
+    inLanguage: 'en-IN',
+    publisher: { '@id': ORG_ID },
+    isPartOf: { '@id': WEBSITE_ID },
+    audience: {
+      '@type': 'EducationalAudience',
+      educationalRole: 'student',
+      audienceType: 'MBA and PGDM students in India',
+    },
+    featureList: [
+      'Live AI case interview with a conversational interviewer',
+      'Guesstimate practice with a scoring backstop',
+      'Six-dimension scoring rubric with written feedback',
+      'Group discussion briefs',
+      'National and college leaderboards',
+      'Free casebook with 50+ worked examples',
+    ],
+    offers: {
+      '@type': 'Offer',
+      price: 0,
+      priceCurrency: 'INR',
+      availability: 'https://schema.org/InStock',
+      description: "Today's case and guesstimate are free, no account required.",
+      url: absoluteUrl(opts.url),
+      seller: { '@id': ORG_ID },
+    },
+    ...(opts.ratingValue && opts.ratingCount
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: opts.ratingValue,
+            ratingCount: opts.ratingCount,
+            bestRating: 5,
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * HowTo schema. This is the AEO workhorse: when someone asks an answer engine
+ * "how do I practise case interviews for free", a HowTo with numbered steps is
+ * the shape most likely to be lifted verbatim into the answer with a citation.
+ * Keep step text short, imperative and self-contained.
+ */
+export function howToJsonLd(opts: {
+  name: string;
+  description: string;
+  url: string;
+  totalMinutes?: number;
+  steps: { name: string; text: string }[];
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: opts.name,
+    description: opts.description,
+    inLanguage: 'en-IN',
+    ...(opts.totalMinutes ? { totalTime: `PT${opts.totalMinutes}M` } : {}),
+    estimatedCost: { '@type': 'MonetaryAmount', currency: 'INR', value: 0 },
+    supply: { '@type': 'HowToSupply', name: 'A web browser' },
+    tool: { '@type': 'HowToTool', name: 'MECE' },
+    publisher: { '@id': ORG_ID },
+    step: opts.steps.map((s, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+      url: `${absoluteUrl(opts.url)}#step-${i + 1}`,
+    })),
+  };
+}
+
 /* ── Pricing / Product schema ──────────────────────────────────────── */
 
 /** Product + Offer structured data for the /pricing page. */

@@ -85,8 +85,27 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       if (!res.ok) {
         throw new Error(payload?.error ?? `Failed (HTTP ${res.status})`);
       }
-      toast.success("You're in. Let's get to the dashboard.");
-      router.push('/dashboard');
+      // GUEST MODE (0045): a visitor who solved a case before signing up was
+      // sent here by the onboarding gate mid-way to their results. Their score
+      // is the only reason they created an account, so return them to it
+      // rather than to a dashboard they have no context for yet. Anyone who
+      // arrived the ordinary way has no key set and still lands on /dashboard.
+      let after = '/dashboard';
+      try {
+        const parked = sessionStorage.getItem('mece:after-onboarding');
+        // Only ever an internal path — never trust this to build an external
+        // redirect, even though we are the only writer.
+        if (parked && parked.startsWith('/')) {
+          after = parked;
+          sessionStorage.removeItem('mece:after-onboarding');
+        }
+      } catch {
+        /* storage unavailable — fall through to the dashboard */
+      }
+      toast.success(
+        after === '/dashboard' ? "You're in. Let's get to the dashboard." : "You're in. Here's your analysis.",
+      );
+      router.push(after);
       router.refresh();
     } catch (err: any) {
       toast.error(err?.message ?? 'Something went wrong. Try again?');

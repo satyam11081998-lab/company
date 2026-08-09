@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import type { DailyContentResponse } from '@/lib/api';
 
 /**
@@ -31,7 +32,23 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * Never throws — on any miss returns null fields; the strip shows its graceful
  * "Browse…" fallbacks.
  */
-export async function getDailyTodayServerSide(): Promise<DailyContentResponse> {
+export async function getDailyTodayServerSide(
+  /**
+   * Pass `'static'` from a statically-rendered route.
+   *
+   * The default cookie-backed client calls `cookies()`, and ANY `cookies()` read
+   * in a route's tree opts that whole route out of static rendering. Calling
+   * this from `app/page.tsx` with the default flipped "/" from `○ (Static)` to
+   * `ƒ (Dynamic)` — a per-request render with auth round-trips on the highest
+   * traffic, highest-value URL on the domain, and a Core Web Vitals regression
+   * that is itself a ranking input.
+   *
+   * The daily pair is identical for every visitor, so there is nothing in this
+   * query that needs a session. `createStaticClient()` is the cookie-free
+   * anon-key client that exists for exactly this case.
+   */
+  mode: 'session' | 'static' = 'session',
+): Promise<DailyContentResponse> {
   const today = todayIstDate();
   const empty: DailyContentResponse = {
     date: today,
@@ -43,7 +60,7 @@ export async function getDailyTodayServerSide(): Promise<DailyContentResponse> {
   };
 
   try {
-    const supabase = createClient();
+    const supabase = mode === 'static' ? createStaticClient() : createClient();
 
     // Today's schedule row — falling back to the MOST RECENT one on/before
     // today. Between IST midnight and the morning cron (or on a cron-failure

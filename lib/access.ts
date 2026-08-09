@@ -66,15 +66,19 @@ export async function getAttemptAccess(
   const isFirst = !(priorRows && priorRows.length);
 
 
-  // GUEST MODE (0045): checked BEFORE the isDaily branch so a guest re-opening
-  // today's case gets the save wall, not an upgrade pitch they cannot act on
-  // (and which /api/razorpay/order would 403 anyway). First attempts fall
-  // through untouched — the daily pair is exactly what a guest is entitled to.
-  if (user?.is_guest && !isFirst) {
+  // GUEST MODE (0045). A guest may re-open the daily pair freely — the wall is
+  // at SUBMIT, not at access, so "you already attempted this" is the wrong
+  // message for someone who has not been scored yet and has no account to
+  // upgrade. Non-daily cases are still refused below.
+  if (user?.is_guest && !isDaily) {
     return { allowed: false, reason: 'guest-non-daily', bucket, remaining: 0 };
   }
 
   if (isDaily) {
+    // A guest gets unlimited re-attempts at the daily pair. They have never
+    // been scored, so the free-tier one-attempt rule below has nothing to
+    // protect — and blocking them would strand a half-finished conversation.
+    if (user?.is_guest) return { allowed: true, reason: 'ok', bucket, remaining: null };
     if (tier === 'free' && !isFirst) return { allowed: false, reason: 'free-reattempt', bucket, remaining: 0 };
     return { allowed: true, reason: 'ok', bucket, remaining: null };
   }

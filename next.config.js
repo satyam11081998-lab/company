@@ -38,6 +38,17 @@ const nextConfig = {
         destination: '/learn/casebook',
         permanent: true,
       },
+      {
+        // "Explore MECE" is the pre-login dashboard itself, not a separate
+        // marketing page. A 308 here rather than deleting the URL outright:
+        // it was briefly in the sitemap and linked from the homepage nav, so
+        // anything that already picked it up lands somewhere real instead of
+        // a 404. redirects() runs before routing, so this wins over any
+        // leftover app/explore-mece/page.tsx.
+        source: '/explore-mece',
+        destination: '/dashboard',
+        permanent: true,
+      },
     ];
   },
 };

@@ -12,6 +12,9 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
+// Shared with every other Supabase auth call — see lib/turnstile.ts for why the
+// helper cannot live in this file.
+import { getCaptchaToken } from '@/lib/turnstile';
 import type { UserRow } from '@/lib/types';
 
 /** True when the guest-mode feature flag is enabled. */
@@ -35,7 +38,10 @@ export async function ensureGuestSession() {
 
   if (!isGuestModeEnabled()) return null;
 
-  const { data, error } = await supabase.auth.signInAnonymously();
+  const captchaToken = await getCaptchaToken();
+  const { data, error } = await supabase.auth.signInAnonymously(
+    captchaToken ? { options: { captchaToken } } : undefined,
+  );
   if (error) {
     console.error('[guest] signInAnonymously failed:', error.message);
     return null;
