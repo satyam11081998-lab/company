@@ -123,6 +123,12 @@ export const PUBLIC_ROUTES: string[] = [
   // Shared cheat sheets: mece.in/s/<id>. The entire point is that a stranger
   // with the link can open the PDF, so this must resolve logged-out.
   '/s',
+  // Certificate verification: mece.in/verify/<cert id>. A recruiter scanning
+  // the QR on a printed certificate has no MECE account and never will. If this
+  // bounced to /login the certificate would be unverifiable and the QR would be
+  // decoration. Reads through an exact-match anon RPC, so being public here
+  // exposes nothing beyond what is already printed on the paper.
+  '/verify',
   // SEO/crawler surfaces — extensionless URLs the middleware matcher doesn't
   // skip, so they must be explicitly public or link previews break.
   '/og', // dynamic Open Graph image generator
