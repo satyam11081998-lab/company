@@ -18,6 +18,11 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Signup succeeded but Supabase issued no session — email confirmation is on.
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
+  // Shown inline as well as in a toast: a toast that has already faded leaves
+  // someone staring at a form with no idea why nothing happened.
+  const [formError, setFormError] = useState<string | null>(null);
 
   const nextPath = searchParams.get('next') || '/dashboard';
 
@@ -63,7 +68,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       const captchaToken = await getCaptchaToken();
 
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -72,7 +77,18 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           },
         });
         if (error) throw error;
-        toast.success('Account created. Check your email to confirm if required.');
+
+        // When email confirmation is required, signUp returns a user but NO
+        // session. Navigating to `nextPath` here sent an unconfirmed visitor to
+        // /dashboard with no session — which used to bounce to /login and now
+        // renders the guest dashboard, so it reads as "I signed up and got
+        // logged in as a stranger". Only navigate when a session actually
+        // exists; otherwise hold them on a confirm-your-email screen.
+        if (!data.session) {
+          setAwaitingConfirm(true);
+          return;
+        }
+        toast.success('Account created.');
         router.push(nextPath);
         router.refresh();
       } else {
@@ -86,11 +102,47 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         router.refresh();
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Authentication failed';
-      toast.error(message);
+      const raw = err instanceof Error ? err.message : 'Authentication failed';
+      // Supabase deliberately returns the SAME "Invalid login credentials" for
+      // a wrong password and an email that has no account — otherwise anyone
+      // could probe which addresses are registered. We cannot tell them apart,
+      // and should not try. What we can do is stop implying the password is
+      // the problem, and point at sign-up as the likely fix.
+      const friendly =
+        /invalid login credentials/i.test(raw)
+          ? "That email and password don't match an account. If you haven't signed up yet, create one below."
+          : /email not confirmed/i.test(raw)
+          ? 'Please confirm your email first — check your inbox for the link we sent.'
+          : raw;
+      toast.error(friendly);
+      setFormError(friendly);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (awaitingConfirm) {
+    return (
+      <div className="rounded-xl border border-primary/20 bg-card p-6 text-center">
+        <h2 className="text-lg font-bold text-foreground">Confirm your email</h2>
+        <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed text-muted-foreground">
+          We sent a link to <span className="font-medium text-foreground">{email}</span>. Open it to activate your
+          account, then come back and log in.
+        </p>
+        <p className="mt-4 text-[12px] text-muted-foreground/80">
+          Wrong address?{' '}
+          <button
+            onClick={() => {
+              setAwaitingConfirm(false);
+              setFormError(null);
+            }}
+            className="font-medium text-primary underline underline-offset-2"
+          >
+            Use a different email
+          </button>
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -182,6 +234,20 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             </button>
           </div>
         </div>
+
+        {formError && (
+          <p className="rounded-lg border border-destructive/25 bg-destructive/5 px-3 py-2 text-[13px] leading-relaxed text-destructive">
+            {formError}
+            {mode === 'login' && /don't match an account/.test(formError) && (
+              <>
+                {' '}
+                <Link href="/signup" className="font-medium underline underline-offset-2">
+                  Sign up
+                </Link>
+              </>
+            )}
+          </p>
+        )}
 
         <button
           type="submit"
