@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { validateOnboarding, type OnboardingFormData } from '@/lib/types-onboarding';
+import { notifyAdmin } from '@/lib/telegram';
 
 /**
  * POST /api/onboarding/complete
@@ -64,6 +65,50 @@ export async function POST(req: Request) {
         { error: `Profile save failed: ${error.message}` },
         { status: 500 },
       );
+    }
+
+    // ── Admin alert ────────────────────────────────────────────────────
+    // Fired HERE, on onboarding completion, and deliberately not on the
+    // creation of a public.users row. Under guest mode every anonymous
+    // visitor gets a row, so a row-level trigger would ping the phone for
+    // people who are only reading — and the details worth knowing (name,
+    // college, batch, goal) do not exist until this point anyway. This is the
+    // first moment a real person has actually joined.
+    //
+    // Awaited but never allowed to fail the request: the profile is already
+    // saved, and a Telegram outage must not make a successful signup look
+    // broken to the user. notifyAdmin swallows its own errors and returns
+    // false; the try/catch is belt and braces.
+    try {
+      const collegeLabel =
+        college_other ||
+        (college_id
+          ? (
+              await supabase.from('colleges').select('short_name, name').eq('id', college_id).maybeSingle()
+            ).data?.short_name ?? 'Unknown college'
+          : '—');
+
+      await notifyAdmin(
+        [
+          '🎉 New MECE signup',
+          '',
+          `Name:      ${patch.full_name}`,
+          `Email:     ${user.email ?? '—'}`,
+          `College:   ${collegeLabel}`,
+          `Batch:     ${body.batch_year ?? '—'}`,
+          `Focus:     ${body.placement_focus ?? '—'}`,
+          `LinkedIn:  ${patch.linkedin_url ?? '—'}`,
+          `Heard via: ${body.referral_source || '—'}`,
+          `Hrs/week:  ${body.weekly_hours_target ?? '—'}`,
+          body.goal_text?.trim() ? `Goal:      ${body.goal_text.trim()}` : '',
+          '',
+          `User ID:   ${user.id}`,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      );
+    } catch {
+      /* never block a successful signup on an alert */
     }
 
     return NextResponse.json({ ok: true });

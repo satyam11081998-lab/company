@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/service';
 import UsersAdminClient, { type AdminUserRow, type SignupBucket } from './users-admin-client';
 
@@ -21,17 +22,36 @@ function istDayKey(t: string | number | Date): string {
 }
 
 export default async function AdminUsersPage() {
+  // `dynamic = 'force-dynamic'` marks the ROUTE dynamic, but Next 14 still
+  // caches the underlying `fetch` calls supabase-js makes — which is why a new
+  // signup could appear, vanish, then reappear depending on which cached
+  // response was served. noStore() opts this render out explicitly; an admin
+  // list must read through to the database every time or it is not an admin
+  // list, it is a snapshot of an unknown moment.
+  noStore();
+
   const svc = createServiceClient();
 
   const { data, error } = await svc
     .from('users')
     .select(
       'id, name, full_name, email, avatar_url, created_at, points, streak_count, ' +
-      'subscription_tier, subscription_expires_at, is_admin, is_demo, ' +
+      'subscription_tier, subscription_expires_at, is_admin, is_demo, is_guest, ' +
       'college_id, college_other, batch_year, linkedin_url, onboarding_completed_at',
     )
+    // GUEST MODE (0045): every anonymous visitor creates a users row. Without
+    // this filter the newest-first list fills with throwaway guests within a
+    // day and pushes real signups off the page entirely — the same "users
+    // disappear" symptom, but permanent rather than intermittent. Guests are
+    // counted separately below so the number is still visible.
+    .eq('is_guest', false)
     .order('created_at', { ascending: false })
     .limit(LIST_LIMIT);
+
+  const { count: guestCount } = await svc
+    .from('users')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_guest', true);
 
   const raw = (data as Record<string, any>[] | null) || [];
 
