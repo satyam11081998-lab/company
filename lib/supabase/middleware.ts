@@ -53,8 +53,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // If logged in and on auth pages, push them into the app
-  if (user && isAuthPage) {
+  // If logged in and on auth pages, push them into the app.
+  //
+  // GUEST MODE (0045): anonymous users are EXEMPT. A guest holds a session, so
+  // this bounced them straight back to /dashboard the instant they clicked
+  // "Log in" — making the link a silent no-op loop. But a guest going to
+  // /login is entirely legitimate: they are telling us they already have a
+  // real account. They must be allowed to reach the form.
+  if (user && !user.is_anonymous && isAuthPage) {
     const homeUrl = request.nextUrl.clone();
     homeUrl.pathname = '/dashboard';
     homeUrl.search = '';

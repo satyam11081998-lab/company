@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import GuestStartButton from '@/components/guest/guest-start-button';
 
 /**
  * Cold-start wrapper for a guest-viewable surface (currently /dashboard).
@@ -12,14 +11,12 @@ import GuestStartButton from '@/components/guest/guest-start-button';
  * given anything. Under anonymous auth there is nothing to fake and nothing to
  * gate — one click and this becomes their real dashboard.
  *
- * What remains is a single primary action. `GuestStartButton` mints the
- * anonymous session on CLICK (never on mount, so crawlers never trigger it) and
- * refreshes in place; the server components then re-run with the session and
- * render live data. When `NEXT_PUBLIC_GUEST_MODE` is off the button renders
- * null and only the log-in link remains — rollback is an env flip, not a
- * deploy.
+ * The starting actions live in <GuestPracticeActions/>, rendered above this by
+ * app/(app)/dashboard/page.tsx with today's real case, guesstimate and news
+ * ids — each going straight to /cases/<id>. This bar carries only the log-in
+ * link, so a visitor is never asked to "start" twice to reach one case.
  *
- * Still zero client JS beyond the button itself.
+ * Zero client JS: pure links.
  */
 export default function GuestPreviewFrame({
   children,
@@ -53,26 +50,21 @@ export default function GuestPreviewFrame({
       >
         <div className="mx-auto flex max-w-md flex-col items-center gap-2 rounded-2xl border border-primary/25 bg-card/95 p-4 shadow-2xl backdrop-blur-sm">
           {guestMode ? (
-            <>
-              <p className="text-center text-[14px] font-semibold text-foreground">
-                Today&apos;s case and guesstimate are open
-              </p>
-              <p className="-mt-1 text-center text-[12px] text-muted-foreground">
-                Solve them right now. Nothing to fill in.
-              </p>
-              {/* Label is "Start practising", not "Start today's case": this
-                  button refreshes THIS page into the live dashboard, it does not
-                  navigate to the case. Promising a case and delivering a
-                  dashboard is the kind of small dishonesty that costs the next
-                  click. */}
-              <GuestStartButton label="Start practising" />
-              <Link
-                href={loginHref}
-                className="text-[12px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
-              >
-                Already have an account? Log in
-              </Link>
-            </>
+            /* No "Start practising" button here, deliberately.
+               <GuestPracticeActions/> is rendered ABOVE this frame with today's
+               real case, guesstimate and news ids, and each of those goes
+               STRAIGHT to /cases/<id>. A second button here only refreshed this
+               same page into the same dashboard, so the journey read
+               landing -> dashboard -> "start" -> dashboard again -> pick a case.
+               Two dashboards for one decision. The actions block is the single
+               place to start from; this bar is now just the door for people who
+               already have an account. */
+            <Link
+              href={loginHref}
+              className="text-[13px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Already have an account? Log in
+            </Link>
           ) : (
             <>
               <p className="text-center text-[14px] font-semibold text-foreground">
