@@ -35,11 +35,17 @@ export default function GuestPreviewFrame({
 
   return (
     <div className="relative">
-      {/* With guest mode OFF this must behave exactly as it did before the
-          rewrite — inert content behind a sign-in prompt. Rollback has to
-          restore the old experience, not leave a half-migrated surface whose
-          only call to action is "log in". */}
-      {guestMode ? children : <div aria-hidden className="pointer-events-none select-none">{children}</div>}
+      {/* The sample dashboard stays INERT in both modes.
+          It is built from `buildGuestDashboardProps()` — synthetic submissions,
+          `demo-case-N` ids, hero CTAs hard-coded to /practice. Making it
+          clickable (as an earlier version of this file did) sends a visitor who
+          taps anything on it to /practice or a case id that does not exist,
+          which reads as the product being broken.
+          The REAL actions live in <GuestPracticeActions/>, rendered above this
+          by app/(app)/dashboard/page.tsx with today's actual case, guesstimate
+          and news-brief ids. That block is fully interactive; this one is a
+          picture of what the dashboard becomes. */}
+      <div aria-hidden className="pointer-events-none select-none">{children}</div>
 
       <div
         className="sticky bottom-0 z-40 mt-2 px-3"

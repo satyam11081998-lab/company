@@ -43,8 +43,26 @@ export async function ensureGuestSession() {
     captchaToken ? { options: { captchaToken } } : undefined,
   );
   if (error) {
-    console.error('[guest] signInAnonymously failed:', error.message);
-    return null;
+    // Log the raw error AND throw a diagnosable one. The three ways this fails
+    // in practice are all configuration, not user error, and a generic "could
+    // not start" message sends you hunting through code for a dashboard toggle:
+    //   • Anonymous sign-ins not enabled in Supabase → "disabled"
+    //   • Migration 0045 not run → the handle_new_user trigger hits the
+    //     NOT NULL constraint on public.users.email (anonymous users have no
+    //     email) and Supabase returns a 500 / unexpected_failure
+    //   • CAPTCHA protection on with no site key deployed → "captcha"
+    console.error('[guest] signInAnonymously failed:', error.status, error.message, error);
+    const m = (error.message || '').toLowerCase();
+    if (m.includes('anonymous') && m.includes('disabl')) {
+      throw new Error('Guest practice is not enabled yet. (Supabase: turn on Anonymous sign-ins.)');
+    }
+    if (m.includes('captcha')) {
+      throw new Error('Verification failed. (Supabase CAPTCHA is on but no Turnstile site key is deployed.)');
+    }
+    if (error.status === 500 || m.includes('unexpected')) {
+      throw new Error('Could not create a practice session. (Server: has migration 0045 been run?)');
+    }
+    throw new Error(error.message || 'Could not start a practice session.');
   }
   return data.user;
 }

@@ -35,7 +35,19 @@ begin
   insert into public.users (id, email, name, avatar_url, points, is_guest)
   values (
     new.id,
-    coalesce(new.email, ''),
+    -- NOT a plain coalesce to ''. public.users.email is NOT NULL *and* carries
+    -- a UNIQUE index (users_email_key — added in the dashboard, so it appears
+    -- in no migration file). A shared '' therefore inserts the FIRST anonymous
+    -- user fine and fails every one after it with a unique violation, which
+    -- GoTrue surfaces as the opaque "Database error creating anonymous user".
+    --
+    -- A per-user synthetic address keeps that uniqueness guarantee — the one
+    -- protecting real accounts from sharing an email — completely intact.
+    -- `.invalid` is reserved by RFC 2606 and can never resolve, so it can
+    -- never be mistaken for deliverable or accidentally emailed.
+    -- handle_user_converted (§2b) overwrites it with the real address on
+    -- sign-up.
+    coalesce(new.email, 'guest+' || new.id || '@guest.invalid'),
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
     new.raw_user_meta_data->>'avatar_url',
     0,
@@ -88,7 +100,10 @@ begin
 
     update public.users
        set is_guest = coalesce(new.is_anonymous, false),
-           email    = coalesce(new.email, email, '')
+           -- Keep the existing value when auth has no email yet; never write
+           -- '' here, or a second converted-but-emailless row would collide on
+           -- users_email_key exactly as the insert path used to.
+           email    = coalesce(new.email, email)
      where id = new.id;
 
     perform set_config('request.jwt.claims', coalesce(v_prev, ''), true);

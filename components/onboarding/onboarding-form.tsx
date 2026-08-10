@@ -102,8 +102,16 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       } catch {
         /* storage unavailable — fall through to the dashboard */
       }
+      // Three destinations, three honest messages. A guest returning via OAuth
+      // goes back to /cases/<id> to finish the submit that the onboarding gate
+      // interrupted — promising "here's your analysis" there would be a lie for
+      // the few seconds before scoring completes.
       toast.success(
-        after === '/dashboard' ? "You're in. Let's get to the dashboard." : "You're in. Here's your analysis.",
+        after.startsWith('/results/')
+          ? "You're in. Here's your analysis."
+          : after.startsWith('/cases/')
+          ? "You're in. Scoring your answer now…"
+          : "You're in. Let's get to the dashboard.",
       );
       router.push(after);
       router.refresh();

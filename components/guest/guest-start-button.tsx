@@ -50,13 +50,24 @@ export default function GuestStartButton({
   async function onClick() {
     setError(null);
     setWorking(true);
-    const user = await ensureGuestSession();
-    setWorking(false);
-    if (!user) {
-      setError('Could not start a practice session. Please sign up instead.');
-      return;
+    try {
+      const user = await ensureGuestSession();
+      if (!user) {
+        // Guest mode flag is off — not an error, just nothing to do here.
+        setError('Guest practice is not available right now. Please sign up instead.');
+        return;
+      }
+      startTransition(() => router.refresh());
+    } catch (err) {
+      // ensureGuestSession throws a diagnosable message for the three
+      // configuration failures (anonymous sign-ins off, migration 0045 not
+      // run, CAPTCHA on without a site key). Surface it rather than replacing
+      // it with a generic string that sends the next person code-hunting for a
+      // dashboard setting.
+      setError(err instanceof Error ? err.message : 'Could not start a practice session.');
+    } finally {
+      setWorking(false);
     }
-    startTransition(() => router.refresh());
   }
 
   return (

@@ -399,6 +399,17 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       // other's draft.
       try {
         sessionStorage.setItem(PENDING_REC_KEY(caseId), rec);
+        // Park the RETURN PATH too, for the OAuth route specifically.
+        // Google/LinkedIn come back to /cases/<id>, but the user is by then a
+        // real, not-yet-onboarded account — so middleware's onboarding gate
+        // redirects them to /onboarding BEFORE this component can mount and
+        // resume the submit. Without this line the onboarding form has no idea
+        // where they came from and drops them on the dashboard, leaving a
+        // finished answer stranded in sessionStorage and never scored.
+        // The email path never needs this (it converts in-page, no redirect),
+        // and it is overwritten with the real /results/<id> path the moment a
+        // submit succeeds.
+        sessionStorage.setItem('mece:after-onboarding', `/cases/${caseId}`);
       } catch {
         /* private mode — the email path still works from React state */
       }

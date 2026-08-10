@@ -114,11 +114,25 @@ export default function GuestSaveWall({
     if (linkErr) {
       setState('idle');
       const label = provider === 'google' ? 'Google' : 'LinkedIn';
-      setError(
-        linkErr.message?.toLowerCase().includes('already')
-          ? `That ${label} account is already registered. Log in to it below — today’s practice won’t carry over.`
-          : `Could not connect ${label}. Try email instead.`,
-      );
+      // Log the raw error: the failures here are configuration, not user error,
+      // and a generic "could not connect" sends the next person reading OAuth
+      // code when the answer is a dashboard toggle.
+      //   • Manual linking disabled  → linkIdentity is rejected outright. This
+      //     is the common one; it is a SEPARATE switch from the provider being
+      //     enabled, so Google can be on and this still fails.
+      //   • Provider not configured  → no client id/secret for that provider.
+      //   • Identity already linked  → the account exists; offer login instead.
+      console.error('[guest] linkIdentity failed:', provider, linkErr.status, linkErr.message, linkErr);
+      const m = (linkErr.message || '').toLowerCase();
+      if (m.includes('manual linking') || m.includes('linking is disabled')) {
+        setError('Account linking is not enabled yet. (Supabase: turn on Manual linking.) Use email below.');
+      } else if (m.includes('already')) {
+        setError(`That ${label} account is already registered. Log in to it below — today’s practice won’t carry over.`);
+      } else if (m.includes('provider') && (m.includes('not enabled') || m.includes('disabled'))) {
+        setError(`${label} sign-in is not enabled on this project. Use email below.`);
+      } else {
+        setError(`Could not connect ${label} (${linkErr.message || 'unknown error'}). Try email instead.`);
+      }
     }
   }
 
