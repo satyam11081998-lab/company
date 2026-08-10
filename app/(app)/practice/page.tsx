@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 
@@ -14,9 +15,27 @@ export default async function PracticePage({
 }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  // Logged-out visitors may BROWSE the full library (cases are public-readable
-  // under RLS). Opening one lands on the read-only case preview where the solve
-  // workspace is gated. No attempted-state for guests.
+
+  // GUEST MODE (0045): anonymous guests get today's daily pair and nothing
+  // else, so the full library is not theirs to browse. Sent to the dashboard,
+  // which is where their two live actions are.
+  //
+  // The access gate in lib/access.ts + services/access_guard.py already refuses
+  // a guest on any non-daily case, so this is not the security boundary — it is
+  // the honesty boundary. Letting them browse 200 cases, pick one, and only
+  // then meet a wall is a bait-and-switch; the wall should never be reachable
+  // from a path we control.
+  //
+  // `/cases` redirects here too, so this one check covers both entry points.
+  // Note `!user` is no longer the guest test: a guest HAS a session, it is just
+  // an anonymous one.
+  if (user?.is_anonymous) {
+    redirect('/dashboard');
+  }
+
+  // Logged-out visitors (no session at all — the cold-start path) may still
+  // BROWSE the full library; cases are public-readable under RLS. Opening one
+  // lands on the read-only preview where the solve workspace is gated.
   const isGuest = !user; // drives the guest banner + read-only browse
 
   const casesRes = await supabase

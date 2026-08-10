@@ -53,13 +53,23 @@ export default function AppNav() {
   // avatar/upgrade cluster at common laptop widths (~1280–1366px). Five primary
   // links + a More menu fit comfortably and mirror the mobile bottom-bar "More".
   type NavLink = { href: string; label: string; active?: boolean };
+  // GUEST MODE (0045): a guest gets today's daily pair and nothing else. These
+  // three destinations either bounce them (/practice redirects to /dashboard)
+  // or 403 at the API (CV Pointer Lab, GD Briefs), so showing the links only
+  // teaches them the product is full of dead ends. Learn stays: the casebook is
+  // genuinely free to read and is the best thing to give them next.
+  const guest = user?.is_guest === true;
   const PRIMARY_LINKS: NavLink[] = [
     { href: '/dashboard', label: 'Dashboard' },
     // "Learn" owns the casebook EXCEPT the case-competitions track (under More).
     { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
-    { href: '/practice', label: 'Practice' },
-    { href: '/gd-briefs', label: 'GD Briefs' },
-    { href: '/resume', label: 'CV Pointer Lab' },
+    ...(guest
+      ? []
+      : ([
+          { href: '/practice', label: 'Practice' },
+          { href: '/gd-briefs', label: 'GD Briefs' },
+          { href: '/resume', label: 'CV Pointer Lab' },
+        ] as NavLink[])),
   ];
   const MORE_LINKS: NavLink[] = [
     { href: '/leaderboard', label: 'Leaderboard' },

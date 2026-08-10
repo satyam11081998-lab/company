@@ -87,7 +87,11 @@ export default function MobileBottomNav() {
         className="xl:hidden fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-md border-t border-border flex items-center justify-around px-1 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] transform-gpu"
         style={{ height: 'calc(4rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        {PRIMARY.map((tab) => {
+        {/* GUEST MODE (0045): drop the tabs a guest cannot use. /practice
+            redirects them to /dashboard and GD Briefs 403s, so leaving them on
+            a four-tab bar just advertises dead ends. Learn is genuinely free
+            and stays. */}
+        {PRIMARY.filter((tab) => !(user?.is_guest && (tab.href === '/practice' || tab.href === '/gd-briefs'))).map((tab) => {
           const active = isActive(tab.href);
           const Icon = tab.icon;
           return (
