@@ -415,12 +415,25 @@ export async function buildCertificatePdf(
       />,
     ).toBlob();
   } catch (err) {
-    // The usual cause is a 404 on a font or an image: react-pdf surfaces that
-    // as an opaque failure, which would otherwise look like "download broken".
+    const detail = (err as Error).message || String(err);
+
+    // fontkit is what react-pdf uses to parse an embedded TTF. If its ESM build
+    // is missing or half-installed, the failure surfaces as "<minified>.create
+    // is not a function" and reads like a broken download, sending you off to
+    // check fonts and images that are perfectly fine. Name it instead.
+    if (/\.create is not a function/.test(detail)) {
+      throw new Error(
+        'Certificate PDF failed to render: the fontkit package is not installed '
+        + 'correctly, so the embedded fonts cannot be parsed. Fix it with '
+        + '`npm ci` (or `rm -rf node_modules/fontkit && npm i fontkit`), then '
+        + 'delete .next and restart. Underlying error: ' + detail,
+      );
+    }
+
     throw new Error(
-      `Certificate PDF failed to render. Check that /fonts/*.ttf, `
-      + `/certificates/logo-mece-navy.png and any signature image resolve. `
-      + `Underlying error: ${(err as Error).message}`,
+      'Certificate PDF failed to render. Check that /fonts/*.ttf, '
+      + '/certificates/logo-mece-navy.png and any signature image resolve. '
+      + 'Underlying error: ' + detail,
     );
   }
 }
