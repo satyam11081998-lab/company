@@ -539,18 +539,32 @@ export default function CertificatesAdminClient({
         </div>
 
         {/* ── preview ──────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-border bg-card p-3">
+        {/* The certificate is A4 LANDSCAPE. The frame has to carry that aspect
+            ratio itself: a fixed pixel height letterboxes the page inside a
+            portrait box and makes a correct PDF look wrong. Height is derived
+            from width via aspectRatio (inline, so it cannot be dropped by a
+            Tailwind JIT sweep), and #view=Fit tells the built-in PDF viewer to
+            fit the whole page rather than the width. */}
+        <div className="rounded-xl border border-border bg-card p-3 xl:sticky xl:top-24 xl:self-start">
           <div className="mb-2 flex items-center justify-between px-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Live preview
+              <span className="ml-2 font-normal normal-case tracking-normal">A4 landscape</span>
             </p>
             {previewing && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
           {previewUrl ? (
-            <iframe title="Certificate preview" src={`${previewUrl}#toolbar=0&navpanes=0`}
-              className="h-[520px] w-full rounded-lg border border-border bg-white" />
+            <iframe
+              title="Certificate preview"
+              src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
+              style={{ aspectRatio: '297 / 210' }}
+              className="w-full rounded-lg border border-border bg-white"
+            />
           ) : (
-            <div className="flex h-[520px] items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+            <div
+              style={{ aspectRatio: '297 / 210' }}
+              className="flex w-full items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground"
+            >
               Rendering…
             </div>
           )}
