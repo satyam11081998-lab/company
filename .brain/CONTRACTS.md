@@ -44,6 +44,7 @@ Source of truth: `lib/casebook/types.ts`; consumed by `components/casebook/caseb
 - Routes: `app/api/me`, `app/api/razorpay/{order,verify,webhook}`, `app/auth/callback`; backend `routes/{submit,daily,cron,news,attempts,transcribe,vision}.py`.
   - **Note (2026-06-14)**: `razorpay/order` and `razorpay/verify` accept optional `period` (monthly, 3-month, annual); additive.
   - **Note (2026-07-17)**: `razorpay/order` accepts optional `coupon` (string, validated server-side — see C7); additive. New backend routes `routes/deck_vault.py` (`/deck-vault/{submit,status}`); new Next APIs `app/api/coupons/validate`, `app/api/admin/deck-vault/file/[submissionId]`.
+  - **Note (2026-08-11)**: certificates. New Next APIs `app/api/admin/certificates`, `app/api/admin/certificates/[id]`, `app/api/admin/certificates/draft` (all admin-gated in the handler, not only by the /admin layout). New PUBLIC page `app/verify/[certId]`, added to `PUBLIC_ROUTES` in `lib/constants.ts` (the `/s` mechanism; the middleware matcher is untouched). New backend route `routes/certificates.py` (`POST /certificates/draft`, admin only, fails closed). Public reads go through the `verify_certificate(text)` RPC, never a table or view grant. Additive.
 - **Rule:** new domain/route or changed request/response shape = announce. Affects: Daily-content, any frontend caller.
 
 ## C5 · Curriculum data   (v1)
