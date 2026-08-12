@@ -126,7 +126,36 @@ export default function GuestPracticeActions({
   ];
 
   const live = cards.filter((c) => c.available);
-  if (!live.length) return null;
+  // NEVER return null here. This block returning nothing is indistinguishable
+  // from the feature being broken — and it is exactly what happened: the daily
+  // lookup failed, every id came back null, and the page rendered a headline
+  // promising practice with no way to start it. If there is genuinely nothing
+  // scheduled, say so and offer the library instead.
+  if (!live.length) {
+    return (
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="text-[16px] font-bold text-foreground">Today&apos;s set isn&apos;t ready yet</h2>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+          The daily case and guesstimate are published each morning. Browse the library in the meantime, or create a
+          free account and we&apos;ll have them waiting.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2.5">
+          <a
+            href="/practice"
+            className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            Browse the library
+          </a>
+          <a
+            href="/signup?next=/dashboard"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+          >
+            Sign up free <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-2xl border border-primary/20 bg-card p-4 sm:p-5">

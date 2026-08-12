@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { ensureGuestSession } from '@/lib/guest';
 import { ArrowRight } from 'lucide-react';
 import { useNavLoading } from '@/components/guest/nav-loading';
 
@@ -37,6 +38,28 @@ const BIG_PRIMARY =
 export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
   const [state, setState] = useState<'loading' | 'authed' | 'guest'>('loading');
   const { navigate, overlay, router } = useNavLoading('Loading…');
+
+  /**
+   * "Explore MECE" for a logged-out visitor.
+   *
+   * Mints the anonymous session BEFORE navigating. Without this the button
+   * lands on /dashboard with no session, which renders the cold-start page —
+   * a headline and a list, no dashboard. The real dashboard needs a user id to
+   * build against, so the session has to exist first.
+   *
+   * This is still a CLICK, never a mount effect, so crawlers never trigger it
+   * and "/" stays statically renderable. If minting fails we navigate anyway:
+   * the cold-start page is a worse experience but an honest one, and better
+   * than a button that does nothing.
+   */
+  async function exploreAsGuest() {
+    try {
+      await ensureGuestSession();
+    } catch {
+      /* fall through — /dashboard degrades to the cold-start page */
+    }
+    navigate(EXPLORE_HREF);
+  }
 
   useEffect(() => {
     const supabase = createClient();
@@ -80,7 +103,7 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate(state === 'authed' ? '/dashboard' : EXPLORE_HREF)}
+            onClick={() => (state === 'authed' ? navigate('/dashboard') : exploreAsGuest())}
             className={`${BIG_PRIMARY} justify-center`}
           >
             {state === 'authed' ? 'Open MECE' : 'Explore MECE'} <ArrowRight className="h-4 w-4" />
@@ -116,7 +139,7 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
     return (
       <div className="flex flex-col items-center gap-3">
         {overlay}
-        <button type="button" onClick={() => navigate(EXPLORE_HREF)} className={`${BIG_PRIMARY} w-fit`}>
+        <button type="button" onClick={exploreAsGuest} className={`${BIG_PRIMARY} w-fit`}>
           Explore the platform <ArrowRight className="h-4 w-4" />
         </button>
         <Link href="/signup" className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-2">

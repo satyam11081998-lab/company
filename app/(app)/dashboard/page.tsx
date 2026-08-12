@@ -65,7 +65,12 @@ export default async function DashboardPage() {
     // Today's real pair — the same case a signed-in user sees, and the same
     // one the landing page advertises. Guests must not be shown a different
     // case from the one they were promised on "/".
-    const guestDaily = await getDailyTodayServerSide();
+    // 'static' = the anon-key client, exactly what the landing page uses and
+    // known to work for a visitor with no session. The default 'session' client
+    // is cookie-backed, and a cold-start guest has no cookie — any hiccup there
+    // is swallowed by getDailyTodayServerSide's catch and returns all-nulls,
+    // which made the whole actions block silently render nothing.
+    const guestDaily = await getDailyTodayServerSide('static');
     // The synthetic dashboard is GONE. It was a picture of someone else's
     // progress — 24 invented submissions, a fake streak, CTAs wired to
     // /practice and `demo-case-N` ids. Every complaint about this page traced

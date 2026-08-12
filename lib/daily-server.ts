@@ -126,8 +126,12 @@ export async function getDailyTodayServerSide(
           }
         : null,
     };
-  } catch {
-    // Any failure (incl. RLS denial) → empty, never breaks the dashboard render.
+  } catch (err) {
+    // Was a bare `catch {}`. A silent empty result here renders a dashboard
+    // that promises "practise a real case" with no case to click, and looks
+    // identical to the feature being switched off — which cost real debugging
+    // time. Still returns `empty` (never throw into a page render), but says so.
+    console.error('[daily] getDailyTodayServerSide failed; returning empty set:', err);
     return empty;
   }
 }
