@@ -8,6 +8,8 @@ import {
   extractPageDescription,
   casebookArticleJsonLd,
   casebookBreadcrumbJsonLd,
+  casebookCanonicalPath,
+  isCanonicalisedAway,
   faqPageJsonLd,
 } from '@/lib/seo';
 import { getClusterFAQs } from '@/lib/casebook/faqs';
@@ -41,7 +43,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
   if (!page) return { robots: { index: false, follow: false } };
 
   const description = extractPageDescription(page);
-  const canonical = `/learn/casebook/${page.slug}`;
+  const canonical = casebookCanonicalPath(page.slug);
   const ogImage = `/og?title=${encodeURIComponent(page.title)}${
     page.subtitle ? `&subtitle=${encodeURIComponent(page.subtitle)}` : ''
   }&kind=${encodeURIComponent(page.kind)}`;
@@ -84,15 +86,20 @@ export default function CasebookRoute({ params }: PageProps) {
     notFound();
   }
 
-  const articleLd = casebookArticleJsonLd(page);
+  // A canonicalised page must not also emit an Article node: that would put two
+  // Article entities on the same canonical content and muddy which URL owns it.
+  // The canonical target carries the schema.
+  const articleLd = isCanonicalisedAway(page.slug) ? null : casebookArticleJsonLd(page);
   const breadcrumbLd = casebookBreadcrumbJsonLd(page.slug);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}
-      />
+      {articleLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}
+        />
+      )}
       {breadcrumbLd && (
         <script
           type="application/ld+json"

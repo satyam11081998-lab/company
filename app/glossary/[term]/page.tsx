@@ -196,6 +196,26 @@ export default async function GlossaryTermPage({
             </section>
           )}
 
+          {/* Deep dive — a full standalone reference for this term, when one exists */}
+          {term.deepDive && (
+            <section className="mt-8">
+              <Link
+                href={term.deepDive.href}
+                className="group flex items-center justify-between gap-4 rounded-xl border-2 border-primary/25 bg-primary/[0.04] p-5 transition-colors hover:border-primary/50"
+              >
+                <span>
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-primary">
+                    Full guide
+                  </span>
+                  <span className="mt-1 block text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {term.deepDive.label}
+                  </span>
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              </Link>
+            </section>
+          )}
+
           {/* Related casebook pages */}
           {term.relatedCasebookPages && term.relatedCasebookPages.length > 0 && (
             <section className="mt-8">

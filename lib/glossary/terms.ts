@@ -7,6 +7,12 @@ export interface GlossaryTerm {
   relatedTerms: string[];
   relatedCasebookPages?: string[];
   example?: string;
+  /**
+   * A full standalone reference page for this term, when one exists. A glossary
+   * entry is a definition; a deep dive is the page we actually want to rank and
+   * be cited. Surfacing the link keeps the two from competing.
+   */
+  deepDive?: { href: string; label: string };
 }
 
 export const GLOSSARY_TERMS: GlossaryTerm[] = [
@@ -23,6 +29,10 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     category: 'consulting',
     relatedTerms: ['issue-tree', 'hypothesis-driven-approach', 'profitability-framework'],
     relatedCasebookPages: ['profitability-framework', 'market-entry'],
+    deepDive: {
+      href: '/mece-framework',
+      label: 'Read the full MECE framework guide',
+    },
     example:
       'McKinsey consultants analyzing a retailer\'s declining sales structured the problem MECE: (1) Store-level factors (foot traffic, conversion, basket size) vs. (2) External factors (competition, macro trends). This ensured no driver was double-counted or overlooked.',
   },

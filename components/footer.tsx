@@ -45,6 +45,7 @@ export default function Footer({ className = "" }: { className?: string }) {
             <div>
               <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Resources</h4>
               <ul className="space-y-3.5">
+                <li><Link href="/mece-framework" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">The MECE Framework</Link></li>
                 <li><Link href="/methodology" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Our Methodology</Link></li>
                 <li><Link href="/learn/casebook/getting-started/what-it-tests" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">The MECE Casebook</Link></li>
                 <li><Link href="/learn/casebook/cases/profitability/regional-dairy-cooperative" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Worked Case Interviews</Link></li>

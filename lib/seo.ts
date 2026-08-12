@@ -18,6 +18,44 @@ export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+/* ── Canonical overrides ───────────────────────────────────────────── */
+
+/**
+ * Casebook slugs whose canonical URL lives OUTSIDE the casebook.
+ *
+ * This lives here, in the SEO module, rather than in any one consumer, because
+ * three unrelated files have to agree about it and a disagreement is silent:
+ *
+ *   - app/(app)/learn/casebook/[[...slug]]/page.tsx  emits the rel=canonical
+ *     and suppresses the page's Article JSON-LD
+ *   - app/sitemap.ts                                 must NOT list the page
+ *   - app/llms-full.txt/route.ts                     must print the canonical
+ *     URL, not the casebook URL, or an AI answer will cite the wrong page
+ *
+ * The first version of this shipped as three hand-synced copies with a comment
+ * telling the next person to keep them aligned. Comments do not keep anything
+ * aligned. One exported constant does.
+ *
+ * Current entry: `core-frameworks/mece` and `/mece-framework` target the same
+ * query. Two of our own URLs competing for one term splits link equity and lets
+ * Google choose the winner for us. The standalone hub is the stronger candidate
+ * (short path, far more depth, cited sources), so the casebook version
+ * canonicalises to it and stays as the in-course read.
+ */
+export const CASEBOOK_CANONICAL_OVERRIDES: Record<string, string> = {
+  'core-frameworks/mece': '/mece-framework',
+};
+
+/** The canonical path for a casebook slug: an override if one exists, else its own path. */
+export function casebookCanonicalPath(slug: string): string {
+  return CASEBOOK_CANONICAL_OVERRIDES[slug] ?? `/learn/casebook/${slug}`;
+}
+
+/** True when the slug's canonical URL points somewhere else. */
+export function isCanonicalisedAway(slug: string): boolean {
+  return slug in CASEBOOK_CANONICAL_OVERRIDES;
+}
+
 /** Strip restricted inline markdown (**bold**, *italic*, `code`, [text](url)) to plain text. */
 export function stripInlineMd(md: string): string {
   return md

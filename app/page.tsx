@@ -30,7 +30,7 @@ const HOMEPAGE_FAQS = [
   {
     question: 'Is mece.in the same as the MECE framework?',
     answer:
-      'No. The MECE principle (Mutually Exclusive, Collectively Exhaustive) is a problem-solving concept popularised in management consulting. MECE — the platform at mece.in — is a separate product that helps Indian MBA and PGDM students prepare for placement interviews. It is named after the principle but is a distinct service.',
+      'No. The MECE principle (Mutually Exclusive, Collectively Exhaustive) is a problem-solving concept popularised in management consulting by Barbara Minto at McKinsey. MECE — the platform at mece.in — is a separate product that helps Indian MBA and PGDM students prepare for placement interviews. It is named after the principle but is a distinct service. Our full guide to the principle itself is at mece.in/mece-framework.',
   },
   {
     question: 'Who is MECE for?',
@@ -97,7 +97,7 @@ export default async function LandingPage() {
               {/* "Try a case" points straight at the pre-login dashboard —
                   that IS the explore experience. /explore-mece 308s here too
                   (next.config) for anything that already picked up the URL. */}
-              {[['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['/dashboard', 'Start practising'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
+              {[['/mece-framework', 'MECE framework'], ['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['/dashboard', 'Start practising'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
                 <Link key={href} href={href} className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
                   {label}
                 </Link>

@@ -25,6 +25,12 @@ export const meceFramework: Page = {
       md: "MECE — **Mutually Exclusive, Collectively Exhaustive** — is the principle this whole product is named after, and the spine of every structure you will ever draw. It is a quiet promise to the interviewer: no double-counting, and nothing missed. Get this one idea right and your issue trees stop leaking; get it wrong and even perfect arithmetic sits on a broken frame.",
     },
     {
+      type: "callout",
+      variant: "note",
+      title: "This is the short version",
+      md: "For the full reference — where MECE came from, how to pronounce it, twelve worked MECE vs non-MECE examples, the six ways to build a MECE split, the GRIPS test, and the documented criticisms — read [The MECE framework](/mece-framework). This page is the version you need in the middle of a case.",
+    },
+    {
       type: "heading",
       level: 2,
       text: "What MECE actually means",

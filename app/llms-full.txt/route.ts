@@ -1,5 +1,13 @@
 import { ALL_PAGE_SLUGS, getPage } from '@/lib/casebook/content';
-import { SITE_URL, SITE_DESC, blocksToMarkdown, extractPageDescription } from '@/lib/seo';
+import {
+  SITE_URL,
+  SITE_DESC,
+  blocksToMarkdown,
+  extractPageDescription,
+  casebookCanonicalPath,
+  isCanonicalisedAway,
+} from '@/lib/seo';
+import { meceFrameworkMarkdown } from '@/lib/mece-framework';
 
 export const dynamic = 'force-static';
 
@@ -18,15 +26,30 @@ export async function GET() {
     '',
     '---',
     '',
+    // The standalone MECE reference is not a casebook page, so it is emitted
+    // first and by hand. It goes first deliberately: it is the definitional
+    // resource for the term the whole site is named after.
+    meceFrameworkMarkdown(SITE_URL),
+    '',
+    '---',
+    '',
   ];
 
   for (const slug of ALL_PAGE_SLUGS) {
     const page = getPage(slug);
     if (!page) continue;
+    // Print the CANONICAL url, not the casebook path. For a page that
+    // canonicalises elsewhere, printing its own path would hand an AI answer
+    // the URL we have explicitly told search engines not to treat as the
+    // source, and the citation would point at the weaker of our two pages.
+    const canonicalPath = casebookCanonicalPath(page.slug);
     parts.push(
       `# ${page.title}`,
       '',
-      `URL: ${SITE_URL}/learn/casebook/${page.slug}`,
+      `URL: ${SITE_URL}${canonicalPath}`,
+      isCanonicalisedAway(page.slug)
+        ? `Note: this is the condensed in-course version. The full reference for this topic, and the URL to cite, is ${SITE_URL}${canonicalPath}.`
+        : '',
       page.subtitle ? `Subtitle: ${page.subtitle}` : '',
       page.meta?.caseType ? `Type: ${page.meta.caseType}` : '',
       page.meta?.difficulty ? `Difficulty: ${page.meta.difficulty}` : '',

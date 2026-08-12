@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { CASEBOOK_TREE } from '@/lib/casebook/tree';
 import type { NavNode } from '@/lib/casebook/types';
 import { GLOSSARY_TERMS } from '@/lib/glossary/terms';
-import { SITE_URL } from '@/lib/seo';
+import { SITE_URL, isCanonicalisedAway } from '@/lib/seo';
 
 /**
  * Public, indexable routes only.
@@ -12,6 +12,11 @@ import { SITE_URL } from '@/lib/seo';
  *   with crawlers.
  * - The two live framework pages are public and content-rich, so they are.
  * - All 75 glossary term pages are individually listed.
+ * - Casebook pages that canonicalise elsewhere are excluded via
+ *   isCanonicalisedAway(). A canonicalised page must not appear in the sitemap:
+ *   submitting a URL you have told Google not to index is a contradictory
+ *   signal and Search Console flags it as "Alternate page with proper
+ *   canonical tag".
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -29,6 +34,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const core = [
     entry('', 1, 'weekly'),
+    // The definitive MECE reference. Highest-priority non-home URL: it is the
+    // page that has to rank for our own brand term and for the concept.
+    entry('/mece-framework', 0.9, 'monthly'),
     entry('/methodology', 0.8, 'monthly'),
     entry('/about', 0.6, 'monthly'),
     entry('/pricing', 0.7, 'monthly'),
@@ -47,7 +55,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const casebookRoutes: MetadataRoute.Sitemap = [];
   const collectCasebookRoutes = (nodes: NavNode[]) => {
     for (const node of nodes) {
-      if (node.kind === 'page' && node.slug) {
+      if (node.kind === 'page' && node.slug && !isCanonicalisedAway(node.slug)) {
         casebookRoutes.push(entry(`/learn/casebook/${node.slug}`, 0.7, 'monthly'));
       }
       if (node.children) {
