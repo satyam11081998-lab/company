@@ -37,6 +37,7 @@ const BIG_PRIMARY =
 
 export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
   const [state, setState] = useState<'loading' | 'authed' | 'guest'>('loading');
+  const [busy, setBusy] = useState(false);
   const { navigate, overlay, router } = useNavLoading('Loading…');
 
   /**
@@ -53,12 +54,31 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
    * than a button that does nothing.
    */
   async function exploreAsGuest() {
+    // Overlay FIRST. Minting a session is a network round-trip, and without
+    // this the button sat dead for a second or two with no feedback.
+    setBusy(true);
     try {
       await ensureGuestSession();
+      // Confirm the session is actually readable before leaving. signInAnonymously
+      // resolving is not the same as the cookie being available.
+      const supabase = createClient();
+      for (let i = 0; i < 20; i++) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
     } catch {
-      /* fall through — /dashboard degrades to the cold-start page */
+      /* fall through — a hard load still lands somewhere sane */
     }
-    navigate(EXPLORE_HREF);
+    // HARD navigation, not router.push. A client-side route change asks the
+    // server for /dashboard before the auth cookie is necessarily attached, so
+    // the first render saw no session and produced the cold-start page — which
+    // is why the real dashboard only appeared on the SECOND visit. A full page
+    // load always carries the cookie, so the dashboard is built for a real
+    // (anonymous) user on the very first paint. The daily lookup also runs
+    // authenticated rather than as `anon`, which is what made the set look
+    // "not ready".
+    window.location.assign(EXPLORE_HREF);
   }
 
   useEffect(() => {
@@ -95,11 +115,25 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
     );
   }
 
+  /* Full-screen "Setting up MECE…" while the anonymous session is created and
+     the hard navigation is in flight. The button used to look inert for the
+     whole round-trip, which reads as a broken click. */
+  const busyOverlay = busy ? (
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background/95 backdrop-blur-sm">
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-primary/25 border-t-primary" />
+      <div className="text-center">
+        <p className="text-[15px] font-semibold text-foreground">Setting up MECE…</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">Getting today&apos;s case ready. No account needed.</p>
+      </div>
+    </div>
+  ) : null;
+
   /* ── Hero variant ───────────────────────────────────────────────── */
   if (variant === 'hero') {
     return (
       <div>
         {overlay}
+        {busyOverlay}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <button
             type="button"
@@ -139,6 +173,7 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
     return (
       <div className="flex flex-col items-center gap-3">
         {overlay}
+        {busyOverlay}
         <button type="button" onClick={exploreAsGuest} className={`${BIG_PRIMARY} w-fit`}>
           Explore the platform <ArrowRight className="h-4 w-4" />
         </button>

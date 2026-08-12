@@ -11,6 +11,7 @@ import DashboardClient from '@/components/dashboard-client';
 import { DeckVaultPopup } from '@/components/deck-vault/deck-vault-promo';
 import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
+import GuestStartButton from '@/components/guest/guest-start-button';
 // NOTE: lib/dashboard/guest-sample.ts is now unreferenced. Left on disk rather
 // than deleted so the diff stays reviewable; safe to remove in a follow-up.
 import { getDailyTodayServerSide } from '@/lib/daily-server';
@@ -82,38 +83,23 @@ export default async function DashboardPage() {
     // three real actions, and one honest line about what an account adds.
     return (
       <GuestPreviewFrame next="/dashboard">
-        <div className="container max-w-3xl space-y-5 py-8">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Practise a real case, right now
-            </h1>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-              Today&apos;s set is open to everyone — no account, no email. You only sign up when you want your score.
-            </p>
-          </div>
-
-          <GuestPracticeActions
-            targets={{
-              caseId: guestDaily.case?.id ?? null,
-              caseTitle: guestDaily.case?.title ?? null,
-              guesstimateId: guestDaily.guesstimate?.id ?? null,
-              guesstimateTitle: guestDaily.guesstimate?.title ?? guestDaily.guesstimate_title ?? null,
-              briefId: guestDaily.brief?.id ?? null,
-              briefHeadline: guestDaily.brief?.title ?? null,
-            }}
-            heading="Start with any of these"
-            subheading="Pick one and you're straight into the interview."
-          />
-
-          <div className="rounded-2xl border border-border bg-card/50 p-5">
-            <h2 className="text-[15px] font-semibold text-foreground">What an account adds</h2>
-            <ul className="mt-3 space-y-1.5 text-[14px] leading-relaxed text-muted-foreground">
-              <li>· Your score on six dimensions, with written feedback</li>
-              <li>· A fresh case and guesstimate every day</li>
-              <li>· Saved history, streak and skill graph</li>
-              <li>· National and college leaderboards</li>
-              <li>· The full case bank and GD briefs</li>
-            </ul>
+        {/* ONE action. Reached only by typing /dashboard directly with no
+            session — Explore MECE now mints the session and hard-navigates, so
+            it never lands here. Deliberately not a mini-dashboard: the previous
+            version offered "browse the library", which sent people to
+            /practice, into the login overlay, and back again. That detour is
+            what the owner asked to remove. Start, and you are on the real
+            dashboard. */}
+        <div className="container flex min-h-[60vh] max-w-md flex-col items-center justify-center py-10 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Practise a real case, right now
+          </h1>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+            Today&apos;s case and guesstimate are open to everyone — no account, no email. You only sign up when you
+            want your score.
+          </p>
+          <div className="mt-7 w-full max-w-xs">
+            <GuestStartButton label="Start practising" />
           </div>
         </div>
       </GuestPreviewFrame>
