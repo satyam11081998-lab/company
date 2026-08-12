@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
@@ -37,22 +38,19 @@ export default async function DashboardPage() {
   // gated behind "Sign in to continue". MUST return BEFORE any Supabase client
   // is created — createServiceClient() needs SUPABASE_SERVICE_ROLE_KEY, which
   // guests (and some local envs) don't have, so building it would throw.
-  // GUEST MODE (0045). Fires for BOTH shapes of guest:
-  //   • no session at all — the cold start, before they have clicked anything;
-  //   • an anonymous session — after they have.
+  // GUEST MODE (0045, revised 2026-08-10 to the owner spec). This branch is
+  // the COLD START only — a visitor with no session at all, before they have
+  // clicked anything.
   //
-  // The second case is the one that matters and was missing. Once
-  // ensureGuestSession() mints a session, `authUser` is a perfectly valid user,
-  // so this page used to fall through to the FULL logged-in dashboard: streak,
-  // skill graph, leaderboard rank, readiness ring — the entire product, handed
-  // to someone who has never given us an email. That is not a preview, it is
-  // the app with the door left open, and it made the anonymous state
-  // indistinguishable from a real account.
-  //
-  // A guest sees exactly one page, before and after the session exists: today's
-  // three actions and what an account adds. Everything else arrives with the
-  // account.
-  if (!authUser || authUser.is_anonymous) {
+  // A guest WITH an anonymous session falls through to the real dashboard
+  // below, deliberately. That is the spec: after Explore MECE they see the
+  // actual product, with every case and guesstimate visible, gated by the
+  // submit wall rather than hidden behind a lesser page. Safe to hand them
+  // because a just-onboarded real user has zero history too and already runs
+  // this exact path — the aggregates all tolerate an empty account.
+  // Their own data is genuinely empty, and `is_guest` keeps them out of
+  // leaderboards, the activity feed, peer proximity and the proof rail.
+  if (!authUser) {
     // GUEST MODE (0045): this branch is now the COLD START only — a visitor
     // whose first server request carried no cookie, because anonymous sessions
     // are minted on a click, never on mount (crawler safety). Once they click
@@ -291,8 +289,40 @@ export default async function DashboardPage() {
   // components/dashboard/constellation.tsx (888 / 600 ≈ 1.48). All other
   // grids on the dashboard are fractional (1fr / 1.5fr) so they scale
   // proportionally without further tuning.
+  // GUEST MODE: a guest now sees the real dashboard, so it must say plainly
+  // that this is not yet an account. Sits at the very top of the page rather
+  // than in a sticky bar so it is part of the content, not chrome to dismiss.
+  const isGuestSession = authUser.is_anonymous === true;
+
   return (
     <div className="container max-w-7xl py-10">
+      {isGuestSession && (
+        <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-primary/25 bg-primary/[0.06] px-5 py-4">
+          <div className="min-w-[15rem] flex-1">
+            <p className="text-[14px] font-semibold text-foreground">
+              You&apos;re practising without an account
+            </p>
+            <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+              Today&apos;s case and guesstimate are open. Create an account to get your score, keep your history and
+              unlock the full library.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login?next=/dashboard"
+              className="inline-flex items-center justify-center rounded-full border border-border bg-card px-4 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/signup?next=/dashboard"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+            >
+              Sign up free
+            </Link>
+          </div>
+        </div>
+      )}
       <DashboardClient
         userName={userName}
         points={points}

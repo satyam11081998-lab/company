@@ -205,9 +205,19 @@ export default async function ResultPage({ params }: { params: { id: string } })
           </Card>
         </div>
 
-        <div className="mt-8 flex justify-center">
+        {/* GUEST MODE: someone who solved a case before signing up lands HERE
+            as their first authenticated page — the score is what they created
+            the account for. They have never seen the dashboard, so "Try
+            another case" alone leaves them with no route into the product.
+            Both options, dashboard first. */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link href="/dashboard">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
+              Go to your dashboard
+            </Button>
+          </Link>
           <Link href="/practice?tab=scored">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">Try another case</Button>
+            <Button variant="outline">Try another case</Button>
           </Link>
         </div>
         <LinkedInFollowPrompt wasDaily={wasDaily} />

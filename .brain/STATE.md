@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-08-01 10:53 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-08-08 10:20 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
-**Last landed:** 2026-08-01 — fix-clarification-quota-dead-end — <pending commit; cross-repo>
-**Last sync:** 2026-08-01 10:53 UTC
+**Last landed:** 2026-08-06 — influencer-growth-kit — <pending commit>
+**Last sync:** 2026-08-08 10:20 UTC
 
 ## Last 5 commits — frontend
-- 6aed26d feat(deck-vault): structured filters (year/organizer/result/search) + backfill approved submissions into vault (0042); auto-publish + uploader write filter fields (satyam11081998-lab, 2026-07-17)
-- 08f163f docs(brain): full 2026-07-17 sync - deck-vault-rewards (S21, C7, C8), ledger dedupe, STATE blockers, sync.mjs hand-section preservation (satyam11081998-lab, 2026-07-17)
-- 14e5bc2 fix(deck-vault): derive library file_type from Drive filename for gdrive: paths (fetchFileName) (satyam11081998-lab, 2026-07-17)
-- 1f49694 feat: auto-publish approved deck submissions to public Deck Vault library (satyam11081998-lab, 2026-07-17)
-- 47764c2 fix(deck-vault): build errors (React18 ref type, CouponRow never-narrowing) + admin file streaming from Drive (satyam11081998-lab, 2026-07-17)
+- a9d2f70 merge: guest mode (anonymous auth practice), flag-gated (satyam11081998-lab, 2026-08-08)
+- fcffeae fix(guest-mode): conversion sync survives the privileged-column guard (satyam11081998-lab, 2026-08-08)
+- f105830 feat(guest-mode): anonymous auth practice + / rewrites to dashboard (satyam11081998-lab, 2026-08-08)
+- ea93fe2 fix(dashboard): give HeroReadiness the same right rail as HeroCase (satyam11081998-lab, 2026-08-06)
+- 8ab6513 fix(dashboard,admin): one hero type scale; IST signup buckets; execution-tested SQL (satyam11081998-lab, 2026-08-06)
 
 ## Last 5 commits — backend
+- 9fcc68c feat(guest-mode): guests limited to the daily pair; 403 on paid AI routes (satyam11081998-lab, 2026-08-08)
+- 2824dbc feat(solve): interviewer stops sounding like a template (satyam11081998-lab, 2026-08-01)
+- 9d80195 fix(solve): free tier gets a real clarification quota (7/12/20) and the interviewer never goes silent when it is spent (satyam11081998-lab, 2026-08-01)
 - 6a7f496 feat(deck-vault): store submissions in Google Drive vault (gdrive: paths, bucket fallback); accept TELEGRAM_CHAT_ID (satyam11081998-lab, 2026-07-17)
 - 41a5f50 feat(deck-vault): winning-deck upload -> verified discount coupons - private-bucket submissions (deck+cert, magic-byte checks), Telegram admin alert, status endpoint; corporate 60% / b-school 40% (satyam11081998-lab, 2026-07-17)
-- 7adc9d2 fix(resume): CV Pointer Lab uses placeholders, not clarifying questions, for missing numbers (satyam11081998-lab, 2026-07-17)
-- 59aea78 feat(growth): LinkedIn follow -> one-time free-bank unlock (+1 case, +1 guesstimate) - popup after dailies, lock-screen offer, footer link; server-side claim flag guarded by trg_guard_user_cols (satyam11081998-lab, 2026-07-15)
-- e42b55c fix: Deduplicate news headlines by title to prevent repeats (satyam11081998-lab, 2026-07-10)
 
 ## Open feature branches (not merged into main)
 - (none)
