@@ -10,7 +10,8 @@ import DashboardClient from '@/components/dashboard-client';
 import { DeckVaultPopup } from '@/components/deck-vault/deck-vault-promo';
 import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
-import { buildGuestDashboardProps } from '@/lib/dashboard/guest-sample';
+// NOTE: lib/dashboard/guest-sample.ts is now unreferenced. Left on disk rather
+// than deleted so the diff stays reviewable; safe to remove in a follow-up.
 import { getDailyTodayServerSide } from '@/lib/daily-server';
 import { getHeatmap } from '@/lib/dashboard/heatmap';
 import { getGrowthDeltas } from '@/lib/dashboard/growth-deltas';
@@ -36,7 +37,22 @@ export default async function DashboardPage() {
   // gated behind "Sign in to continue". MUST return BEFORE any Supabase client
   // is created — createServiceClient() needs SUPABASE_SERVICE_ROLE_KEY, which
   // guests (and some local envs) don't have, so building it would throw.
-  if (!authUser) {
+  // GUEST MODE (0045). Fires for BOTH shapes of guest:
+  //   • no session at all — the cold start, before they have clicked anything;
+  //   • an anonymous session — after they have.
+  //
+  // The second case is the one that matters and was missing. Once
+  // ensureGuestSession() mints a session, `authUser` is a perfectly valid user,
+  // so this page used to fall through to the FULL logged-in dashboard: streak,
+  // skill graph, leaderboard rank, readiness ring — the entire product, handed
+  // to someone who has never given us an email. That is not a preview, it is
+  // the app with the door left open, and it made the anonymous state
+  // indistinguishable from a real account.
+  //
+  // A guest sees exactly one page, before and after the session exists: today's
+  // three actions and what an account adds. Everything else arrives with the
+  // account.
+  if (!authUser || authUser.is_anonymous) {
     // GUEST MODE (0045): this branch is now the COLD START only — a visitor
     // whose first server request carried no cookie, because anonymous sessions
     // are minted on a click, never on mount (crawler safety). Once they click
@@ -52,12 +68,27 @@ export default async function DashboardPage() {
     // one the landing page advertises. Guests must not be shown a different
     // case from the one they were promised on "/".
     const guestDaily = await getDailyTodayServerSide();
+    // The synthetic dashboard is GONE. It was a picture of someone else's
+    // progress — 24 invented submissions, a fake streak, CTAs wired to
+    // /practice and `demo-case-N` ids. Every complaint about this page traced
+    // back to it: taps that went nowhere, a redirect to /practice, and real
+    // buttons lost among fake ones. A visitor with no history is not helped by
+    // being shown a stranger's.
+    //
+    // What replaces it is the only thing that was ever true here: today's
+    // three real actions, and one honest line about what an account adds.
     return (
       <GuestPreviewFrame next="/dashboard">
-        <div className="container max-w-7xl space-y-5 py-6">
-          {/* Above the sample dashboard on purpose: on a phone this is what a
-              visitor meets after one short scroll, and it is the only part of
-              this page that actually does anything. */}
+        <div className="container max-w-3xl space-y-5 py-8">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Practise a real case, right now
+            </h1>
+            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+              Today&apos;s set is open to everyone — no account, no email. You only sign up when you want your score.
+            </p>
+          </div>
+
           <GuestPracticeActions
             targets={{
               caseId: guestDaily.case?.id ?? null,
@@ -67,8 +98,20 @@ export default async function DashboardPage() {
               briefId: guestDaily.brief?.id ?? null,
               briefHeadline: guestDaily.brief?.title ?? null,
             }}
+            heading="Start with any of these"
+            subheading="Pick one and you're straight into the interview."
           />
-          <DashboardClient {...buildGuestDashboardProps()} />
+
+          <div className="rounded-2xl border border-border bg-card/50 p-5">
+            <h2 className="text-[15px] font-semibold text-foreground">What an account adds</h2>
+            <ul className="mt-3 space-y-1.5 text-[14px] leading-relaxed text-muted-foreground">
+              <li>· Your score on six dimensions, with written feedback</li>
+              <li>· A fresh case and guesstimate every day</li>
+              <li>· Saved history, streak and skill graph</li>
+              <li>· National and college leaderboards</li>
+              <li>· The full case bank and GD briefs</li>
+            </ul>
+          </div>
         </div>
       </GuestPreviewFrame>
     );

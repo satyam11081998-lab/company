@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 
 import PracticeHub from '@/components/practice-hub';
+import LoginToContinueOverlay from '@/components/guest/login-to-continue-overlay';
 import type { CaseRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -16,27 +17,15 @@ export default async function PracticePage({
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // GUEST MODE (0045): anonymous guests get today's daily pair and nothing
-  // else, so the full library is not theirs to browse. Sent to the dashboard,
-  // which is where their two live actions are.
+  // GUEST MODE (0045, revised 2026-08-10): guests are NOT redirected away.
+  // They see the real library, blurred, under a "Log in to continue" overlay —
+  // the product sells itself far better than a redirect to somewhere else does.
+  // `lib/access.ts` + `services/access_guard.py` remain the actual boundary:
+  // a guest still cannot attempt anything beyond today's daily pair.
   //
-  // The access gate in lib/access.ts + services/access_guard.py already refuses
-  // a guest on any non-daily case, so this is not the security boundary — it is
-  // the honesty boundary. Letting them browse 200 cases, pick one, and only
-  // then meet a wall is a bait-and-switch; the wall should never be reachable
-  // from a path we control.
-  //
-  // `/cases` redirects here too, so this one check covers both entry points.
-  // Note `!user` is no longer the guest test: a guest HAS a session, it is just
-  // an anonymous one.
-  if (user?.is_anonymous) {
-    redirect('/dashboard');
-  }
-
-  // Logged-out visitors (no session at all — the cold-start path) may still
-  // BROWSE the full library; cases are public-readable under RLS. Opening one
-  // lands on the read-only preview where the solve workspace is gated.
-  const isGuest = !user; // drives the guest banner + read-only browse
+  // A guest is either shape: no session at all (cold start) or an anonymous
+  // one. `!user` alone is not the test.
+  const isGuest = !user || user.is_anonymous === true;
 
   const casesRes = await supabase
     .from('cases')
@@ -70,21 +59,17 @@ export default async function PracticePage({
               ? 'Browse every case and guesstimate. Open any one to read it — sign in when you’re ready to solve and get scored.'
               : 'Active practice across cases, guesstimates, and case studies. Pick a category or hit the randomizer.'}
           </p>
-          {isGuest && (
-            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/[0.05] px-4 py-3">
-              <p className="text-[13px] text-foreground/80">
-                You&apos;re browsing as a guest. Create an account to solve cases and track your progress.
-              </p>
-              <Link
-                href="/signup?next=/practice"
-                className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
-              >
-                Sign up <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          )}
         </div>
-        <PracticeHub cases={cases} attemptedCaseIds={attemptedCaseIds} initialTab={initialTab} />
+        {/* The banner that used to sit here is gone: the overlay says the same
+            thing, in the one place a guest cannot miss it, without stealing a
+            row from the content it is describing. */}
+        {isGuest ? (
+          <LoginToContinueOverlay next="/practice">
+            <PracticeHub cases={cases} attemptedCaseIds={attemptedCaseIds} initialTab={initialTab} />
+          </LoginToContinueOverlay>
+        ) : (
+          <PracticeHub cases={cases} attemptedCaseIds={attemptedCaseIds} initialTab={initialTab} />
+        )}
       </main>
     </div>
   );

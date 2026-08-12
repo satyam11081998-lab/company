@@ -118,6 +118,31 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // ── Guests are confined to the guest surface ─────────────────────────
+  // GUEST MODE (0045). An anonymous session is a real session, so without this
+  // every authenticated page — leaderboard, profile, upgrade, cheat sheet,
+  // deck vault, resume, GD briefs, skeletons — opens for someone who has never
+  // given us an email. Hiding the nav links was not enough; a typed URL, a
+  // stale tab or a shared link still got in.
+  //
+  // Done HERE rather than per page deliberately: eight pages today, and the
+  // ninth one somebody adds next month would silently be exposed. One
+  // allowlist, one place, and new routes are closed by default.
+  //
+  // What a guest may reach: the dashboard (their whole product surface), an
+  // individual case (to solve it), the free casebook, the auth pages (to
+  // convert), plus everything already public. Results and onboarding are listed
+  // because a guest becomes non-anonymous mid-flight on conversion and may
+  // arrive a beat before the session refreshes.
+  // REMOVED (2026-08-10, owner spec): the guest allowlist that redirected
+  // anonymous users off every authenticated page. The answer to "a guest opened
+  // /practice" is now an overlay — they SEE the real questions, blurred, with
+  // "Log in to continue" over them — not a redirect that hides the product.
+  // Redirecting taught them nothing; the overlay shows exactly what an account
+  // buys. The real boundary is unchanged and lives where it always did:
+  // lib/access.ts and services/access_guard.py still refuse a guest on any
+  // non-daily case, and assert_can_submit still gates scoring.
+
   // ── "/" serves the dashboard, without changing the URL ───────────────
   // GUEST MODE (0045). The owner's requirement is that mece.in IS the
   // dashboard — not a landing page that forwards to /dashboard. A client-side
