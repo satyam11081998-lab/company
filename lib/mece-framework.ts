@@ -47,6 +47,21 @@ export const MECE_KEY_TAKEAWAYS: string[] = [
   '**Under time pressure, aim for roughly 80% MECE and highly relevant.** Fix overlaps first, since they are easier to spot than gaps, then close gaps with "Other".',
 ];
 
+/**
+ * The condensed summary for the sticky right rail.
+ *
+ * Not a duplicate of MECE_KEY_TAKEAWAYS. Those are 7 full sentences meant to be
+ * quoted; these are 4 fragments meant to be glanced at from the corner of the
+ * eye while reading something else, so they are trimmed to the point of being
+ * headlines rather than statements.
+ */
+export const MECE_RAIL_SUMMARY: { label: string; value: string }[] = [
+  { label: 'Stands for', value: 'Mutually Exclusive, Collectively Exhaustive' },
+  { label: 'In one line', value: 'No overlaps, no gaps' },
+  { label: 'Coined by', value: 'Barbara Minto, McKinsey, late 1960s' },
+  { label: 'Said as', value: '"mee-see" (Minto says "meece")' },
+];
+
 /* ── ME / CE explainers ────────────────────────────────────────────── */
 
 export interface Explainer {

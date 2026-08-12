@@ -5,6 +5,7 @@ import ThemeToggle from '@/components/theme-toggle';
 import AuthCTA from '@/components/auth-cta';
 import Footer from '@/components/footer';
 import { parseInlineMd } from '@/components/casebook/blocks/prose';
+import { OnThisPageList } from '@/components/on-this-page-list';
 import {
   ArrowRight,
   BookOpen,
@@ -31,6 +32,7 @@ import {
   MECE_PAGE_MODIFIED,
   MECE_DEFINITION,
   MECE_KEY_TAKEAWAYS,
+  MECE_RAIL_SUMMARY,
   MECE_HALVES,
   MECE_SEGMENTATION_TESTS,
   MECE_SPLIT_METHODS,
@@ -254,6 +256,14 @@ const TOC: { id: string; label: string }[] = [
   { id: 'sources', label: 'Sources' },
 ];
 
+/**
+ * Hoisted to module scope so the array identity is stable. <OnThisPageList>
+ * keys its IntersectionObserver effect on this prop; mapping inline in the
+ * component body would hand it a fresh array every render and tear the observer
+ * down and rebuild it for nothing.
+ */
+const TOC_ITEMS = TOC.map((t) => ({ id: t.id, text: t.label, level: 2 }));
+
 /* ── Small presentational helpers ──────────────────────────────────── */
 
 function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
@@ -315,7 +325,16 @@ export default function MeceFrameworkPage() {
       </nav>
 
       <main className="flex-grow">
-        <article className="container max-w-3xl mx-auto px-4 pt-8 pb-16">
+        {/*
+          Two-column reader, matching the casebook: content column plus a
+          sticky right rail. The casebook's third (left nav) column is
+          deliberately absent — this page is a public entry point that people
+          land on cold from search, and a course tree on first contact reads as
+          "you are lost in somebody's LMS". The rail carries the route into the
+          casebook instead.
+        */}
+        <div className="container max-w-[1180px] mx-auto px-4 pt-8 pb-16 lg:grid lg:grid-cols-[minmax(0,1fr)_250px] lg:gap-14 lg:items-start">
+          <article className="w-full max-w-3xl">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-6">
             <ol className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -415,8 +434,8 @@ export default function MeceFrameworkPage() {
             </ul>
           </section>
 
-          {/* ── TOC ─────────────────────────────────────────────────── */}
-          <nav aria-label="On this page" className="mt-8 rounded-xl border border-border p-5">
+          {/* ── TOC — mobile/tablet only; lg+ gets the sticky rail ───── */}
+          <nav aria-label="On this page" className="lg:hidden mt-8 rounded-xl border border-border p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               On this page
             </h2>
@@ -1255,8 +1274,70 @@ export default function MeceFrameworkPage() {
                 </span>
               </Link>
             ))}
+            </div>
+          </article>
+
+          {/* ── Sticky right rail ─────────────────────────────────────
+              TOC and summary scroll inside the rail; the route back into
+              the Casebook is pinned, so it is reachable from any scroll
+              depth rather than only from the top of the page. */}
+          <div className="hidden lg:block pt-1">
+            <OnThisPageList
+              items={TOC_ITEMS}
+              widthClassName="w-[250px]"
+              pinned={
+                <div className="rounded-xl border border-primary/25 bg-primary/[0.05] p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Part of the MECE Casebook
+                  </p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/80">
+                    This framework sits in Core Frameworks, alongside 50+ worked cases and
+                    guesstimates. Free, no account.
+                  </p>
+                  <Link
+                    href="/learn/casebook/getting-started/what-it-tests"
+                    className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline underline-offset-4"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                    Open the Casebook
+                  </Link>
+                  <Link
+                    href="/learn/casebook/core-frameworks/mece"
+                    className="mt-2 flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                    In-course version of this page
+                  </Link>
+                </div>
+              }
+            >
+              {/* Key summary — glanceable, sits under the TOC */}
+              <div className="mt-8 rounded-xl border border-border bg-muted/40 p-4">
+                <h4 className="text-label text-muted-foreground uppercase tracking-widest">
+                  Key summary
+                </h4>
+                <dl className="mt-3 space-y-2.5">
+                  {MECE_RAIL_SUMMARY.map((s) => (
+                    <div key={s.label}>
+                      <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+                        {s.label}
+                      </dt>
+                      <dd className="mt-0.5 text-[13px] leading-snug text-foreground/90">
+                        {s.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <a
+                  href="#faq"
+                  className="mt-3 inline-block text-[12px] font-medium text-primary hover:underline underline-offset-4"
+                >
+                  Jump to the 14 FAQs
+                </a>
+              </div>
+            </OnThisPageList>
           </div>
-        </article>
+        </div>
       </main>
 
       <Footer />

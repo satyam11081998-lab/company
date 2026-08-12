@@ -26,9 +26,9 @@ export const meceFramework: Page = {
     },
     {
       type: "callout",
-      variant: "note",
-      title: "This is the short version",
-      md: "For the full reference — where MECE came from, how to pronounce it, twelve worked MECE vs non-MECE examples, the six ways to build a MECE split, the GRIPS test, and the documented criticisms — read [The MECE framework](/mece-framework). This page is the version you need in the middle of a case.",
+      variant: "insight",
+      title: "Full reference: The MECE framework →",
+      md: "This page is the in-case version: the rule, the two failure modes, and the 10-second check. **[Jump to the complete MECE framework guide](/mece-framework)** for where MECE came from, how it is pronounced, 12 worked MECE vs non-MECE examples, the 6 ways to build a MECE split, the GRIPS test, 7 common mistakes, the documented criticisms, and 14 FAQs.",
     },
     {
       type: "heading",
@@ -171,6 +171,12 @@ export const meceFramework: Page = {
         "Clean is necessary, not sufficient — pick buckets that are actually worth analysing, then drill the one that matters.",
         "MECE is the check you run top-to-bottom on every issue tree. To see it in action, read [Structuring fundamentals](/learn/casebook/core-frameworks/structuring-fundamentals).",
       ],
+    },
+    {
+      type: "callout",
+      variant: "tip",
+      title: "Go deeper",
+      md: "Everything above, plus history, pronunciation, 12 worked examples, 15 ready-to-use structures, the GRIPS test and the honest criticisms, is in **[the full MECE framework guide](/mece-framework)**.",
     },
   ],
 };
