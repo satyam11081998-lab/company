@@ -22,7 +22,17 @@
  * [text](url). Nothing else. No raw HTML.
  */
 
-export const MECE_PAGE_PATH = '/mece-framework';
+/**
+ * Lives under /learn so it sits where readers expect the teaching material to
+ * be, next to the Casebook, rather than floating at the site root. `/learn` is
+ * already in PUBLIC_ROUTES and the (app) layout has a public carve-out for
+ * `/learn/**`, so this is crawlable and readable logged-out with no auth change.
+ *
+ * Every canonical URL, JSON-LD @id, OG url and llms.txt entry derives from this
+ * one constant. Moving the page again means editing this line and the hardcoded
+ * hrefs listed in the mece-seo handoff.
+ */
+export const MECE_PAGE_PATH = '/learn/mece-framework';
 
 /** Bumped whenever the body copy materially changes. Feeds dateModified. */
 export const MECE_PAGE_PUBLISHED = '2025-06-20';

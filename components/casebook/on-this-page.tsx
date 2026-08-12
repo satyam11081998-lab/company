@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import Link from 'next/link';
+import { ArrowRight, BookOpen } from 'lucide-react';
 import type { Block } from '@/lib/casebook/types';
 import { OnThisPageList, type TocItem } from '@/components/on-this-page-list';
+import { getDeepDive } from '@/lib/casebook/deep-dives';
 
 interface OnThisPageProps {
   blocks: Block[];
@@ -55,5 +58,36 @@ export function OnThisPage({ blocks, pageSlug }: OnThisPageProps) {
     return list;
   }, [blocks]);
 
-  return <OnThisPageList items={toc} observeKey={pageSlug} widthClassName="w-[220px]" />;
+  const deepDive = getDeepDive(pageSlug);
+
+  return (
+    <OnThisPageList
+      items={toc}
+      observeKey={pageSlug}
+      widthClassName="w-[220px]"
+      pinned={
+        deepDive ? (
+          <Link
+            href={deepDive.href}
+            className="group block rounded-xl border border-primary/25 bg-primary/[0.05] p-3.5 transition-colors hover:border-primary/50"
+          >
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+              <BookOpen className="h-3 w-3" aria-hidden="true" />
+              Learn more
+            </span>
+            <span className="mt-1.5 flex items-start gap-1 text-[13px] font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
+              {deepDive.label}
+              <ArrowRight
+                className="h-3.5 w-3.5 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-hidden="true"
+              />
+            </span>
+            <span className="mt-1 block text-[12px] leading-snug text-muted-foreground">
+              {deepDive.blurb}
+            </span>
+          </Link>
+        ) : undefined
+      }
+    />
+  );
 }

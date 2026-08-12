@@ -70,6 +70,15 @@ const nextConfig = {
         destination: '/dashboard',
         permanent: true,
       },
+      {
+        // The MECE framework guide was briefly built at the site root before
+        // moving under /learn, where the rest of the teaching material lives.
+        // Cheap insurance: anything that picked up the root URL lands on the
+        // real page instead of a 404, and the 308 passes signal along.
+        source: '/mece-framework',
+        destination: '/learn/mece-framework',
+        permanent: true,
+      },
     ];
   },
 };

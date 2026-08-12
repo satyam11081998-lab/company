@@ -36,7 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry('', 1, 'weekly'),
     // The definitive MECE reference. Highest-priority non-home URL: it is the
     // page that has to rank for our own brand term and for the concept.
-    entry('/mece-framework', 0.9, 'monthly'),
+    entry('/learn/mece-framework', 0.9, 'monthly'),
     entry('/methodology', 0.8, 'monthly'),
     entry('/about', 0.6, 'monthly'),
     entry('/pricing', 0.7, 'monthly'),

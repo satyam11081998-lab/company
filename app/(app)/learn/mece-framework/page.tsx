@@ -1,9 +1,5 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import Logo from '@/components/logo';
-import ThemeToggle from '@/components/theme-toggle';
-import AuthCTA from '@/components/auth-cta';
-import Footer from '@/components/footer';
 import { parseInlineMd } from '@/components/casebook/blocks/prose';
 import { OnThisPageList } from '@/components/on-this-page-list';
 import {
@@ -293,7 +289,15 @@ function Lead({ md }: { md: string }) {
 
 export default function MeceFrameworkPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    /*
+      No <nav> and no <Footer> here. This page lives under the (app) route
+      group, whose layout already supplies chrome for BOTH audiences: AppNav +
+      Footer for signed-in users, and GuestChrome (logo, log in, get started) +
+      Footer for logged-out readers, because `/learn/**` is a public carve-out
+      in that layout and `/learn` is in PUBLIC_ROUTES. Rendering our own would
+      double the header and the footer for every visitor.
+    */
+    <div className="bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
@@ -311,20 +315,7 @@ export default function MeceFrameworkPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(gripsHowToJsonLd) }}
       />
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
-        <div className="container flex h-14 md:h-16 items-center justify-between">
-          <Link href="/" className="flex items-center -ml-2 shrink-0">
-            <Logo isLanding />
-          </Link>
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <ThemeToggle />
-            <AuthCTA variant="nav" />
-          </div>
-        </div>
-      </nav>
-
-      <main className="flex-grow">
+      <div>
         {/*
           Two-column reader, matching the casebook: content column plus a
           sticky right rail. The casebook's third (left nav) column is
@@ -1338,9 +1329,7 @@ export default function MeceFrameworkPage() {
             </OnThisPageList>
           </div>
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }

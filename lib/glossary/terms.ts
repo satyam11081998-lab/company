@@ -30,7 +30,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     relatedTerms: ['issue-tree', 'hypothesis-driven-approach', 'profitability-framework'],
     relatedCasebookPages: ['profitability-framework', 'market-entry'],
     deepDive: {
-      href: '/mece-framework',
+      href: '/learn/mece-framework',
       label: 'Read the full MECE framework guide',
     },
     example:

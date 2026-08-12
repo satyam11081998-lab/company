@@ -28,7 +28,7 @@ export const meceFramework: Page = {
       type: "callout",
       variant: "insight",
       title: "Full reference: The MECE framework →",
-      md: "This page is the in-case version: the rule, the two failure modes, and the 10-second check. **[Jump to the complete MECE framework guide](/mece-framework)** for where MECE came from, how it is pronounced, 12 worked MECE vs non-MECE examples, the 6 ways to build a MECE split, the GRIPS test, 7 common mistakes, the documented criticisms, and 14 FAQs.",
+      md: "This page is the in-case version: the rule, the two failure modes, and the 10-second check. **[Jump to the complete MECE framework guide](/learn/mece-framework)** for where MECE came from, how it is pronounced, 12 worked MECE vs non-MECE examples, the 6 ways to build a MECE split, the GRIPS test, 7 common mistakes, the documented criticisms, and 14 FAQs.",
     },
     {
       type: "heading",
@@ -176,7 +176,7 @@ export const meceFramework: Page = {
       type: "callout",
       variant: "tip",
       title: "Go deeper",
-      md: "Everything above, plus history, pronunciation, 12 worked examples, 15 ready-to-use structures, the GRIPS test and the honest criticisms, is in **[the full MECE framework guide](/mece-framework)**.",
+      md: "Everything above, plus history, pronunciation, 12 worked examples, 15 ready-to-use structures, the GRIPS test and the honest criticisms, is in **[the full MECE framework guide](/learn/mece-framework)**.",
     },
   ],
 };

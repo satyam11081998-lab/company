@@ -36,14 +36,14 @@ export function absoluteUrl(path: string): string {
  * telling the next person to keep them aligned. Comments do not keep anything
  * aligned. One exported constant does.
  *
- * Current entry: `core-frameworks/mece` and `/mece-framework` target the same
- * query. Two of our own URLs competing for one term splits link equity and lets
- * Google choose the winner for us. The standalone hub is the stronger candidate
- * (short path, far more depth, cited sources), so the casebook version
+ * Current entry: `core-frameworks/mece` and `/learn/mece-framework` target the
+ * same query. Two of our own URLs competing for one term splits link equity and
+ * lets Google choose the winner for us. The full guide is the stronger
+ * candidate (far more depth, cited sources), so the casebook version
  * canonicalises to it and stays as the in-course read.
  */
 export const CASEBOOK_CANONICAL_OVERRIDES: Record<string, string> = {
-  'core-frameworks/mece': '/mece-framework',
+  'core-frameworks/mece': '/learn/mece-framework',
 };
 
 /** The canonical path for a casebook slug: an override if one exists, else its own path. */
