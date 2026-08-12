@@ -97,7 +97,7 @@ export default async function LandingPage() {
               {/* "Try a case" points straight at the pre-login dashboard —
                   that IS the explore experience. /explore-mece 308s here too
                   (next.config) for anything that already picked up the URL. */}
-              {[['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['/dashboard', 'Try a case'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
+              {[['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['/dashboard', 'Start practising'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
                 <Link key={href} href={href} className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
                   {label}
                 </Link>
