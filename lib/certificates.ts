@@ -33,6 +33,7 @@ export const CERT_TITLE_PRESETS = [
   'Certificate of Live Project Completion',
   'Certificate of Internship Completion',
   'Certificate of Live Project Contribution',
+  'Certificate of Live Project & Foundership',
 ] as const;
 
 /** Matches MECE-LP-2026-K7QF2M. Crockford base32 suffix: no I, L, O or U. */

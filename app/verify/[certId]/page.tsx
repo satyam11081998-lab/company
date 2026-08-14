@@ -83,10 +83,13 @@ export async function generateMetadata(
     };
   }
   const title = `${cert.recipient_name} | ${cert.cert_title} | MECE`;
+  const periodMeta = cert.duration_label === 'Ongoing'
+    ? `${formatCertDate(cert.start_date)} - Ongoing`
+    : `${formatCertDate(cert.start_date)} to ${formatCertDate(cert.end_date)}`;
   const description = cert.is_revoked
     ? `This MECE certificate (${cert.cert_id}) has been revoked and is no longer valid.`
     : `${cert.recipient_name} completed a live project at MECE as ${cert.role_title}, `
-      + `${formatCertDate(cert.start_date)} to ${formatCertDate(cert.end_date)}. `
+      + `${periodMeta}. `
       + `Verified against MECE's issuance record.`;
 
   return {
@@ -154,7 +157,9 @@ export default async function VerifyCertificatePage(
     );
   }
 
-  const period = `${formatCertDate(cert.start_date)} to ${formatCertDate(cert.end_date)}`;
+  const period = cert.duration_label === 'Ongoing'
+    ? `${formatCertDate(cert.start_date)} - Ongoing`
+    : `${formatCertDate(cert.start_date)} to ${formatCertDate(cert.end_date)}`;
 
   return (
     <Shell>

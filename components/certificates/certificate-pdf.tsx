@@ -310,12 +310,23 @@ export function CertificateDocument({
           </View>
           {!!cert.recipient_program && <Text style={s.prog}>{cert.recipient_program}</Text>}
 
-          <Text style={s.statement}>
-            has successfully completed a{' '}
-            <Text style={s.statementBold}>live, in-production project</Text> at MECE
-            {cert.project_title ? ` (${cert.project_title})` : ''}, working directly with
-            the Co-Founder on the 0 to 1 build of the product, in the role of
-          </Text>
+          {cert.cert_title.includes('Foundership') ? (
+            <Text style={s.statement}>
+              Founder of{' '}
+              <Text style={s.statementBold}>mece.in</Text>, conceived, built and launched
+              mece.in as a{' '}
+              <Text style={s.statementBold}>live, in-production SaaS platform</Text>,
+              leading the product from 0-to-1 across product development, strategy and
+              execution, serving as
+            </Text>
+          ) : (
+            <Text style={s.statement}>
+              has successfully completed a{' '}
+              <Text style={s.statementBold}>live, in-production project</Text> at MECE
+              {cert.project_title ? ` (${cert.project_title})` : ''}, working directly with
+              the Co-Founder on the 0 to 1 build of the product, in the role of
+            </Text>
+          )}
 
           <Text style={s.role}>{cert.role_title}</Text>
 
@@ -331,42 +342,68 @@ export function CertificateDocument({
           </Text>
         </View>
 
-        <View style={s.sign}>
-          <View style={s.sigCol}>
-            {assets.sig1Url
-              // eslint-disable-next-line jsx-a11y/alt-text
-              ? <Image style={s.sigImage} src={assets.sig1Url} />
-              : <View style={s.sigSpacer} />}
-            <View style={s.sigLine}>
-              <Text style={s.sigName}>{cert.sig1_name}</Text>
-              <Text style={s.sigRole}>{cert.sig1_title}</Text>
+        {cert.cert_title.includes('Foundership') ? (
+          <View style={[s.sign, { right: mm(22), justifyContent: 'center', gap: mm(16) }]}>
+            <View style={s.sealCol}>
+              <View style={s.seal}>
+                <View style={s.sealInner} />
+                <Text style={s.sealT1}>VERIFIED</Text>
+                <Text style={s.sealT2}>MECE</Text>
+                <Text style={s.sealT3}>LIVE PROJECT</Text>
+              </View>
+            </View>
+            <View style={{ alignItems: 'center', minWidth: mm(60) }}>
+              <Text style={[s.verify, { marginTop: 0, marginBottom: mm(2) }]}>
+                Certificate ID <Text style={s.verifyBold}>{cert.cert_id}</Text>
+                {'\n'}Issued {formatCertDate(cert.issued_at)}
+              </Text>
+              <View style={s.sigLine}>
+                <Text style={s.sigName}>{cert.sig1_name}</Text>
+                <Text style={s.sigRole}>{cert.sig1_title}</Text>
+              </View>
+              <Text style={{ fontFamily: 'Lato', fontSize: 5.5, color: SOFT, marginTop: mm(2), textAlign: 'center' }}>
+                This is a digitally generated certificate.{'\n'}No signature required.
+              </Text>
             </View>
           </View>
+        ) : (
+          <View style={s.sign}>
+            <View style={s.sigCol}>
+              {assets.sig1Url
+                // eslint-disable-next-line jsx-a11y/alt-text
+                ? <Image style={s.sigImage} src={assets.sig1Url} />
+                : <View style={s.sigSpacer} />}
+              <View style={s.sigLine}>
+                <Text style={s.sigName}>{cert.sig1_name}</Text>
+                <Text style={s.sigRole}>{cert.sig1_title}</Text>
+              </View>
+            </View>
 
-          <View style={s.sealCol}>
-            <View style={s.seal}>
-              <View style={s.sealInner} />
-              <Text style={s.sealT1}>VERIFIED</Text>
-              <Text style={s.sealT2}>MECE</Text>
-              <Text style={s.sealT3}>LIVE PROJECT</Text>
+            <View style={s.sealCol}>
+              <View style={s.seal}>
+                <View style={s.sealInner} />
+                <Text style={s.sealT1}>VERIFIED</Text>
+                <Text style={s.sealT2}>MECE</Text>
+                <Text style={s.sealT3}>LIVE PROJECT</Text>
+              </View>
+              <Text style={s.verify}>
+                Certificate ID <Text style={s.verifyBold}>{cert.cert_id}</Text>
+                {'\n'}Issued {formatCertDate(cert.issued_at)}
+              </Text>
             </View>
-            <Text style={s.verify}>
-              Certificate ID <Text style={s.verifyBold}>{cert.cert_id}</Text>
-              {'\n'}Issued {formatCertDate(cert.issued_at)}
-            </Text>
-          </View>
 
-          <View style={s.sigCol}>
-            {assets.sig2Url
-              // eslint-disable-next-line jsx-a11y/alt-text
-              ? <Image style={s.sigImage} src={assets.sig2Url} />
-              : <View style={s.sigSpacer} />}
-            <View style={s.sigLine}>
-              <Text style={s.sigName}>{cert.sig2_name}</Text>
-              <Text style={s.sigRole}>{cert.sig2_title}</Text>
+            <View style={s.sigCol}>
+              {assets.sig2Url
+                // eslint-disable-next-line jsx-a11y/alt-text
+                ? <Image style={s.sigImage} src={assets.sig2Url} />
+                : <View style={s.sigSpacer} />}
+              <View style={s.sigLine}>
+                <Text style={s.sigName}>{cert.sig2_name}</Text>
+                <Text style={s.sigRole}>{cert.sig2_title}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         <View style={s.qrBox}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
