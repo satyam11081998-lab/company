@@ -44,6 +44,14 @@ Source of truth: `lib/casebook/types.ts`; consumed by `components/casebook/caseb
 - Routes: `app/api/me`, `app/api/razorpay/{order,verify,webhook}`, `app/auth/callback`; backend `routes/{submit,daily,cron,news,attempts,transcribe,vision}.py`.
   - **Note (2026-06-14)**: `razorpay/order` and `razorpay/verify` accept optional `period` (monthly, 3-month, annual); additive.
   - **Note (2026-07-17)**: `razorpay/order` accepts optional `coupon` (string, validated server-side — see C7); additive. New backend routes `routes/deck_vault.py` (`/deck-vault/{submit,status}`); new Next APIs `app/api/coupons/validate`, `app/api/admin/deck-vault/file/[submissionId]`.
+  - **Note (2026-08-13)**: voice interview mode. New backend route `routes/speak.py`
+    (`POST /speak`) — JSON `{text}` in, `audio/mpeg` out, plus an
+    `X-Speak-Remaining-Min` header. Auth required, guests 403, **Pro-only 403**,
+    rate-limited 40/min, bounded by `assert_daily_budget()` and a per-day TTS-minute
+    meter, logged to `ai_usage_log` under `endpoint='/speak'`. `GET /usage/ai-quota`
+    gains an additive `speak` block alongside `voice` and `images` (existing blocks
+    unchanged; `AiQuota.speak` is optional on the client so a stale backend degrades to
+    "talk mode unavailable"). Additive — no existing route changes shape.
   - **Note (2026-08-11)**: certificates. New Next APIs `app/api/admin/certificates`, `app/api/admin/certificates/[id]`, `app/api/admin/certificates/draft` (all admin-gated in the handler, not only by the /admin layout). New PUBLIC page `app/verify/[certId]`, added to `PUBLIC_ROUTES` in `lib/constants.ts` (the `/s` mechanism; the middleware matcher is untouched). New backend route `routes/certificates.py` (`POST /certificates/draft`, admin only, fails closed). Public reads go through the `verify_certificate(text)` RPC, never a table or view grant. Additive.
 - **Rule:** new domain/route or changed request/response shape = announce. Affects: Daily-content, any frontend caller.
 
@@ -114,7 +122,7 @@ Python twin `services/gdrive.py` (backend) — the two MUST stay in lockstep.
 
 ---
 
-## C9 · Clarification quota — tier surface, cross-repo   (v1, 2026-08-01)
+## C9 · Clarification quota — tier surface, cross-repo   (v2, 2026-08-13)
 Source of truth: **`routes/attempts.py CLARIFICATION_QUOTA`** (backend).
 Mirrored in `lib/tier.ts TIER_LIMITS.maxHintQuestions`, and STATED TO USERS in
 `components/pricing-plans.tsx`, `app/(app)/upgrade/page.tsx`, `app/pricing/page.tsx`.
@@ -140,6 +148,52 @@ Mirrored in `lib/tier.ts TIER_LIMITS.maxHintQuestions`, and STATED TO USERS in
   invited free users to ask — and that drift is exactly what produced the 2026-08-01
   P0 (a new user's first question got no interviewer reply at all).
   Affects: Case solve UX, Free-tier rework, Payments/Pricing copy.
+
+### v2 (2026-08-13) — counting method for spoken turns
+**The ladder is UNCHANGED: free 7 · lite 12 · pro 20. No migration, no backfill.**
+What changed is how a turn is COUNTED, and only for `kind='voice'`:
+- `count_clarifications(text, kind="text")` — the default keeps every existing call site
+  on v1 behaviour byte-for-byte. Only `routes/attempts.py post_message` passes `body.kind`.
+- Text turns: unchanged. Every `?` counts (deliberate typing, anti-packing rationale holds).
+- **Voice turns:** conversational-management questions ("does that make sense?", "shall I
+  continue?", "is that fair?" — see `_VOICE_FILLER_QUESTIONS`) are NOT clarifications, and
+  a single spoken turn spends **at most 1** quota point.
+- Why: Whisper punctuates on rising intonation, so `text.count("?")` massively over-counts
+  speech. "I'd size this top-down, does that make sense? Urban households only, is that
+  fair?" is one structure statement and zero information requests, but scored 2 under v1.
+  At free tier a spoken case would exhaust the quota in minutes and spend its back half
+  with the interviewer declining to answer — a worse rerun of the P0 v1 was written to stop.
+- The clamp replaces the anti-packing rule for speech: a speaker cannot pack five distinct
+  data requests into one breath without it being one clarification in substance, and
+  Whisper's punctuation is not reliable enough to adjudicate.
+- Deterministic, no model call. `post_message` is the hottest path in the app and the quota
+  decision must be made BEFORE the interviewer call (it sets `clarifications_exhausted` in
+  the prompt). A blocking classifier there would cost latency and spend on every turn.
+  Escalate to `gpt-4o-mini` only if real transcripts show the filter misfiring.
+- **Source of truth moved (2026-08-13):** the counter now lives in
+  `services/clarification_counter.py`, a pure module with no OpenAI dependency.
+  `services/interview_engine.py` re-exports `count_clarifications`, so
+  `routes/attempts.py` and any other importer are unchanged. It was extracted
+  because interview_engine builds an OpenAI client at import time and raises
+  without `OPENAI_API_KEY` — meaning the one piece of logic that can silently
+  make an interview unfair required a real API key, fastapi and supabase to be
+  installed before it could be tested.
+- Covered by `tests/test_count_clarifications.py` (14 cases, text + voice).
+  Runs on the standard library alone: `python -m tests.test_count_clarifications`.
+- Affects: Case solve UX, Voice + image input.
+
+### v2 addendum — scoring must not see WHICH turns were spoken
+Not a quota rule, but it lives with this contract because it is the other half of "a
+spoken attempt is the same exam as a typed one". Both scorer serializers tag non-text
+turns (`prompts/interview_prompts.py` for cases, `_flatten_for_legacy_scorer` in
+`services/interview_engine.py` for guesstimates). In talk mode EVERY candidate turn is
+`voice`, so the scorer would receive a visibly different document than for a typed
+attempt — same rubric, different input. Both sites now collapse `voice` → `text`.
+`image` / `file` stay tagged: those genuinely change what a turn means.
+- **Rule:** if you add a new `kind`, decide explicitly whether the scorer should see it.
+  The default answer for anything that is just an INPUT METHOD is no.
+- Note this also normalised the pre-existing dictated turns, which had been reaching the
+  scorer tagged `(voice)` since dictation shipped.
 - **v2 note (0042, 2026-07-17):** `deck_skeletons` gained `year int null`,
   `organizer text default ''`, `source_submission_id uuid null → deck_submissions`
   (unique where not null — one catalogue row per submission). Written by BOTH the

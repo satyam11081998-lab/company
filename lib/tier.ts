@@ -59,6 +59,8 @@ export const TIER_LIMITS = {
     gdBriefsLifetime: 1,       // …but ONE lifetime brief (view + cheat-sheet + PDF)
     cheatSheet: 'unlocked-brief' as const, // saves only from their 1 free brief
     cvLabTrialUses: 2,         // CV Pointer Lab: 2 lifetime free generations
+    // Talk mode. UI gate only — backend routes/speak.py enforces Pro server-side.
+    voiceInterview: false,
   },
   lite: {
     maxReattempts: Infinity,
@@ -75,6 +77,7 @@ export const TIER_LIMITS = {
     gdBriefsLifetime: Infinity,
     cheatSheet: 'full' as const,
     cvLabTrialUses: 2,         // CV Pointer Lab is Pro; Lite gets the same 2-try preview
+    voiceInterview: false,
   },
   pro: {
     maxReattempts: Infinity,
@@ -94,6 +97,7 @@ export const TIER_LIMITS = {
     gdBriefsLifetime: Infinity,
     cheatSheet: 'full' as const,
     cvLabTrialUses: Infinity,
+    voiceInterview: true,
   },
 } as const;
 

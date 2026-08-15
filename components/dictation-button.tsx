@@ -95,7 +95,11 @@ const DictationButton = forwardRef<DictationHandle, DictationButtonProps>(functi
           return;
         }
 
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        // The recorder's OWN type, not an assumption: Safari records audio/mp4
+        // and labelling that as webm sends Whisper a mislabelled container.
+        const audioBlob = new Blob(chunksRef.current, {
+          type: mediaRecorder.mimeType || 'audio/webm',
+        });
         if (audioBlob.size === 0) {
           setS('idle');
           settle(null);

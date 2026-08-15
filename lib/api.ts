@@ -202,6 +202,11 @@ export interface AiQuota {
   tier: 'free' | 'lite' | 'pro' | string;
   voice: { used_min: number; limit_min: number; remaining_min: number };
   images: { used: number; limit: number; remaining: number };
+  /**
+   * Talk-mode (interviewer TTS) minutes. Optional so a stale backend that does
+   * not send the block still typechecks — every existing reader is unaffected.
+   */
+  speak?: { used_min: number; limit_min: number; remaining_min: number };
 }
 
 /** Pull a JSON `detail` (FastAPI error body) so users see the friendly reason, not raw JSON. */
@@ -236,6 +241,50 @@ export async function fetchAiQuota(token?: string): Promise<AiQuota | null> {
 }
 
 /**
+ * Speak one sentence of interviewer text (talk mode). Returns MP3 bytes.
+ *
+ * Pro-only and metered server-side — a 403 here means the tier gate, a 429
+ * means the daily talk-mode minutes are spent. Callers should degrade to
+ * on-screen text rather than ending the session.
+ */
+export async function speakText(
+  text: string,
+  token: string,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const res = await fetch(`${API_URL}/speak`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+    body: JSON.stringify({ text }),
+    signal,
+  });
+  if (!res.ok) throw new Error(await _detail(res));
+  return res.blob();
+}
+
+/**
+ * Map a MediaRecorder mime type to the extension the backend whitelists.
+ * `audioBlob.type` looks like 'audio/webm;codecs=opus' or 'audio/mp4'.
+ */
+function audioExt(mime: string): string {
+  const base = (mime || '').split(';')[0].trim().toLowerCase();
+  switch (base) {
+    case 'audio/mp4':
+    case 'audio/x-m4a':
+      return 'mp4';
+    case 'audio/mpeg':
+      return 'mp3';
+    case 'audio/wav':
+    case 'audio/x-wav':
+      return 'wav';
+    case 'audio/ogg':
+      return 'ogg';
+    default:
+      return 'webm';
+  }
+}
+
+/**
  * Send an audio blob to the backend for Whisper transcription.
  * Requires a signed-in session token; returns the text plus the updated quota.
  */
@@ -244,7 +293,12 @@ export async function transcribeAudio(
   token?: string,
 ): Promise<{ text: string; quota?: AiQuota }> {
   const formData = new FormData();
-  formData.append('file', audioBlob, 'recording.webm');
+  // Name the file after what it ACTUALLY is. Safari's MediaRecorder produces
+  // audio/mp4, not webm, and the old hard-coded 'recording.webm' handed Whisper
+  // a container that did not match its bytes — the backend's extension
+  // whitelist happily let it through because the NAME looked fine. Falls back
+  // to .webm, which is what every Chromium browser produces anyway.
+  formData.append('file', audioBlob, `recording.${audioExt(audioBlob.type)}`);
 
   const res = await fetch(`${API_URL}/transcribe`, {
     method: 'POST',

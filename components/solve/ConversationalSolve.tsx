@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Send, Paperclip, Mic, Square, FileText, ArrowLeft, Award, Menu } from 'lucide-react';
+import { Loader2, Send, Paperclip, Mic, Square, FileText, ArrowLeft, Award, Menu, AudioLines } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +27,8 @@ import { Card } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import DictationButton, { type DictationHandle } from '@/components/dictation-button';
 import MicWaveform from '@/components/mic-waveform';
+import VoiceInterview from '@/components/solve/VoiceInterview';
+import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import EngagingLoader from '@/components/engaging-loader';
 import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { createClient } from '@/lib/supabase/client';
@@ -81,6 +83,18 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState<'idle' | 'recording' | 'transcribing'>('idle');
   const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  // Talk mode. The sinks let the overlay subscribe to the SAME token stream the
+  // on-screen draft renders from, so audio starts before the reply finishes
+  // without forking send().
+  const [talkMode, setTalkMode] = useState(false);
+  const tokenSinkRef = useRef<((chunk: string) => void) | null>(null);
+  const doneSinkRef = useRef<(() => void) | null>(null);
+  // VoiceInterview boots once and holds its callbacks for the whole session, so
+  // anything it captures directly is frozen at mount. A spoken case runs 20-40
+  // minutes — longer than a Supabase access token lives — so a captured `send`
+  // would keep posting with a JWT that expired mid-interview. Routing through a
+  // ref means the overlay always calls the CURRENT send, with the current token.
+  const sendRef = useRef<(kind: 'text' | 'voice', content?: string) => Promise<boolean>>();
   const [quota, setQuota] = useState<AiQuota | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
@@ -196,9 +210,19 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     return () => { alive = false; };
   }, [token]);
 
-  async function send(kind: 'text' | 'voice' = 'text', content?: string) {
+  // Refreshed on every render — see sendRef above.
+  sendRef.current = send;
+
+  /**
+   * Returns whether the turn actually landed. Talk mode needs to know: it drives
+   * itself in a loop, and a turn that fails for a NON-transient reason (the
+   * attempt hit MAX_MESSAGES_PER_ATTEMPT, the token expired, the tier lapsed)
+   * would otherwise be retried forever, paying for a Whisper transcription on
+   * every pass. Typed callers ignore the value and are unaffected.
+   */
+  async function send(kind: 'text' | 'voice' = 'text', content?: string): Promise<boolean> {
     const text = (content ?? composer).trim();
-    if (!text || !attempt || !token || sending) return;
+    if (!text || !attempt || !token || sending) return false;
 
     const optimisticUser: AttemptMessage = {
       id: `tmp-${Date.now()}`,
@@ -224,6 +248,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           },
           onToken: (chunk) => {
             setDraftAssistant((d) => (d ? { ...d, text: d.text + chunk } : d));
+            // Talk mode listens here. No-op when the overlay is closed.
+            tokenSinkRef.current?.(chunk);
+          },
+          onDone: () => {
+            doneSinkRef.current?.();
           },
           onError: (err) => toast.error(err),
         },
@@ -245,9 +274,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           { description: 'The interviewer will keep responding — state your assumption and walk through your structure.' },
         );
       }
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Send failed');
       setMessages((m) => m.filter((x) => x.id !== optimisticUser.id));
+      return false;
     } finally {
       setSending(false);
       setDraftAssistant(null);
@@ -272,7 +303,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         const resolve = micResolveRef.current;
         micResolveRef.current = null;
         if (micCancelledRef.current) { audioChunksRef.current = []; setRecording('idle'); resolve?.(null); return; }
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // The recorder's OWN type, not an assumption — Safari records audio/mp4.
+        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || 'audio/webm' });
         if (blob.size === 0) { setRecording('idle'); resolve?.(null); return; }
         setRecording('transcribing');
         try {
@@ -485,6 +517,18 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // Voice-input allowance (per-tier, resets midnight IST). null while still loading.
   const voiceLeft = quota?.voice.remaining_min ?? null;
   const voiceOut = voiceLeft !== null && voiceLeft <= 0;
+
+  // Talk mode (Pro). This is the UI gate ONLY — routes/speak.py enforces the
+  // tier server-side, because a client flag is a suggestion. Guests are blocked
+  // at the API too.
+  //
+  // The `speak` quota block only exists on a backend that has the /speak route,
+  // so its ABSENCE is the deploy-order signal: requiring it means a frontend
+  // shipped ahead of its backend simply does not offer talk mode, rather than
+  // offering a button that 404s the moment the interviewer tries to speak.
+  const speakQuota = quota?.speak ?? null;
+  const speakOut = speakQuota !== null && speakQuota.remaining_min <= 0;
+  const canTalk = attempt?.tier === 'pro' && !isGuest && !voiceOut && speakQuota !== null && !speakOut;
 
   // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND
   // inside the mobile drawer (opened from the chat bar) so the phone is chat-first.
@@ -748,6 +792,18 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 )}
 
                 <div className="flex items-center gap-1.5 pr-1 mb-0.5">
+                  {canTalk && (
+                    <button
+                      type="button"
+                      onClick={() => { primeAudioPlayback(); setTalkMode(true); }}
+                      disabled={sending || recording !== 'idle' || !attempt}
+                      className="relative shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Start voice interview"
+                      title="Talk mode — speak with the interviewer"
+                    >
+                      <AudioLines className="h-5 w-5" />
+                    </button>
+                  )}
                   <button type="button" onClick={micButtonClick} disabled={recording === 'transcribing' || (recording === 'idle' && voiceOut)} className={`relative shrink-0 rounded-full p-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label={recording === 'recording' ? 'Cancel recording' : 'Voice input'} title={recording === 'recording' ? 'Tap to cancel — use Send to submit' : voiceOut ? 'Daily voice limit reached' : 'Voice input'}>
                     {recording === 'recording' && (
                       <>
@@ -766,6 +822,20 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           </div>
         )}
       </div>
+
+      {talkMode && token && (
+        <VoiceInterview
+          token={token}
+          onSend={(text) => sendRef.current!('voice', text)}
+          registerTokenSink={(sink) => { tokenSinkRef.current = sink; }}
+          registerDoneSink={(sink) => { doneSinkRef.current = sink; }}
+          messages={messages}
+          voiceOut={voiceOut}
+          onQuotaUpdate={setQuota}
+          onClose={() => setTalkMode(false)}
+          onSubmitSession={() => { setTalkMode(false); setSubmitOpen(true); }}
+        />
+      )}
 
       {submitOpen && (
         <SubmitDialog
