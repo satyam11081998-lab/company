@@ -6,6 +6,9 @@ import { SITE_URL } from '@/lib/seo';
 import { Lock, ArrowRight, Sparkles, Trophy, Building2, Calendar, FileText, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import Logo from '@/components/logo';
+import ThemeToggle from '@/components/theme-toggle';
+import AuthCTA from '@/components/auth-cta';
 
 interface PageProps {
   params: { slug: string };
@@ -118,25 +121,26 @@ export default async function PublicDeckPage({ params }: PageProps) {
       />
 
       {/* Top Navigation */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-mono font-bold text-lg tracking-wider text-foreground">MECE</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">Deck Vault</span>
+      {/* Same chrome as /pricing — the other public, crawlable page. This used
+          to hand-roll a text "MECE" wordmark, so a deck page looked like a
+          different product to the stranger arriving from Google. That visitor
+          is the entire point of these pages: their first impression of MECE is
+          this header. Logo + ThemeToggle + AuthCTA are the shared components,
+          so the deck page cannot drift from the rest of the brand again. */}
+      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex h-14 md:h-16 items-center justify-between">
+          <Link href="/" className="flex items-center -ml-2 shrink-0">
+            <Logo isLanding />
           </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Sign In</Button>
-            </Link>
-            <Link href="/pricing">
-              <Button size="sm" className="gap-1.5 shadow-sm">
-                <span>Unlock All Decks</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
-            </Link>
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              Deck Vault
+            </span>
+            <ThemeToggle />
+            <AuthCTA variant="nav" />
           </div>
         </div>
-      </header>
+      </nav>
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-10">
         {/* Header Hero */}
@@ -193,75 +197,88 @@ export default async function PublicDeckPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Free Preview Slides (deck-free-preview) */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
+        {/* ONE CONTINUOUS DECK. Slides run in a single column, free then
+            locked, in real slide order, the way you read a deck. The previous
+            version broke after the free pages into a separate 2-up grid capped
+            at 4 placeholders, so a 40-slide deck showed 3 slides, then 4 boxes,
+            then stopped. It read as a different component rather than the rest
+            of the same deck, and it hid how much was actually behind the wall.
+            Showing every locked slide in sequence IS the upgrade argument.
+
+            SECURITY: locked slides emit NO <img> and no URL. There is nothing
+            hidden to reveal in DevTools because the bytes were never sent, and
+            /api/decks/<slug>/page/<n> returns 403 past the free limit. The lock
+            is server-side; this is only its visual representation. */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Free Preview Slides</h2>
+              <h2 className="text-xl font-bold text-foreground">The deck</h2>
               <p className="text-sm text-muted-foreground">
-                Showing the first {effectiveFree} of {pageCount} slides in full resolution.
+                {effectiveFree} of {pageCount} slides free. The rest unlock with MECE Pro.
               </p>
             </div>
             <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 font-medium border border-emerald-200 dark:border-emerald-800">
-              Free Access ({effectiveFree} Pages)
+              Slides 1&ndash;{effectiveFree} free
             </span>
           </div>
 
-          <div className="deck-free-preview grid grid-cols-1 gap-8">
+          <div className="deck-free-preview flex flex-col gap-6">
             {freePagesList.map((n) => (
-              <div key={n} className="space-y-2 bg-card border border-border/70 rounded-xl overflow-hidden shadow-sm">
+              <figure key={n} className="bg-card border border-border/70 rounded-xl overflow-hidden shadow-sm">
                 <div className="px-4 py-2 bg-muted/40 border-b border-border/50 flex items-center justify-between text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">Slide {n} of {pageCount}</span>
-                  <span>{deck.title}</span>
+                  <span className="truncate max-w-[60%]">{deck.title}</span>
                 </div>
                 <div className="relative aspect-[16/9] w-full bg-muted flex items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/api/decks/${deck.slug}/page/${n}`}
-                    alt={`${deck.title} — Slide ${n}`}
+                    alt={`${deck.title} slide ${n} of ${pageCount}`}
                     loading={n === 1 ? 'eager' : 'lazy'}
                     className="w-full h-full object-contain"
                   />
                 </div>
-              </div>
+              </figure>
+            ))}
+
+            {lockedPagesList.map((n) => (
+              <Link
+                key={n}
+                href="/upgrade?from=deck"
+                aria-label={`Slide ${n} of ${pageCount}, unlock with MECE Pro`}
+                className="deck-locked-paywall group block bg-card border border-border/70 rounded-xl overflow-hidden shadow-sm transition-colors hover:border-primary/50"
+              >
+                <div className="px-4 py-2 bg-muted/40 border-b border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Slide {n} of {pageCount}</span>
+                  <span className="inline-flex items-center gap-1 text-primary">
+                    <Lock className="w-3 h-3" /> Pro
+                  </span>
+                </div>
+                <div className="relative aspect-[16/9] w-full bg-muted/30 flex items-center justify-center">
+                  {/* A DRAWN placeholder, never a CSS blur over the real slide:
+                      blurring would mean the slide had already been sent. */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 opacity-[0.07]"
+                    style={{ backgroundImage: 'repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 10px)' }}
+                  />
+                  <div className="relative z-10 flex flex-col items-center gap-2 px-6 text-center">
+                    <span className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:border-primary/40 transition-colors">
+                      <Lock className="w-4 h-4" />
+                    </span>
+                    <span className="text-sm font-semibold text-foreground">Unlock with MECE Pro</span>
+                    <span className="text-xs text-muted-foreground">
+                      Slides {effectiveFree + 1}&ndash;{pageCount}, plus every other winning deck
+                    </span>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </section>
 
-        {/* Locked Paywall Slides (deck-locked-paywall) */}
         {lockedPagesList.length > 0 && (
           <section className="space-y-6 pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Remaining Presentation Slides</h2>
-                <p className="text-sm text-muted-foreground">
-                  Slides {effectiveFree + 1} to {pageCount} are available exclusively to MECE Pro members.
-                </p>
-              </div>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 font-medium border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Locked Content
-              </span>
-            </div>
-
-            <div className="deck-locked-paywall grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {lockedPagesList.slice(0, 4).map((n) => (
-                <div
-                  key={n}
-                  className="relative aspect-[16/9] rounded-xl border border-border/60 bg-muted/20 flex flex-col items-center justify-center p-6 text-center overflow-hidden group shadow-inner"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background/90" />
-                  <div className="relative z-10 space-y-2">
-                    <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center mx-auto text-muted-foreground group-hover:text-primary transition-colors">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <p className="font-semibold text-sm text-foreground">Slide {n} of {pageCount}</p>
-                    <p className="text-xs text-muted-foreground max-w-xs">
-                      Unlock recommendations, financials, and implementation plans.
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
 
             {/* Paywall CTA Card */}
             <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/10 p-8 text-center space-y-6 shadow-md">
