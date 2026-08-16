@@ -198,15 +198,23 @@ export default async function PublicDeckPage({ params }: PageProps) {
             right reading order for a crawler. */}
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-8 items-start">
 
-          <section className="bg-muted/30 border border-border/80 rounded-2xl p-6 sm:p-7 space-y-4 shadow-sm lg:sticky lg:top-24">
-            <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+          {/* Height-matched to the viewer. The summary is the SEO asset and can
+              run long; letting it set the row height left the slide viewer
+              floating beside a wall of text. Capping it and scrolling INTERNALLY
+              keeps the two columns level.
+
+              Scrolled content is still fully in the DOM, so this costs nothing
+              for indexing — Google reads the whole summary regardless of what is
+              visible in the viewport. */}
+          <section className="bg-muted/30 border border-border/80 rounded-2xl p-6 sm:p-7 shadow-sm lg:sticky lg:top-24 flex flex-col gap-4 lg:max-h-[calc(100vh-9rem)]">
+            <div className="flex items-center gap-2 text-primary font-semibold text-sm shrink-0">
               <Sparkles className="w-4 h-4" />
               <h2>Executive summary</h2>
             </div>
-            <div className="prose prose-slate dark:prose-invert max-w-none text-foreground/90 text-[15px] leading-relaxed whitespace-pre-line">
+            <div className="prose prose-slate dark:prose-invert max-w-none text-foreground/90 text-[15px] leading-relaxed whitespace-pre-line flex-1 min-h-0 overflow-y-auto pr-1 [scrollbar-width:thin]">
               {deck.summary || deck.description || `This ${deck.result.toLowerCase()} presentation for ${deck.competition} sets out the problem statement, the team's structure and analysis, and their final recommendations.`}
             </div>
-            <div className="pt-2 border-t border-border/60 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
+            <div className="pt-3 border-t border-border/60 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground shrink-0">
               <span><span className="text-foreground font-medium">{pageCount}</span> slides</span>
               <span><span className="text-foreground font-medium">{effectiveFree}</span> free to read</span>
               {deck.year && <span>Presented <span className="text-foreground font-medium">{deck.year}</span></span>}

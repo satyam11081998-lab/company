@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Lock, EyeOff, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lock, EyeOff, ArrowRight, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -38,6 +38,30 @@ export default function DeckViewer({
   // 1-indexed slide number. Can exceed freePages — that is the locked state.
   const [current, setCurrent] = useState(1);
   const [obscured, setObscured] = useState(false);
+  const [isFull, setIsFull] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+
+  // Fullscreen is driven by the BROWSER's state, not a local boolean, because
+  // the user can leave via Escape or the OS chrome without touching our button.
+  // Keying the label off `document.fullscreenElement` keeps them in sync.
+  useEffect(() => {
+    const sync = () => setIsFull(document.fullscreenElement === shellRef.current);
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await shellRef.current?.requestFullscreen();
+      }
+    } catch {
+      // Fullscreen can be refused (iOS Safari has no element fullscreen).
+      // Failing silently is right: the deck is still perfectly usable inline.
+    }
+  }, []);
 
   const isLocked = current > freePages;
   const go = useCallback(
@@ -91,24 +115,44 @@ export default function DeckViewer({
     >
       <style>{`@media print { .deck-stage { visibility: hidden !important; } }`}</style>
 
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div
+        ref={shellRef}
+        className={`border border-border bg-card shadow-sm overflow-hidden ${
+          isFull ? "flex h-screen w-screen flex-col rounded-none" : "rounded-2xl"
+        }`}
+      >
         {/* Bar states the ONE number that matters: how much deck exists. */}
         <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-2.5">
           <span className="text-sm font-medium text-foreground tabular-nums">
             Slide {current} <span className="text-muted-foreground">of {pageCount}</span>
           </span>
-          {isLocked ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-              <Lock className="h-3 w-3" /> Pro
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
-              Free preview
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {isLocked ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                <Lock className="h-3 w-3" /> Pro
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+                Free preview
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              aria-label={isFull ? 'Exit full screen' : 'View full screen'}
+              title={isFull ? 'Exit full screen' : 'View full screen'}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {isFull ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
-        <div className="deck-stage relative aspect-[16/9] w-full bg-muted">
+        <div
+          className={`deck-stage relative w-full bg-muted ${
+            isFull ? "flex-1 min-h-0" : "aspect-[16/9]"
+          }`}
+        >
           {/* deck-free-preview: matches the JSON-LD isAccessibleForFree selector */}
           <div className="deck-free-preview absolute inset-0">
             {Array.from({ length: Math.min(freePages, pageCount) }, (_, i) => i + 1).map((n) => (
