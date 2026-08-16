@@ -123,6 +123,9 @@ export const PUBLIC_ROUTES: string[] = [
   // Shared cheat sheets: mece.in/s/<id>. The entire point is that a stranger
   // with the link can open the PDF, so this must resolve logged-out.
   '/s',
+  // Public indexable deck pages and previews: mece.in/decks/<slug>.
+  // Crawlers and search visitors must be able to view free preview slides and summaries.
+  '/decks',
   // Certificate verification: mece.in/verify/<cert id>. A recruiter scanning
   // the QR on a printed certificate has no MECE account and never will. If this
   // bounced to /login the certificate would be unverifiable and the QR would be

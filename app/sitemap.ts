@@ -3,6 +3,7 @@ import { CASEBOOK_TREE } from '@/lib/casebook/tree';
 import type { NavNode } from '@/lib/casebook/types';
 import { GLOSSARY_TERMS } from '@/lib/glossary/terms';
 import { SITE_URL, isCanonicalisedAway } from '@/lib/seo';
+import { getIndexableDecks } from '@/lib/decks';
 
 /**
  * Public, indexable routes only.
@@ -12,22 +13,24 @@ import { SITE_URL, isCanonicalisedAway } from '@/lib/seo';
  *   with crawlers.
  * - The two live framework pages are public and content-rich, so they are.
  * - All 75 glossary term pages are individually listed.
+ * - Public competition deck pages (/decks/<slug>) are listed with 0.8 priority.
  * - Casebook pages that canonicalise elsewhere are excluded via
  *   isCanonicalisedAway(). A canonicalised page must not appear in the sitemap:
  *   submitting a URL you have told Google not to index is a contradictory
  *   signal and Search Console flags it as "Alternate page with proper
  *   canonical tag".
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const entry = (
     path: string,
     priority: number,
-    changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'weekly'
+    changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'weekly',
+    lastModified: Date = now
   ) => ({
     url: `${SITE_URL}${path}`,
-    lastModified: now,
+    lastModified,
     changeFrequency,
     priority,
   });
@@ -70,6 +73,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry('/learn/market/market-entry', 0.7, 'monthly'),
   ];
 
-  return [...core, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks];
+  /* Indexable public deck pages */
+  let deckEntries: MetadataRoute.Sitemap = [];
+  try {
+    const decks = await getIndexableDecks();
+    deckEntries = decks.map((d) =>
+      entry(
+        `/decks/${d.slug}`,
+        0.8,
+        'monthly',
+        d.pages_rendered_at ? new Date(d.pages_rendered_at) : (d.created_at ? new Date(d.created_at) : now)
+      )
+    );
+  } catch (err) {
+    console.error('Failed to load decks for sitemap:', err);
+  }
+
+  return [...core, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks, ...deckEntries];
 }
 

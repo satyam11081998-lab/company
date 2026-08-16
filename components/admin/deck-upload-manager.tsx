@@ -1,13 +1,15 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -15,7 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, Trash2, Eye, EyeOff, FileText } from 'lucide-react';
+import {
+  UploadCloud,
+  Trash2,
+  Eye,
+  EyeOff,
+  FileText,
+  ExternalLink,
+  Globe,
+  Sparkles,
+  Layers,
+  Lock,
+} from 'lucide-react';
 import type { VaultDeckRow } from '@/app/(app)/admin/decks/page';
 
 const CASE_TYPES = [
@@ -50,13 +63,17 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
   const [result, setResult] = useState('National Finalist');
   const [caseType, setCaseType] = useState('strategy');
   const [roundType, setRoundType] = useState('finale');
+  const [freePages, setFreePages] = useState('');
   const [description, setDescription] = useState('');
+
+  // Expandable summary state
+  const [expandedSummaryId, setExpandedSummaryId] = useState<string | null>(null);
 
   const resetForm = () => {
     setFile(null);
     setTitle('');
     setDescription('');
-    // keep kind/competition/result/case type — uploads usually come in batches
+    setFreePages('');
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -101,6 +118,7 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
 
       // 3. Insert the catalogue row (admin table policy).
       setProgress('Saving to catalogue…');
+      const freePagesNum = freePages.trim() ? parseInt(freePages.trim(), 10) : null;
       const { error: insertError } = await supabase.from('deck_skeletons').insert({
         title: title.trim(),
         source_kind: sourceKind,
@@ -112,7 +130,8 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
         description: description.trim(),
         storage_path: `gdrive:${uploaded.id}`,
         is_active: true,
-        // Structured filter fields (0042). Optional — null/'' render as "Unknown" in filters.
+        is_indexable: true,
+        free_pages: freePagesNum,
         year: /^\d{4}$/.test(year.trim()) ? Number(year.trim()) : null,
         organizer: organizer.trim(),
       });
@@ -140,11 +159,45 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
     else { toast.success(deck.is_active ? 'Hidden from the Vault.' : 'Visible in the Vault.'); router.refresh(); }
   };
 
+  const toggleIndexable = async (deck: VaultDeckRow) => {
+    const nextVal = !deck.is_indexable;
+    const { error } = await supabase
+      .from('deck_skeletons')
+      .update({ is_indexable: nextVal })
+      .eq('id', deck.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(nextVal ? 'Deck is now indexable (in sitemap).' : 'Deck pulled from search (noindex).');
+      router.refresh();
+    }
+  };
+
+  const handleUpdateFreePages = async (deck: VaultDeckRow) => {
+    const input = window.prompt(
+      `Set free preview pages for "${deck.title}" (Enter a number, or leave empty for computed 25% default):`,
+      deck.free_pages !== null ? String(deck.free_pages) : ''
+    );
+    if (input === null) return;
+    const trimmed = input.trim();
+    const val = trimmed ? parseInt(trimmed, 10) : null;
+    if (val !== null && (!Number.isFinite(val) || val < 0)) {
+      toast.error('Free pages must be a non-negative number.');
+      return;
+    }
+    const { error } = await supabase
+      .from('deck_skeletons')
+      .update({ free_pages: val })
+      .eq('id', deck.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Free pages set to ${val === null ? 'computed default (25%)' : val}.`);
+      router.refresh();
+    }
+  };
+
   const handleDelete = async (deck: VaultDeckRow) => {
     if (!window.confirm(`Delete "${deck.title}" and its file permanently?`)) return;
     try {
-      // Server route deletes the catalogue row AND the backing file
-      // (Drive or legacy bucket) with the right credentials.
       const res = await fetch('/api/skeletons/manage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,7 +229,6 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
               onChange={(e) => {
                 const f = e.target.files?.[0] || null;
                 setFile(f);
-                // Pre-fill title from filename if empty.
                 if (f && !title.trim()) {
                   setTitle(f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim());
                 }
@@ -262,6 +314,11 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label htmlFor="deck-freepages">Free Preview Pages (Optional)</Label>
+            <Input id="deck-freepages" value={freePages} onChange={(e) => setFreePages(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
+              placeholder="Default: auto 25% (1 to 4 pages)" inputMode="numeric" className="mt-1" />
+          </div>
           <div className="md:col-span-2">
             <Label htmlFor="deck-desc">Description (one line, optional)</Label>
             <Input id="deck-desc" value={description} onChange={(e) => setDescription(e.target.value)}
@@ -279,26 +336,83 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
       {/* Existing decks */}
       <div>
         <h2 className="text-h3 text-foreground mb-4">In the Vault ({initialDecks.length})</h2>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {initialDecks.map((deck) => (
-            <Card key={deck.id} className={`ui-card p-4 flex items-center justify-between gap-4 ${deck.is_active ? '' : 'opacity-50'}`}>
-              <div className="flex items-center gap-3 min-w-0">
-                <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-strong font-semibold text-foreground truncate">{deck.title}</p>
-                  <p className="text-small text-muted-foreground truncate">
-                    {deck.source_kind === 'corporate' ? 'Corporate' : 'B-school'} · {deck.competition} · {deck.result} · {deck.case_type} · {deck.file_type.toUpperCase()}
-                  </p>
+            <Card key={deck.id} className={`ui-card p-4 space-y-3 ${deck.is_active ? '' : 'opacity-60'}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-strong font-semibold text-foreground truncate">{deck.title}</p>
+                      {deck.slug && (
+                        <Link
+                          href={`/decks/${deck.slug}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
+                        >
+                          /decks/{deck.slug}
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      )}
+                    </div>
+                    <p className="text-small text-muted-foreground truncate">
+                      {deck.source_kind === 'corporate' ? 'Corporate' : 'B-school'} · {deck.competition} · {deck.result} · {deck.case_type} · {deck.file_type.toUpperCase()}
+                    </p>
+                    {/* Paywall & SEO tags */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <Badge variant="outline" className="text-xs">
+                        <Lock className="w-3 h-3 mr-1" />
+                        {deck.free_pages !== null ? `${deck.free_pages} free pages (override)` : 'Auto 25% free'}
+                      </Badge>
+                      <Badge variant="outline" className={deck.is_indexable ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
+                        <Globe className="w-3 h-3 mr-1" />
+                        {deck.is_indexable ? 'Indexed' : 'Noindex'}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        <Layers className="w-3 h-3 mr-1" />
+                        {deck.pages_rendered_at ? `${deck.page_count || '?'}p rendered` : 'Not rendered'}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        {deck.summary ? 'Summary ready' : 'No summary'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Button variant="outline" size="sm" onClick={() => handleUpdateFreePages(deck)}>
+                    Edit Free Pages
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => toggleIndexable(deck)}>
+                    {deck.is_indexable ? 'Hide from SEO' : 'Show in SEO'}
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleActive(deck)}>
+                    {deck.is_active ? <><EyeOff className="h-3.5 w-3.5" /> Hide</> : <><Eye className="h-3.5 w-3.5" /> Show</>}
+                  </Button>
+                  {deck.summary && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExpandedSummaryId(expandedSummaryId === deck.id ? null : deck.id)}
+                    >
+                      {expandedSummaryId === deck.id ? 'Close Summary' : 'View Summary'}
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => handleDelete(deck)}>
+                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleActive(deck)}>
-                  {deck.is_active ? <><EyeOff className="h-3.5 w-3.5" /> Hide</> : <><Eye className="h-3.5 w-3.5" /> Show</>}
-                </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => handleDelete(deck)}>
-                  <Trash2 className="h-3.5 w-3.5" /> Delete
-                </Button>
-              </div>
+
+              {/* Summary accordion */}
+              {expandedSummaryId === deck.id && deck.summary && (
+                <div className="p-3 bg-muted/40 rounded-lg text-xs text-foreground/90 whitespace-pre-line border border-border/60">
+                  <p className="font-semibold mb-1 text-primary">AI Executive Summary:</p>
+                  {deck.summary}
+                </div>
+              )}
             </Card>
           ))}
           {initialDecks.length === 0 && (

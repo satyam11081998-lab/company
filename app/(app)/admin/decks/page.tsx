@@ -9,6 +9,8 @@ export interface VaultDeckRow {
   title: string;
   source_kind: string;
   competition: string;
+  organizer?: string;
+  year?: number | null;
   result: string;
   case_type: string;
   round_type: string;
@@ -16,6 +18,13 @@ export interface VaultDeckRow {
   description: string;
   storage_path: string;
   is_active: boolean;
+  slug: string | null;
+  page_count: number | null;
+  free_pages: number | null;
+  summary: string | null;
+  summary_generated_at: string | null;
+  pages_rendered_at: string | null;
+  is_indexable: boolean;
   sort: number;
   created_at: string;
 }
@@ -24,7 +33,7 @@ export default async function AdminDecksPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from('deck_skeletons')
-    .select('id, title, source_kind, competition, result, case_type, round_type, file_type, description, storage_path, is_active, sort, created_at')
+    .select('id, title, source_kind, competition, organizer, year, result, case_type, round_type, file_type, description, storage_path, is_active, slug, page_count, free_pages, summary, summary_generated_at, pages_rendered_at, is_indexable, sort, created_at')
     .order('created_at', { ascending: false });
 
   const decks = (data as VaultDeckRow[] | null) || [];
