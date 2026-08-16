@@ -50,6 +50,7 @@ const MIME_BY_EXT: Record<string, string> = {
 export default function DeckUploadManager({ initialDecks }: { initialDecks: VaultDeckRow[] }) {
   const router = useRouter();
   const supabase = createClient();
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
 
@@ -192,6 +193,51 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
     else {
       toast.success(`Free pages set to ${val === null ? 'computed default (25%)' : val}.`);
       router.refresh();
+    }
+  };
+
+  /**
+   * Rasterise the deck's pages and generate its verified summary.
+   *
+   * This is the step that was missing entirely: the backend endpoints existed
+   * and nothing ever called them, so every deck sat at "Not rendered / No
+   * summary" forever and no public page could work.
+   *
+   * Goes straight to the FastAPI backend (not a Next route) because the work is
+   * there — pypdfium2 rasterisation and the number-verified summary. Needs the
+   * caller's Supabase JWT; the backend re-checks is_admin and fails closed.
+   */
+  const handleProcess = async (deck: VaultDeckRow, mode: 'process' | 'render' | 'summarize' = 'process') => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      toast.error('NEXT_PUBLIC_API_URL is not set — cannot reach the backend.');
+      return;
+    }
+    setProcessingId(deck.id);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('Not signed in.');
+
+      const res = await fetch(`${apiUrl}/decks/${deck.id}/${mode}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.detail || `Failed (${res.status})`);
+
+      toast.success(
+        mode === 'render' ? `Rendered ${body?.page_count ?? '?'} pages.`
+          : mode === 'summarize' ? 'Summary generated.'
+          : `Processed — ${body?.page_count ?? '?'} pages rendered, summary ready.`,
+      );
+      router.refresh();
+    } catch (e) {
+      // Rendering a large deck is slow and the summary can be rejected by the
+      // number guard, so surface the real reason rather than a generic failure.
+      toast.error(e instanceof Error ? e.message : 'Processing failed');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -382,6 +428,20 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={processingId === deck.id}
+                    onClick={() => handleProcess(deck, 'process')}
+                    title="Rasterise every page and generate the number-verified summary"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    {processingId === deck.id
+                      ? 'Processing…'
+                      : deck.pages_rendered_at || deck.summary
+                        ? 'Re-process'
+                        : 'Process'}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => handleUpdateFreePages(deck)}>
                     Edit Free Pages
                   </Button>
