@@ -318,6 +318,7 @@ export default function UpgradePage() {
                 <FeatureItem text="20 interviewer hints per case & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
                 <FeatureItem text="Interviewer simulator" />
+                <FeatureItem text="Voice interview — talk the case out loud" />
                 <FeatureItem muted text="Deck Vault — coming soon" />
               </ul>
               <button

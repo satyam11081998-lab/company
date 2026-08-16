@@ -63,7 +63,39 @@
 
 <!-- HAND-MAINTAINED BELOW THIS LINE — sync.mjs preserves everything under this marker -->
 
-## 🔧 IN FLIGHT (2026-08-06, Cowork brain — uncommitted, owner will push)
+## 🔧 IN FLIGHT (2026-08-13, Cowork brain — branch `feat/voice-interview`, both repos)
+**voice-interview-mode (talk mode)** — the candidate speaks the case and hears the
+interviewer back, cases AND guesstimates. Pipeline over the EXISTING turn loop
+(mic → VAD → `/transcribe` → `send('voice')` → attempts SSE → new `POST /speak` → playback),
+so scoring, quota, rate limits and persistence are all the current code paths.
+See CHANGELOG top entry + `handoffs/ANTIGRAVITY_HANDOFF_voice-interview-mode.md`.
+- **Contract:** C9 bumped v1 → v2 (counting method for spoken turns only — ladder
+  unchanged at free 7 / lite 12 / pro 20). C4 additive note for `POST /speak`.
+- **No migration.** `attempt_messages.kind` already accepted `'voice'`.
+- **Gates:** `tsc --noEmit` EXIT 0, `py_compile` EXIT 0 (6 files), 14/14 unit cases.
+  `npm run build` NOT COMPLETED in the Cowork sandbox (mounted-FS build exceeds the tool
+  timeout — same limit as the certificates entry). **Run it on the real tree.**
+- **NOT QA'd in a browser** — mic, autoplay and VAD tuning cannot be tested headless.
+- **BEFORE UNFLAGGING:** raise `AI_VOICE_MIN_PRO` (~150-180) and `AI_TTS_MIN_PRO` on the
+  backend host (one spoken case eats 20-40 of the current 60 daily Whisper minutes), and
+  audition the TTS voice (`TTS_VOICE` env, default `alloy`).
+
+## ✅ LANDED — everything previously listed here as IN FLIGHT is now COMMITTED
+Verified against `git log` on 2026-08-13. This section had gone stale by roughly two
+weeks and was still telling every brain to treat committed work as a merge hazard:
+- **influencer-growth-kit** → `999a5f6` (+ `143d7c8` admin live user list). Migration
+  `0044_growth_kit.sql` is committed; confirm it has been RUN in Supabase.
+- **interviewer-voice + solve-scroll + daily-done-state** → backend `2824dbc`,
+  frontend `dcf2ce0`.
+- **fix-clarification-quota-dead-end** → backend `9d80195`, frontend `2c3da6f`.
+  Migration `0043` committed; confirm it has been RUN.
+- **certificates** → `464f806` and friends. Migration `0046` committed; confirm RUN.
+Frontend `main` is clean. Backend `main` carries ONLY the dormant CRLF/LF churn (~19
+files, `git diff --ignore-all-space` is empty) — still never `git add -A` there.
+
+<details>
+<summary>Historical detail from the stale entries (kept for reference)</summary>
+
 **influencer-growth-kit** — 5 components for influencer marketing launch:
 1. Demo/showcase account (`users.is_demo = true`, excluded from leaderboards/activity, session-lock exempt, 77% constellation seeded, skill-graph fallback fixed).
 2. Admin Users panel (`/admin/users`, 30-day signup chart, filters, drawer with sessions & IP/city, demo toggle, sign out everywhere).
@@ -105,7 +137,40 @@ instead of going silent); SSE meta carries `clarifications_spent`.
 - Working tree also still carries the **deck-vault-discount-revision** edits
   (35% / 25%) from 2026-07-18 — uncommitted, unrelated, do not mix the two commits.
 
+</details>
+
+## ✅ BLOCKER 1 SOLVED (2026-08-13) — the Vercel build failure, root-caused at last
+**The variables really did "all exist". They were never both in the SAME environment.**
+`vercel env ls` on 2026-08-13:
+- `NEXT_PUBLIC_SUPABASE_URL` → **Preview only** (Production had none)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` → **Production only** (Preview had none)
+
+So every production build got a URL of `undefined`, `createStaticClient()` handed it
+straight to supabase-js (`as string` on a possibly-undefined env var), supabase-js threw
+`supabaseUrl is required`, `/` failed to export, and one unexportable route fails the whole
+build. The live site kept serving the last deployment that succeeded — which is why the
+site worked while every new deploy silently failed for weeks.
+
+FIXED TWO WAYS:
+1. **Config:** both vars added so each is scoped to Production AND Preview.
+2. **Code (the durable fix):** `lib/supabase/static.ts` now carries the same
+   placeholder-on-server / throw-in-browser guard that `lib/supabase/client.ts` got on
+   2026-08-08. That earlier hardening missed `static.ts` — which is the file the LANDING
+   PAGE uses (`app/page.tsx:63`, `lib/daily-server.ts:63`) — so the auth pages degraded
+   gracefully while `/` still hard-failed and took the deployment with it.
+   Verified: a query through the placeholder client RESOLVES with `{data: null}` rather
+   than rejecting, and all three callers already fall back (testimonials → hardcoded
+   constant, endorsements → `[]`, daily → try/catch default). `/` now renders its
+   zero-state instead of failing the export.
+
+**A missing env var can no longer block a deployment.** The build-log warning still fires,
+so a real misconfiguration stays visible. Scope-check `vercel env ls` after ANY env change:
+a variable in only one environment is the same as absent in the other.
+
 ## ⛔ OPEN BLOCKERS (2026-07-17 — read before doing ANYTHING)
+> **Blocker 1 below is RESOLVED — see the section immediately above.** Left in place for
+> the history of what it cost: three weeks of undeployed work, and an owner who was
+> correct the whole time that the variables existed.
 1. **Vercel production build FAILING** → the live site still serves pre-deck-vault code.
    Types now pass ("Compiled successfully"); prerender of `/`, `/forgot-password`,
    `/reset-password` dies on missing `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -140,6 +205,19 @@ deck into `deck_skeletons` (C8). NOT yet user-visible in prod (blocker 1).
 ## Per-feature status
 Mirror of LEDGER.md — LEDGER was deduplicated + consolidated 2026-07-17 and is the
 single source; read it directly instead of a stale copy here.
+
+## Session hygiene notes (Cowork, 2026-08-13)
+- Owner instructed the Cowork brain to BUILD rather than hand off, so this session
+  authored code on `feat/voice-interview` in both repos AND updated CONTRACTS/LEDGER/
+  STATE/CHANGELOG directly. Same bypass as 2026-07-17; recorded here for the same reason.
+  The handoff `handoffs/ANTIGRAVITY_HANDOFF_voice-interview-mode.md` stays as the design
+  record and still carries the decision log.
+- The IN FLIGHT sections above had been stale for ~2 weeks: every entry was committed.
+  A brain reading STATE would have refused to start, or built defensively around a merge
+  hazard that no longer existed. Worth a `sync.mjs` run after each push.
+- Two bugs found by VERIFYING rather than building, both in the "obviously fine" category:
+  the scorer could see which turns were spoken, and adding the TTS model to `PRICES` would
+  have logged every voice call at $0 and hidden it from the daily-budget kill switch.
 
 ## Session hygiene notes (Cowork, 2026-07-17)
 - This session bypassed the worker: Cowork brain authored AND the human pushed to main

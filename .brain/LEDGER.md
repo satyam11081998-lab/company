@@ -19,6 +19,7 @@ section. Deduplicated and consolidated into the single table below; no row delet
 | **Daily content + admin + keep-alive** | B | feat/daily | **BUILT** (daily scheduler live) | `services/content_generator.py`, `services/daily_scheduler.py`, `routes/daily.py`, `routes/cron.py`, `.github/workflows/*`, `app/(app)/admin/*` | DB:`cases`, API-contract (C4) |
 | **News pipeline** | B | feat/daily | **BUILT** (self-heal live) | `services/news_fetcher.py`, `services/headline_classifier.py`, `routes/news.py` | API-contract (C4) |
 | **Voice + image input** | B | feat/io | **BUILT** | `routes/transcribe.py`, `routes/vision.py`, `components/{dictation,camera}-button.tsx` | API-contract (C4) |
+| **Voice interview (talk mode)** | Cowork | feat/voice-interview | **BUILT 2026-08-13, NOT YET MERGED** — gates green (tsc EXIT 0, py_compile EXIT 0, 14/14 unit cases); needs a real-browser QA pass + the env-var raise before unflagging | frontend `components/solve/VoiceInterview.tsx`, `lib/voice/{vad,tts-queue,markdown-strip}.ts`; backend `routes/speak.py`, TTS metering in `services/ai_usage.py` | **C4** (additive `/speak`), **C9 v2** (defines the voice counting rule), Case solve UX (`send()`, `ConversationalSolve`), Voice + image input (`/transcribe`), Payments (Pro gate + pricing copy) |
 | **Payments (Razorpay + audit trail)** | B | feat/payments | **BUILT; annual dropped 2026-06-20 (2901f0b); optional server-validated coupon path added 2026-07-17 (C7)** | `app/api/razorpay/{order,verify,webhook}/route.ts`, `lib/tier.ts` (pricing + `discountedPaise`) | DB:`payments`/`users`, **C7 coupons** |
 | **Rate limiting** | B | feat/backend | **BUILT** | `services/rate_limit.py`, `routes/attempts.py` | — |
 | **AI evaluation v2** | B | feat/eval | **BUILT** | `services/ai_scorer.py`, `services/interview_engine.py`, `prompts/*`, `routes/submit.py` | Scoring-contract (this feature DEFINES it) |
@@ -48,6 +49,16 @@ section. Deduplicated and consolidated into the single table below; no row delet
 | **Free-tier rework** | C+B | feat/free-tier | **BUILT frontend (c96e952) + backend (f254eba)**; LinkedIn-follow perk (0040) live | `lib/{tier,access}.ts`, `services/access_guard.py`, `supabase/migrations/{0038,0040}*.sql` | TIER surface (cross-repo) |
 
 ## Collision watch (features that touch the same surface)
+- **Talk mode rides the EXISTING turn loop.** `VoiceInterview` owns no attempt state — it
+  calls `ConversationalSolve`'s `send('voice', text)` and subscribes to the same SSE token
+  stream the on-screen draft renders from. Anyone changing `send()`, `postMessageStream`
+  or the SSE event names must check the overlay still gets its tokens. The moment talk
+  mode forks the send path, scoring parity is gone.
+- **Two meters, one session.** Talk mode burns BOTH `/transcribe` minutes (candidate in)
+  and `/speak` minutes (interviewer out). They are separate `ai_usage_log` endpoints on
+  purpose so dictation and talk mode do not eat each other's allowance — but a single
+  spoken case consumes 20-40 min of the Whisper meter, so `AI_VOICE_MIN_PRO` and
+  `AI_TTS_MIN_PRO` must be raised together.
 - **Clarification quota** is THREE constants that must agree: backend
   `routes/attempts.py CLARIFICATION_QUOTA`, frontend `lib/tier.ts
   TIER_LIMITS.maxHintQuestions`, and the pricing copy (`components/pricing-plans.tsx`,

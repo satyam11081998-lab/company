@@ -88,10 +88,15 @@ const FEATURES = [
   { name: 'Practice bank access', free: false, lite: true, pro: true },
   { name: 'Unlimited re-attempts', free: false, lite: true, pro: true },
   { name: 'GD Briefs', free: false, lite: true, pro: true },
-  { name: 'Interviewer Hints', free: false, lite: '5 per case', pro: 'Unlimited' },
+  // C9: this row is user-facing copy for CLARIFICATION_QUOTA and must match the
+  // backend constant + TIER_LIMITS.maxHintQuestions. It said "free: none /
+  // lite: 5 per case / pro: Unlimited" long after the 2026-08-01 ladder landed —
+  // exactly the three-way drift C9 exists to stop.
+  { name: 'Interviewer Hints', free: '7 per case', lite: '12 per case', pro: '20 per case' },
   { name: 'Bookmarks', free: false, lite: false, pro: true },
   { name: 'Personal cheat-sheet', free: false, lite: false, pro: true },
   { name: 'Interviewer simulator', free: false, lite: false, pro: true },
+  { name: 'Voice interview (talk mode)', free: false, lite: false, pro: true },
   { name: 'Deck Vault (lifetime)', free: false, lite: false, pro: true },
 ];
 
