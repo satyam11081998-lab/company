@@ -142,7 +142,7 @@ export default function PricingPlans() {
               <PlanFeature text="20 interviewer hints per case & model Q&A" />
               <PlanFeature text="CV Pointer Lab — unlimited" />
               <PlanFeature text="Interviewer simulator" />
-              <PlanFeature text="Voice interview — talk the case out loud" />
+              <PlanFeature text="Voice interview — speak the case aloud" />
               <PlanFeature text="Deck Vault lifetime access" />
             </ul>
             <Link href="/signup" className="mt-auto">

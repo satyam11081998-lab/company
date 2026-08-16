@@ -19,7 +19,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Send, Paperclip, Mic, FileText, ArrowLeft, Award, Menu, Headphones, Check, X } from 'lucide-react';
+import { Loader2, Send, Paperclip, Mic, FileText, ArrowLeft, Award, Menu, Check, X, Lock } from 'lucide-react';
+import VoiceWave from '@/components/icons/voice-wave';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -548,7 +549,13 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // offering a button that 404s the moment the interviewer tries to speak.
   const speakQuota = quota?.speak ?? null;
   const speakOut = speakQuota !== null && speakQuota.remaining_min <= 0;
-  const canTalk = attempt?.tier === 'pro' && !isGuest && !voiceOut && speakQuota !== null && !speakOut;
+  const isPro = attempt?.tier === 'pro';
+  const canTalk = isPro && !isGuest && !voiceOut && speakQuota !== null && !speakOut;
+  // Free and Lite SEE the button, locked. A feature nobody knows exists cannot
+  // sell an upgrade — showing the door and naming the tier converts far better
+  // than hiding it. Guests still see nothing: they have no tier to upgrade from
+  // yet, and the save-wall is the right ask for them.
+  const showTalkLocked = !canTalk && !isGuest && !!attempt && !isPro;
 
   // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND
   // inside the mobile drawer (opened from the chat bar) so the phone is chat-first.
@@ -825,8 +832,25 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                       aria-label="Start voice interview"
                       title="Voice interview — speak with the interviewer and hear them reply"
                     >
-                      <Headphones className="h-4 w-4" />
+                      <VoiceWave className="h-5 w-5" />
                       <span className="hidden sm:inline text-micro font-semibold uppercase tracking-wide">Talk</span>
+                    </button>
+                  )}
+
+                  {/* LOCKED for Free and Lite — visible, named, and one tap from
+                      the upgrade page. Muted rather than disabled so it reads as
+                      "available on Pro", not "broken". */}
+                  {showTalkLocked && recording === 'idle' && (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/upgrade?from=voice')}
+                      className="relative shrink-0 inline-flex items-center gap-1.5 rounded-full border border-primary/30 px-3 py-2 text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
+                      aria-label="Voice interview is a Pro feature — upgrade"
+                      title="Voice interview is a Pro feature — tap to upgrade"
+                    >
+                      <VoiceWave className="h-5 w-5" />
+                      <Lock className="h-3 w-3" />
+                      <span className="hidden sm:inline text-micro font-semibold uppercase tracking-wide">Talk · Pro</span>
                     </button>
                   )}
 

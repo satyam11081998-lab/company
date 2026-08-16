@@ -56,6 +56,21 @@ const IDLE_RECYCLE_MS = 3000;
 const IDLE_WARN_MS = 3 * 60_000;
 const IDLE_CLOSE_MS = 5 * 60_000;
 
+/**
+ * Hard ceiling on ONE voice session (owner decision, 2026-08-16). Reopening is
+ * one tap, so the cost of this is trivial; the cost of NOT having it is a mic
+ * left open on a desk.
+ *
+ * The idle guards above only fire on SILENCE. A session left running in a noisy
+ * room, or one where the candidate genuinely keeps talking, has no upper bound
+ * without this — and voice billing is per second of audio streamed, silence
+ * included. This is the one guard that bounds the worst case rather than the
+ * typical case.
+ */
+const MAX_SESSION_MS = 10 * 60_000;
+/** Start warning the candidate this long before the cap, so it is never a surprise. */
+const SESSION_WARN_BEFORE_MS = 60_000;
+
 /** Consecutive transcription failures before we stop retrying and back out. */
 const MAX_FAILURE_STREAK = 3;
 
@@ -124,6 +139,9 @@ export default function VoiceInterview({
   tokenRef.current = token;
   const lastActivityRef = useRef(performance.now());
   const idleWarnedRef = useRef(false);
+  const sessionStartRef = useRef(performance.now());
+  const sessionWarnedRef = useRef(false);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const failureStreakRef = useRef(0);
   const closingRef = useRef(false);
   const onCloseRef = useRef(onClose);
@@ -425,6 +443,25 @@ export default function VoiceInterview({
     const id = window.setInterval(() => {
       recycleIfIdle();
 
+      // HARD SESSION CAP — checked before the idle guards and regardless of
+      // mute or busy, because this is the bound that must always hold.
+      const elapsed = performance.now() - sessionStartRef.current;
+      const remaining = MAX_SESSION_MS - elapsed;
+      if (remaining <= 0) {
+        toast.message('Voice session ended', {
+          description: 'Sessions run 10 minutes at a time. Everything is saved — tap Talk to carry on.',
+        });
+        closeSession();
+        return;
+      }
+      setSecondsLeft(remaining <= SESSION_WARN_BEFORE_MS ? Math.ceil(remaining / 1000) : null);
+      if (remaining <= SESSION_WARN_BEFORE_MS && !sessionWarnedRef.current) {
+        sessionWarnedRef.current = true;
+        toast.message('About a minute of voice time left', {
+          description: 'It will pause itself shortly. Tap Talk to start a fresh session.',
+        });
+      }
+
       // Abandoned-session guard. Muting is an explicit "I am still here, hold
       // on", so it does not count as idleness.
       if (mutedRef.current || busyRef.current) return;
@@ -533,6 +570,11 @@ export default function VoiceInterview({
         <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
           <span className={`h-2 w-2 rounded-full ${phase === 'speaking' ? 'bg-primary' : active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
           <span>Voice interview</span>
+          {secondsLeft !== null && (
+            <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 tabular-nums text-primary">
+              {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')} left
+            </span>
+          )}
         </div>
         <button
           type="button"

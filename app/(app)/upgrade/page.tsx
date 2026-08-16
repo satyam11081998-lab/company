@@ -318,7 +318,10 @@ export default function UpgradePage() {
                 <FeatureItem text="20 interviewer hints per case & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
                 <FeatureItem text="Interviewer simulator" />
-                <FeatureItem text="Voice interview — talk the case out loud" />
+                {/* Voice is the only Pro feature a candidate cannot get by
+                    reading harder, and it is what the locked button in the
+                    solve composer sends them here for. Name it fully. */}
+                <FeatureItem text="Voice interview — speak the case aloud, hear the interviewer reply" />
                 <FeatureItem muted text="Deck Vault — coming soon" />
               </ul>
               <button
