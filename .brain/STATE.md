@@ -139,7 +139,38 @@ instead of going silent); SSE meta carries `clarifications_spent`.
 
 </details>
 
+## ✅ BLOCKER 1 SOLVED (2026-08-13) — the Vercel build failure, root-caused at last
+**The variables really did "all exist". They were never both in the SAME environment.**
+`vercel env ls` on 2026-08-13:
+- `NEXT_PUBLIC_SUPABASE_URL` → **Preview only** (Production had none)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` → **Production only** (Preview had none)
+
+So every production build got a URL of `undefined`, `createStaticClient()` handed it
+straight to supabase-js (`as string` on a possibly-undefined env var), supabase-js threw
+`supabaseUrl is required`, `/` failed to export, and one unexportable route fails the whole
+build. The live site kept serving the last deployment that succeeded — which is why the
+site worked while every new deploy silently failed for weeks.
+
+FIXED TWO WAYS:
+1. **Config:** both vars added so each is scoped to Production AND Preview.
+2. **Code (the durable fix):** `lib/supabase/static.ts` now carries the same
+   placeholder-on-server / throw-in-browser guard that `lib/supabase/client.ts` got on
+   2026-08-08. That earlier hardening missed `static.ts` — which is the file the LANDING
+   PAGE uses (`app/page.tsx:63`, `lib/daily-server.ts:63`) — so the auth pages degraded
+   gracefully while `/` still hard-failed and took the deployment with it.
+   Verified: a query through the placeholder client RESOLVES with `{data: null}` rather
+   than rejecting, and all three callers already fall back (testimonials → hardcoded
+   constant, endorsements → `[]`, daily → try/catch default). `/` now renders its
+   zero-state instead of failing the export.
+
+**A missing env var can no longer block a deployment.** The build-log warning still fires,
+so a real misconfiguration stays visible. Scope-check `vercel env ls` after ANY env change:
+a variable in only one environment is the same as absent in the other.
+
 ## ⛔ OPEN BLOCKERS (2026-07-17 — read before doing ANYTHING)
+> **Blocker 1 below is RESOLVED — see the section immediately above.** Left in place for
+> the history of what it cost: three weeks of undeployed work, and an owner who was
+> correct the whole time that the variables existed.
 1. **Vercel production build FAILING** → the live site still serves pre-deck-vault code.
    Types now pass ("Compiled successfully"); prerender of `/`, `/forgot-password`,
    `/reset-password` dies on missing `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
