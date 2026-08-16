@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Brain,
+  Building2,
   FileText,
   BookOpen,
   Trophy,
@@ -33,15 +34,21 @@ import SignOutButton from '@/components/sign-out-button';
  * a predictable place. The app-nav hamburger is hidden on mobile to match.
  */
 
+// Mirrors app-nav's primary row (2026-08-16): Industry Primers is promoted over
+// the generic "Learn" entry, which moves into More. Four tabs is the ceiling
+// here, so Case Competitions sits at the top of the More sheet rather than in
+// the bar — on desktop, where there is room, it IS primary.
 const PRIMARY = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/practice', icon: Brain, label: 'Practice' },
-  { href: '/learn/casebook', icon: FileText, label: 'Learn' },
   { href: '/gd-briefs', icon: BookOpen, label: 'GDs' },
+  { href: '/learn/casebook/industry-primers/asset-management', icon: Building2, label: 'Primers' },
 ];
 
 // Routes that live behind "More" — used to light up the More tab when active.
-const SECONDARY_PREFIXES = ['/resume', '/leaderboard', '/skeletons', '/cheat-sheet', '/profile', '/upgrade'];
+// `/learn/casebook` is listed so the generic casebook lights up More, but the
+// primers prefix must NOT, or both Primers and More would appear selected.
+const SECONDARY_PREFIXES = ['/resume', '/leaderboard', '/skeletons', '/cheat-sheet', '/profile', '/upgrade', '/learn/casebook'];
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -70,13 +77,17 @@ export default function MobileBottomNav() {
   if (pathname?.startsWith('/cases/')) return null;
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
-  const moreActive = SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
+  // Industry Primers is its own tab now, so it must not also light up More even
+  // though it sits under the /learn/casebook prefix listed above.
+  const inPrimers = pathname?.startsWith('/learn/casebook/industry-primers') ?? false;
+  const moreActive = !inPrimers && SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
   const moreLinks = [
+    { href: '/learn/casebook/case-competitions/why-they-matter', icon: Medal, label: 'Case Competitions' },
+    { href: '/learn/casebook', icon: FileText, label: 'Learn' },
     { href: '/resume', icon: FileText, label: 'CV Pointer Lab' },
     { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { href: '/skeletons', icon: Library, label: 'Deck Vault' },
-    { href: '/learn/casebook/case-competitions/why-they-matter', icon: Medal, label: 'Case Competitions' },
     { href: '/cheat-sheet', icon: ScrollText, label: 'Cheat Sheet' },
     { href: '/profile', icon: User, label: 'Profile' },
   ];

@@ -59,17 +59,29 @@ export default function AppNav() {
   // "Log in to continue" overlay. Hiding a link tells a visitor nothing;
   // letting them look at what they cannot have yet is the argument for signing
   // up. The gates themselves are unchanged and live server-side.
+  // Primary row promotes the two DESTINATION tracks a visitor is here for —
+  // Industry Primers and Case Competitions — over the generic "Learn" entry
+  // that used to bury them (owner decision, 2026-08-16). Learn and CV Pointer
+  // Lab move to More; nothing is removed, only re-ranked.
+  //
+  // Neither track has a cluster-root page (see lib/casebook/tree.ts), so both
+  // link to their FIRST leaf, which is the pattern Case Competitions already
+  // used. The casebook sidebar then opens on that cluster.
   const PRIMARY_LINKS: NavLink[] = [
     { href: '/dashboard', label: 'Dashboard' },
-    // "Learn" owns the casebook EXCEPT the case-competitions track (under More).
-    { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') },
     { href: '/practice', label: 'Practice' },
     { href: '/gd-briefs', label: 'GD Briefs' },
-    { href: '/resume', label: 'CV Pointer Lab' },
+    { href: '/learn/casebook/industry-primers/asset-management', label: 'Industry Primers', active: isActive('/learn/casebook/industry-primers') },
+    { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
   ];
   const MORE_LINKS: NavLink[] = [
+    // "Learn" owns the casebook EXCEPT the two tracks promoted above — without
+    // both exclusions it would light up as active while the user is plainly in
+    // Industry Primers or Case Competitions, and two nav items would look
+    // selected at once.
+    { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') && !isActive('/learn/casebook/industry-primers') },
+    { href: '/resume', label: 'CV Pointer Lab' },
     { href: '/leaderboard', label: 'Leaderboard' },
-    { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
     { href: '/skeletons', label: 'Deck Vault' },
     { href: '/cheat-sheet', label: 'Cheat Sheet' },
     { href: '/testimonials', label: 'Testimonials' },
