@@ -17,6 +17,8 @@ import { Trophy, ShieldCheck, Filter, Building2, GraduationCap, Layers, Eye, Roc
 
 export interface VaultDeck {
   id: string;
+  /** Public deck-page slug. Optional: rows created before 0047/0048 may lack one. */
+  slug?: string | null;
   title: string;
   source_kind: string;   // 'corporate' | 'bschool'
   competition: string;
@@ -104,7 +106,14 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
   }), [decks]);
 
 
-  if (!isVaultUnlocked) {
+  // The "in the workshop" screen is retained but no longer reachable in normal
+  // operation: the vault is live, and every signed-in user gets the catalogue.
+  // Free and Lite click through to the PUBLIC deck page (preview + paywall);
+  // Pro and admins get the full DRM reader. Rendering a coming-soon screen over
+  // decks that exist, and whose public pages are already indexed by Google, was
+  // the worst of both worlds — the content was discoverable everywhere except
+  // inside the product.
+  if (!isVaultUnlocked && decks.length === 0) {
     return (
       <>
         <Card className="ui-card max-w-2xl mx-auto p-8 text-center">
@@ -262,7 +271,11 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
             return (
               <Link
                 key={d.id}
-                href={`/skeletons/view/${d.id}`}
+                // Pro/admin -> full DRM reader. Everyone else -> the PUBLIC deck page:
+                  // free preview slides, then the paywall. Sending a free user to
+                  // /skeletons/view only 403s them; /decks/<slug> shows them what
+                  // they would actually be buying.
+                  href={isVaultUnlocked || !d.slug ? `/skeletons/view/${d.id}` : `/decks/${d.slug}`}
                 className="block outline-none"
               >
                 <Card className="ui-card flex flex-col p-5 h-full transition-colors hover:border-primary/50 group">
