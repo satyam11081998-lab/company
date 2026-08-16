@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { ChevronDown, Compass, Layers, Wrench, Briefcase, Calculator, Building2, Shapes, Trophy } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { NavTreeItem } from './nav-tree-item';
@@ -54,9 +55,28 @@ function NavTreeSection({ node, searchQuery, defaultCollapsed = false }: NavTree
   // A naive filter check (if doing deeply recursive filter, logic would be moved up)
   const matchesSearch = node.title.toLowerCase().includes(searchQuery.toLowerCase());
   
-  // If search is active, we might force open if children match. 
+  // A section containing the page you are ON must be open. Without this, an
+  // Industry Primer reached from the top nav (or any deep link, or a refresh)
+  // rendered its content with the sidebar collapsed around it — no indication
+  // of where you were in the casebook, and no sibling primers to move between.
+  // Beats both `defaultOpen` and the sessionStorage restore, because "where the
+  // user actually is" outranks "where they last left this section".
+  const pathname = usePathname();
+  const containsActivePage = React.useMemo(() => {
+    if (!pathname) return false;
+    const hasActive = (nodes: NavNode[] | undefined): boolean =>
+      (nodes ?? []).some(
+        (n) =>
+          (n.slug ? pathname.startsWith(`/learn/casebook/${n.slug}`) : false) || hasActive(n.children),
+      );
+    return hasActive(node.children);
+  }, [pathname, node.children]);
+
+  // If search is active, we might force open if children match.
   // For now, we'll just let the parent handle filtering and pass down the filtered tree.
-  const openState = isSearchActive ? true : isOpen;
+  // `defaultCollapsed` is the mobile drawer, which deliberately starts fully
+  // collapsed every time — do not force it open there.
+  const openState = isSearchActive ? true : (containsActivePage && !defaultCollapsed) || isOpen;
 
   return (
     <Collapsible open={openState} onOpenChange={setIsOpen} className="mb-2">

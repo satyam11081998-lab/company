@@ -18,6 +18,27 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import Logo from '@/components/logo';
+import { CASEBOOK_TREE } from '@/lib/casebook/tree';
+
+/**
+ * The 27 Industry Primers, DERIVED from the casebook tree rather than
+ * hand-listed, so adding or renaming one updates the nav automatically. A
+ * hand-written copy of a 27-item list is a drift bug waiting to happen.
+ *
+ * Cost: this pulls lib/casebook/tree.ts (~18KB raw, ~5KB gzipped of static
+ * strings) into the app shell bundle. Judged worth it against silently wrong
+ * navigation; if that ever matters, the fix is to codegen this list at build
+ * time, not to hand-maintain it.
+ *
+ * Titles carry an ordering prefix in the tree ("1 · Asset Management") which is
+ * meaningful in the sidebar but noise in a menu, so it is stripped here.
+ */
+const INDUSTRY_PRIMERS = CASEBOOK_TREE.flatMap((section) => section.children ?? [])
+  .filter((node) => node.kind === 'page' && node.slug?.startsWith('industry-primers/'))
+  .map((node) => ({
+    slug: node.slug as string,
+    title: node.title.replace(/^\s*\d+\s*·\s*/, ''),
+  }));
 
 /**
  * Full-bleed navy navigation bar.
@@ -67,13 +88,35 @@ export default function AppNav() {
   // Neither track has a cluster-root page (see lib/casebook/tree.ts), so both
   // link to their FIRST leaf, which is the pattern Case Competitions already
   // used. The casebook sidebar then opens on that cluster.
+  // Bar order: Dashboard | Practice▾ | GD Briefs▾ | Industry Primers▾ |
+  // Case Competitions | More▾. PRIMARY renders before the dropdown groups and
+  // TRAILING after, which is the only way to get Case Competitions to sit on
+  // the far side of them.
   const PRIMARY_LINKS: NavLink[] = [
     { href: '/dashboard', label: 'Dashboard' },
-    { href: '/practice', label: 'Practice' },
-    { href: '/gd-briefs', label: 'GD Briefs' },
-    { href: '/learn/casebook/industry-primers/asset-management', label: 'Industry Primers', active: isActive('/learn/casebook/industry-primers') },
+  ];
+  const TRAILING_LINKS: NavLink[] = [
     { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
   ];
+
+  // Dropdown groups. Each has a HEAD link (clicking the label still navigates,
+  // so the menu is a shortcut and never a dead end) plus its children.
+  const PRACTICE_LINKS: NavLink[] = [
+    { href: '/practice', label: 'All practice' },
+    { href: '/practice?tab=scored', label: 'Cases' },
+    { href: '/practice?tab=guesstimates', label: 'Guesstimates' },
+    { href: '/practice?tab=attempted', label: 'Attempted' },
+  ];
+  const GD_LINKS: NavLink[] = [
+    { href: '/gd-briefs', label: 'News briefs' },
+    { href: '/gd-briefs/abstract', label: 'Abstract GD' },
+  ];
+  // Derived from the casebook tree, NOT hand-listed — 27 primers that would
+  // otherwise silently drift out of sync every time one is added or renamed.
+  const PRIMER_LINKS: NavLink[] = INDUSTRY_PRIMERS.map((p) => ({
+    href: `/learn/casebook/${p.slug}`,
+    label: p.title,
+  }));
   const MORE_LINKS: NavLink[] = [
     // "Learn" owns the casebook EXCEPT the two tracks promoted above — without
     // both exclusions it would light up as active while the user is plainly in
@@ -87,6 +130,20 @@ export default function AppNav() {
     { href: '/testimonials', label: 'Testimonials' },
   ];
   const moreActive = MORE_LINKS.some(({ href, active }) => active ?? isActive(href));
+
+  // Render order of the bar: Dashboard, then these three groups, then Case
+  // Competitions, then More. `head` is where the trigger label itself goes.
+  const NAV_GROUPS = [
+    { label: 'Practice', head: '/practice', links: PRACTICE_LINKS.slice(1), isOpen: isActive('/practice'), scroll: false },
+    { label: 'GD Briefs', head: '/gd-briefs', links: GD_LINKS, isOpen: isActive('/gd-briefs'), scroll: false },
+    {
+      label: 'Industry Primers',
+      head: `/learn/casebook/${INDUSTRY_PRIMERS[0]?.slug ?? 'industry-primers/asset-management'}`,
+      links: PRIMER_LINKS,
+      isOpen: isActive('/learn/casebook/industry-primers'),
+      scroll: true,
+    },
+  ];
 
   return (
     <header className={`nav-bar sticky top-0 z-40 w-full overflow-hidden max-w-[100vw]${pathname?.startsWith('/cases/') ? ' max-xl:hidden' : ''}`}>
@@ -133,6 +190,57 @@ export default function AppNav() {
                     <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-none" />
                   )}
                 </Link>
+                );
+              })}
+
+              {/* Grouped destinations. The trigger LABEL is also a link, so the
+                  dropdown is a shortcut into a section rather than a gate in
+                  front of it — clicking "Practice" still lands on /practice. */}
+              {NAV_GROUPS.map(({ label, head, links, isOpen, scroll }) => (
+                <DropdownMenu key={label}>
+                  <DropdownMenuTrigger
+                    className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
+                      isOpen ? 'text-navy-foreground' : 'text-navy-foreground/50 hover:text-navy-foreground/80'
+                    }`}
+                  >
+                    {label}
+                    <ChevronDown className="h-4 w-4" />
+                    {isOpen && <span className="absolute bottom-0 left-3 right-7 h-0.5 bg-primary rounded-none" />}
+                  </DropdownMenuTrigger>
+                  {/* @ts-ignore - JSX inferred types lack children */}
+                  <DropdownMenuContent
+                    align="start"
+                    className={scroll ? 'w-60 max-h-[70vh] overflow-y-auto' : 'w-52'}
+                  >
+                    {/* @ts-ignore - JSX inferred types lack children */}
+                    <DropdownMenuItem asChild>
+                      <Link href={head} className="cursor-pointer w-full font-semibold">
+                        {scroll ? 'All industry primers' : `Open ${label}`}
+                      </Link>
+                    </DropdownMenuItem>
+                    {links.map(({ href, label: itemLabel }) => (
+                      /* @ts-ignore - JSX inferred types lack children */
+                      <DropdownMenuItem key={href} asChild>
+                        <Link href={href} className="cursor-pointer w-full">{itemLabel}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ))}
+
+              {TRAILING_LINKS.map(({ href, label, active }) => {
+                const linkActive = active ?? isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
+                      linkActive ? 'text-navy-foreground' : 'text-navy-foreground/50 hover:text-navy-foreground/80'
+                    }`}
+                  >
+                    {label}
+                    {linkActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-none" />}
+                  </Link>
                 );
               })}
 
@@ -242,7 +350,18 @@ export default function AppNav() {
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto py-2">
-              {[...PRIMARY_LINKS, ...MORE_LINKS].map(({ href, label, active }) => {
+              {/* The drawer is the ONLY nav between md and xl, where the
+                  desktop bar is hidden. It must therefore carry every group's
+                  contents too — listing just PRIMARY + MORE would silently drop
+                  Practice, GD Briefs and the primers on tablet widths. */}
+              {[
+                ...PRIMARY_LINKS,
+                ...PRACTICE_LINKS,
+                ...GD_LINKS,
+                ...TRAILING_LINKS,
+                ...MORE_LINKS,
+                ...PRIMER_LINKS,
+              ].map(({ href, label, active }) => {
                 const linkActive = active ?? isActive(href);
                 return (
                   <Link
