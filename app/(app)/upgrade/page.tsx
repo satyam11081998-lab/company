@@ -8,6 +8,7 @@ import TeamsContactBanner from "@/components/teams-contact-banner";
 import { DeckVaultBanner, DeckVaultPopup } from "@/components/deck-vault/deck-vault-promo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { VOICE_INTERVIEW_ENABLED } from "@/lib/constants";
 import {
   BILLING_PERIODS,
   BILLING_PERIOD_LABELS,
@@ -321,7 +322,10 @@ export default function UpgradePage() {
                 {/* Voice is the only Pro feature a candidate cannot get by
                     reading harder, and it is what the locked button in the
                     solve composer sends them here for. Name it fully. */}
-                <FeatureItem text="Voice interview — speak the case aloud, hear the interviewer reply" />
+                {/* Hidden while VOICE_INTERVIEW_ENABLED is off. */}
+                {VOICE_INTERVIEW_ENABLED && (
+                  <FeatureItem text="Voice interview — speak the case aloud, hear the interviewer reply" />
+                )}
                 <FeatureItem muted text="Deck Vault — coming soon" />
               </ul>
               <button

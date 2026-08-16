@@ -37,7 +37,7 @@ const USE_REALTIME = process.env.NEXT_PUBLIC_VOICE_REALTIME !== '0';
 import EngagingLoader from '@/components/engaging-loader';
 import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { createClient } from '@/lib/supabase/client';
-import { CASE_TYPE_LABELS, DIFFICULTY_LABELS } from '@/lib/constants';
+import { CASE_TYPE_LABELS, DIFFICULTY_LABELS, VOICE_INTERVIEW_ENABLED } from '@/lib/constants';
 import {
   startAttempt,
   getAttempt,
@@ -572,7 +572,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
    *                 save-wall is the right ask.
    */
   const talkState: 'active' | 'unavailable' | 'locked' | 'hidden' =
-    isGuest || !attempt ? 'hidden'
+    !VOICE_INTERVIEW_ENABLED ? 'hidden'          // owner decision: not ROI positive
+      : isGuest || !attempt ? 'hidden'
       : !isPro ? 'locked'
       : voiceOut || speakOut ? 'unavailable'
       : speakQuota === null ? 'unavailable'

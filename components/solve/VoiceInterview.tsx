@@ -564,7 +564,9 @@ export default function VoiceInterview({
   const orbScale = active ? 1 + Math.min(0.35, level * 0.5) : phase === 'speaking' ? 1.08 : 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background/98 backdrop-blur-sm">
+    // Chat column only — see the matching note in VoiceInterviewRealtime. The
+    // case prompt must stay readable while you are talking about it.
+    <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
       {/* header */}
       <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Minus, Star, Zap, Sparkles, ShieldCheck, Trophy, ArrowRight } from "lucide-react";
+import { VOICE_INTERVIEW_ENABLED } from "@/lib/constants";
 import {
   BILLING_PERIODS,
   BILLING_PERIOD_LABELS,
@@ -142,7 +143,9 @@ export default function PricingPlans() {
               <PlanFeature text="20 interviewer hints per case & model Q&A" />
               <PlanFeature text="CV Pointer Lab — unlimited" />
               <PlanFeature text="Interviewer simulator" />
-              <PlanFeature text="Voice interview — speak the case aloud" />
+              {/* Hidden while VOICE_INTERVIEW_ENABLED is off — never advertise
+                  a feature the product does not currently ship. */}
+              {VOICE_INTERVIEW_ENABLED && <PlanFeature text="Voice interview — speak the case aloud" />}
               <PlanFeature text="Deck Vault lifetime access" />
             </ul>
             <Link href="/signup" className="mt-auto">

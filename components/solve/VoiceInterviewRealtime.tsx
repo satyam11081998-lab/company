@@ -227,7 +227,14 @@ export default function VoiceInterviewRealtime({
   const rail = live.length ? live : messages.slice(-8).map((m) => ({ role: m.role as 'user' | 'assistant', text: m.content ?? '' }));
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background/98 backdrop-blur-sm">
+    // Covers the CHAT COLUMN ONLY — the case prompt on the left stays sharp and
+    // readable. Blurring it was actively harmful: a spoken case is exactly when
+    // you need to read the numbers you are being asked about, and you cannot
+    // scroll back through a conversation you are having out loud.
+    // Offsets mirror the solve layout: sidebar is lg:w-[35%] xl:w-[30%], and the
+    // shell sits below the nav at xl. Below lg the sidebar is hidden, so this
+    // correctly becomes full width on mobile.
+    <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
       <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
           <span className={`h-2 w-2 rounded-full ${phase === 'speaking' ? 'bg-primary' : phase === 'listening' ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />

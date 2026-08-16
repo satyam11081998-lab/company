@@ -13,6 +13,7 @@ import Footer from '@/components/footer';
 import PricingPlans from '@/components/pricing-plans';
 import TeamsContactBanner from '@/components/teams-contact-banner';
 import AuthCTA from '@/components/auth-cta';
+import { VOICE_INTERVIEW_ENABLED } from '@/lib/constants';
 import {
   pricingProductJsonLd,
   faqPageJsonLd,
@@ -96,7 +97,11 @@ const FEATURES = [
   { name: 'Bookmarks', free: false, lite: false, pro: true },
   { name: 'Personal cheat-sheet', free: false, lite: false, pro: true },
   { name: 'Interviewer simulator', free: false, lite: false, pro: true },
-  { name: 'Voice interview (talk mode)', free: false, lite: false, pro: true },
+  // Voice interview: only listed when the feature actually ships. Spreading an
+  // empty array is how a row disappears without leaving a hole in the table.
+  ...(VOICE_INTERVIEW_ENABLED
+    ? [{ name: 'Voice interview (talk mode)', free: false, lite: false, pro: true }]
+    : []),
   { name: 'Deck Vault (lifetime)', free: false, lite: false, pro: true },
 ];
 

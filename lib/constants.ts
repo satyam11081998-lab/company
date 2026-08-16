@@ -174,3 +174,31 @@ export const LINKEDIN_FOLLOW_PERK = {
   extraCases: 1,
   extraGuesstimates: 1,
 } as const;
+
+/**
+ * VOICE INTERVIEW — OFF (owner decision, 2026-08-16). Not ROI positive.
+ *
+ * Measured against Pro at ₹599/mo (~$6.80), per 25-minute session:
+ *   text only                      $0.024
+ *   dictation (speech-to-text)     $0.084
+ *   voice, old pipeline            $0.159
+ *   voice, realtime                $0.690   -> 28x text, break-even at 10/mo
+ *   voice, realtime + 10-min cap   $0.440   -> 18x text, break-even at 15/mo
+ *
+ * The cost is audio OUTPUT: the interviewer speaking bills at 1200 tok/min
+ * against 600 for the candidate, at double the rate. No amount of tuning fixes
+ * a 4x-per-minute asymmetry against a ₹599 tier.
+ *
+ * THE CODE IS KEPT, NOT DELETED — routes/speak.py, routes/realtime.py,
+ * lib/voice/*, VoiceInterview.tsx and VoiceInterviewRealtime.tsx all remain and
+ * all still work. This single flag is what hides it.
+ *
+ * TO BRING IT BACK: set NEXT_PUBLIC_VOICE_ENABLED=1 (frontend) and
+ * REALTIME_ENABLED=1 + AI_TTS_MIN_PRO>0 (backend). It would make sense again
+ * at a higher tier, as a metered add-on, or if audio output gets materially
+ * cheaper.
+ *
+ * This one constant gates BOTH the feature and the pricing copy on purpose.
+ * Splitting them is how you end up selling something nobody can reach.
+ */
+export const VOICE_INTERVIEW_ENABLED = process.env.NEXT_PUBLIC_VOICE_ENABLED === '1';

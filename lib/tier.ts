@@ -97,6 +97,12 @@ export const TIER_LIMITS = {
     gdBriefsLifetime: Infinity,
     cheatSheet: 'full' as const,
     cvLabTrialUses: Infinity,
+    // Voice interview is OFF product-wide (not ROI positive — see
+    // VOICE_INTERVIEW_ENABLED in lib/constants.ts for the numbers). This stays
+    // `true` because Pro IS the tier that would own it if it returns; the
+    // feature is gated by the constant, not by this flag. Flipping this to
+    // false would be misleading: it would say Pro lacks the entitlement, when
+    // what is actually true is that nobody has the feature right now.
     voiceInterview: true,
   },
 } as const;
