@@ -1,5 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createClient } from '@/lib/supabase/server';
 
 export interface PublicDeck {
   id: string;
@@ -53,14 +52,28 @@ export async function getDeckBySlug(slug: string): Promise<PublicDeck | null> {
  * Fetch all active, indexable decks for sitemap generation.
  */
 export async function getIndexableDecks(): Promise<Array<{ slug: string; created_at: string; pages_rendered_at: string | null }>> {
-  const svc = createServiceClient();
-  const { data } = await svc
-    .from('deck_skeletons')
-    .select('slug, created_at, pages_rendered_at')
-    .eq('is_active', true)
-    .eq('is_indexable', true)
-    .not('slug', 'is', null)
-    .order('created_at', { ascending: false });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    return [];
+  }
 
-  return (data as Array<{ slug: string; created_at: string; pages_rendered_at: string | null }> | null) || [];
+  try {
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const client = createSupabaseClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data } = await client
+      .from('deck_skeletons')
+      .select('slug, created_at, pages_rendered_at')
+      .eq('is_active', true)
+      .eq('is_indexable', true)
+      .not('slug', 'is', null)
+      .order('created_at', { ascending: false });
+
+    return (data as Array<{ slug: string; created_at: string; pages_rendered_at: string | null }> | null) || [];
+  } catch (err) {
+    return [];
+  }
 }
