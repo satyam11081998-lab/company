@@ -150,7 +150,7 @@ export default function AppNav() {
       <div className="container flex h-14 md:h-16 items-center justify-between">
 
         {/* Left: wordmark + nav links */}
-        <div className="flex items-center gap-4 md:gap-12">
+        <div className="flex min-w-0 items-center gap-4 md:gap-6 2xl:gap-8">
           <Link href={user ? '/dashboard' : '/'} className="flex items-center group -ml-4 md:-ml-6 shrink-0 -mt-1.5">
             <Logo variant="light" className="" />
           </Link>
@@ -185,7 +185,7 @@ export default function AppNav() {
                 <Link
                   key={href}
                   href={href}
-                  className={`relative whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
+                  className={`relative whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors rounded-sm ${
                     linkActive
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'
@@ -205,7 +205,7 @@ export default function AppNav() {
               {NAV_GROUPS.map(({ label, head, links, isOpen, scroll }) => (
                 <DropdownMenu key={label}>
                   <DropdownMenuTrigger
-                    className={`relative flex items-center gap-1 whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
+                    className={`relative flex items-center gap-1 whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
                       isOpen ? 'text-navy-foreground' : 'text-navy-foreground/50 hover:text-navy-foreground/80'
                     }`}
                   >
@@ -240,7 +240,7 @@ export default function AppNav() {
                   <Link
                     key={href}
                     href={href}
-                    className={`relative whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
+                    className={`relative whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors rounded-sm ${
                       linkActive ? 'text-navy-foreground' : 'text-navy-foreground/50 hover:text-navy-foreground/80'
                     }`}
                   >
@@ -253,7 +253,7 @@ export default function AppNav() {
               {/* Secondary destinations, grouped so the bar never overflows. */}
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  className={`relative flex items-center gap-1 whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
+                  className={`relative flex items-center gap-1 whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
                     moreActive
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'
@@ -283,7 +283,7 @@ export default function AppNav() {
             shrink-0 so this cluster keeps its size and the nav row absorbs any
             tightening — the reverse squeezed the labels into two lines. Gap
             drops at xl and only opens up at 2xl, where there is room. */}
-        <div className="flex shrink-0 items-center gap-3 xl:gap-3 2xl:gap-6">
+        <div className="flex shrink-0 items-center gap-3 2xl:gap-4">
           <ThemeToggle />
 
           {user ? (
