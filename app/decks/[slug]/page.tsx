@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import AuthCTA from '@/components/auth-cta';
+import DeckProtection from '@/components/decks/deck-protection';
 
 interface PageProps {
   params: { slug: string };
@@ -222,6 +223,7 @@ export default async function PublicDeckPage({ params }: PageProps) {
             </span>
           </div>
 
+          <DeckProtection>
           <div className="deck-free-preview flex flex-col gap-6">
             {freePagesList.map((n) => (
               <figure key={n} className="bg-card border border-border/70 rounded-xl overflow-hidden shadow-sm">
@@ -275,6 +277,7 @@ export default async function PublicDeckPage({ params }: PageProps) {
               </Link>
             ))}
           </div>
+          </DeckProtection>
         </section>
 
         {lockedPagesList.length > 0 && (
