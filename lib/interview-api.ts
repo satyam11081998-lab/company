@@ -205,6 +205,34 @@ export async function postMessageStream(
   return { assistantText, quotaRemaining, clarificationsSpent };
 }
 
+/**
+ * Persist ONE turn from a realtime voice session.
+ *
+ * Realtime runs the conversation at the far end, so unlike postMessageStream
+ * this does not produce a reply — it only lands the same `attempt_messages`
+ * row the typed path writes, so scoring reads one format for every transport.
+ * `usage` carries the audio-token counts from `response.done`; without it,
+ * realtime spend is invisible to the daily-budget guard.
+ */
+export async function postRealtimeTurn(
+  attemptId: string,
+  token: string,
+  turn: {
+    role: 'user' | 'assistant';
+    content: string;
+    audio_input_tokens?: number;
+    audio_output_tokens?: number;
+  },
+): Promise<{ message_id: string | null }> {
+  const res = await fetch(`${API_URL}/attempts/${attemptId}/realtime-turn`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify(turn),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't save that turn."));
+  return res.json();
+}
+
 export async function uploadAttemptFile(
   attemptId: string,
   token: string,

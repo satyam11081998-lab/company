@@ -29,7 +29,11 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import DictationButton, { type DictationHandle } from '@/components/dictation-button';
 import MicWaveform from '@/components/mic-waveform';
 import VoiceInterview from '@/components/solve/VoiceInterview';
+import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
+
+/** Realtime transport unless explicitly switched off. See the mount below. */
+const USE_REALTIME = process.env.NEXT_PUBLIC_VOICE_REALTIME !== '0';
 import EngagingLoader from '@/components/engaging-loader';
 import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { createClient } from '@/lib/supabase/client';
@@ -937,7 +941,30 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         )}
       </div>
 
-      {talkMode && token && (
+      {/* Realtime is the default: the pipeline below it is ~3.5s per turn
+          because it makes two round trips through our backend per exchange,
+          and no amount of tuning removes those. Set
+          NEXT_PUBLIC_VOICE_REALTIME=0 to fall straight back to the pipeline —
+          it still works, so a regression is a config change, not a redeploy. */}
+      {talkMode && token && attempt && USE_REALTIME && (
+        <VoiceInterviewRealtime
+          token={token}
+          caseId={caseId}
+          attemptId={attempt.attempt_id}
+          messages={messages}
+          onTurnPersisted={async () => {
+            try {
+              const detail = await getAttempt(attempt.attempt_id, token);
+              setMessages(detail.messages);
+              setAttempt(detail.attempt);
+            } catch { /* the rail already shows the turn locally */ }
+          }}
+          onClose={() => setTalkMode(false)}
+          onSubmitSession={() => { setTalkMode(false); setSubmitOpen(true); }}
+        />
+      )}
+
+      {talkMode && token && !USE_REALTIME && (
         <VoiceInterview
           token={token}
           onSend={(text) => sendRef.current!('voice', text)}
