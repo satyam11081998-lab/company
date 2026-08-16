@@ -550,12 +550,34 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const speakQuota = quota?.speak ?? null;
   const speakOut = speakQuota !== null && speakQuota.remaining_min <= 0;
   const isPro = attempt?.tier === 'pro';
-  const canTalk = isPro && !isGuest && !voiceOut && speakQuota !== null && !speakOut;
-  // Free and Lite SEE the button, locked. A feature nobody knows exists cannot
-  // sell an upgrade — showing the door and naming the tier converts far better
-  // than hiding it. Guests still see nothing: they have no tier to upgrade from
-  // yet, and the save-wall is the right ask for them.
-  const showTalkLocked = !canTalk && !isGuest && !!attempt && !isPro;
+
+  /**
+   * ONE state, not three booleans.
+   *
+   * The first version of this vanished the button for a Pro user whose daily
+   * minutes were spent, or whose backend predated /speak — which is exactly the
+   * failure that took an hour to diagnose in production ("I can't see the voice
+   * button"), except aimed at the paying tier. A feature that silently
+   * disappears is indistinguishable from a broken one.
+   *
+   *   active      — Pro, in credit: go
+   *   unavailable — Pro, but out of minutes or the backend lacks /speak. SHOW it
+   *                 and say why; never just remove it.
+   *   locked      — Free/Lite: show it, name the tier, link to upgrade.
+   *   hidden      — guests only. They have no tier to upgrade from; the
+   *                 save-wall is the right ask.
+   */
+  const talkState: 'active' | 'unavailable' | 'locked' | 'hidden' =
+    isGuest || !attempt ? 'hidden'
+      : !isPro ? 'locked'
+      : voiceOut || speakOut ? 'unavailable'
+      : speakQuota === null ? 'unavailable'
+      : 'active';
+
+  const talkUnavailableReason =
+    voiceOut || speakOut
+      ? 'Daily voice limit reached — resets at midnight IST'
+      : 'Voice interview is not available right now';
 
   // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND
   // inside the mobile drawer (opened from the chat bar) so the phone is chat-first.
@@ -823,11 +845,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                       styled as a filled pill with a headphones icon so it can
                       never be mistaken for the dictation mic sitting beside it:
                       one dictates text, the other starts a spoken interview. */}
-                  {canTalk && recording === 'idle' && (
+                  {talkState === 'active' && recording === 'idle' && (
                     <button
                       type="button"
                       onClick={() => { primeAudioPlayback(); setTalkMode(true); }}
-                      disabled={sending || !attempt}
+                      disabled={sending}
                       className="relative shrink-0 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-2 text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label="Start voice interview"
                       title="Voice interview — speak with the interviewer and hear them reply"
@@ -837,10 +859,26 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                     </button>
                   )}
 
+                  {/* Pro, but temporarily unavailable. Present and explained,
+                      never silently removed — a missing button is read as a
+                      broken product. */}
+                  {talkState === 'unavailable' && recording === 'idle' && (
+                    <button
+                      type="button"
+                      onClick={() => toast.message('Voice interview unavailable', { description: talkUnavailableReason })}
+                      className="relative shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-muted-foreground/60 transition-colors hover:bg-muted"
+                      aria-label={talkUnavailableReason}
+                      title={talkUnavailableReason}
+                    >
+                      <VoiceWave className="h-5 w-5" />
+                      <span className="hidden sm:inline text-micro font-semibold uppercase tracking-wide">Talk</span>
+                    </button>
+                  )}
+
                   {/* LOCKED for Free and Lite — visible, named, and one tap from
                       the upgrade page. Muted rather than disabled so it reads as
                       "available on Pro", not "broken". */}
-                  {showTalkLocked && recording === 'idle' && (
+                  {talkState === 'locked' && recording === 'idle' && (
                     <button
                       type="button"
                       onClick={() => router.push('/upgrade?from=voice')}

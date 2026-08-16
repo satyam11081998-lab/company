@@ -76,11 +76,34 @@ export async function startRealtimeSession(
   stream.getAudioTracks().forEach((t) => pc.addTrack(t, stream));
 
   // 3. Remote audio — this element IS the interviewer's voice.
+  //
+  // It MUST be attached to the document. A detached <audio> plays in Chrome but
+  // is unreliable elsewhere (Safari in particular), and "the interviewer is
+  // silent on iPhone" is close to impossible to diagnose from a bug report.
   const audioEl = document.createElement('audio');
   audioEl.autoplay = true;
+  audioEl.setAttribute('playsinline', '');   // iOS: do not hijack into fullscreen
+  audioEl.style.display = 'none';
+  document.body.appendChild(audioEl);
   pc.ontrack = (e) => {
     audioEl.srcObject = e.streams[0];
+    // Autoplay can still be refused if the gesture that opened talk mode has
+    // expired. Surface it rather than sitting mute.
+    void audioEl.play().catch((err) => {
+      cbs.onError?.(
+        err?.name === 'NotAllowedError'
+          ? 'Tap the screen once to allow audio playback.'
+          : 'Could not play the interviewer audio.',
+      );
+    });
   };
+
+  // 4. A dropped connection must not look like a thoughtful pause.
+  pc.addEventListener('connectionstatechange', () => {
+    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+      cbs.onError?.('Voice connection lost. Your session is saved — carry on in the chat.');
+    }
+  });
 
   // 4. Data channel carries the event stream both ways.
   const dc = pc.createDataChannel('oai-events');
@@ -159,7 +182,10 @@ export async function startRealtimeSession(
         /* already closed */
       }
       stream.getTracks().forEach((t) => t.stop());
+      audioEl.pause();
       audioEl.srcObject = null;
+      // Remove the element we appended, or every session leaks one into <body>.
+      audioEl.remove();
       pc.close();
       setSpeaking(false);
     },
