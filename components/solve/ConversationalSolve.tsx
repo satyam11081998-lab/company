@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Send, Paperclip, Mic, Square, FileText, ArrowLeft, Award, Menu, AudioLines } from 'lucide-react';
+import { Loader2, Send, Paperclip, Mic, FileText, ArrowLeft, Award, Menu, Headphones, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -340,6 +340,25 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
+  /**
+   * Tick = transcribe INTO the composer. Does not send.
+   *
+   * Reverses the 2026-06-30 decision that Send should finalize and post in one
+   * tap. Owner asked for a review step (2026-08-16): dictation is a drafting
+   * tool, and a spoken sentence that Whisper mishears should be fixable before
+   * the interviewer sees it — not after, when it is already scored transcript.
+   *
+   * Appends rather than replaces, so dictating on top of typed text adds to it.
+   */
+  async function confirmMic() {
+    const text = await finalizeMic();
+    if (!text) return;
+    setComposer((prev) => {
+      const base = prev.trimEnd();
+      return base ? `${base} ${text}` : text;
+    });
+  }
+
   function finalizeMic(): Promise<string | null> {
     return new Promise((resolve) => {
       if (recording !== 'recording' || !mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') { resolve(null); return; }
@@ -349,7 +368,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     });
   }
 
-  // Composer Send: while recording, finalize (transcribe) and send as voice in one tap.
+  // Composer Send. While RECORDING the tick owns the transcribe step, so Send is
+  // disabled rather than silently posting un-reviewed speech (see confirmMic).
   async function handleComposerSend() {
     if (recording === 'recording') {
       const t = await finalizeMic();
@@ -792,28 +812,60 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 )}
 
                 <div className="flex items-center gap-1.5 pr-1 mb-0.5">
-                  {canTalk && (
+                  {/* TALK MODE — a distinct MODE, not another mic. Deliberately
+                      styled as a filled pill with a headphones icon so it can
+                      never be mistaken for the dictation mic sitting beside it:
+                      one dictates text, the other starts a spoken interview. */}
+                  {canTalk && recording === 'idle' && (
                     <button
                       type="button"
                       onClick={() => { primeAudioPlayback(); setTalkMode(true); }}
-                      disabled={sending || recording !== 'idle' || !attempt}
-                      className="relative shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      disabled={sending || !attempt}
+                      className="relative shrink-0 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-2 text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label="Start voice interview"
-                      title="Talk mode — speak with the interviewer"
+                      title="Voice interview — speak with the interviewer and hear them reply"
                     >
-                      <AudioLines className="h-5 w-5" />
+                      <Headphones className="h-4 w-4" />
+                      <span className="hidden sm:inline text-micro font-semibold uppercase tracking-wide">Talk</span>
                     </button>
                   )}
-                  <button type="button" onClick={micButtonClick} disabled={recording === 'transcribing' || (recording === 'idle' && voiceOut)} className={`relative shrink-0 rounded-full p-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${recording === 'recording' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`} aria-label={recording === 'recording' ? 'Cancel recording' : 'Voice input'} title={recording === 'recording' ? 'Tap to cancel — use Send to submit' : voiceOut ? 'Daily voice limit reached' : 'Voice input'}>
-                    {recording === 'recording' && (
-                      <>
-                        <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-rose-400/60 animate-ping" />
-                        <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-rose-400/30 animate-ping [animation-delay:700ms]" />
-                      </>
-                    )}
-                    {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : recording === 'recording' ? <Square className="relative h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}
-                  </button>
-                  <Button type="button" onClick={handleComposerSend} disabled={sending || !attempt || recording === 'transcribing' || (recording === 'idle' && !composer.trim())} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
+
+                  {/* RECORDING: tick commits the transcription into the composer
+                      so it can be edited; cross discards. Send stays disabled
+                      until the tick, so speech is never posted un-reviewed. */}
+                  {recording === 'recording' ? (
+                    <>
+                      {/* Both brand red. Hierarchy comes from WEIGHT, not hue:
+                          discard is a ghost outline, confirm is solid. Green/red
+                          would have read as a system prompt rather than as part
+                          of the product. */}
+                      <button
+                        type="button"
+                        onClick={cancelMic}
+                        className="shrink-0 rounded-full border border-primary/40 p-2 text-primary transition-colors hover:bg-primary/10"
+                        aria-label="Discard recording"
+                        title="Discard"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={confirmMic}
+                        className="relative shrink-0 rounded-full bg-primary p-2 text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
+                        aria-label="Transcribe into the message box"
+                        title="Transcribe — you can edit before sending"
+                      >
+                        <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-primary/50 animate-ping" />
+                        <Check className="relative h-5 w-5" />
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" onClick={micButtonClick} disabled={recording === 'transcribing' || voiceOut} className="relative shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Voice input" title={voiceOut ? 'Daily voice limit reached' : 'Dictate a message'}>
+                      {recording === 'transcribing' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mic className="h-5 w-5" />}
+                    </button>
+                  )}
+
+                  <Button type="button" onClick={handleComposerSend} disabled={sending || !attempt || recording !== 'idle' || !composer.trim()} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
                     <Send className="h-4 w-4 ml-0.5" />
                   </Button>
                 </div>
