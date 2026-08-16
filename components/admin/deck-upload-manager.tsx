@@ -28,6 +28,9 @@ import {
   Sparkles,
   Layers,
   Lock,
+  Play,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import type { VaultDeckRow } from '@/app/(app)/admin/decks/page';
 
@@ -50,9 +53,9 @@ const MIME_BY_EXT: Record<string, string> = {
 export default function DeckUploadManager({ initialDecks }: { initialDecks: VaultDeckRow[] }) {
   const router = useRouter();
   const supabase = createClient();
-  const [processingId, setProcessingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  const [processingDeckId, setProcessingDeckId] = useState<string | null>(null);
 
   // Form state
   const [file, setFile] = useState<File | null>(null);
@@ -120,27 +123,45 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
       // 3. Insert the catalogue row (admin table policy).
       setProgress('Saving to catalogue…');
       const freePagesNum = freePages.trim() ? parseInt(freePages.trim(), 10) : null;
-      const { error: insertError } = await supabase.from('deck_skeletons').insert({
-        title: title.trim(),
-        source_kind: sourceKind,
-        competition: competition.trim(),
-        result,
-        case_type: caseType,
-        round_type: roundType,
-        file_type: ext,
-        description: description.trim(),
-        storage_path: `gdrive:${uploaded.id}`,
-        is_active: true,
-        is_indexable: true,
-        free_pages: freePagesNum,
-        year: /^\d{4}$/.test(year.trim()) ? Number(year.trim()) : null,
-        organizer: organizer.trim(),
-      });
-      if (insertError) {
-        throw new Error(`Catalogue insert failed: ${insertError.message} — the uploaded file is orphaned; re-upload after fixing.`);
+      const { data: insertedDeck, error: insertError } = await supabase
+        .from('deck_skeletons')
+        .insert({
+          title: title.trim(),
+          source_kind: sourceKind,
+          competition: competition.trim(),
+          result,
+          case_type: caseType,
+          round_type: roundType,
+          file_type: ext,
+          description: description.trim(),
+          storage_path: `gdrive:${uploaded.id}`,
+          is_active: true,
+          is_indexable: true,
+          free_pages: freePagesNum,
+          year: /^\d{4}$/.test(year.trim()) ? Number(year.trim()) : null,
+          organizer: organizer.trim(),
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !insertedDeck) {
+        throw new Error(`Catalogue insert failed: ${insertError?.message || 'Unknown error'} — re-upload after fixing.`);
       }
 
-      toast.success(`"${title.trim()}" is live in the Vault.`);
+      toast.success(`"${title.trim()}" uploaded. Processing slides & AI summary…`);
+
+      // 4. Trigger background processing (render + AI summary)
+      try {
+        setProgress('Rendering slides & generating summary…');
+        await fetch('/api/admin/decks/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deckId: insertedDeck.id, action: 'process' }),
+        });
+      } catch {
+        // Background processing can be retried manually if offline
+      }
+
       resetForm();
       router.refresh();
     } catch (err: any) {
@@ -148,6 +169,35 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
     } finally {
       setBusy(false);
       setProgress(null);
+    }
+  };
+
+  const handleProcessDeck = async (deckId: string, action: 'process' | 'render' | 'summarize' = 'process') => {
+    try {
+      setProcessingDeckId(deckId);
+      toast.loading(action === 'render' ? 'Rendering slides…' : action === 'summarize' ? 'Generating AI summary…' : 'Rendering slides and generating AI summary…', { id: `proc-${deckId}` });
+
+      const res = await fetch('/api/admin/decks/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deckId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Processing failed');
+
+      toast.success(
+        action === 'render'
+          ? `Rendered ${data.page_count} pages.`
+          : action === 'summarize'
+          ? 'AI summary generated.'
+          : `Rendered ${data.page_count} pages & generated summary!`,
+        { id: `proc-${deckId}` }
+      );
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Processing failed.', { id: `proc-${deckId}` });
+    } finally {
+      setProcessingDeckId(null);
     }
   };
 
@@ -193,51 +243,6 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
     else {
       toast.success(`Free pages set to ${val === null ? 'computed default (25%)' : val}.`);
       router.refresh();
-    }
-  };
-
-  /**
-   * Rasterise the deck's pages and generate its verified summary.
-   *
-   * This is the step that was missing entirely: the backend endpoints existed
-   * and nothing ever called them, so every deck sat at "Not rendered / No
-   * summary" forever and no public page could work.
-   *
-   * Goes straight to the FastAPI backend (not a Next route) because the work is
-   * there — pypdfium2 rasterisation and the number-verified summary. Needs the
-   * caller's Supabase JWT; the backend re-checks is_admin and fails closed.
-   */
-  const handleProcess = async (deck: VaultDeckRow, mode: 'process' | 'render' | 'summarize' = 'process') => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!apiUrl) {
-      toast.error('NEXT_PUBLIC_API_URL is not set — cannot reach the backend.');
-      return;
-    }
-    setProcessingId(deck.id);
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error('Not signed in.');
-
-      const res = await fetch(`${apiUrl}/decks/${deck.id}/${mode}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.detail || `Failed (${res.status})`);
-
-      toast.success(
-        mode === 'render' ? `Rendered ${body?.page_count ?? '?'} pages.`
-          : mode === 'summarize' ? 'Summary generated.'
-          : `Processed — ${body?.page_count ?? '?'} pages rendered, summary ready.`,
-      );
-      router.refresh();
-    } catch (e) {
-      // Rendering a large deck is slow and the summary can be rejected by the
-      // number guard, so surface the real reason rather than a generic failure.
-      toast.error(e instanceof Error ? e.message : 'Processing failed');
-    } finally {
-      setProcessingId(null);
     }
   };
 
@@ -383,98 +388,107 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
       <div>
         <h2 className="text-h3 text-foreground mb-4">In the Vault ({initialDecks.length})</h2>
         <div className="space-y-3">
-          {initialDecks.map((deck) => (
-            <Card key={deck.id} className={`ui-card p-4 space-y-3 ${deck.is_active ? '' : 'opacity-60'}`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-strong font-semibold text-foreground truncate">{deck.title}</p>
-                      {deck.slug && (
-                        <Link
-                          href={`/decks/${deck.slug}`}
-                          target="_blank"
-                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
-                        >
-                          /decks/{deck.slug}
-                          <ExternalLink className="w-3 h-3" />
-                        </Link>
+          {initialDecks.map((deck) => {
+            const isProcessing = processingDeckId === deck.id;
+            const isRendered = Boolean(deck.pages_rendered_at);
+            const hasSummary = Boolean(deck.summary);
+
+            return (
+              <Card key={deck.id} className={`ui-card p-4 space-y-3 ${deck.is_active ? '' : 'opacity-60'}`}>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-strong font-semibold text-foreground truncate">{deck.title}</p>
+                        {deck.slug && (
+                          <Link
+                            href={`/decks/${deck.slug}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
+                          >
+                            /decks/{deck.slug}
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        )}
+                      </div>
+                      <p className="text-small text-muted-foreground truncate">
+                        {deck.source_kind === 'corporate' ? 'Corporate' : 'B-school'} · {deck.competition} · {deck.result} · {deck.case_type} · {deck.file_type.toUpperCase()}
+                      </p>
+                      {/* Paywall & SEO tags */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <Badge variant="outline" className="text-xs">
+                          <Lock className="w-3 h-3 mr-1" />
+                          {deck.free_pages !== null ? `${deck.free_pages} free (override)` : 'Auto 25% free'}
+                        </Badge>
+                        <Badge variant="outline" className={deck.is_indexable ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
+                          <Globe className="w-3 h-3 mr-1" />
+                          {deck.is_indexable ? 'Indexed' : 'Noindex'}
+                        </Badge>
+                        <Badge variant="outline" className={isRendered ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'}>
+                          <Layers className="w-3 h-3 mr-1" />
+                          {isRendered ? `${deck.page_count || '?'}p rendered` : 'Not rendered (broken slides)'}
+                        </Badge>
+                        <Badge variant="outline" className={hasSummary ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {hasSummary ? 'Summary ready' : 'No summary'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    {/* Render / Process Trigger */}
+                    <Button
+                      variant={isRendered && hasSummary ? 'outline' : 'default'}
+                      size="sm"
+                      disabled={isProcessing}
+                      onClick={() => handleProcessDeck(deck.id, 'process')}
+                      className="gap-1.5"
+                    >
+                      {isProcessing ? (
+                        <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…</>
+                      ) : isRendered ? (
+                        <><RefreshCw className="h-3.5 w-3.5" /> Re-process</>
+                      ) : (
+                        <><Play className="h-3.5 w-3.5" /> Render Slides</>
                       )}
-                    </div>
-                    <p className="text-small text-muted-foreground truncate">
-                      {deck.source_kind === 'corporate' ? 'Corporate' : 'B-school'} · {deck.competition} · {deck.result} · {deck.case_type} · {deck.file_type.toUpperCase()}
-                    </p>
-                    {/* Paywall & SEO tags */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <Badge variant="outline" className="text-xs">
-                        <Lock className="w-3 h-3 mr-1" />
-                        {deck.free_pages !== null ? `${deck.free_pages} free pages (override)` : 'Auto 25% free'}
-                      </Badge>
-                      <Badge variant="outline" className={deck.is_indexable ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
-                        <Globe className="w-3 h-3 mr-1" />
-                        {deck.is_indexable ? 'Indexed' : 'Noindex'}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <Layers className="w-3 h-3 mr-1" />
-                        {deck.pages_rendered_at ? `${deck.page_count || '?'}p rendered` : 'Not rendered'}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        {deck.summary ? 'Summary ready' : 'No summary'}
-                      </Badge>
-                    </div>
+                    </Button>
+
+                    <Button variant="outline" size="sm" onClick={() => handleUpdateFreePages(deck)}>
+                      Edit Free
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => toggleIndexable(deck)}>
+                      {deck.is_indexable ? 'Hide SEO' : 'Show SEO'}
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleActive(deck)}>
+                      {deck.is_active ? <><EyeOff className="h-3.5 w-3.5" /> Hide</> : <><Eye className="h-3.5 w-3.5" /> Show</>}
+                    </Button>
+                    {deck.summary && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedSummaryId(expandedSummaryId === deck.id ? null : deck.id)}
+                      >
+                        {expandedSummaryId === deck.id ? 'Hide Summary' : 'View Summary'}
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => handleDelete(deck)}>
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </Button>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    disabled={processingId === deck.id}
-                    onClick={() => handleProcess(deck, 'process')}
-                    title="Rasterise every page and generate the number-verified summary"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                    {processingId === deck.id
-                      ? 'Processing…'
-                      : deck.pages_rendered_at || deck.summary
-                        ? 'Re-process'
-                        : 'Process'}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleUpdateFreePages(deck)}>
-                    Edit Free Pages
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => toggleIndexable(deck)}>
-                    {deck.is_indexable ? 'Hide from SEO' : 'Show in SEO'}
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleActive(deck)}>
-                    {deck.is_active ? <><EyeOff className="h-3.5 w-3.5" /> Hide</> : <><Eye className="h-3.5 w-3.5" /> Show</>}
-                  </Button>
-                  {deck.summary && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setExpandedSummaryId(expandedSummaryId === deck.id ? null : deck.id)}
-                    >
-                      {expandedSummaryId === deck.id ? 'Close Summary' : 'View Summary'}
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => handleDelete(deck)}>
-                    <Trash2 className="h-3.5 w-3.5" /> Delete
-                  </Button>
-                </div>
-              </div>
-
-              {/* Summary accordion */}
-              {expandedSummaryId === deck.id && deck.summary && (
-                <div className="p-3 bg-muted/40 rounded-lg text-xs text-foreground/90 whitespace-pre-line border border-border/60">
-                  <p className="font-semibold mb-1 text-primary">AI Executive Summary:</p>
-                  {deck.summary}
-                </div>
-              )}
-            </Card>
-          ))}
+                {/* Summary accordion */}
+                {expandedSummaryId === deck.id && deck.summary && (
+                  <div className="p-3 bg-muted/40 rounded-lg text-xs text-foreground/90 whitespace-pre-line border border-border/60">
+                    <p className="font-semibold mb-1 text-primary">AI Executive Summary:</p>
+                    {deck.summary}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
           {initialDecks.length === 0 && (
             <Card className="ui-card p-8 text-center">
               <p className="text-body text-muted-foreground">Nothing uploaded yet — the form above is your starting line.</p>
