@@ -171,15 +171,21 @@ export default function AppNav() {
             </button>
           )}
 
+          {/* NAV MUST NOT WRAP. On Free/Lite the right-hand cluster carries an
+              extra Upgrade button, which squeezed this row enough that labels
+              broke mid-word ("GD / Briefs") and the bar became two lines — Pro
+              was fine only because it has no Upgrade button. Fixed by nowrapping
+              every label and tightening padding below 2xl, not by removing
+              anything: every destination is present at every width. */}
           {user && (
-            <nav className="hidden xl:flex items-center gap-0.5">
+            <nav className="hidden xl:flex flex-nowrap items-center gap-0.5">
               {PRIMARY_LINKS.map(({ href, label, active }) => {
                 const linkActive = active ?? isActive(href);
                 return (
                 <Link
                   key={href}
                   href={href}
-                  className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
+                  className={`relative whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
                     linkActive
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'
@@ -199,7 +205,7 @@ export default function AppNav() {
               {NAV_GROUPS.map(({ label, head, links, isOpen, scroll }) => (
                 <DropdownMenu key={label}>
                   <DropdownMenuTrigger
-                    className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
+                    className={`relative flex items-center gap-1 whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
                       isOpen ? 'text-navy-foreground' : 'text-navy-foreground/50 hover:text-navy-foreground/80'
                     }`}
                   >
@@ -234,7 +240,7 @@ export default function AppNav() {
                   <Link
                     key={href}
                     href={href}
-                    className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
+                    className={`relative whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm ${
                       linkActive ? 'text-navy-foreground' : 'text-navy-foreground/50 hover:text-navy-foreground/80'
                     }`}
                   >
@@ -247,7 +253,7 @@ export default function AppNav() {
               {/* Secondary destinations, grouped so the bar never overflows. */}
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
+                  className={`relative flex items-center gap-1 whitespace-nowrap px-2.5 2xl:px-4 py-2 text-sm font-medium transition-colors rounded-sm outline-none ${
                     moreActive
                       ? 'text-navy-foreground'
                       : 'text-navy-foreground/50 hover:text-navy-foreground/80'
@@ -273,8 +279,11 @@ export default function AppNav() {
           )}
         </div>
 
-        {/* Right: points, avatar, theme toggle, sign out */}
-        <div className="flex items-center gap-3 md:gap-6">
+        {/* Right: points, avatar, theme toggle, sign out.
+            shrink-0 so this cluster keeps its size and the nav row absorbs any
+            tightening — the reverse squeezed the labels into two lines. Gap
+            drops at xl and only opens up at 2xl, where there is room. */}
+        <div className="flex shrink-0 items-center gap-3 xl:gap-3 2xl:gap-6">
           <ThemeToggle />
 
           {user ? (
@@ -303,13 +312,13 @@ export default function AppNav() {
               {tier !== 'pro' && (
                 <Link 
                   href="/upgrade" 
-                  className="hidden md:inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1.5 border border-primary/20 rounded bg-primary/5"
+                  className="hidden md:inline-flex shrink-0 whitespace-nowrap items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1.5 border border-primary/20 rounded bg-primary/5"
                 >
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="h-3 w-3 shrink-0" />
                   Upgrade
                 </Link>
               )}
-              <div className="hidden md:block">
+              <div className="hidden md:block shrink-0 whitespace-nowrap">
                 <SignOutButton />
               </div>
             </div>
