@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { track } from '@vercel/analytics';
 import { ArrowRight, Trophy, X } from 'lucide-react';
 
 /**
@@ -56,7 +57,10 @@ export default function DeckGuestOverlay({
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (cancelled) return;
       // Only ask the truly logged-out. A real or anonymous session is past this.
-      if (!user) setShow(true);
+      if (!user) {
+        track('deck_overlay_shown', { slug });
+        setShow(true);
+      }
     });
 
     return () => {
@@ -77,6 +81,7 @@ export default function DeckGuestOverlay({
   const next = `/decks/${slug}`;
 
   function dismiss() {
+    track('deck_overlay_dismiss', { slug });
     setShow(false);
     try {
       sessionStorage.setItem(DISMISS_KEY, '1');
@@ -125,12 +130,14 @@ export default function DeckGuestOverlay({
         <div className="mt-5 flex flex-col gap-2.5">
           <Link
             href={`/signup?next=${encodeURIComponent(next)}`}
+            onClick={() => track('deck_overlay_signup', { slug })}
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
           >
             Sign up free <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href={`/login?next=${encodeURIComponent(next)}`}
+            onClick={() => track('deck_overlay_login', { slug })}
             className="inline-flex w-full items-center justify-center rounded-full border border-border px-5 py-2.5 text-[14px] font-medium text-foreground transition-colors hover:bg-muted"
           >
             Log in

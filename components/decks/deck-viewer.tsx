@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Lock, EyeOff, ArrowRight, Maximize2, Minimize2 } from 'lucide-react';
+import { track } from '@vercel/analytics';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -188,7 +189,7 @@ export default function DeckViewer({
                   {pageCount - freePages} more slides in this deck, plus every other winning deck in the Vault.
                 </p>
               </div>
-              <Link href="/upgrade?from=deck" className="relative z-10">
+              <Link href="/upgrade?from=deck" onClick={() => track('deck_slide_unlock', { slug })} className="relative z-10">
                 <Button size="sm" className="gap-1.5">
                   Unlock with Pro <ArrowRight className="h-3.5 w-3.5" />
                 </Button>

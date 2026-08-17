@@ -282,10 +282,10 @@ export default async function PublicDeckPage({ params }: PageProps) {
               </div>
               <div className="max-w-xl mx-auto space-y-2">
                 <h3 className="text-2xl font-bold text-foreground">
-                  Unlock the full {pageCount}-slide deck and 50+ winning presentations
+                  Unlock all {pageCount} slides, plus the full Vault of winning decks
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Get full access to verified corporate finalist presentations from HUL L.I.M.E., Tata Steel Steel-a-thon, ITC Interrobang, and premier B-school competitions.
+                  Get full access to verified winner decks from top Indian corporate and B-school case competitions, plus the interactive consulting casebook.
                 </p>
               </div>
 
