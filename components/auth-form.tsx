@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { sanitizeNextPath } from '@/lib/constants';
 import { getCaptchaToken } from '@/lib/turnstile';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
@@ -24,7 +25,8 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   // someone staring at a form with no idea why nothing happened.
   const [formError, setFormError] = useState<string | null>(null);
 
-  const nextPath = searchParams.get('next') || '/dashboard';
+  // Same-site only — see sanitizeNextPath (open-redirect guard).
+  const nextPath = sanitizeNextPath(searchParams.get('next'));
 
   async function handleGoogleSignIn() {
     setIsLoading(true);

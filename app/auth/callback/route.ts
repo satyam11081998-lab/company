@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { sanitizeNextPath } from '@/lib/constants';
 
 /**
  * Auth callback used by Google OAuth and Supabase email magic links
@@ -9,7 +10,9 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  const next = url.searchParams.get('next') || '/dashboard';
+  // Same-site only — a crafted next= must not turn the callback into an
+  // open redirect. See sanitizeNextPath.
+  const next = sanitizeNextPath(url.searchParams.get('next'));
 
   if (code) {
     const supabase = createClient();

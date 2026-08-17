@@ -64,6 +64,16 @@ export default function DeckGuestOverlay({
     };
   }, []);
 
+  // Escape closes the overlay (same as the backdrop / "keep reading").
+  useEffect(() => {
+    if (!show) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') dismiss();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [show]);
+
   const next = `/decks/${slug}`;
 
   function dismiss() {
@@ -88,7 +98,12 @@ export default function DeckGuestOverlay({
         className="absolute inset-0 bg-background/70 backdrop-blur-[3px]"
       />
 
-      <div className="animate-fade-in relative z-10 w-full max-w-sm rounded-2xl border border-primary/25 bg-card p-6 text-center shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="deck-guest-overlay-title"
+        className="animate-fade-in relative z-10 w-full max-w-sm rounded-2xl border border-primary/25 bg-card p-6 text-center shadow-2xl"
+      >
         <button
           type="button"
           onClick={dismiss}
@@ -101,7 +116,7 @@ export default function DeckGuestOverlay({
         <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
           <Trophy className="h-5 w-5 text-primary" />
         </div>
-        <h2 className="text-lg font-bold text-foreground">See this winning deck in full</h2>
+        <h2 id="deck-guest-overlay-title" className="text-lg font-bold text-foreground">See this winning deck in full</h2>
         <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed text-muted-foreground">
           Log in or create a free account to unlock more slides
           {competition ? ` from ${competition}` : ''} and every other winning deck in the Vault.

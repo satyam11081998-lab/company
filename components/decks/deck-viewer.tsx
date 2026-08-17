@@ -159,7 +159,7 @@ export default function DeckViewer({
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 key={n}
-                src={`/api/decks/${slug}/page/${n}`}
+                src={`/deck-img/${slug}/${n}.webp`}
                 alt={`${title} slide ${n} of ${pageCount}`}
                 loading={n === 1 ? 'eager' : 'lazy'}
                 draggable={false}

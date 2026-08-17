@@ -17,7 +17,12 @@ interface PageProps {
   params: { slug: string };
 }
 
-export const dynamic = 'force-dynamic';
+// ISR: the page is public and identical for every visitor, so it is CDN-cached
+// and regenerated at most hourly instead of rendered on every request (the old
+// force-dynamic meant two uncached DB reads per hit — generateMetadata + body).
+// New decks render on first hit (dynamicParams default) and cache thereafter;
+// admin visibility/index toggles reflect within the revalidation window.
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const deck = await getDeckBySlug(params.slug);
@@ -91,12 +96,25 @@ export default async function PublicDeckPage({ params }: PageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CreativeWork',
-    'name': deck.title,
+    'name': deckHeading(deck),
+    'alternateName': deck.title,
+    'headline': deckHeading(deck),
     'about': deck.competition,
     'datePublished': deck.year ? `${deck.year}-01-01` : deck.created_at,
     'inLanguage': 'en',
+    // Crawlable (non-/api) image so Google can fetch it for rich results.
+    'image': `${SITE_URL}/deck-img/${deck.slug}/1.webp`,
+    'keywords': [deck.competition, deck.organizer, deck.result, deck.case_type, deck.round_type, deck.year]
+      .filter(Boolean)
+      .join(', '),
+    'publisher': {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      'name': 'MECE',
+    },
     'isPartOf': {
       '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
       'name': 'MECE',
       'url': SITE_URL,
     },
@@ -295,7 +313,7 @@ export default async function PublicDeckPage({ params }: PageProps) {
                 </Link>
                 <Link href="/explore-mece" className="w-full sm:w-auto">
                   <Button variant="outline" size="lg" className="w-full">
-                    Explore MECE Frameworks
+                    Explore MECE
                   </Button>
                 </Link>
               </div>

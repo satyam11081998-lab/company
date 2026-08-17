@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { cache } from 'react';
 
 export interface PublicDeck {
   id: string;
@@ -30,11 +30,27 @@ export interface PublicDeck {
  * NOTE: effective_free_pages is calculated in SQL (effective_free_pages function)
  * so there is never logic drift between the database and application code.
  */
-export async function getDeckBySlug(slug: string): Promise<PublicDeck | null> {
-  const supabase = createClient();
+export const getDeckBySlug = cache(async (slug: string): Promise<PublicDeck | null> => {
+  // Cookieless client ON PURPOSE: the deck page is public and byte-identical for
+  // every visitor, so it must not read cookies — that is exactly what lets the
+  // page be ISR-cached (see `revalidate` in app/decks/[slug]/page.tsx) instead
+  // of re-rendering per request. Wrapped in React cache() so generateMetadata
+  // and the page body share ONE database call per render.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    console.error('[decks] getDeckBySlug: NEXT_PUBLIC_SUPABASE_URL / key missing.');
+    return null;
+  }
+
+  const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+  const supabase = createSupabaseClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
   // Reads through the get_public_deck() SECURITY DEFINER RPC (migration 0049),
   // NOT a direct table select. anon has NO SELECT on deck_skeletons, so the
-  // catalogue's internal columns (storage_path = the gdrive: id behind the
+  // catalogue's internal columns (storage_path = the gdrive id behind the
   // paywall, source_submission_id) are never reachable through the public REST
   // endpoint. The RPC returns only page-safe columns for ACTIVE decks and
   // computes effective_free_pages server-side.
@@ -57,7 +73,7 @@ export async function getDeckBySlug(slug: string): Promise<PublicDeck | null> {
   }
 
   return (data as PublicDeck | null) || null;
-}
+});
 
 /**
  * Fetch all active, indexable decks for sitemap generation.

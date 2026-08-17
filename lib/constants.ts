@@ -165,6 +165,27 @@ export function isPreviewPath(pathname: string): boolean {
 /** Auth pages — if logged in, user gets redirected away from these. */
 export const AUTH_ROUTES: string[] = ['/login', '/signup'];
 
+/**
+ * Sanitise a `?next=` redirect target to a SAME-SITE path.
+ *
+ * Defuses open-redirect via a crafted `/login?next=https://evil.com` (or
+ * `//evil.com`, or a backslash trick like `/\evil.com` that some browsers
+ * normalise to `//evil.com`). Login/reset pages are prime phishing targets, so
+ * the redirect target must be an in-app path or we fall back. Used by the auth
+ * form and the OAuth/magic-link callback — the two places that act on `next`.
+ */
+export function sanitizeNextPath(
+  next: string | null | undefined,
+  fallback = '/dashboard',
+): string {
+  if (!next) return fallback;
+  if (!next.startsWith('/')) return fallback; // must be an in-app path
+  if (next.startsWith('//')) return fallback; // protocol-relative -> off-site
+  if (next.includes('\\')) return fallback; // backslash can normalise to //
+  if (next.includes('://')) return fallback; // embedded absolute URL
+  return next;
+}
+
 /** MECE company page on LinkedIn — footer link + follow-to-unlock target. */
 export const LINKEDIN_COMPANY_URL = 'https://www.linkedin.com/company/mece-in/';
 

@@ -52,6 +52,21 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        // Crawlable image URL for deck slides. The API route
+        // (app/api/decks/[slug]/page/[n]) lives under /api, which robots.txt
+        // disallows — so Google Images could never index a deck slide. Serving
+        // the same bytes at /deck-img/<slug>/<n>.webp fixes that; the .webp
+        // suffix also makes the middleware matcher skip it (no auth round-trip
+        // per image), and the API route still enforces the paywall (403 past
+        // the free limit).
+        source: '/deck-img/:slug/:n',
+        destination: '/api/decks/:slug/page/:n',
+      },
+    ];
+  },
   async redirects() {
     return [
       {
