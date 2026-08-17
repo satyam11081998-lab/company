@@ -32,17 +32,14 @@ export interface PublicDeck {
  */
 export async function getDeckBySlug(slug: string): Promise<PublicDeck | null> {
   const supabase = createClient();
+  // Reads through the get_public_deck() SECURITY DEFINER RPC (migration 0049),
+  // NOT a direct table select. anon has NO SELECT on deck_skeletons, so the
+  // catalogue's internal columns (storage_path = the gdrive: id behind the
+  // paywall, source_submission_id) are never reachable through the public REST
+  // endpoint. The RPC returns only page-safe columns for ACTIVE decks and
+  // computes effective_free_pages server-side.
   const { data, error } = await supabase
-    .from('deck_skeletons')
-    .select(`
-      id, slug, title, source_kind, competition, organizer, result,
-      case_type, round_type, file_type, description, page_count,
-      free_pages, summary, summary_generated_at, pages_rendered_at,
-      is_indexable, is_active, year, created_at,
-      effective_free_pages
-    `)
-    .eq('slug', slug)
-    .eq('is_active', true)
+    .rpc('get_public_deck', { p_slug: slug })
     .maybeSingle();
 
   // Do NOT swallow this. Discarding the error made a SCHEMA failure look
@@ -53,7 +50,8 @@ export async function getDeckBySlug(slug: string): Promise<PublicDeck | null> {
   if (error) {
     console.error(
       `[decks] getDeckBySlug("${slug}") failed: ${error.message}. ` +
-        'If this mentions effective_free_pages, migration 0047 has not been run.',
+        'If this mentions get_public_deck, migration 0049 has not been run; ' +
+        'if it mentions effective_free_pages, migration 0047 has not been run.',
     );
     return null;
   }
@@ -77,13 +75,10 @@ export async function getIndexableDecks(): Promise<Array<{ slug: string; created
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const { data, error } = await client
-      .from('deck_skeletons')
-      .select('slug, created_at, pages_rendered_at')
-      .eq('is_active', true)
-      .eq('is_indexable', true)
-      .not('slug', 'is', null)
-      .order('created_at', { ascending: false });
+    // Via the list_indexable_decks() SECURITY DEFINER RPC (0049) so this works
+    // with the anon key too (no direct table grant to anon); with the service
+    // key it works the same — the function is stable and read-only.
+    const { data, error } = await client.rpc('list_indexable_decks');
 
     // A silent [] here means the sitemap quietly ships without a single deck —
     // the feature looks fine and simply never gets indexed. Say so.
@@ -97,4 +92,43 @@ export async function getIndexableDecks(): Promise<Array<{ slug: string; created
     console.error('[decks] getIndexableDecks threw:', err);
     return [];
   }
+}
+
+/**
+ * The public <h1> for a deck, composed from the fields the admin FILLED IN
+ * rather than whatever ended up in `title`.
+ *
+ * The uploader used to pre-fill `title` from the filename, so decks published
+ * with headings like "flipkart wired final v3 compressed" — a pre-filled field
+ * looks answered and gets skipped. That string was then the single most
+ * important element on an indexed page.
+ *
+ * Composing from competition + year + result also happens to be the strongest
+ * possible H1 for search, because it is exactly the phrase people type:
+ * "Flipkart WiRED 8.0 2026 — National Finalist Deck". The admin's own title is
+ * appended only when it adds something the composed parts do not already say.
+ */
+export function deckHeading(deck: {
+  title?: string | null;
+  competition?: string | null;
+  year?: number | null;
+  result?: string | null;
+}): string {
+  const competition = (deck.competition || '').trim();
+  const result = (deck.result || '').trim();
+  const year = deck.year ? String(deck.year) : '';
+  const title = (deck.title || '').trim();
+
+  const lead = [competition, year].filter(Boolean).join(' ');
+  const composed = [lead, result && `${result} Deck`].filter(Boolean).join(' — ');
+
+  if (!composed) return title || 'Case competition deck';
+
+  // Only append the admin title when it carries information the composed
+  // heading does not — otherwise the H1 repeats itself.
+  const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (title && !norm(composed).includes(norm(title)) && !norm(title).includes(norm(competition))) {
+    return `${composed}: ${title}`;
+  }
+  return composed;
 }

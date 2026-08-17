@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getDeckBySlug } from '@/lib/decks';
+import { getDeckBySlug, deckHeading } from '@/lib/decks';
 import { SITE_URL } from '@/lib/seo';
 import { Lock, ArrowRight, Sparkles, Trophy, Building2, Calendar, FileText, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import AuthCTA from '@/components/auth-cta';
 import DeckViewer from '@/components/decks/deck-viewer';
+import GuestPreviewNav from '@/components/guest/guest-preview-nav';
+import DeckGuestOverlay from '@/components/decks/deck-guest-overlay';
 
 interface PageProps {
   params: { slug: string };
@@ -28,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const competitionText = deck.organizer ? `${deck.competition} (${deck.organizer})` : deck.competition;
   const yearText = deck.year ? ` · ${deck.year}` : '';
-  const title = `${deck.title} — ${deck.result} | MECE Deck Vault`;
+  const title = `${deckHeading(deck)} | MECE Deck Vault`;
   const rawDescription = deck.summary || deck.description || `Read the verified ${deck.result.toLowerCase()} presentation for ${competitionText}${yearText} on MECE.`;
   const description = rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
   const canonicalUrl = `${SITE_URL}/decks/${deck.slug}`;
@@ -121,6 +123,12 @@ export default async function PublicDeckPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* Login / sign-up overlay for LOGGED-OUT visitors. Client-only, so
+          crawlers still receive the full free preview + summary with no overlay.
+          Dismissible → the visitor keeps browsing as an anonymous guest. Its
+          auth links carry ?next=/decks/<slug> so login returns here. */}
+      <DeckGuestOverlay slug={deck.slug} competition={deck.competition} />
+
       {/* Top Navigation */}
       {/* Same chrome as /pricing — the other public, crawlable page. This used
           to hand-roll a text "MECE" wordmark, so a deck page looked like a
@@ -134,13 +142,23 @@ export default async function PublicDeckPage({ params }: PageProps) {
             <Logo isLanding />
           </Link>
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-              Deck Vault
-            </span>
+            {/* Awareness links — a stranger who landed here from Google should
+                be one tap from "what is this / what does it cost". */}
+            <Link href="/methodology" className="hidden md:inline-block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              How it works
+            </Link>
+            <Link href="/pricing" className="hidden md:inline-block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Pricing
+            </Link>
             <ThemeToggle />
             <AuthCTA variant="nav" />
           </div>
         </div>
+        {/* Dashboard / Practice / Leaderboard / Casebook — the SAME section nav a
+            guest sees while exploring. Makes the whole product reachable from a
+            page a stranger landed on; each destination gates its real actions
+            behind sign-in (middleware PREVIEW_ROUTES + the (app) guest chrome). */}
+        <GuestPreviewNav />
       </nav>
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-10">
@@ -164,8 +182,10 @@ export default async function PublicDeckPage({ params }: PageProps) {
             </Badge>
           </div>
 
+          {/* Composed from the admin's structured fields, not the raw title —
+              see deckHeading() in lib/decks.ts for why. */}
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
-            {deck.title}
+            {deckHeading(deck)}
           </h1>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">

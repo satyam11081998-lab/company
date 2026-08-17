@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ensureGuestSession } from '@/lib/guest';
 import { ArrowRight } from 'lucide-react';
@@ -43,6 +44,20 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const { navigate, overlay, router } = useNavLoading('Loading…');
+
+  // Preserve where the visitor is when they choose to authenticate, so login /
+  // sign-up returns them to THIS page instead of always dumping them on the
+  // dashboard. auth-form.tsx already reads `?next=` and honours it for OAuth,
+  // email confirmation and password. Uses ONLY usePathname() (never
+  // useSearchParams) so a statically rendered page like "/" is not forced out
+  // of static generation.
+  const pathname = usePathname();
+  const authNext =
+    pathname && pathname !== '/login' && pathname !== '/signup'
+      ? `?next=${encodeURIComponent(pathname)}`
+      : '';
+  const loginHref = `/login${authNext}`;
+  const signupHref = `/signup${authNext}`;
 
   /**
    * "Explore MECE" for a logged-out visitor.
@@ -166,7 +181,7 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
         {state === 'guest' && (
           <p className="mt-3 text-[12.5px] text-muted-foreground">
             See real cases, guesstimates &amp; the dashboard — no account needed.{' '}
-            <Link href="/signup" className="font-semibold text-primary hover:underline">
+            <Link href={signupHref} className="font-semibold text-primary hover:underline">
               Sign up
             </Link>
           </p>
@@ -194,7 +209,7 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
         <button type="button" onClick={exploreAsGuest} className={`${BIG_PRIMARY} w-fit`}>
           Start your practice here <ArrowRight className="h-4 w-4" />
         </button>
-        <Link href="/signup" className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-2">
+        <Link href={signupHref} className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-2">
           or create an account
         </Link>
       </div>
@@ -220,12 +235,12 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
   return (
     <>
       <Link
-        href="/login"
+        href={loginHref}
         className="hidden sm:inline-block text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors"
       >
         Log in
       </Link>
-      <Link href="/signup" className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap shadow-sm">
+      <Link href={signupHref} className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap shadow-sm">
         Sign up
       </Link>
     </>

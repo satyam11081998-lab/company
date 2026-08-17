@@ -34,13 +34,42 @@ import {
 } from 'lucide-react';
 import type { VaultDeckRow } from '@/app/(app)/admin/decks/page';
 
+// EXHAUSTIVE on purpose. These strings end up on a public, indexed page and
+// they are exactly what a searcher types ("national 1st runner up deck",
+// "zonal finalist", "semi final"). A short list forces the admin into "Other",
+// which erases the precise term the page could have ranked for.
 const CASE_TYPES = [
-  'marketing', 'strategy', 'finance', 'operations', 'product',
-  'sustainability', 'hr', 'general management', 'guesstimate', 'other',
+  'strategy', 'marketing', 'finance', 'operations', 'supply chain',
+  'product', 'technology', 'digital transformation', 'analytics',
+  'consulting', 'market entry', 'growth', 'pricing', 'M&A',
+  'sustainability', 'ESG', 'hr', 'general management',
+  'social impact', 'healthcare', 'retail', 'BFSI', 'guesstimate', 'other',
 ];
+
 const RESULTS = [
-  'National Winner', 'National Runner Up', 'National Finalist',
-  'National Semi Finalist', 'Campus Winner', 'Problem Statement', 'Template', 'Other',
+  'National Winner', 'National 1st Runner Up', 'National 2nd Runner Up',
+  'National Finalist', 'National Semi Finalist',
+  'Zonal Winner', 'Zonal Runner Up', 'Zonal Finalist',
+  'Regional Winner', 'Regional Finalist',
+  'Campus Winner', 'Campus Runner Up', 'Campus Finalist',
+  'Top 5', 'Top 10', 'Top 25', 'Shortlisted', 'Participant',
+  'Problem Statement', 'Template', 'Other',
+];
+
+// Ordered the way a competition actually progresses.
+const ROUND_TYPES: Array<{ value: string; label: string }> = [
+  { value: 'screening', label: 'Screening / submission' },
+  { value: 'campus', label: 'Campus round' },
+  { value: 'zonal', label: 'Zonal round' },
+  { value: 'regional', label: 'Regional round' },
+  { value: 'quarter-final', label: 'Quarter final' },
+  { value: 'semi-final', label: 'Semi final' },
+  { value: 'final', label: 'Final' },
+  { value: 'finale', label: 'Grand finale' },
+  { value: 'live-round', label: 'Live / on-stage round' },
+  { value: 'case-submission', label: 'Case submission' },
+  { value: 'problem-statement', label: 'Problem statement' },
+  { value: 'other', label: 'Other' },
 ];
 
 const MIME_BY_EXT: Record<string, string> = {
@@ -280,9 +309,11 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
               onChange={(e) => {
                 const f = e.target.files?.[0] || null;
                 setFile(f);
-                if (f && !title.trim()) {
-                  setTitle(f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim());
-                }
+                // Deliberately does NOT auto-fill the title from the filename.
+                // That silently published names like "flipkart wired final v3
+                // compressed" as the public <h1>, because a pre-filled field
+                // looks answered and gets skipped. The heading is the single
+                // most important string on an indexed page — type it on purpose.
               }}
               className="mt-1"
             />
@@ -356,12 +387,10 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               {/* @ts-ignore */}
               <SelectContent>
-                {/* @ts-ignore */}
-                <SelectItem value="screening">Screening / submission</SelectItem>
-                {/* @ts-ignore */}
-                <SelectItem value="finale">Finale</SelectItem>
-                {/* @ts-ignore */}
-                <SelectItem value="problem-statement">Problem statement</SelectItem>
+                {ROUND_TYPES.map((r) => (
+                  /* @ts-ignore */
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
