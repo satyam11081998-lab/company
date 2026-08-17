@@ -3,15 +3,26 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDeckBySlug, deckHeading } from '@/lib/decks';
 import { SITE_URL } from '@/lib/seo';
-import { Lock, ArrowRight, Sparkles, Trophy, Building2, Calendar, FileText, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Lock, ArrowRight, Sparkles, Trophy, Building2, Calendar, FileText, CheckCircle2, ShieldCheck, LayoutDashboard, Brain, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import AuthCTA from '@/components/auth-cta';
 import DeckViewer from '@/components/decks/deck-viewer';
-import GuestPreviewNav from '@/components/guest/guest-preview-nav';
 import DeckGuestOverlay from '@/components/decks/deck-guest-overlay';
+import HideForPro from '@/components/decks/hide-for-pro';
+
+// One-line product nav shown on the public deck page. Server-rendered <Link>s so
+// the internal links stay crawlable; icons match the app's section nav.
+const DECK_NAV: Array<{ href: string; label: string; icon: any }> = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/practice', label: 'Practice', icon: Brain },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/learn/casebook', label: 'Casebook', icon: BookOpen },
+  { href: '/methodology', label: 'How it works', icon: null },
+  { href: '/pricing', label: 'Pricing', icon: null },
+];
 
 interface PageProps {
   params: { slug: string };
@@ -155,28 +166,34 @@ export default async function PublicDeckPage({ params }: PageProps) {
           this header. Logo + ThemeToggle + AuthCTA are the shared components,
           so the deck page cannot drift from the rest of the brand again. */}
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex h-14 md:h-16 items-center justify-between">
-          <Link href="/" className="flex items-center -ml-2 shrink-0">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex h-14 md:h-16 items-center gap-3 md:gap-5">
+          <Link href="/" className="flex items-center -ml-1 shrink-0" aria-label="MECE home">
             <Logo isLanding />
           </Link>
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            {/* Awareness links — a stranger who landed here from Google should
-                be one tap from "what is this / what does it cost". */}
-            <Link href="/methodology" className="hidden md:inline-block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              How it works
-            </Link>
-            <Link href="/pricing" className="hidden md:inline-block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
-            </Link>
+
+          {/* Product nav on ONE line with the logo (like the app dashboard nav).
+              On narrow screens the middle scrolls horizontally rather than
+              wrapping to a second row. A logged-in visitor gets back to their
+              dashboard from here (this Dashboard link + AuthCTA's "Open MECE")
+              instead of relying on the browser back button. */}
+          <div className="flex-1 min-w-0 flex items-center gap-0.5 sm:gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {DECK_NAV.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex items-center gap-1.5 shrink-0 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
+              >
+                {Icon && <Icon className="h-4 w-4" />}
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             <ThemeToggle />
             <AuthCTA variant="nav" />
           </div>
         </div>
-        {/* Dashboard / Practice / Leaderboard / Casebook — the SAME section nav a
-            guest sees while exploring. Makes the whole product reachable from a
-            page a stranger landed on; each destination gates its real actions
-            behind sign-in (middleware PREVIEW_ROUTES + the (app) guest chrome). */}
-        <GuestPreviewNav />
       </nav>
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-10">
@@ -273,7 +290,8 @@ export default async function PublicDeckPage({ params }: PageProps) {
         </div>
 
         {lockedPagesList.length > 0 && (
-          <section className="space-y-6 pt-4">
+          <HideForPro>
+            <section className="space-y-6 pt-4">
 
             {/* Paywall CTA Card */}
             <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/10 p-8 text-center space-y-6 shadow-md">
@@ -318,7 +336,8 @@ export default async function PublicDeckPage({ params }: PageProps) {
                 </Link>
               </div>
             </div>
-          </section>
+            </section>
+          </HideForPro>
         )}
       </main>
 

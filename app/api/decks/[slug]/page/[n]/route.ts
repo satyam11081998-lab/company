@@ -1,9 +1,43 @@
 ﻿import { createServiceClient } from '@/lib/supabase/service';
+import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+/**
+ * True when the COOKIE-authenticated caller may read LOCKED pages: an admin, or
+ * an unexpired Pro subscription — the same rule as app/(app)/skeletons/page.tsx
+ * and the client hook lib/use-deck-access.ts.
+ *
+ * Fails CLOSED: any error (no session, RLS, network) returns false, so a locked
+ * slide is only ever served to a verified entitled user. Only called on the
+ * locked branch, so anonymous free-page requests never pay for it and stay
+ * publicly cacheable.
+ */
+async function callerHasFullAccess(): Promise<boolean> {
+  try {
+    const authed = createClient();
+    const {
+      data: { user },
+    } = await authed.auth.getUser();
+    if (!user) return false;
+    const { data } = await authed
+      .from('users')
+      .select('subscription_tier, subscription_expires_at, is_admin')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (!data) return false;
+    if (data.is_admin === true) return true;
+    return (
+      data.subscription_tier === 'pro' &&
+      (!data.subscription_expires_at || new Date(data.subscription_expires_at) > new Date())
+    );
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Public image delivery endpoint for case competition deck slides.
@@ -41,8 +75,17 @@ export async function GET(
 
     const raw = Number(deck.effective_free_pages);
     const effectiveLimit = Number.isFinite(raw) ? raw : 1;
+
+    // Free pages: served to anyone, cached hard (below). Locked pages: 403 for
+    // the public, but a COOKIE-verified Pro/admin gets them — served PRIVATE so
+    // no shared/CDN cache can ever hold an entitled response and leak it to anon.
+    let cacheControl = 'public, max-age=31536000, immutable';
     if (pageNum > effectiveLimit) {
-      return new Response(null, { status: 403 });
+      const entitled = await callerHasFullAccess();
+      if (!entitled) {
+        return new Response(null, { status: 403 });
+      }
+      cacheControl = 'private, max-age=600';
     }
 
     let storagePath = `${deck.id}/${pageNum}.webp`;
@@ -110,7 +153,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': cacheControl,
         'X-Content-Type-Options': 'nosniff',
       },
     });

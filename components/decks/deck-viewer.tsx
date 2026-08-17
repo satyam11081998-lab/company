@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Lock, EyeOff, ArrowRight, Maximize2, Minimize2 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { Button } from '@/components/ui/button';
+import { useIsProViewer } from '@/lib/use-deck-access';
 
 /**
  * Slide viewer for a public deck page.
@@ -42,6 +43,12 @@ export default function DeckViewer({
   const [isFull, setIsFull] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
 
+  const { isPro } = useIsProViewer();
+  // Full access (Pro/admin) unlocks every slide inline; everyone else stops at
+  // the free preview. The image route enforces the SAME rule server-side, so a
+  // client that flips this still cannot fetch a locked slide.
+  const unlocked = isPro ? pageCount : freePages;
+
   // Fullscreen is driven by the BROWSER's state, not a local boolean, because
   // the user can leave via Escape or the OS chrome without touching our button.
   // Keying the label off `document.fullscreenElement` keeps them in sync.
@@ -64,7 +71,7 @@ export default function DeckViewer({
     }
   }, []);
 
-  const isLocked = current > freePages;
+  const isLocked = current > unlocked;
   const go = useCallback(
     (n: number) => setCurrent(Math.min(pageCount, Math.max(1, n))),
     [pageCount],
@@ -134,7 +141,7 @@ export default function DeckViewer({
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
-                Free preview
+                {isPro ? 'Full access' : 'Free preview'}
               </span>
             )}
             <button
@@ -156,7 +163,7 @@ export default function DeckViewer({
         >
           {/* deck-free-preview: matches the JSON-LD isAccessibleForFree selector */}
           <div className="deck-free-preview absolute inset-0">
-            {Array.from({ length: Math.min(freePages, pageCount) }, (_, i) => i + 1).map((n) => (
+            {Array.from({ length: Math.min(unlocked, pageCount) }, (_, i) => i + 1).map((n) => (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 key={n}
@@ -183,10 +190,10 @@ export default function DeckViewer({
               </span>
               <div className="relative z-10 space-y-1">
                 <p className="text-base font-semibold text-foreground">
-                  Slides {freePages + 1}&ndash;{pageCount} are Pro
+                  Slides {unlocked + 1}&ndash;{pageCount} are Pro
                 </p>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  {pageCount - freePages} more slides in this deck, plus every other winning deck in the Vault.
+                  {pageCount - unlocked} more slides in this deck, plus every other winning deck in the Vault.
                 </p>
               </div>
               <Link href="/upgrade?from=deck" onClick={() => track('deck_slide_unlock', { slug })} className="relative z-10">
@@ -222,7 +229,7 @@ export default function DeckViewer({
                 aria-label={`Go to slide ${n}`}
                 onClick={() => go(n)}
                 className={`h-1.5 rounded-full transition-all ${
-                  n === current ? 'w-4 bg-primary' : n <= freePages ? 'w-1.5 bg-muted-foreground/40' : 'w-1.5 bg-muted-foreground/15'
+                  n === current ? 'w-4 bg-primary' : n <= unlocked ? 'w-1.5 bg-muted-foreground/40' : 'w-1.5 bg-muted-foreground/15'
                 }`}
               />
             ))}

@@ -271,11 +271,11 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
             return (
               <Link
                 key={d.id}
-                // Pro/admin -> full DRM reader. Everyone else -> the PUBLIC deck page:
-                  // free preview slides, then the paywall. Sending a free user to
-                  // /skeletons/view only 403s them; /decks/<slug> shows them what
-                  // they would actually be buying.
-                  href={isVaultUnlocked || !d.slug ? `/skeletons/view/${d.id}` : `/decks/${d.slug}`}
+                // Everyone opens the public deck page (/decks/<slug>): free users
+                  // get the preview + paywall, Pro/admin get every slide inline
+                  // (unlocked client-side, enforced server-side in the image route).
+                  // Only a legacy deck with no slug falls back to the admin reader.
+                  href={d.slug ? `/decks/${d.slug}` : `/skeletons/view/${d.id}`}
                 className="block outline-none"
               >
                 <Card className="ui-card flex flex-col p-5 h-full transition-colors hover:border-primary/50 group">
