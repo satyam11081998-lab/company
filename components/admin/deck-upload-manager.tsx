@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -423,57 +423,70 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
             const hasSummary = Boolean(deck.summary);
 
             return (
-              <Card key={deck.id} className={`ui-card p-4 space-y-3 ${deck.is_active ? '' : 'opacity-60'}`}>
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-strong font-semibold text-foreground truncate">{deck.title}</p>
-                        {deck.slug && (
-                          <Link
-                            href={`/decks/${deck.slug}`}
-                            target="_blank"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono"
-                          >
-                            /decks/{deck.slug}
-                            <ExternalLink className="w-3 h-3" />
-                          </Link>
-                        )}
-                      </div>
-                      <p className="text-small text-muted-foreground truncate">
-                        {deck.source_kind === 'corporate' ? 'Corporate' : 'B-school'} · {deck.competition} · {deck.result} · {deck.case_type} · {deck.file_type.toUpperCase()}
-                      </p>
-                      {/* Paywall & SEO tags */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <Badge variant="outline" className="text-xs">
-                          <Lock className="w-3 h-3 mr-1" />
-                          {deck.free_pages !== null ? `${deck.free_pages} free (override)` : 'Auto 25% free'}
-                        </Badge>
-                        <Badge variant="outline" className={deck.is_indexable ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
-                          <Globe className="w-3 h-3 mr-1" />
-                          {deck.is_indexable ? 'Indexed' : 'Noindex'}
-                        </Badge>
-                        <Badge variant="outline" className={isRendered ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'}>
-                          <Layers className="w-3 h-3 mr-1" />
-                          {isRendered ? `${deck.page_count || '?'}p rendered` : 'Not rendered (broken slides)'}
-                        </Badge>
-                        <Badge variant="outline" className={hasSummary ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          {hasSummary ? 'Summary ready' : 'No summary'}
-                        </Badge>
-                      </div>
+              <Card key={deck.id} className={`ui-card p-4 space-y-3 ${deck.is_active ? '' : 'opacity-60 bg-muted/20'}`}>
+                {/* 1-2 lines of clean details across full width */}
+                <div className="space-y-1.5 min-w-0">
+                  {/* Line 1: Title + Slug + Status Badges inline */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <p className="text-base font-semibold text-foreground truncate">{deck.title}</p>
+                      {deck.slug && (
+                        <Link
+                          href={`/decks/${deck.slug}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono bg-primary/10 px-2 py-0.5 rounded shrink-0"
+                        >
+                          /decks/{deck.slug}
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Badges inline */}
+                    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                      <Badge variant="outline" className="text-xs">
+                        <Lock className="w-3 h-3 mr-1" />
+                        {deck.free_pages !== null ? `${deck.free_pages} free` : 'Auto 25% free'}
+                      </Badge>
+                      <Badge variant="outline" className={deck.is_indexable ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
+                        <Globe className="w-3 h-3 mr-1" />
+                        {deck.is_indexable ? 'Indexed' : 'Noindex'}
+                      </Badge>
+                      <Badge variant="outline" className={isRendered ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'}>
+                        <Layers className="w-3 h-3 mr-1" />
+                        {isRendered ? `${deck.page_count || '?'}p rendered` : 'Unrendered'}
+                      </Badge>
+                      <Badge variant="outline" className={hasSummary ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'}>
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        {hasSummary ? 'Summary' : 'No summary'}
+                      </Badge>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {/* Line 2: Structured Metadata */}
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground/80">{deck.source_kind === 'corporate' ? 'Corporate' : 'B-school'}</span>
+                    {deck.competition && <> · <span className="text-foreground/90 font-medium">{deck.competition}</span></>}
+                    {deck.organizer && <> ({deck.organizer})</>}
+                    {deck.year && <> · <span>{deck.year}</span></>}
+                    {deck.result && <> · <span className="font-medium text-primary">{deck.result}</span></>}
+                    {deck.case_type && <> · <span>{deck.case_type}</span></>}
+                    {deck.file_type && <> · <span className="uppercase text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded">{deck.file_type}</span></>}
+                    {deck.description && <> · <span className="italic text-muted-foreground/80">{deck.description}</span></>}
+                  </p>
+                </div>
+
+                {/* Horizontal Action Bar below details */}
+                <div className="pt-2 border-t border-border/50 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {/* Render / Process Trigger */}
                     <Button
                       variant={isRendered && hasSummary ? 'outline' : 'default'}
                       size="sm"
                       disabled={isProcessing}
                       onClick={() => handleProcessDeck(deck.id, 'process')}
-                      className="gap-1.5"
+                      className="h-8 gap-1.5 text-xs"
                     >
                       {isProcessing ? (
                         <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…</>
@@ -484,25 +497,29 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
                       )}
                     </Button>
 
-                    <Button variant="outline" size="sm" onClick={() => handleUpdateFreePages(deck)}>
+                    <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleUpdateFreePages(deck)}>
                       Edit Free
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toggleIndexable(deck)}>
+                    <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => toggleIndexable(deck)}>
                       {deck.is_indexable ? 'Hide SEO' : 'Show SEO'}
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleActive(deck)}>
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => toggleActive(deck)}>
                       {deck.is_active ? <><EyeOff className="h-3.5 w-3.5" /> Hide</> : <><Eye className="h-3.5 w-3.5" /> Show</>}
                     </Button>
                     {deck.summary && (
                       <Button
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
+                        className="h-8 text-xs"
                         onClick={() => setExpandedSummaryId(expandedSummaryId === deck.id ? null : deck.id)}
                       >
                         {expandedSummaryId === deck.id ? 'Hide Summary' : 'View Summary'}
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => handleDelete(deck)}>
+                  </div>
+
+                  <div>
+                    <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(deck)}>
                       <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
                   </div>
