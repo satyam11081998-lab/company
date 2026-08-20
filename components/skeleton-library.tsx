@@ -51,8 +51,10 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
   const [resultFilter, setResultFilter] = useState<string>(ALL_TYPES);
   const [query, setQuery] = useState('');
 
-  // Deck Vault is in development: unlocked for admins only (hasAccess is admin-only server-side).
-  const isVaultUnlocked = hasAccess;
+  // Deck Vault is LIVE for all signed-in users. The catalogue is open to everyone;
+  // free/lite users click through to the PUBLIC deck page (preview + paywall).
+  // Pro users and admins get the full DRM reader. hasAccess controls DRM only.
+  const isVaultUnlocked = true;
 
   const caseTypes = useMemo(
     () => Array.from(new Set(decks.map((d) => d.case_type))).sort((a, b) => a.localeCompare(b)),
@@ -111,36 +113,19 @@ export default function DeckVault({ decks, hasAccess }: DeckVaultProps) {
   // Free and Lite click through to the PUBLIC deck page (preview + paywall);
   // Pro and admins get the full DRM reader. Rendering a coming-soon screen over
   // decks that exist, and whose public pages are already indexed by Google, was
-  // the worst of both worlds — the content was discoverable everywhere except
-  // inside the product.
-  if (!isVaultUnlocked && decks.length === 0) {
+  // Empty-state fallback: only shows when the database query returns zero decks.
+  // Now that the vault is live, this is purely a safety net — not a dev gate.
+  if (decks.length === 0) {
     return (
       <>
         <Card className="ui-card max-w-2xl mx-auto p-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Rocket className="h-6 w-6" />
+            <Layers className="h-6 w-6" />
           </div>
-          <h2 className="text-h2 text-foreground">The Deck Vault is in the workshop</h2>
+          <h2 className="text-h2 text-foreground">No decks available yet</h2>
           <p className="mt-3 text-body text-muted-foreground max-w-lg mx-auto">
-            {decks.length > 0 ? `${decks.length}+ ` : 'A growing collection of '}
-            case-competition decks from national winners, finalists and semi-finalists —
-            corporate flagships and B-school competitions — plus problem statements and templates.
-            We&apos;re still building this — curating the collection and polishing the secure reader before it goes live.
-          </p>
-          <ul className="mt-6 text-left max-w-md mx-auto space-y-2 text-body text-muted-foreground">
-            <li className="flex gap-2"><Building2 className="h-4 w-4 mt-1 text-primary shrink-0" /> Corporate comps: HUL L.I.M.E., Flipkart WiRED, TVS EPIC, Samsung EDGE, Tata Steel-a-thon &amp; more</li>
-            <li className="flex gap-2"><GraduationCap className="h-4 w-4 mt-1 text-primary shrink-0" /> B-school comps: IIM Lucknow, Rohtak, Kashipur, Ranchi winners &amp; national finalists</li>
-            <li className="flex gap-2"><Eye className="h-4 w-4 mt-1 text-primary shrink-0" /> Read inline in our secure DRM viewer</li>
-            <li className="flex gap-2"><ShieldCheck className="h-4 w-4 mt-1 text-primary shrink-0" /> For learning and reference — study the structures, build your own decks</li>
-          </ul>
-          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-5 py-2.5 text-base font-semibold text-primary">
-            <Rocket className="h-5 w-5" /> In active development — launching soon
-          </div>
-          <p className="mt-3 text-small text-muted-foreground">
-            New to competitions? Start with the free{' '}
-            <Link href="/learn/casebook/case-competitions/why-they-matter" className="text-primary hover:underline">
-              Case Competitions track
-            </Link>.
+            We&apos;re adding verified case-competition decks from national winners, finalists and
+            semi-finalists. Check back soon.
           </p>
         </Card>
       </>
