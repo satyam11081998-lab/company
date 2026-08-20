@@ -21,7 +21,7 @@ export const revalidate = 0;
 const SITE = 'https://mece.in';
 
 /** Matches MECE-OL-2026-001 style IDs. */
-const OFFER_ID_RE = /^MECE-OL-\d{4}-\d{3}$/;
+const OFFER_ID_RE = /^MECE-OL-\d{4}-\d{3,5}$/;
 
 interface OfferRecord {
   offer_id: string;

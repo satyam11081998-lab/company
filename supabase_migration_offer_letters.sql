@@ -6,7 +6,7 @@
 -- 1. Table
 CREATE TABLE IF NOT EXISTS public.offer_letters (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  offer_id      text NOT NULL UNIQUE,          -- e.g. MECE-OL-2026-001
+  offer_id      text NOT NULL UNIQUE,          -- e.g. MECE-OL-2026-4632
   candidate_name    text NOT NULL,
   candidate_email   text,
   role_title        text NOT NULL,
@@ -67,7 +67,7 @@ INSERT INTO public.offer_letters (
   engagement_type, duration, start_date, issued_date,
   signatory_name, signatory_title
 ) VALUES (
-  'MECE-OL-2026-001',
+  'MECE-OL-2026-4632',
   'Samridhi Kashyap',
   NULL,  -- fill in her email if you like
   'HR Associate (AI & Competency Assessment)',
