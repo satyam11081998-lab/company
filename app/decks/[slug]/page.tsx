@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getDeckBySlug, deckHeading } from '@/lib/decks';
+import { getDeckBySlug, deckHeading, getRelatedDecks } from '@/lib/decks';
 import { SITE_URL } from '@/lib/seo';
 import { Lock, ArrowRight, Sparkles, Trophy, Building2, Calendar, FileText, CheckCircle2, ShieldCheck, LayoutDashboard, Brain, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -93,6 +93,10 @@ export default async function PublicDeckPage({ params }: PageProps) {
   if (!deck) {
     notFound();
   }
+
+  // Related decks power the crawlable internal-link rail at the bottom of the page
+  // (retention + on-site SEO). Cached alongside the page under ISR (revalidate).
+  const relatedDecks = await getRelatedDecks(deck.slug, 6);
 
   const pageCount = deck.page_count || 12;
   // Effective free pages is derived directly from the SQL database function
@@ -338,6 +342,49 @@ export default async function PublicDeckPage({ params }: PageProps) {
             </div>
             </section>
           </HideForPro>
+        )}
+
+        {/* Related decks — crawlable internal links (retention + SEO). Server
+            rendered <Link>s so Google follows them; only ACTIVE + INDEXABLE decks
+            come back from the RPC, so this never links to a held-for-review page. */}
+        {relatedDecks.length > 0 && (
+          <section className="space-y-5 pt-6 border-t border-border/50">
+            <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+              <Sparkles className="w-4 h-4" />
+              <h2>Related winning decks</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {relatedDecks.map((r) => (
+                <Link
+                  key={r.slug}
+                  href={`/decks/${r.slug}`}
+                  className="group rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 hover:border-primary/30 transition-colors p-4 flex flex-col gap-2"
+                >
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 gap-1 text-xs">
+                      <Trophy className="w-3 h-3" />
+                      {r.result}
+                    </Badge>
+                    {r.year && (
+                      <Badge variant="outline" className="bg-muted text-muted-foreground text-xs gap-1">
+                        <Calendar className="w-3 h-3" /> {r.year}
+                      </Badge>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                    {deckHeading(r)}
+                  </h3>
+                  <div className="mt-auto flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                    <Building2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{r.competition}</span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    View deck <ArrowRight className="w-3 h-3" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
       </main>
 

@@ -75,6 +75,58 @@ export const getDeckBySlug = cache(async (slug: string): Promise<PublicDeck | nu
   return (data as PublicDeck | null) || null;
 });
 
+export interface RelatedDeck {
+  slug: string;
+  title: string;
+  competition: string;
+  organizer: string;
+  company: string;
+  industry: string;
+  case_type: string;
+  result: string;
+  source_kind: string;
+  year: number | null;
+}
+
+/**
+ * Fetch decks related to a given one, for the "Related winning decks" rail.
+ *
+ * Reads through the list_related_decks() SECURITY DEFINER RPC (migration 0053) —
+ * same reason as getDeckBySlug: anon has no direct SELECT on deck_skeletons, and
+ * the RPC returns only page-safe columns for ACTIVE + INDEXABLE decks. The rail is
+ * pure internal linking (crawlable <Link>s), which is one of the strongest on-site
+ * SEO levers, so it must never link to a held-for-review / no-index deck.
+ */
+export const getRelatedDecks = cache(async (slug: string, limit = 6): Promise<RelatedDeck[]> => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  try {
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const supabase = createSupabaseClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data, error } = await supabase.rpc('list_related_decks', { p_slug: slug, p_limit: limit });
+
+    // Don't swallow: an error here silently drops the whole rail. If it mentions
+    // list_related_decks, migration 0053 has not been run.
+    if (error) {
+      console.error(
+        `[decks] getRelatedDecks("${slug}") failed: ${error.message}. ` +
+          'If this mentions list_related_decks, migration 0053 has not been run.',
+      );
+      return [];
+    }
+
+    return (data as RelatedDeck[] | null) || [];
+  } catch (err) {
+    console.error('[decks] getRelatedDecks threw:', err);
+    return [];
+  }
+});
+
 /**
  * Fetch all active, indexable decks for sitemap generation.
  */
