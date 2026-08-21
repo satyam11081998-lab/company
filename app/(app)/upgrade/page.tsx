@@ -5,7 +5,6 @@ import Script from "next/script";
 import { Check, Star, Zap, ShieldCheck, Sparkles, Minus, Ticket, X } from "lucide-react";
 import { useUser } from "@/components/user-context";
 import TeamsContactBanner from "@/components/teams-contact-banner";
-import { DeckVaultBanner, DeckVaultPopup } from "@/components/deck-vault/deck-vault-promo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { VOICE_INTERVIEW_ENABLED } from "@/lib/constants";
@@ -166,9 +165,6 @@ export default function UpgradePage() {
       {/* Load Razorpay SDK */}
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
-      {/* One-time Deck Vault nudge for non-Pro visitors */}
-      <DeckVaultPopup surface="upgrade" />
-
       <main className="container max-w-5xl mx-auto space-y-10">
         {/* Header */}
         <div className="flex flex-col items-center justify-center text-center animate-fade-in">
@@ -183,9 +179,6 @@ export default function UpgradePage() {
             practice bank, GD briefs, and unlimited re-attempts.
           </p>
         </div>
-
-        {/* Deck Vault Rewards — won a case comp? up to 35% off */}
-        {tier !== "pro" && <DeckVaultBanner className="max-w-2xl mx-auto -mt-4" />}
 
         {/* Billing period toggle */}
         <div className="flex justify-center -mt-4">
@@ -326,7 +319,7 @@ export default function UpgradePage() {
                 {VOICE_INTERVIEW_ENABLED && (
                   <FeatureItem text="Voice interview — speak the case aloud, hear the interviewer reply" />
                 )}
-                <FeatureItem muted text="Deck Vault — coming soon" />
+                <FeatureItem text="Deck Vault — winning corporate case decks, unlocked" />
               </ul>
               <button
                 onClick={() => handleUpgrade("pro")}

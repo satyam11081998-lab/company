@@ -8,7 +8,6 @@ import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
 import { GUESSTIMATE_DIMENSIONS, type GuesstimateDimension } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
-import { DeckVaultPopup } from '@/components/deck-vault/deck-vault-promo';
 import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
 import GuestStartButton from '@/components/guest/guest-start-button';
@@ -342,9 +341,6 @@ export default async function DashboardPage() {
         todayMeta={todayMeta}
         dailyProgress={dailyProgress}
       />
-      {/* Deck Vault Rewards — one-time nudge (client component, localStorage-gated,
-          renders nothing for Pro users or after first view). */}
-      <DeckVaultPopup surface="dashboard" />
     </div>
   );
 }
