@@ -180,6 +180,9 @@ export default function UpgradePage() {
           </p>
         </div>
 
+        {/* Colleges & clubs — highlighted institutional group-access banner */}
+        <TeamsContactBanner />
+
         {/* Billing period toggle */}
         <div className="flex justify-center -mt-4">
           <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1">
@@ -337,9 +340,6 @@ export default function UpgradePage() {
             </div>
           </div>
         </div>
-
-        {/* Colleges & clubs — quiet B2B contact line, not a focus */}
-        <TeamsContactBanner />
       </main>
     </div>
   );

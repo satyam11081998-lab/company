@@ -174,7 +174,9 @@ export default function PricingPage() {
         {/* ── Pricing Cards ──────────────────────────────────────────── */}
         <section className="container max-w-5xl mx-auto px-4 py-10">
           <PricingPlans />
-          <div className="mt-6">
+          {/* Institutions band — sits right after the self-serve tiers, its own
+              highlighted contact-us slot (the conventional enterprise placement). */}
+          <div className="mt-10">
             <TeamsContactBanner />
           </div>
         </section>

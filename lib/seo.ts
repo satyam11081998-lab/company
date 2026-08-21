@@ -10,9 +10,9 @@ import { CASEBOOK_TREE } from '@/lib/casebook/tree';
 
 export const SITE_URL = 'https://mece.in';
 export const SITE_NAME = 'MECE';
-export const SITE_TITLE = 'MECE — Placement interview prep for Indian MBA students';
+export const SITE_TITLE = 'Practice real cases & guesstimates for MBA placements | MECE';
 export const SITE_DESC =
-  'Cases, frameworks, GD briefs, and structured feedback for MBA & PGDM placement interviews — consulting, finance, marketing, product, ops.';
+  'Practice guesstimates and real business cases, not textbook samples, scored in about 60 seconds. MBA & PGDM placement-interview prep for India. Free to start.';
 
 export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
