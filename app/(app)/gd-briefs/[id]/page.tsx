@@ -20,6 +20,10 @@ export default function BriefDetailPage() {
   const [brief, setBrief] = useState<GeneratedBriefData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // point_texts from this brief that are ALREADY on the user's cheat sheet (any
+  // domain tag). Fetched once per brief so each save-star can show its persisted
+  // "already added" state instead of resetting to an empty star on every reload.
+  const [savedPoints, setSavedPoints] = useState<Set<string>>(new Set());
   const { user, hasTierAccess } = useUser();
   const locked = !hasTierAccess('lite');
 
@@ -98,6 +102,28 @@ export default function BriefDetailPage() {
     return () => { mounted = false; };
   }, [headlineId, gate]);
 
+  // Once the brief is loaded, look up which of its data points the user has
+  // already saved to their cheat sheet (RLS scopes this to their own rows) so
+  // the save-stars render in the persisted "added" state.
+  useEffect(() => {
+    let mounted = true;
+    if (!user || !brief || brief.data_points.length === 0) {
+      setSavedPoints(new Set());
+      return;
+    }
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('cheatsheet_points')
+        .select('point_text')
+        .eq('user_id', user.id)
+        .in('point_text', brief.data_points);
+      if (!mounted) return;
+      setSavedPoints(new Set((data ?? []).map((r: { point_text: string }) => r.point_text)));
+    })();
+    return () => { mounted = false; };
+  }, [user, brief]);
+
   if (gate === 'denied') {
     return (
       <div className="min-h-screen bg-muted">
@@ -156,7 +182,7 @@ export default function BriefDetailPage() {
           <div className="flex gap-8 items-start">
             {/* Main content */}
             <div className="flex-1 min-w-0">
-              <BriefContent brief={brief} freeUnlocked={locked} />
+              <BriefContent brief={brief} freeUnlocked={locked} savedPoints={savedPoints} />
             </div>
             {/* Right Rail: On This Page sidebar (hidden on small screens) */}
             <BriefOnThisPage brief={brief} />
@@ -167,7 +193,7 @@ export default function BriefDetailPage() {
   );
 }
 
-function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean }) {
+function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean; savedPoints?: Set<string> }) {
   const b = props.brief;
   return (
     <article className="space-y-6">
@@ -272,6 +298,7 @@ function BriefContent(props: { brief: GeneratedBriefData; freeUnlocked?: boolean
                   sourceTopic={b.headline_title}
                   sourceHeadlineId={b.headline_id}
                   freeUnlocked={props.freeUnlocked}
+                  initiallySaved={props.savedPoints?.has(dp) ?? false}
                 />
               </li>
             ))}

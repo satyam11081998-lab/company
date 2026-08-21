@@ -17,6 +17,7 @@ export function AddToCheatSheetButton({
   sourceHeadlineId,
   sourceKind = 'data_point',
   freeUnlocked = false,
+  initiallySaved = false,
 }: {
   content: string;
   sourceTopic: string;
@@ -24,12 +25,17 @@ export function AddToCheatSheetButton({
   sourceKind?: CheatSheetItemKind;
   /** free tier: this point comes from the user's one unlocked GD brief, so saving is allowed */
   freeUnlocked?: boolean;
+  /** this point is already on the user's cheat sheet (persisted in the DB) — start in the
+   *  saved state so the checkmark shows across reloads/logins instead of resetting to a star */
+  initiallySaved?: boolean;
 }) {
   const { user, hasTierAccess } = useUser();
   // Free-tier rework: cheat sheet is Lite+ (was Pro-only); free users can save
   // points from THEIR one unlocked brief. RLS (migration 0038) is the real gate.
   const canSave = hasTierAccess('lite') || freeUnlocked;
-  const [state, setState] = useState<'idle' | 'input' | 'saving' | 'added' | 'already_added'>('idle');
+  const [state, setState] = useState<'idle' | 'input' | 'saving' | 'added' | 'already_added'>(
+    initiallySaved ? 'already_added' : 'idle',
+  );
   const [tag, setTag] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +44,15 @@ export function AddToCheatSheetButton({
       inputRef.current.focus();
     }
   }, [state]);
+
+  // The saved-state lookup on the parent resolves asynchronously, so `initiallySaved`
+  // can flip to true AFTER first render. Reflect it — but only from a neutral idle
+  // state, never clobbering an in-progress tag input, save, or a just-saved success.
+  useEffect(() => {
+    if (initiallySaved) {
+      setState((s) => (s === 'idle' ? 'already_added' : s));
+    }
+  }, [initiallySaved]);
 
   if (!canSave) {
     return (
