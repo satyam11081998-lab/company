@@ -175,8 +175,10 @@ export default function BroadcastComposer() {
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          Bulk email sends via Resend — requires <code>RESEND_API_KEY</code> and a verified sender domain.
-          Upgrade receipts send via Google Workspace SMTP.
+          Bulk email sends for free via your Google Workspace / Gmail SMTP (<code>GMAIL_USER</code> +{' '}
+          <code>GMAIL_APP_PASSWORD</code>) — best for up to a few hundred recipients per send. Set{' '}
+          <code>RESEND_API_KEY</code> to switch to the high-volume path automatically. Unsubscribed users are
+          always skipped and an unsubscribe link is added to every email.
         </p>
       </div>
     </Card>

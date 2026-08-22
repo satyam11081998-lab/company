@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/components/user-context';
-import SignOutButton from '@/components/sign-out-button';
 import ThemeToggle from '@/components/theme-toggle';
 import TierBadge from '@/components/tier-badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -328,9 +327,6 @@ export default function AppNav() {
                   Manage plan
                 </Link>
               )}
-              <div className="hidden md:block shrink-0 whitespace-nowrap">
-                <SignOutButton />
-              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -420,7 +416,6 @@ export default function AppNav() {
                   <Sparkles className="h-4 w-4" /> Manage plan
                 </Link>
               )}
-              <SignOutButton />
             </div>
           </div>
         </div>,

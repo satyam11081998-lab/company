@@ -75,39 +75,95 @@ export interface BulkResult {
   error?: string;
 }
 
-/** Bulk send via Resend batch API (https://resend.com), 100 messages per request. */
+/**
+ * Bulk send. Two transports, chosen automatically:
+ *   1. If RESEND_API_KEY is set → Resend batch API (best deliverability at volume).
+ *   2. Otherwise → FREE fallback over Gmail / Google Workspace SMTP (the same
+ *      credentials transactional receipts already use). No paid service needed.
+ *
+ * The SMTP fallback sends sequentially through one pooled connection with a
+ * gentle throttle, so it stays within Gmail's limits (~500/day on consumer
+ * Gmail, ~2000/day on Workspace). It is intended for MECE's scale (tens–low
+ * hundreds of recipients per send). For a very large list, send in segments,
+ * or set RESEND_API_KEY to switch to the volume path automatically.
+ */
 export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
   const key = process.env.RESEND_API_KEY;
-  if (!key) {
-    console.warn('[email] RESEND_API_KEY not set — skipping bulk send');
-    return { sent: 0, failed: messages.length, skipped: true, error: 'RESEND_API_KEY not configured' };
+  if (key) {
+    let sent = 0;
+    let failed = 0;
+    for (let i = 0; i < messages.length; i += 100) {
+      const batch = messages.slice(i, i + 100).map((m) => ({
+        from: EMAIL_FROM,
+        to: [m.to],
+        subject: m.subject,
+        html: m.html,
+        text: m.text,
+      }));
+      try {
+        const res = await fetch('https://api.resend.com/emails/batch', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(batch),
+        });
+        if (res.ok) {
+          sent += batch.length;
+        } else {
+          failed += batch.length;
+          console.error('[email] resend batch failed:', res.status, await res.text().catch(() => ''));
+        }
+      } catch (e: any) {
+        failed += batch.length;
+        console.error('[email] resend batch error:', e?.message || e);
+      }
+    }
+    return { sent, failed };
   }
+
+  // FREE fallback — Gmail / Workspace SMTP via nodemailer.
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) {
+    console.warn('[email] no bulk transport configured (need RESEND_API_KEY, or GMAIL_USER + GMAIL_APP_PASSWORD)');
+    return {
+      sent: 0,
+      failed: messages.length,
+      skipped: true,
+      error: 'Email not configured. Set GMAIL_USER + GMAIL_APP_PASSWORD (free) or RESEND_API_KEY.',
+    };
+  }
+
   let sent = 0;
   let failed = 0;
-  for (let i = 0; i < messages.length; i += 100) {
-    const batch = messages.slice(i, i + 100).map((m) => ({
-      from: EMAIL_FROM,
-      to: [m.to],
-      subject: m.subject,
-      html: m.html,
-      text: m.text,
-    }));
-    try {
-      const res = await fetch('https://api.resend.com/emails/batch', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(batch),
-      });
-      if (res.ok) {
-        sent += batch.length;
-      } else {
-        failed += batch.length;
-        console.error('[email] resend batch failed:', res.status, await res.text().catch(() => ''));
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user, pass },
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 100,
+  });
+  try {
+    for (const m of messages) {
+      try {
+        await transporter.sendMail({
+          from: EMAIL_FROM,
+          to: m.to,
+          subject: m.subject,
+          html: m.html,
+          text: m.text,
+        });
+        sent += 1;
+      } catch (e: any) {
+        failed += 1;
+        console.error('[email] smtp bulk send failed for', m.to, '-', e?.message || e);
       }
-    } catch (e: any) {
-      failed += batch.length;
-      console.error('[email] resend batch error:', e?.message || e);
+      // Gentle throttle so a burst does not trip Gmail's rate limiter.
+      await new Promise((r) => setTimeout(r, 350));
     }
+  } finally {
+    transporter.close();
   }
   return { sent, failed };
 }

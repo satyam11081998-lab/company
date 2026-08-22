@@ -12,11 +12,24 @@ import {
   type CouponRow,
 } from '@/lib/coupons';
 
+// SECURITY (2026-08-22): in PRODUCTION, refuse to honour a payment made against
+// TEST-MODE Razorpay keys. A test-mode checkout produces a genuinely valid
+// signature (signed with the test secret) and would otherwise pass every check
+// below and grant real Pro for a free test card — money that never appears in
+// the Live dashboard. Fail closed: if prod is misconfigured onto test keys,
+// upgrades stop working (loudly) instead of being given away silently.
+function testKeysInProduction(): boolean {
+  const isProd =
+    process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+  const keyId = process.env.RAZORPAY_KEY_ID || '';
+  return isProd && keyId.startsWith('rzp_test');
+}
+
 export async function POST(req: Request) {
   try {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -28,6 +41,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: 'Create an account before purchasing — your practice will carry over.' },
         { status: 403 },
+      );
+    }
+
+    if (testKeysInProduction()) {
+      console.error('[verify] BLOCKED: RAZORPAY_KEY_ID is a rzp_test key in a production deploy.');
+      return NextResponse.json(
+        { error: 'Payments are temporarily unavailable. Please try again later.' },
+        { status: 503 },
       );
     }
 
@@ -44,7 +65,7 @@ export async function POST(req: Request) {
 
     const secret = process.env.RAZORPAY_KEY_SECRET!;
     const bodyText = razorpay_order_id + '|' + razorpay_payment_id;
-    
+
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(bodyText.toString())
@@ -93,6 +114,30 @@ export async function POST(req: Request) {
       }
       if (order.notes && order.notes.tier && order.notes.tier !== tier) {
         return NextResponse.json({ error: 'Plan mismatch' }, { status: 400 });
+      }
+
+      // SECURITY (2026-08-22): confirm the PAYMENT is real and captured.
+      // The signature check only proves that whoever produced `signature` holds
+      // the key secret — it does NOT prove a payment was actually made or that
+      // `razorpay_payment_id` even exists. Fetch the payment from Razorpay and
+      // assert it is CAPTURED, belongs to THIS order, and settled the expected
+      // amount. A fabricated/forged payment id (e.g. from a leaked secret) does
+      // not exist at Razorpay and 404s here; an authorized-but-uncaptured or
+      // failed payment is rejected too.
+      let payment: any;
+      try {
+        payment = await instance.payments.fetch(razorpay_payment_id);
+      } catch {
+        return NextResponse.json({ error: 'Payment could not be verified with Razorpay' }, { status: 400 });
+      }
+      if (!payment || payment.order_id !== razorpay_order_id) {
+        return NextResponse.json({ error: 'Payment does not belong to this order' }, { status: 400 });
+      }
+      if (payment.status !== 'captured') {
+        return NextResponse.json({ error: 'Payment has not been captured' }, { status: 400 });
+      }
+      if (Number(payment.amount) !== expectedPaise) {
+        return NextResponse.json({ error: 'Captured amount does not match the selected plan' }, { status: 400 });
       }
 
       // Privileged writes MUST run as the service role. Migration 0006's
@@ -195,4 +240,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

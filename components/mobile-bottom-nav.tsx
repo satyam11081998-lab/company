@@ -20,7 +20,6 @@ import {
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useUser } from '@/components/user-context';
-import SignOutButton from '@/components/sign-out-button';
 
 /**
  * Single source of truth for mobile navigation.
@@ -192,9 +191,6 @@ export default function MobileBottomNav() {
                   <Sparkles className="h-4 w-4" /> Manage plan
                 </Link>
               )}
-              <div className="px-1">
-                <SignOutButton />
-              </div>
             </div>
           </div>
         </div>,
