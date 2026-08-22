@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { deleteFile, isDrivePath, driveFileId } from '@/lib/google-drive';
 
@@ -19,7 +20,39 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    if (body?.action !== 'delete' || !body?.deckId) {
+    if (!body?.deckId) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+
+    // Set free-preview pages AND revalidate the public deck page. The admin used
+    // to write deck_skeletons.free_pages straight from the client, but the public
+    // /decks/[slug] page is ISR-cached (revalidate = 3600), so a lowered limit
+    // did not take effect for up to an hour — it looked like the lock was being
+    // ignored. Writing it here lets us revalidate the exact path so the new limit
+    // goes live immediately.
+    if (body.action === 'set_free_pages') {
+      const val = body.freePages;
+      if (val !== null && (typeof val !== 'number' || !Number.isFinite(val) || val < 0)) {
+        return NextResponse.json(
+          { error: 'Free pages must be a non-negative number or null.' },
+          { status: 400 },
+        );
+      }
+      const { data: updated, error: updErr } = await supabase
+        .from('deck_skeletons')
+        .update({ free_pages: val })
+        .eq('id', body.deckId)
+        .select('slug')
+        .maybeSingle();
+      if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+      if (updated?.slug) {
+        // Bust the ISR cache for the public deck page so the new lock is live now.
+        revalidatePath(`/decks/${updated.slug}`);
+      }
+      return NextResponse.json({ success: true, slug: updated?.slug ?? null });
+    }
+
+    if (body.action !== 'delete') {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 

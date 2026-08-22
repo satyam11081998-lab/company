@@ -173,13 +173,23 @@ export default function MobileBottomNav() {
             <div className="border-t border-border mx-3 my-2" />
 
             <div className="px-3 pb-1 flex flex-col gap-2">
-              {!isPro && (
+              {!isPro ? (
                 <Link
                   href="/upgrade"
                   onClick={() => setMoreOpen(false)}
                   className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-white font-semibold text-[15px] hover:bg-primary-hover transition-colors"
                 >
                   <Sparkles className="h-4 w-4" /> Upgrade to Pro
+                </Link>
+              ) : (
+                // Pro users still need /upgrade — extend to a longer plan or ask
+                // about institutional/college access.
+                <Link
+                  href="/upgrade"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-primary/30 bg-primary/5 text-primary font-semibold text-[15px] hover:bg-primary/10 transition-colors"
+                >
+                  <Sparkles className="h-4 w-4" /> Manage plan
                 </Link>
               )}
               <div className="px-1">

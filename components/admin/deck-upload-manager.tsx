@@ -264,13 +264,21 @@ export default function DeckUploadManager({ initialDecks }: { initialDecks: Vaul
       toast.error('Free pages must be a non-negative number.');
       return;
     }
-    const { error } = await supabase
-      .from('deck_skeletons')
-      .update({ free_pages: val })
-      .eq('id', deck.id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success(`Free pages set to ${val === null ? 'computed default (25%)' : val}.`);
+    // Route through the admin server endpoint so it can revalidate the public
+    // /decks/[slug] ISR cache — a direct client update leaves the public page
+    // stale for up to an hour, which is why a lowered limit "did not lock".
+    const res = await fetch('/api/skeletons/manage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_free_pages', deckId: deck.id, freePages: val }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(data?.error || 'Could not update free pages.');
+    } else {
+      toast.success(
+        `Free pages set to ${val === null ? 'computed default (25%)' : val} — live now.`,
+      );
       router.refresh();
     }
   };

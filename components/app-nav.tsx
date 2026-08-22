@@ -309,13 +309,23 @@ export default function AppNav() {
                 )}
                 </span>
               </Link>
-              {tier !== 'pro' && (
-                <Link 
-                  href="/upgrade" 
+              {tier !== 'pro' ? (
+                <Link
+                  href="/upgrade"
                   className="hidden md:inline-flex shrink-0 whitespace-nowrap items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1.5 border border-primary/20 rounded bg-primary/5"
                 >
                   <Sparkles className="h-3 w-3 shrink-0" />
                   Upgrade
+                </Link>
+              ) : (
+                // Pro users still need /upgrade — to extend to a longer plan
+                // (quarterly) or ask about institutional/college access.
+                <Link
+                  href="/upgrade"
+                  className="hidden md:inline-flex shrink-0 whitespace-nowrap items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 border border-border rounded"
+                >
+                  <Sparkles className="h-3 w-3 shrink-0" />
+                  Manage plan
                 </Link>
               )}
               <div className="hidden md:block shrink-0 whitespace-nowrap">
@@ -393,13 +403,21 @@ export default function AppNav() {
                 <span className="font-mono text-base font-medium text-primary tabular-nums">{user.points}</span>
                 <span className="text-xs">points</span>
               </div>
-              {tier !== 'pro' && (
+              {tier !== 'pro' ? (
                 <Link
                   href="/upgrade"
                   onClick={() => setMenuOpen(false)}
                   className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-primary px-3 py-2 border border-primary/30 rounded bg-primary/5"
                 >
                   <Sparkles className="h-4 w-4" /> Upgrade to Pro
+                </Link>
+              ) : (
+                <Link
+                  href="/upgrade"
+                  onClick={() => setMenuOpen(false)}
+                  className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-muted-foreground px-3 py-2 border border-border rounded"
+                >
+                  <Sparkles className="h-4 w-4" /> Manage plan
                 </Link>
               )}
               <SignOutButton />
