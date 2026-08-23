@@ -135,6 +135,7 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
 
   let sent = 0;
   let failed = 0;
+  let firstError: string | undefined;
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -145,7 +146,21 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
     maxMessages: 100,
   });
   try {
-    for (const m of messages) {
+    // Verify the connection ONCE. A bad app password otherwise fails on every
+    // single message, wasting the whole function budget before reporting it.
+    try {
+      await transporter.verify();
+    } catch (e: any) {
+      transporter.close();
+      return {
+        sent: 0,
+        failed: messages.length,
+        skipped: true,
+        error: `SMTP connection failed (${e?.message || e}). Check GMAIL_USER / GMAIL_APP_PASSWORD.`,
+      };
+    }
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i];
       try {
         await transporter.sendMail({
           from: EMAIL_FROM,
@@ -157,15 +172,19 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
         sent += 1;
       } catch (e: any) {
         failed += 1;
+        if (!firstError) firstError = e?.message || String(e);
         console.error('[email] smtp bulk send failed for', m.to, '-', e?.message || e);
       }
-      // Gentle throttle so a burst does not trip Gmail's rate limiter.
-      await new Promise((r) => setTimeout(r, 350));
+      // Gentle throttle so a burst does not trip Gmail's rate limiter — but not
+      // after the final message, and small enough to stay within the function
+      // budget for a few-hundred-recipient send.
+      if (i < messages.length - 1) await new Promise((r) => setTimeout(r, 120));
     }
   } finally {
     transporter.close();
   }
-  return { sent, failed };
+  // Surface the cause when nothing got through (e.g. rate-limited, all bounced).
+  return { sent, failed, error: sent === 0 && firstError ? firstError : undefined };
 }
 
 // ---------------------------------------------------------------------------
