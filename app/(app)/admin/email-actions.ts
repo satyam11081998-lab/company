@@ -86,6 +86,12 @@ export async function sendBroadcast(input: {
   ctaUrl?: string;
   segmentType: SegmentType;
   segmentValue: string;
+  // When true, bodyHtml is a COMPLETE email document and is sent verbatim —
+  // it is NOT wrapped in baseEmailLayout (no extra header/footer). Any
+  // `{{UNSUBSCRIBE}}` token in it is replaced per-recipient with their unique
+  // unsubscribe link. Use this for full custom designs; leave off for the
+  // composer's simple heading+body path.
+  bodyIsFullHtml?: boolean;
 }): Promise<BroadcastResult> {
   await requireAdmin();
   const subject = (input.subject || '').trim();
@@ -105,13 +111,15 @@ export async function sendBroadcast(input: {
   const messages = recipients.map((r) => ({
     to: r.email,
     subject,
-    html: broadcastEmail({
-      heading,
-      bodyHtml,
-      ctaLabel: input.ctaLabel,
-      ctaUrl: input.ctaUrl,
-      unsubscribeUrl: unsubscribeUrl(r.id),
-    }),
+    html: input.bodyIsFullHtml
+      ? bodyHtml.replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/g, unsubscribeUrl(r.id))
+      : broadcastEmail({
+          heading,
+          bodyHtml,
+          ctaLabel: input.ctaLabel,
+          ctaUrl: input.ctaUrl,
+          unsubscribeUrl: unsubscribeUrl(r.id),
+        }),
   }));
 
   const result = await sendBulk(messages);

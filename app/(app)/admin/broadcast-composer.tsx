@@ -37,6 +37,7 @@ export default function BroadcastComposer() {
   const [ctaUrl, setCtaUrl] = useState('');
   const [segmentType, setSegmentType] = useState<SegmentType>('all');
   const [segmentValue, setSegmentValue] = useState('all');
+  const [rawHtml, setRawHtml] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [busy, setBusy] = useState<'preview' | 'send' | null>(null);
   const [log, setLog] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -65,15 +66,22 @@ export default function BroadcastComposer() {
     if (!confirm(`Send "${subject}" to ${count ?? 'all matching'} — ${who}? This emails real users.`)) return;
     setBusy('send');
     setLog(null);
-    const html = body.replace(/\n/g, '<br/>');
+    // Custom-HTML mode: send the pasted markup verbatim (do NOT convert newlines
+    // to <br/> — that would corrupt real HTML — and do NOT wrap it in the shell).
+    // Auto-detect a full document even if the box is unchecked, so pasting a
+    // complete email can never get double-wrapped or riddled with <br/>.
+    const looksLikeFullDoc = /^\s*<(?:!doctype|html)\b/i.test(body);
+    const useRaw = rawHtml || looksLikeFullDoc;
+    const html = useRaw ? body : body.replace(/\n/g, '<br/>');
     const r = await sendBroadcast({
       subject: subject.trim(),
       heading: (heading || subject).trim(),
       bodyHtml: html,
-      ctaLabel: ctaLabel.trim() || undefined,
-      ctaUrl: ctaUrl.trim() || undefined,
+      ctaLabel: useRaw ? undefined : ctaLabel.trim() || undefined,
+      ctaUrl: useRaw ? undefined : ctaUrl.trim() || undefined,
       segmentType,
       segmentValue,
+      bodyIsFullHtml: useRaw,
     });
     if (r.success) {
       setLog({
@@ -124,24 +132,42 @@ export default function BroadcastComposer() {
           </select>
         </div>
 
+        <label className="flex items-center gap-2 text-sm text-foreground select-none">
+          <input
+            type="checkbox"
+            checked={rawHtml}
+            onChange={(e) => setRawHtml(e.target.checked)}
+            className="h-4 w-4 accent-primary"
+          />
+          Send a custom, full-width HTML email (paste a complete design — it is sent exactly as-is, with no extra header or footer)
+        </label>
+
         <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject line" className={inputCls} />
-        <input
-          value={heading}
-          onChange={(e) => setHeading(e.target.value)}
-          placeholder="Email heading (optional — defaults to the subject)"
-          className={inputCls}
-        />
+        {!rawHtml && (
+          <input
+            value={heading}
+            onChange={(e) => setHeading(e.target.value)}
+            placeholder="Email heading (optional — defaults to the subject)"
+            className={inputCls}
+          />
+        )}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          rows={6}
-          placeholder="Your message… (line breaks are preserved; basic HTML is allowed)"
-          className={`${inputCls} h-auto py-2 resize-y`}
+          rows={rawHtml ? 12 : 6}
+          placeholder={
+            rawHtml
+              ? 'Paste the FULL email HTML here (the entire document). Include {{UNSUBSCRIBE}} where the unsubscribe link should go — it is filled in per recipient.'
+              : 'Your message… (line breaks are preserved; basic HTML is allowed)'
+          }
+          className={`${inputCls} h-auto py-2 resize-y ${rawHtml ? 'font-mono text-xs' : ''}`}
         />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} placeholder="Button label (optional)" className={inputCls} />
-          <input value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="Button URL (optional)" className={inputCls} />
-        </div>
+        {!rawHtml && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} placeholder="Button label (optional)" className={inputCls} />
+            <input value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="Button URL (optional)" className={inputCls} />
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <Button variant="outline" onClick={doPreview} disabled={busy !== null} className="h-10 gap-2">
@@ -178,7 +204,8 @@ export default function BroadcastComposer() {
           Bulk email sends for free via your Google Workspace / Gmail SMTP (<code>GMAIL_USER</code> +{' '}
           <code>GMAIL_APP_PASSWORD</code>) — best for up to a few hundred recipients per send. Set{' '}
           <code>RESEND_API_KEY</code> to switch to the high-volume path automatically. Unsubscribed users are
-          always skipped and an unsubscribe link is added to every email.
+          always skipped. In the default mode an unsubscribe link is added automatically; in{' '}
+          <strong>custom HTML</strong> mode, put <code>{'{{UNSUBSCRIBE}}'}</code> in your HTML where the link should appear.
         </p>
       </div>
     </Card>
