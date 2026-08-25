@@ -11,13 +11,13 @@ const PAGE_TITLE = 'Scoring methodology';
 
 export const metadata = {
   title: 'Scoring methodology',
-  description: 'How MECE scores case-interview and GD practice — a transparent 100-point rubric across six dimensions, an arithmetic backstop that verifies your math, written feedback in ~60 seconds, and live percentile ranks against MBA aspirants across India.',
+  description: 'How MECE scores case-interview and GD practice — a transparent 100-point rubric across six dimensions, an arithmetic backstop that verifies your math, written feedback in ~60 seconds, and live percentile ranks against MBA aspirants.',
   alternates: { canonical: '/methodology' },
 };
 
 const articleJsonLd = genericArticleJsonLd({
   title: PAGE_TITLE,
-  description: 'How MECE scores case-interview and GD practice — a transparent 100-point rubric across six dimensions, an arithmetic backstop, and percentile ranks against MBA aspirants across India.',
+  description: 'How MECE scores case-interview and GD practice — a transparent 100-point rubric across six dimensions, an arithmetic backstop, and percentile ranks against MBA aspirants.',
   url: '/methodology',
   datePublished: '2025-01-01',
   dateModified: '2026-06-12',
@@ -42,7 +42,7 @@ const METHODOLOGY_FAQS = [
   {
     question: 'How is my percentile calculated?',
     answer:
-      'Your points accumulate across submissions and are ranked live against other MBA aspirants practising on MECE across India, so your percentile reflects the active pool rather than a fixed curve.',
+      'Your points accumulate across submissions and are ranked live against other MBA aspirants practising on MECE, so your percentile reflects the active pool rather than a fixed curve.',
   },
   {
     question: 'Can this replace a real mock interview?',
@@ -190,7 +190,7 @@ export default function MethodologyPage() {
             <Card className="p-6">
               <p className="text-strong font-semibold text-foreground">Live percentile</p>
               <p className="mt-1 text-body leading-relaxed text-muted-foreground">
-                Your standing is computed against the active pool of MBA aspirants practising on MECE across India — a
+                Your standing is computed against the active pool of MBA aspirants practising on MECE — a
                 moving benchmark, not a fixed curve.
               </p>
             </Card>

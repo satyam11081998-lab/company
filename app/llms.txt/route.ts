@@ -16,7 +16,7 @@ export async function GET() {
     '',
     `> ${SITE_DESC}`,
     '',
-    'MECE (mece.in) is a placement-interview preparation platform for Indian MBA/PGDM students. The MECE Casebook below is free to read without an account. Practice scoring, leaderboards, and GD briefs require a free account.',
+    'MECE (mece.in) is a placement-interview preparation platform for MBA/PGDM students. The MECE Casebook below is free to read without an account. Practice scoring, leaderboards, and GD briefs require a free account.',
     '',
     '## Core pages',
     '',

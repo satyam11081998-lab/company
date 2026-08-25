@@ -12,7 +12,7 @@ export const SITE_URL = 'https://mece.in';
 export const SITE_NAME = 'MECE';
 export const SITE_TITLE = 'Practice real cases & guesstimates for MBA placements | MECE';
 export const SITE_DESC =
-  'Practice guesstimates and real business cases, not textbook samples, scored in about 60 seconds. MBA & PGDM placement-interview prep for India. Free to start.';
+  'Practice guesstimates and real business cases, not textbook samples, scored in about 60 seconds. MBA & PGDM placement-interview prep. Free to start.';
 
 export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
@@ -170,7 +170,7 @@ export function organizationJsonLd() {
     // field tells search + AI systems the platform is a distinct named entity,
     // not the consulting concept it shares a name with.
     disambiguatingDescription:
-      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for Indian students. It is distinct from the MECE problem-solving principle (Mutually Exclusive, Collectively Exhaustive) used in management consulting.',
+      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for MBA & PGDM students. It is distinct from the MECE problem-solving principle (Mutually Exclusive, Collectively Exhaustive) used in management consulting.',
     slogan: 'Placement interview prep, the structured way.',
     foundingDate: '2025',
     areaServed: 'IN',
@@ -202,7 +202,7 @@ export function webSiteJsonLd() {
     url: SITE_URL,
     description: SITE_DESC,
     publisher: { '@id': ORG_ID },
-    inLanguage: 'en-IN',
+    inLanguage: 'en',
   };
 }
 
@@ -248,7 +248,7 @@ export function casebookArticleJsonLd(page: Page) {
     url,
     headline: page.title,
     description: extractPageDescription(page),
-    inLanguage: 'en-IN',
+    inLanguage: 'en',
     isAccessibleForFree: true,
     learningResourceType: KIND_TO_RESOURCE_TYPE[page.kind],
     educationalLevel: 'Postgraduate (MBA/PGDM)',
@@ -311,13 +311,13 @@ export function softwareApplicationJsonLd(opts: {
     operatingSystem: 'Web browser',
     url: absoluteUrl(opts.url),
     description: opts.description,
-    inLanguage: 'en-IN',
+    inLanguage: 'en',
     publisher: { '@id': ORG_ID },
     isPartOf: { '@id': WEBSITE_ID },
     audience: {
       '@type': 'EducationalAudience',
       educationalRole: 'student',
-      audienceType: 'MBA and PGDM students in India',
+      audienceType: 'MBA and PGDM students',
     },
     featureList: [
       'Live AI case interview with a conversational interviewer',
@@ -367,7 +367,7 @@ export function howToJsonLd(opts: {
     '@type': 'HowTo',
     name: opts.name,
     description: opts.description,
-    inLanguage: 'en-IN',
+    inLanguage: 'en',
     ...(opts.totalMinutes ? { totalTime: `PT${opts.totalMinutes}M` } : {}),
     estimatedCost: { '@type': 'MonetaryAmount', currency: 'INR', value: 0 },
     supply: { '@type': 'HowToSupply', name: 'A web browser' },
@@ -429,7 +429,7 @@ export function genericArticleJsonLd(opts: {
     description: opts.description,
     url: absoluteUrl(opts.url),
     mainEntityOfPage: absoluteUrl(opts.url),
-    inLanguage: 'en-IN',
+    inLanguage: 'en',
     author: { '@id': ORG_ID },
     publisher: { '@id': ORG_ID },
     isPartOf: { '@id': WEBSITE_ID },

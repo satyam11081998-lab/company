@@ -15,7 +15,7 @@ export default function Footer({ className = "" }: { className?: string }) {
               <Logo full variant="light" className="!h-[107px] md:!h-[133px]" />
             </Link>
             <p className="text-sm text-navy-foreground/70 leading-relaxed max-w-sm mb-6">
-              The premier platform for Indian MBA students to master consulting, finance, and product management interviews through structured, MECE-driven practice.
+              The premier platform for MBA & PGDM students to master consulting, finance, and product management interviews through structured, MECE-driven practice.
             </p>
             <a
               href={LINKEDIN_COMPANY_URL}

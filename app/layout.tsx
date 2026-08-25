@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     'case interview practice',
     'guesstimate questions',
     'GD topics for MBA',
-    'consulting interview prep India',
+    'consulting interview prep',
     'summer placement interview',
     'product manager interview prep',
     'MBA casebook',
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     siteName: 'MECE',
     title: SITE_TITLE,
     description: SITE_DESC,
-    locale: 'en_IN',
+    locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',

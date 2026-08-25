@@ -16,7 +16,7 @@ import {
 export const metadata = {
   title: 'About us',
   description:
-    'MECE (mece.in) is an independent online MBA & PGDM placement-interview prep platform for Indian students — free casebook, rubric-scored case & guesstimate practice, daily GD briefs, and a national leaderboard. The story and the method behind it.',
+    'MECE (mece.in) is an independent online MBA & PGDM placement-interview prep platform for MBA & PGDM students — free casebook, rubric-scored case & guesstimate practice, daily GD briefs, and a national leaderboard. The story and the method behind it.',
   alternates: { canonical: '/about' },
 };
 
@@ -38,7 +38,7 @@ const ABOUT_FAQS = [
   {
     question: 'Is mece.in related to the MECE framework?',
     answer:
-      'MECE the platform (mece.in) is named after the MECE principle (Mutually Exclusive, Collectively Exhaustive) but is a separate thing. The principle is a consulting problem-solving concept; mece.in is an online product that helps Indian MBA and PGDM students practise and get scored for placement interviews.',
+      'MECE the platform (mece.in) is named after the MECE principle (Mutually Exclusive, Collectively Exhaustive) but is a separate thing. The principle is a consulting problem-solving concept; mece.in is an online product that helps MBA and PGDM students practise and get scored for placement interviews.',
   },
   {
     question: 'Is MECE affiliated with McKinsey, BCG, Bain, or any B-school?',
@@ -53,7 +53,7 @@ const ABOUT_FAQS = [
   {
     question: 'Who is MECE for?',
     answer:
-      'Indian MBA and PGDM students at institutes such as the IIMs, FMS, XLRI, MDI, SPJIMR, NMIMS, and others who are preparing for summer-internship and final placements in consulting, finance, marketing, product, and operations.',
+      'MBA and PGDM students at institutes such as the IIMs, FMS, XLRI, MDI, SPJIMR, NMIMS, and others who are preparing for summer-internship and final placements in consulting, finance, marketing, product, and operations.',
   },
   {
     question: 'Do I need to pay to use it?',
@@ -91,7 +91,7 @@ const WHAT_YOU_GET = [
     icon: Trophy,
     title: 'A national leaderboard',
     body:
-      'Earn points on every submission and brief, and track your percentile against MBA aspirants across India in real time — a milestone ladder from Day-0 Dreamer to the top of the table.',
+      'Earn points on every submission and brief, and track your percentile against MBA aspirants in real time — a milestone ladder from Day-0 Dreamer to the top of the table.',
   },
   {
     icon: Building2,
@@ -138,7 +138,7 @@ export default function AboutPage() {
             Built from inside the placement grind
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            <strong className="text-foreground">MECE</strong> (<span className="text-foreground">mece.in</span>) began the way most placement prep does: 2 AM peer mocks, seniors' PDFs passed down like heirlooms, and feedback that changed depending on who was across the table. It is now an independent, rubric-scored prep platform for Indian MBA and PGDM students — a free 145+ page casebook, practice graded on a fixed 100-point rubric, and a leaderboard that tells you where you actually stand.
+            <strong className="text-foreground">MECE</strong> (<span className="text-foreground">mece.in</span>) began the way most placement prep does: 2 AM peer mocks, seniors' PDFs passed down like heirlooms, and feedback that changed depending on who was across the table. It is now an independent, rubric-scored prep platform for MBA and PGDM students — a free 145+ page casebook, practice graded on a fixed 100-point rubric, and a leaderboard that tells you where you actually stand.
           </p>
           <p className="mt-3 text-sm text-muted-foreground/80">
             The name is a nod to the consulting principle <strong className="text-foreground/70">MECE</strong> —
@@ -177,7 +177,7 @@ export default function AboutPage() {
               <div>
                 <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-2">This platform</p>
                 <p className="text-body leading-relaxed text-foreground/80">
-                  MECE (mece.in) is a product, not a concept: an online place where Indian MBA/PGDM students read a free
+                  MECE (mece.in) is a product, not a concept: an online place where MBA/PGDM students read a free
                   casebook, practise cases and guesstimates, get rubric-scored, and rank nationally. Named after the
                   principle; distinct from it.
                 </p>

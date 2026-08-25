@@ -10,7 +10,7 @@ import AuthCTA from '@/components/auth-cta';
 import LandingMobileNav from '@/components/landing-mobile-nav';
 import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle, Award } from 'lucide-react';
 import ScrollAnimations from '@/components/scroll-animations';
-import HeroInterviewDemo from '@/components/hero-interview-demo';
+import InterviewSim from '@/components/landing/interview-sim';
 import { GdBriefVignette, LeaderboardVignette, DeckVaultVignette, CountUp } from '@/components/landing-vignettes';
 import { faqPageJsonLd } from '@/lib/seo';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
@@ -25,17 +25,17 @@ const HOMEPAGE_FAQS = [
   {
     question: 'What is MECE?',
     answer:
-      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for Indian students. It offers a free case-interview casebook, case and guesstimate practice scored on a six-dimension consulting rubric, daily group-discussion (GD) briefs, and a national leaderboard.',
+      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for MBA & PGDM students. It offers a free case-interview casebook, case and guesstimate practice scored on a six-dimension consulting rubric, daily group-discussion (GD) briefs, and a national leaderboard.',
   },
   {
     question: 'Is mece.in the same as the MECE framework?',
     answer:
-      'No. The MECE principle (Mutually Exclusive, Collectively Exhaustive) is a problem-solving concept popularised in management consulting by Barbara Minto at McKinsey. MECE — the platform at mece.in — is a separate product that helps Indian MBA and PGDM students prepare for placement interviews. It is named after the principle but is a distinct service. Our full guide to the principle itself is at mece.in/learn/mece-framework.',
+      'No. The MECE principle (Mutually Exclusive, Collectively Exhaustive) is a problem-solving concept popularised in management consulting by Barbara Minto at McKinsey. MECE — the platform at mece.in — is a separate product that helps MBA and PGDM students prepare for placement interviews. It is named after the principle but is a distinct service. Our full guide to the principle itself is at mece.in/learn/mece-framework.',
   },
   {
     question: 'Who is MECE for?',
     answer:
-      'Indian MBA and PGDM students preparing for summer-internship and final placements — especially consulting, finance, marketing, product, and operations roles at firms such as McKinsey, BCG, Bain, Goldman Sachs, P&G, and HUL.',
+      'MBA and PGDM students preparing for summer-internship and final placements — especially consulting, finance, marketing, product, and operations roles at firms such as McKinsey, BCG, Bain, Goldman Sachs, P&G, and HUL.',
   },
   {
     question: 'Is MECE free?',
@@ -119,16 +119,16 @@ export default async function LandingPage() {
           <div className="animate-fade-in">
             <div className="badge-pill mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
-              Placement interview prep · India
+              AI case interview · scored in ~60s
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.08] tracking-tight">
-              Crack placement<br />
-              <span className="text-primary">interviews</span><br />
-              the structured way.
+              Sit one real case.<br />
+              See if you'd <span className="text-primary">actually get the offer.</span>
+              
             </h1>
             <p className="mt-5 text-[15px] text-muted-foreground leading-relaxed max-w-md">
-              <strong className="font-semibold text-foreground/80">MECE is a placement-interview prep platform for Indian MBA &amp; PGDM students.</strong>{' '}
-              Cases, frameworks, and GD prep across consulting, finance, marketing, product, and ops — scored on 6 dimensions and ranked against aspirants nationwide.
+              <strong className="font-semibold text-foreground/80">Peers go easy on you. This won't.</strong>{' '}
+              Take today's case the way an interviewer runs it — clarify, structure, solve, recommend — and get scored on the six things they actually weigh. Built for MBA &amp; PGDM placement season.
             </p>
             <div className="mt-7">
               <AuthCTA variant="hero" />
@@ -178,16 +178,7 @@ export default async function LandingPage() {
               {/* Geometric outline shapes behind card */}
               <GeoShapes />
               {/* Main floating card — the product, performing live */}
-              <HeroInterviewDemo />
-              {/* Second floating card */}
-              <div className="ui-card absolute -bottom-6 right-0 sm:-bottom-8 sm:-right-4 p-3.5 w-44 sm:w-52 animate-float" style={{ animationDelay: '0.5s' }}>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Today's case</p>
-                <p className="text-[13px] font-semibold text-foreground leading-snug">Estimate MBA prep market in India</p>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="tag tag-red">Market Sizing</span>
-                  <span className="text-[11px] text-muted-foreground">Medium</span>
-                </div>
-              </div>
+              <InterviewSim />
             </div>
           </div>
         </div>
@@ -453,7 +444,7 @@ export default async function LandingPage() {
               </h2>
               <p className="mt-4 text-[15px] text-muted-foreground leading-relaxed">
                 A <span className="text-primary font-medium">live leaderboard</span> of every MBA aspirant
-                preparing across India. Earn points per submission. Track your{' '}
+                preparing right now. Earn points per submission. Track your{' '}
                 <span className="text-primary font-medium">percentile rank</span> in real time.
               </p>
               <ul className="mt-6 space-y-3">
@@ -563,7 +554,7 @@ export default async function LandingPage() {
           </div>
           <h2 className="text-3xl font-bold text-foreground">Questions about MECE</h2>
           <p className="mt-3 text-[15px] text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            MECE (mece.in) is a placement-interview prep platform for Indian MBA &amp; PGDM students — not to be confused with the MECE problem-solving principle it is named after.
+            MECE (mece.in) is a placement-interview prep platform for MBA &amp; PGDM students — not to be confused with the MECE problem-solving principle it is named after.
           </p>
         </div>
         <div className="space-y-3">

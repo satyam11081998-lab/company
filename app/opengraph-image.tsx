@@ -46,7 +46,7 @@ export default function OpenGraphImage() {
             Crack placement interviews the structured way.
           </div>
           <div style={{ fontSize: 32, color: '#b9c4d6', lineHeight: 1.4 }}>
-            Cases · Guesstimates · Frameworks · GD briefs — for Indian MBA students
+            Cases · Guesstimates · Frameworks · GD briefs — for MBA & PGDM students
           </div>
         </div>
         <div style={{ display: 'flex', fontSize: 28, color: '#8fa0bd' }}>mece.in</div>

@@ -6,7 +6,7 @@ import Logo from '@/components/logo';
 
 export const metadata: Metadata = {
   title: 'Sign up free',
-  description: 'Create a free MECE account — practice cases, guesstimates, and GD briefs scored across 6 dimensions, and rank against MBA aspirants across India.',
+  description: 'Create a free MECE account — practice cases, guesstimates, and GD briefs scored across 6 dimensions, and rank against MBA aspirants.',
   alternates: { canonical: '/signup' },
 };
 
