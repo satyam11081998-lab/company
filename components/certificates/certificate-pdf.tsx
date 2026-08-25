@@ -293,7 +293,7 @@ export function CertificateDocument({
           <Image style={s.logo} src={assets.logoUrl} />
           <Text style={s.tagline}>
             mece.in  ·  Method for Evaluating Corporate Excellence  ·  AI-led case,
-            guesstimate &amp; interview prep for Indian MBA students
+            guesstimate &amp; interview prep for MBA &amp; PGDM students
           </Text>
 
           <View style={s.ribbon}>

@@ -57,7 +57,7 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
         ${o.footerNote ? `<p style="margin:22px 0 0;font-size:13px;color:${MUTED};line-height:1.55;">${o.footerNote}</p>` : ''}
       </td></tr>
       <tr><td style="padding:22px 28px;background:${OFFWHITE};border-top:1px solid ${BORDER};font-family:Inter,Helvetica,Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.6;">
-        <strong style="color:${NAVY};">MECE</strong> — Placement interview prep for Indian MBA students.<br/>
+        <strong style="color:${NAVY};">MECE</strong> — Placement interview prep for MBA &amp; PGDM students.<br/>
         <a href="${SITE_URL}" style="color:${MUTED};text-decoration:underline;">mece.in</a> &middot; <a href="mailto:team@mece.in" style="color:${MUTED};text-decoration:underline;">team@mece.in</a>${unsub}
       </td></tr>
     </table>

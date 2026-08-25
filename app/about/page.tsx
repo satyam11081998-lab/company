@@ -23,7 +23,7 @@ export const metadata = {
 const articleJsonLd = genericArticleJsonLd({
   title: 'About MECE',
   description:
-    'What MECE is, who it is for, and the method behind it — India\'s structured placement-interview prep platform for MBA and PGDM students.',
+    'What MECE is, who it is for, and the method behind it — the structured placement-interview prep platform for MBA and PGDM students.',
   url: '/about',
   datePublished: '2025-01-01',
   dateModified: '2026-07-14',
