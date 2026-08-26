@@ -19,7 +19,7 @@
  * falls back to the baked-in sample. Do NOT wire the real /score endpoint here.
  */
 
-import { useMemo, useReducer, useState, useTransition, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useReducer, useState, useTransition, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, RotateCcw } from 'lucide-react';
@@ -361,6 +361,26 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
     [s.acc],
   );
   const total = useMemo(() => vals.reduce((a, b) => a + b, 0), [vals]);
+
+  // Persist the warm-up so it survives sign-up. The dashboard reads
+  // `mece:warmup` and shows it as a labelled BASELINE — visible, never ranked.
+  useEffect(() => {
+    if (s.phase !== 'result') return;
+    try {
+      localStorage.setItem(
+        'mece:warmup',
+        JSON.stringify({
+          score: total,
+          craft: s.craft,
+          mode: s.mode,
+          dims: DIMS.map((d, i) => ({ name: d.name, score: vals[i], max: d.max })),
+          ts: Date.now(),
+        }),
+      );
+    } catch {
+      /* storage blocked (private mode) — non-fatal */
+    }
+  }, [s.phase, total, s.craft, s.mode, vals]);
 
   const canAdvance = s.ownText.trim().length > 0 || s.picks.length > 0;
   const isLast = s.stepIdx === steps.length - 1;

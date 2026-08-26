@@ -8,6 +8,7 @@ import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
 import { GUESSTIMATE_DIMENSIONS, type GuesstimateDimension } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
+import WarmupCard from '@/components/dashboard/warmup-card';
 import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
 import GuestStartButton from '@/components/guest/guest-start-button';
@@ -313,6 +314,7 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+      <WarmupCard caseId={dailyToday.case?.id ?? null} guessId={dailyToday.guesstimate?.id ?? null} />
       <DashboardClient
         userName={userName}
         points={points}
