@@ -420,13 +420,7 @@ function DailyView({
             </div>
           )}
         </>
-      ) : (
-        <div className="ui-card p-10 text-center">
-          <Flame className="mx-auto h-10 w-10 text-primary/40" />
-          <p className="mt-3 font-semibold text-foreground">No one has solved today&apos;s case yet.</p>
-          <p className="mt-1 text-small text-muted-foreground">Be the first on the board.</p>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

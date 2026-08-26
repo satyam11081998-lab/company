@@ -19,9 +19,12 @@
  * falls back to the baked-in sample. Do NOT wire the real /score endpoint here.
  */
 
-import { useMemo, useReducer, type ChangeEvent } from 'react';
+import { useMemo, useReducer, useState, useTransition, type ChangeEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, RotateCcw } from 'lucide-react';
+import { ensureGuestSession, isGuestModeEnabled } from '@/lib/guest';
+import { toast } from 'sonner';
 
 /* ─────────────────────────── content model ─────────────────────────── */
 
@@ -315,16 +318,43 @@ function barColor(v: number, max: number) {
 interface Props {
   /** optional override of today's case, e.g. built from the static `daily` object */
   today?: SimCase;
+  /** today's real daily case / guesstimate ids — the sim funnels into these for a real, scored, ranked attempt */
+  caseId?: string | null;
+  guesstimateId?: string | null;
   signupHref?: string;
   loginHref?: string;
 }
 
-export default function InterviewSim({ today, signupHref = '/signup', loginHref = '/login' }: Props) {
+export default function InterviewSim({ today, caseId = null, guesstimateId = null, signupHref = '/signup', loginHref = '/login' }: Props) {
   const [s, dispatch] = useReducer(reducer, freshPlay('case'));
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [starting, setStarting] = useState(false);
   const caseData = today ?? CASE_SAMPLE;
   const data = s.mode === 'case' ? caseData : GUESS_SAMPLE;
   const steps = data.steps;
   const step = steps[s.stepIdx];
+
+  // The sim is a warm-up on a sample; the real, scored, RANKED attempt is the
+  // live daily case. "Take it for real" mints the same anonymous guest session
+  // the rest of the landing uses, then opens the real case — so the attempt is
+  // recorded and nothing is lost on sign-up. Click-only (never on mount) keeps
+  // "/" statically renderable and does not create a user row for crawlers.
+  async function startReal() {
+    const rid = s.mode === 'case' ? (caseId ?? guesstimateId) : (guesstimateId ?? caseId);
+    if (!isGuestModeEnabled() || !rid) { router.push(signupHref); return; }
+    if (starting) return;
+    setStarting(true);
+    try {
+      const user = await ensureGuestSession();
+      if (!user) { toast.error('Could not start a session — try signing up.'); router.push(signupHref); return; }
+      startTransition(() => router.push(`/cases/${rid}`));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not start. Please try again.');
+    } finally {
+      setStarting(false);
+    }
+  }
 
   const vals = useMemo(
     () => DIMS.map((d, i) => clamp(s.acc[i], d.max)),
@@ -456,6 +486,8 @@ export default function InterviewSim({ today, signupHref = '/signup', loginHref 
             craft={s.craft}
             mode={s.mode}
             signupHref={signupHref}
+            starting={starting}
+            onStartReal={startReal}
             onRetry={() => dispatch({ type: 'reset' })}
             onRound2={() => dispatch({ type: 'round2' })}
           />
@@ -466,7 +498,8 @@ export default function InterviewSim({ today, signupHref = '/signup', loginHref 
             guided={s.guided}
             text={s.r2Text}
             score={s.r2Score}
-            signupHref={signupHref}
+            starting={starting}
+            onStartReal={startReal}
             onText={(t) => dispatch({ type: 'setR2', text: t })}
             onScore={() => dispatch({ type: 'scoreR2' })}
           />
@@ -488,10 +521,10 @@ export default function InterviewSim({ today, signupHref = '/signup', loginHref 
 /* ─────────────────────────── result view ─────────────────────────── */
 
 function Result({
-  vals, total, craft, mode, signupHref, onRetry, onRound2,
+  vals, total, craft, mode, signupHref, starting, onStartReal, onRetry, onRound2,
 }: {
   vals: number[]; total: number; craft: number; mode: Mode;
-  signupHref: string; onRetry: () => void; onRound2: () => void;
+  signupHref: string; starting: boolean; onStartReal: () => void; onRetry: () => void; onRound2: () => void;
 }) {
   const craftLabel = craft >= 4 ? 'Strong' : craft >= 2 ? 'Solid' : 'Thin';
   const craftGood = craft >= 2;
@@ -559,17 +592,19 @@ function Result({
       </div>
 
       <div className="mt-4 grid gap-2">
-        <Link href={signupHref} className="btn-primary justify-center">
-          Save my score &amp; claim my rank <ArrowRight className="h-4 w-4" />
-        </Link>
+        <button type="button" onClick={onStartReal} disabled={starting} className="btn-primary justify-center disabled:opacity-60">
+          {starting ? 'Starting…' : 'Take today’s case for real'}
+          {!starting && <ArrowRight className="h-4 w-4" />}
+        </button>
         <button type="button" onClick={onRound2} className="btn-ghost justify-center">
-          Round 2 · solve it free-form, beat this
+          Round 2 · solve it free-form first
         </button>
         <button type="button" onClick={onRetry} className="inline-flex items-center justify-center gap-1.5 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
           <RotateCcw className="h-3.5 w-3.5" /> Try again
         </button>
         <span className="text-center text-[11.5px] text-muted-foreground">
-          Guest scores aren’t saved. Make a free account to keep this, unlock your rank, and start a streak.
+          This tapped round is a warm-up — it isn’t scored for real. Do today’s live case to earn a saved score and your rank, or{' '}
+          <Link href={signupHref} className="font-semibold text-primary hover:underline">sign up first</Link>.
         </span>
       </div>
     </div>
@@ -579,10 +614,10 @@ function Result({
 /* ─────────────────────────── round 2 view ─────────────────────────── */
 
 function Round2({
-  guided, text, score, signupHref, onText, onScore,
+  guided, text, score, starting, onStartReal, onText, onScore,
 }: {
   guided: number; text: string; score: number | null;
-  signupHref: string; onText: (t: string) => void; onScore: () => void;
+  starting: boolean; onStartReal: () => void; onText: (t: string) => void; onScore: () => void;
 }) {
   const delta = score === null ? 0 : score - guided;
   return (
@@ -616,9 +651,10 @@ function Round2({
                 : `You dropped ${-delta} without the options. That gap is your prep list — exactly what members train away.`}
             </span>
           </div>
-          <Link href={signupHref} className="btn-primary mt-1 justify-center">
-            Save both scores &amp; see your rank <ArrowRight className="h-4 w-4" />
-          </Link>
+          <button type="button" onClick={onStartReal} disabled={starting} className="btn-primary mt-1 justify-center disabled:opacity-60">
+            {starting ? 'Starting…' : 'Take today’s case for real'}
+            {!starting && <ArrowRight className="h-4 w-4" />}
+          </button>
         </div>
       )}
     </div>

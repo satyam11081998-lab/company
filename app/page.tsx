@@ -178,7 +178,7 @@ export default async function LandingPage() {
               {/* Geometric outline shapes behind card */}
               <GeoShapes />
               {/* Main floating card — the product, performing live */}
-              <InterviewSim />
+              <InterviewSim caseId={daily.case?.id ?? null} guesstimateId={daily.guesstimate?.id ?? null} />
             </div>
           </div>
         </div>
