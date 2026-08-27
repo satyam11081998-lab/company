@@ -10,7 +10,7 @@
  */
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
-import { upgradeReceiptEmail, type UpgradeReceiptData } from './templates';
+import { upgradeReceiptEmail, welcomeEmail, type UpgradeReceiptData } from './templates';
 
 const EMAIL_FROM = process.env.EMAIL_FROM || 'MECE <team@mece.in>';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
@@ -59,6 +59,13 @@ export async function sendTransactional(msg: {
 export async function sendUpgradeReceipt(to: string, data: UpgradeReceiptData): Promise<SendResult> {
   if (!to) return { sent: false, skipped: true };
   const { subject, html, text } = upgradeReceiptEmail(data);
+  return sendTransactional({ to, subject, html, text });
+}
+
+/** Compose + send the one-time welcome email (on onboarding completion). */
+export async function sendWelcomeEmail(to: string, data: { name?: string | null }): Promise<SendResult> {
+  if (!to) return { sent: false, skipped: true };
+  const { subject, html, text } = welcomeEmail(data);
   return sendTransactional({ to, subject, html, text });
 }
 

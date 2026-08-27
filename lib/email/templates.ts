@@ -39,15 +39,15 @@ export function baseEmailLayout(o: EmailLayoutOptions): string {
   return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="color-scheme" content="light only"/><title>${escapeHtml(o.heading)}</title>
+<meta name="color-scheme" content="light only"/><meta name="supported-color-schemes" content="light"/><title>${escapeHtml(o.heading)}</title>
 </head>
 <body style="margin:0;padding:0;background:${OFFWHITE};-webkit-text-size-adjust:100%;">
 ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${OFFWHITE};">${escapeHtml(o.preheader)}</div>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${OFFWHITE};padding:24px 12px;">
   <tr><td align="center">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid ${BORDER};border-radius:14px;overflow:hidden;">
-      <tr><td style="background:${NAVY};padding:20px 28px;">
-        <img src="${SITE_URL}/logo.png" height="28" alt="MECE" style="height:28px;display:block;border:0;outline:none;text-decoration:none;"/>
+      <tr><td style="background:${NAVY};padding:18px 28px;">
+        <img src="${SITE_URL}/signature/hdr-logo.png" height="30" alt="MECE" style="height:30px;display:block;border:0;outline:none;text-decoration:none;"/>
       </td></tr>
       <tr><td style="height:3px;background:${RED};line-height:3px;font-size:0;">&nbsp;</td></tr>
       <tr><td style="padding:32px 28px;font-family:Inter,Helvetica,Arial,sans-serif;color:${INK};">
@@ -57,7 +57,7 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
         ${o.footerNote ? `<p style="margin:22px 0 0;font-size:13px;color:${MUTED};line-height:1.55;">${o.footerNote}</p>` : ''}
       </td></tr>
       <tr><td style="padding:22px 28px;background:${OFFWHITE};border-top:1px solid ${BORDER};font-family:Inter,Helvetica,Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.6;">
-        <strong style="color:${NAVY};">MECE</strong> — Placement interview prep for MBA &amp; PGDM students.<br/>
+        <strong style="color:${NAVY};">MECE</strong> — Placement interview prep for Indian MBA students.<br/>
         <a href="${SITE_URL}" style="color:${MUTED};text-decoration:underline;">mece.in</a> &middot; <a href="mailto:team@mece.in" style="color:${MUTED};text-decoration:underline;">team@mece.in</a>${unsub}
       </td></tr>
     </table>
@@ -112,6 +112,46 @@ Go to your dashboard: ${SITE_URL}/dashboard
 
 — MECE · mece.in`;
   return { subject: `Your MECE ${d.tierLabel} upgrade is confirmed`, html, text };
+}
+
+/** Transactional welcome email, sent once when a user finishes onboarding. */
+export function welcomeEmail(d: { name?: string | null }): { subject: string; html: string; text: string } {
+  const firstName = d.name ? escapeHtml(d.name.split(' ')[0]) : null;
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
+  const content = `
+    <p style="margin:0 0 14px;">${greeting}</p>
+    <p style="margin:0 0 14px;">Welcome to <strong>MECE</strong> — you're all set. We built MECE to make case-interview and guesstimate prep something you do a little of every day, and get sharper each time.</p>
+    <p style="margin:0 0 8px;">Here's where to start:</p>
+    <ul style="margin:0 0 16px;padding-left:20px;color:${INK};font-size:15px;line-height:1.7;">
+      <li>Your <strong>daily case + guesstimate</strong> — a fresh one of each, every day.</li>
+      <li>The <strong>AI interviewer</strong> that asks real follow-ups and scores your structure.</li>
+      <li><strong>GD briefs</strong> on live business news and <strong>industry primers</strong> for context.</li>
+    </ul>
+    <p style="margin:0;">Your first case is waiting:</p>`;
+  const html = baseEmailLayout({
+    preheader: 'Welcome to MECE — your placement prep starts now.',
+    heading: firstName ? `Welcome to MECE, ${firstName}!` : 'Welcome to MECE!',
+    contentHtml: content,
+    cta: { label: 'Start your first case', url: `${SITE_URL}/dashboard` },
+    footerNote: 'Questions or feedback? Just reply to this email — a real person reads it.',
+  });
+  const text = `${greeting}
+
+Welcome to MECE — you're all set. We built MECE to make case and guesstimate prep something you do a little of every day.
+
+Start here:
+- Your daily case + guesstimate, every day
+- The AI interviewer that scores your structure
+- GD briefs on live news + industry primers
+
+Start your first case: ${SITE_URL}/dashboard
+
+- MECE / mece.in`;
+  return {
+    subject: firstName ? `Welcome to MECE, ${firstName}` : 'Welcome to MECE',
+    html,
+    text,
+  };
 }
 
 export interface BroadcastData {

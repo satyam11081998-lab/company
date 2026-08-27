@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { validateOnboarding, type OnboardingFormData } from '@/lib/types-onboarding';
 import { notifyAdmin } from '@/lib/telegram';
+import { sendWelcomeEmail } from '@/lib/email/send';
 
 /**
  * POST /api/onboarding/complete
@@ -65,6 +66,19 @@ export async function POST(req: Request) {
         { error: `Profile save failed: ${error.message}` },
         { status: 500 },
       );
+    }
+
+    // ── Welcome email ──────────────────────────────────────────────────
+    // Sent once, the moment a real person finishes onboarding. Transactional
+    // (via Google Workspace SMTP), and strictly non-blocking: a mail failure
+    // must never make a successful signup look broken to the user. Skipped
+    // automatically when there is no email address (e.g. an anonymous guest).
+    try {
+      if (user.email) {
+        await sendWelcomeEmail(user.email, { name: patch.full_name });
+      }
+    } catch (e) {
+      console.error('[onboarding] welcome email failed:', e);
     }
 
     // ── Admin alert ────────────────────────────────────────────────────
