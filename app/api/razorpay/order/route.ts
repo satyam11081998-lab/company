@@ -4,8 +4,15 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, isBillingPeriod, discountedPaise } from '@/lib/tier';
 import { loadCoupon, checkCoupon, normalizeCode, isValidCodeShape } from '@/lib/coupons';
+import { notifyAdmin } from '@/lib/telegram';
 
 const rateLimit = new Map<string, number>();
+
+// Abuse guard: a user may create at most this many payment orders per rolling
+// hour. Someone firing far more than this and letting them fail/cancel is
+// probing the payment flow or card-testing, not buying. A genuine buyer needs
+// only one or two attempts.
+const MAX_ATTEMPTS_PER_HOUR = 6;
 
 export async function POST(req: Request) {
   try {
@@ -36,6 +43,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Too many requests, please wait' }, { status: 429 });
     }
     rateLimit.set(user.id, now);
+
+    // ── Abuse guard: cap payment attempts per user per rolling hour ─────────
+    // Counts this user's recent attempts (every order is logged as a 'created'
+    // row below, plus any 'failed' rows the webhook records). Self-contained —
+    // works even if the Razorpay webhook is not configured. The in-memory
+    // debounce above only stops rapid double-clicks; this stops a determined
+    // loop across minutes.
+    const guardDb = createServiceClient();
+    const windowStart = new Date(now - 60 * 60 * 1000).toISOString();
+    const { count: recentAttempts } = await guardDb
+      .from('payments')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', windowStart)
+      .in('status', ['created', 'failed']);
+    if ((recentAttempts ?? 0) >= MAX_ATTEMPTS_PER_HOUR) {
+      return NextResponse.json(
+        { error: 'Too many payment attempts. Please wait an hour and try again, or contact team@mece.in.' },
+        { status: 429 },
+      );
+    }
 
     const body = await req.json();
     const { tier } = body;
@@ -93,7 +121,29 @@ export async function POST(req: Request) {
     };
 
     const order = await instance.orders.create(options);
-    
+
+    // Log the attempt (audit trail + the counter the abuse guard reads above).
+    // Non-blocking: a logging failure must never block a legitimate checkout.
+    // On the attempt that reaches the cap, alert on Telegram exactly once
+    // (later attempts are refused above before reaching this point).
+    try {
+      await guardDb.from('payments').insert({
+        user_id: user.id,
+        razorpay_order_id: order.id,
+        tier,
+        amount_paise: amount,
+        currency: 'INR',
+        status: 'created',
+      });
+      if ((recentAttempts ?? 0) + 1 >= MAX_ATTEMPTS_PER_HOUR) {
+        await notifyAdmin(
+          `🚨 MECE payment abuse guard: ${user.email || user.id} reached ${(recentAttempts ?? 0) + 1} payment attempts in the last hour — further orders are now blocked for an hour.\ntier=${tier} period=${period}${couponCode ? ` coupon=${couponCode}` : ''}`,
+        );
+      }
+    } catch (e) {
+      console.error('[order] attempt log/alert failed:', e);
+    }
+
     return NextResponse.json(order);
   } catch (err: any) {
     console.error("Razorpay Create Order Error:", err);

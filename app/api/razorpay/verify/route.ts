@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
 import { sendUpgradeReceipt } from '@/lib/email/send';
+import { notifyAdmin } from '@/lib/telegram';
 import {
   loadCoupon,
   couponHonouredAtPayment,
@@ -217,15 +218,25 @@ export async function POST(req: Request) {
       // webhook backstop won't double-send.
       try {
         const recipient = updatedRows[0] as { name?: string | null; email?: string | null };
-        await sendUpgradeReceipt(recipient?.email || user.email || '', {
+        const target = recipient?.email || user.email || '';
+        const res = await sendUpgradeReceipt(target, {
           name: recipient?.name ?? null,
           tierLabel: tier === 'pro' ? 'Pro' : 'Lite',
           periodLabel: BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'],
           amountInr: Math.round(Number(order.amount) / 100),
           expiresAt: expiresAt.toISOString(),
         });
+        // Visibility: a paying customer with no receipt is a silent failure —
+        // surface it on Telegram so it can be fixed (usually missing/incorrect
+        // GMAIL_USER / GMAIL_APP_PASSWORD in the environment).
+        if (!res.sent) {
+          await notifyAdmin(
+            `⚠️ MECE: upgrade receipt NOT sent to ${target || '(no email)'} — ${res.skipped ? 'email transport not configured (set GMAIL_USER / GMAIL_APP_PASSWORD)' : res.error || 'send failed'}. User ${user.id} IS on ${tier} but received no confirmation email.`,
+          );
+        }
       } catch (e) {
         console.error('[verify] upgrade receipt email failed:', e);
+        await notifyAdmin(`⚠️ MECE: upgrade receipt threw for user ${user.id} (${tier}). Check email transport.`);
       }
 
       return NextResponse.json({ success: true });
