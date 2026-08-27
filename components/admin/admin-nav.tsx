@@ -11,6 +11,7 @@ import {
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
   { href: '/admin', label: 'Operations', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Users', icon: UsersRound },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
   { href: '/admin/status', label: 'Status', icon: Activity },
   { href: '/admin/ai-usage', label: 'AI usage', icon: BarChart3 },

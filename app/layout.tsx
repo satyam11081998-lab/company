@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import GeoPattern from '@/components/geo-pattern';
 import MobileDesktopBanner from '@/components/mobile-desktop-banner';
 import { Analytics } from "@vercel/analytics/next";
+import PageTracker from '@/components/analytics/page-tracker';
 import Script from 'next/script';
 import { SITE_URL, SITE_TITLE, SITE_DESC, siteGraphJsonLd } from '@/lib/seo';
 
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Toaster />
           <Analytics />
+          <PageTracker />
           {/* Cloudflare Turnstile — loaded ONLY when a site key is configured,
               so no third-party script reaches users until you actually turn the
               protection on. `lazyOnload` keeps it off the critical path: it is

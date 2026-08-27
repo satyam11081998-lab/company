@@ -68,6 +68,24 @@ export default async function AdminUsersPage() {
     }
   }
 
+  // Last-active per listed user, derived from user_sessions.last_seen_at (no new
+  // table): sessions come newest-first, so the first hit per user is their latest.
+  const lastActive = new Map<string, string>();
+  {
+    const ids = raw.map((u) => u.id);
+    if (ids.length) {
+      const { data: sess } = await svc
+        .from('user_sessions')
+        .select('user_id, last_seen_at')
+        .in('user_id', ids)
+        .order('last_seen_at', { ascending: false })
+        .limit(8000);
+      for (const row of (sess as { user_id: string; last_seen_at: string | null }[] | null) || []) {
+        if (row.last_seen_at && !lastActive.has(row.user_id)) lastActive.set(row.user_id, row.last_seen_at);
+      }
+    }
+  }
+
   const users: AdminUserRow[] = raw.map((u) => ({
     id: u.id,
     name: u.name || u.full_name || null,
@@ -84,6 +102,7 @@ export default async function AdminUsersPage() {
     batchYear: u.batch_year ?? null,
     linkedinUrl: u.linkedin_url ?? null,
     onboarded: !!u.onboarding_completed_at,
+    lastActiveAt: lastActive.get(u.id) ?? null,
   }));
 
   // Signups per day for the last 30 days, computed from the rows we already

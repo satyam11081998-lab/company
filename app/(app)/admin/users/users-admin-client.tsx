@@ -26,6 +26,7 @@ export interface AdminUserRow {
   batchYear: number | null;
   linkedinUrl: string | null;
   onboarded: boolean;
+  lastActiveAt: string | null;
 }
 
 export interface SignupBucket {
@@ -34,6 +35,7 @@ export interface SignupBucket {
 }
 
 type TierFilter = 'all' | 'pro' | 'lite' | 'free' | 'demo';
+type SortKey = 'active' | 'joined' | 'points';
 
 const rupees = (paise: number) =>
   `₹${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -80,6 +82,7 @@ export default function UsersAdminClient({
 }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<TierFilter>('all');
+  const [sortBy, setSortBy] = useState<SortKey>('joined');
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [detailFor, setDetailFor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -113,6 +116,20 @@ export default function UsersAdminClient({
       );
     });
   }, [users, q, filter]);
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    arr.sort((a, b) => {
+      if (sortBy === 'points') return b.points - a.points;
+      if (sortBy === 'active') {
+        const ta = a.lastActiveAt ? Date.parse(a.lastActiveAt) : 0;
+        const tb = b.lastActiveAt ? Date.parse(b.lastActiveAt) : 0;
+        return tb - ta;
+      }
+      return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+    });
+    return arr;
+  }, [filtered, sortBy]);
 
   const peak = Math.max(1, ...signups.map((s) => s.count));
   const windowTotal = signups.reduce((a, s) => a + s.count, 0);
@@ -263,6 +280,19 @@ export default function UsersAdminClient({
             </button>
           ))}
         </div>
+        <div className="flex gap-1 rounded-md border border-border p-1">
+          {([['active', 'Recently active'], ['joined', 'Newest'], ['points', 'Points']] as [SortKey, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setSortBy(key)}
+              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                sortBy === key ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
@@ -273,6 +303,7 @@ export default function UsersAdminClient({
               <tr>
                 <th className="px-4 py-3 text-left font-medium">User</th>
                 <th className="px-4 py-3 text-left font-medium">Joined</th>
+                <th className="px-4 py-3 text-left font-medium">Last active</th>
                 <th className="px-4 py-3 text-left font-medium">College</th>
                 <th className="px-4 py-3 text-left font-medium">Plan</th>
                 <th className="px-4 py-3 text-right font-medium">Points</th>
@@ -280,7 +311,7 @@ export default function UsersAdminClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map((u) => (
+              {sorted.map((u) => (
                 <tr
                   key={u.id}
                   onClick={() => open(u.id)}
@@ -295,6 +326,7 @@ export default function UsersAdminClient({
                     <span className="block text-xs text-muted-foreground">{u.email}</span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{dateTime(u.createdAt)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{u.lastActiveAt ? dateTime(u.lastActiveAt) : '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {u.college || '—'}
                     {u.batchYear ? <span className="block text-xs">Batch {u.batchYear}</span> : null}
@@ -304,9 +336,9 @@ export default function UsersAdminClient({
                   <td className="px-2 py-3 text-muted-foreground"><ChevronRight className="h-4 w-4" /></td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {sorted.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
                     No users match that search.
                   </td>
                 </tr>
