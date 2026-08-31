@@ -60,3 +60,45 @@ export function useIsProViewer(): { loading: boolean; isPro: boolean } {
 
   return state;
 }
+
+
+/**
+ * Per-deck access: admin, active Pro, whole-vault unlock (skeleton_access),
+ * or this single deck bought (deck_purchases). Reads only the caller's own
+ * rows (RLS). `hasAccess` stays false while loading and for logged-out viewers.
+ */
+export function useDeckAccess(skeletonId?: string | null): { loading: boolean; hasAccess: boolean } {
+  const [state, setState] = useState<{ loading: boolean; hasAccess: boolean }>({ loading: true, hasAccess: false });
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (!user) { setState({ loading: false, hasAccess: false }); return; }
+        const { data: u } = await supabase
+          .from('users')
+          .select('subscription_tier, subscription_expires_at, is_admin')
+          .eq('id', user.id)
+          .maybeSingle();
+        let ok = !!u && (u.is_admin === true ||
+          (u.subscription_tier === 'pro' &&
+            (!u.subscription_expires_at || new Date(u.subscription_expires_at) > new Date())));
+        if (!ok) {
+          const { data: vault } = await supabase.from('skeleton_access').select('user_id').eq('user_id', user.id).maybeSingle();
+          if (vault) ok = true;
+        }
+        if (!ok && skeletonId) {
+          const { data: single } = await supabase.from('deck_purchases').select('id').eq('user_id', user.id).eq('skeleton_id', skeletonId).maybeSingle();
+          if (single) ok = true;
+        }
+        if (!cancelled) setState({ loading: false, hasAccess: ok });
+      } catch {
+        if (!cancelled) setState({ loading: false, hasAccess: false });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [skeletonId]);
+  return state;
+}

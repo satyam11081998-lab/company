@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Lock, EyeOff, ArrowRight, Maximize2, Minimize2 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { Button } from '@/components/ui/button';
-import { useIsProViewer } from '@/lib/use-deck-access';
+import { useDeckAccess } from '@/lib/use-deck-access';
 
 /**
  * Slide viewer for a public deck page.
@@ -31,11 +31,13 @@ export default function DeckViewer({
   title,
   pageCount,
   freePages,
+  skeletonId,
 }: {
   slug: string;
   title: string;
   pageCount: number;
   freePages: number;
+  skeletonId?: string;
 }) {
   // 1-indexed slide number. Can exceed freePages — that is the locked state.
   const [current, setCurrent] = useState(1);
@@ -43,7 +45,7 @@ export default function DeckViewer({
   const [isFull, setIsFull] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
 
-  const { isPro } = useIsProViewer();
+  const { hasAccess: isPro } = useDeckAccess(skeletonId);
   // Full access (Pro/admin) unlocks every slide inline; everyone else stops at
   // the free preview. The image route enforces the SAME rule server-side, so a
   // client that flips this still cannot fetch a locked slide.

@@ -12,6 +12,7 @@ import AuthCTA from '@/components/auth-cta';
 import DeckViewer from '@/components/decks/deck-viewer';
 import DeckGuestOverlay from '@/components/decks/deck-guest-overlay';
 import HideForPro from '@/components/decks/hide-for-pro';
+import DeckPurchase from '@/components/decks/deck-purchase';
 
 // One-line product nav shown on the public deck page. Server-rendered <Link>s so
 // the internal links stay crawlable; icons match the app's section nav.
@@ -286,6 +287,7 @@ export default async function PublicDeckPage({ params }: PageProps) {
               title={deck.title}
               pageCount={pageCount}
               freePages={effectiveFree}
+              skeletonId={deck.id as string}
             />
             <p className="text-xs text-muted-foreground text-center">
               Use the arrows or your keyboard to move through the deck.
@@ -294,7 +296,7 @@ export default async function PublicDeckPage({ params }: PageProps) {
         </div>
 
         {lockedPagesList.length > 0 && (
-          <HideForPro>
+          <HideForPro skeletonId={deck.id as string}>
             <section className="space-y-6 pt-4">
 
             {/* Paywall CTA Card */}
@@ -338,6 +340,11 @@ export default async function PublicDeckPage({ params }: PageProps) {
                     Explore MECE
                   </Button>
                 </Link>
+              </div>
+
+              <div className="pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-3">Or unlock without a subscription:</p>
+                <DeckPurchase skeletonId={deck.id as string} slug={deck.slug as string} />
               </div>
             </div>
             </section>

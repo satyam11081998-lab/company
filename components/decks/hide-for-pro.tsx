@@ -1,17 +1,16 @@
 'use client';
 
-import { useIsProViewer } from '@/lib/use-deck-access';
+import { useDeckAccess } from '@/lib/use-deck-access';
 
 /**
- * Hides its children once the viewer is confirmed Pro/admin.
- *
- * Used to drop the upgrade paywall CTA on a public deck page for someone who
- * already has full access. Renders children by default (and for logged-out /
- * free viewers), so the paywall stays in the server HTML for crawlers and is
- * never flash-hidden from a free user — only a confirmed Pro sees it disappear.
+ * Hides its children once the viewer is confirmed to have full access to this
+ * deck (admin, active Pro, whole-vault unlock, or this single deck bought).
+ * Renders children by default (and for logged-out / free viewers), so the
+ * paywall stays in the server HTML for crawlers and only a confirmed owner sees
+ * it disappear.
  */
-export default function HideForPro({ children }: { children: React.ReactNode }) {
-  const { isPro } = useIsProViewer();
-  if (isPro) return null;
+export default function HideForPro({ skeletonId, children }: { skeletonId?: string; children: React.ReactNode }) {
+  const { hasAccess } = useDeckAccess(skeletonId);
+  if (hasAccess) return null;
   return <>{children}</>;
 }
