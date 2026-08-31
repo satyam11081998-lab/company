@@ -1,5 +1,6 @@
-﻿import { createServiceClient } from '@/lib/supabase/service';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createClient } from '@/lib/supabase/server';
+import { hasDeckAccess } from '@/lib/deck-access';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,33 +8,24 @@ export const dynamic = 'force-dynamic';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
- * True when the COOKIE-authenticated caller may read LOCKED pages: an admin, or
- * an unexpired Pro subscription — the same rule as app/(app)/skeletons/page.tsx
- * and the client hook lib/use-deck-access.ts.
+ * True when the COOKIE-authenticated caller may read this deck's LOCKED pages.
+ * Entitlement (lib/deck-access.ts): admin, active Pro, a whole-vault unlock
+ * (₹499, skeleton_access), or this single deck bought (₹99, deck_purchases).
  *
- * Fails CLOSED: any error (no session, RLS, network) returns false, so a locked
- * slide is only ever served to a verified entitled user. Only called on the
+ * Uses the RLS-scoped session client, so it can only ever read the caller's own
+ * rows. Fails CLOSED: any error (no session, RLS, network) returns false, so a
+ * locked slide is only served to a verified entitled user. Only called on the
  * locked branch, so anonymous free-page requests never pay for it and stay
  * publicly cacheable.
  */
-async function callerHasFullAccess(): Promise<boolean> {
+async function callerHasDeckAccess(skeletonId: string): Promise<boolean> {
   try {
     const authed = createClient();
     const {
       data: { user },
     } = await authed.auth.getUser();
     if (!user) return false;
-    const { data } = await authed
-      .from('users')
-      .select('subscription_tier, subscription_expires_at, is_admin')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (!data) return false;
-    if (data.is_admin === true) return true;
-    return (
-      data.subscription_tier === 'pro' &&
-      (!data.subscription_expires_at || new Date(data.subscription_expires_at) > new Date())
-    );
+    return await hasDeckAccess(authed, user.id, skeletonId);
   } catch {
     return false;
   }
@@ -47,7 +39,7 @@ async function callerHasFullAccess(): Promise<boolean> {
  *   via the `effective_free_pages` SQL function on `deck_skeletons`.
  *
  *   n <= effective_free_pages -> 200 (image/webp or image/jpeg), Cache-Control: public, immutable
- *   n >  effective_free_pages -> 403 Forbidden, empty body (bytes never leave)
+ *   n >  effective_free_pages -> 403 Forbidden unless the caller owns the deck
  */
 export async function GET(
   req: Request,
@@ -77,11 +69,12 @@ export async function GET(
     const effectiveLimit = Number.isFinite(raw) ? raw : 1;
 
     // Free pages: served to anyone, cached hard (below). Locked pages: 403 for
-    // the public, but a COOKIE-verified Pro/admin gets them — served PRIVATE so
-    // no shared/CDN cache can ever hold an entitled response and leak it to anon.
+    // the public, but a COOKIE-verified entitled viewer (admin / Pro / vault /
+    // this deck bought) gets them — served PRIVATE so no shared/CDN cache can
+    // ever hold an entitled response and leak it to anon.
     let cacheControl = 'public, max-age=31536000, immutable';
     if (pageNum > effectiveLimit) {
-      const entitled = await callerHasFullAccess();
+      const entitled = await callerHasDeckAccess(deck.id);
       if (!entitled) {
         return new Response(null, { status: 403 });
       }

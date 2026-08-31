@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, isBillingPeriod, discountedPaise } from '@/lib/tier';
 import { loadCoupon, checkCoupon, normalizeCode, isValidCodeShape } from '@/lib/coupons';
 import { notifyAdmin } from '@/lib/telegram';
+import { DECK_SINGLE_PRICE_INR, DECK_VAULT_PRICE_INR } from '@/lib/deck-access';
 
 const rateLimit = new Map<string, number>();
 
@@ -66,46 +67,84 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { tier } = body;
-    // Billing period is optional and backward-compatible: a missing/legacy body
-    // (no `period`) behaves exactly like before — monthly.
-    const period = body.period === undefined ? 'monthly' : body.period;
+    // `product` selects a Deck Vault purchase ('deck' = one deck ₹99,
+    // 'vault' = whole vault ₹499). Absent → a Lite/Pro subscription (unchanged).
+    const product = typeof body.product === 'string' ? body.product : null;
 
-    if (tier !== 'lite' && tier !== 'pro') {
-      return NextResponse.json({ error: 'Invalid tier specified' }, { status: 400 });
-    }
-    if (!isBillingPeriod(period)) {
-      return NextResponse.json({ error: 'Invalid billing period specified' }, { status: 400 });
-    }
-    let amount = priceFor(tier as 'lite' | 'pro', period) * 100; // INR -> paise, single source of truth
+    let amount: number;                       // paise, computed server-side ONLY
+    let notes: Record<string, string>;        // server-set; the client can inject nothing
+    let couponCode = '';
 
-    // Optional coupon. Fully backward-compatible: a missing coupon leaves the
-    // flow exactly as before. An INVALID coupon is a hard 400 — never silently
-    // charge full price when the user believes a discount applies.
-    //
-    // Both coupon shapes go through lib/coupons (C7 v2): user-locked deck-vault
-    // rewards behave exactly as they did, public influencer codes are usable by
-    // any signed-in buyer up to their redemption cap.
-    const couponCode = normalizeCode(body.coupon);
-    const notes: Record<string, string> = { tier, period, user_id: user.id };
-    if (couponCode) {
-      if (!isValidCodeShape(couponCode)) {
-        return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 });
-      }
+    if (product === 'deck' || product === 'vault') {
+      // ── Deck Vault purchases ─────────────────────────────────────────────
       const svc = createServiceClient();
-      const c = await loadCoupon(svc, couponCode);
-      if (c && c.status === 'active' && new Date(c.expires_at).getTime() < Date.now()) {
-        await svc.from('discount_coupons').update({ status: 'expired' }).eq('id', c.id);
-        return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 });
+      if (product === 'vault') {
+        amount = DECK_VAULT_PRICE_INR * 100;
+        notes = { product: 'vault', user_id: user.id };
+      } else {
+        const skeletonId = typeof body.skeletonId === 'string' ? body.skeletonId.trim() : '';
+        if (!skeletonId) {
+          return NextResponse.json({ error: 'Missing deck.' }, { status: 400 });
+        }
+        const { data: deck } = await svc
+          .from('deck_skeletons').select('id, is_active').eq('id', skeletonId).maybeSingle();
+        if (!deck || (deck as { is_active?: boolean }).is_active === false) {
+          return NextResponse.json({ error: 'Deck not found.' }, { status: 404 });
+        }
+        // Refuse if the user already has access (owns this deck, the whole vault,
+        // or is Pro/admin) — never charge for something already unlocked.
+        const [{ data: owned }, { data: vault }, { data: urow }] = await Promise.all([
+          svc.from('deck_purchases').select('id').eq('user_id', user.id).eq('skeleton_id', skeletonId).maybeSingle(),
+          svc.from('skeleton_access').select('user_id').eq('user_id', user.id).maybeSingle(),
+          svc.from('users').select('is_admin, subscription_tier, subscription_expires_at').eq('id', user.id).maybeSingle(),
+        ]);
+        const u = urow as { is_admin?: boolean; subscription_tier?: string; subscription_expires_at?: string | null } | null;
+        const isPro = u?.subscription_tier === 'pro' && (!u.subscription_expires_at || new Date(u.subscription_expires_at) > new Date());
+        if (owned || vault || u?.is_admin || isPro) {
+          return NextResponse.json({ error: 'You already have access to this deck.' }, { status: 400 });
+        }
+        amount = DECK_SINGLE_PRICE_INR * 100;
+        notes = { product: 'deck', skeleton_id: skeletonId, user_id: user.id };
       }
-      const check = checkCoupon(c, user.id, tier as 'lite' | 'pro');
-      if (!check.ok) {
-        return NextResponse.json({ error: check.reason }, { status: 400 });
+    } else {
+      // ── Subscription (Lite / Pro) — unchanged from before ────────────────
+      const { tier } = body;
+      // Billing period is optional and backward-compatible: a missing/legacy body
+      // (no `period`) behaves exactly like before — monthly.
+      const period = body.period === undefined ? 'monthly' : body.period;
+
+      if (tier !== 'lite' && tier !== 'pro') {
+        return NextResponse.json({ error: 'Invalid tier specified' }, { status: 400 });
       }
-      amount = discountedPaise(tier as 'lite' | 'pro', period, check.coupon.discount_pct);
-      // notes.coupon is server-set and is the ONLY channel a coupon reaches
-      // verify/webhook — the client can never inject one.
-      notes.coupon = check.coupon.code;
+      if (!isBillingPeriod(period)) {
+        return NextResponse.json({ error: 'Invalid billing period specified' }, { status: 400 });
+      }
+      amount = priceFor(tier as 'lite' | 'pro', period) * 100; // INR -> paise, single source of truth
+      notes = { tier, period, user_id: user.id };
+
+      // Optional coupon. Fully backward-compatible: a missing coupon leaves the
+      // flow exactly as before. An INVALID coupon is a hard 400 — never silently
+      // charge full price when the user believes a discount applies.
+      couponCode = normalizeCode(body.coupon);
+      if (couponCode) {
+        if (!isValidCodeShape(couponCode)) {
+          return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 });
+        }
+        const svc = createServiceClient();
+        const c = await loadCoupon(svc, couponCode);
+        if (c && c.status === 'active' && new Date(c.expires_at).getTime() < Date.now()) {
+          await svc.from('discount_coupons').update({ status: 'expired' }).eq('id', c.id);
+          return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 });
+        }
+        const check = checkCoupon(c, user.id, tier as 'lite' | 'pro');
+        if (!check.ok) {
+          return NextResponse.json({ error: check.reason }, { status: 400 });
+        }
+        amount = discountedPaise(tier as 'lite' | 'pro', period, check.coupon.discount_pct);
+        // notes.coupon is server-set and is the ONLY channel a coupon reaches
+        // verify/webhook — the client can never inject one.
+        notes.coupon = check.coupon.code;
+      }
     }
 
     const instance = new Razorpay({
@@ -126,19 +165,24 @@ export async function POST(req: Request) {
     // Non-blocking: a logging failure must never block a legitimate checkout.
     // On the attempt that reaches the cap, alert on Telegram exactly once
     // (later attempts are refused above before reaching this point).
+    // Only subscription attempts are logged to `payments` (its `tier` column is
+    // NOT NULL and checked lite/pro). Deck/vault purchases skip the attempt log;
+    // the abuse guard's main job is protecting the subscription path anyway.
     try {
-      await guardDb.from('payments').insert({
-        user_id: user.id,
-        razorpay_order_id: order.id,
-        tier,
-        amount_paise: amount,
-        currency: 'INR',
-        status: 'created',
-      });
-      if ((recentAttempts ?? 0) + 1 >= MAX_ATTEMPTS_PER_HOUR) {
-        await notifyAdmin(
-          `🚨 MECE payment abuse guard: ${user.email || user.id} reached ${(recentAttempts ?? 0) + 1} payment attempts in the last hour — further orders are now blocked for an hour.\ntier=${tier} period=${period}${couponCode ? ` coupon=${couponCode}` : ''}`,
-        );
+      if (!product) {
+        await guardDb.from('payments').insert({
+          user_id: user.id,
+          razorpay_order_id: order.id,
+          tier: notes.tier,
+          amount_paise: amount,
+          currency: 'INR',
+          status: 'created',
+        });
+        if ((recentAttempts ?? 0) + 1 >= MAX_ATTEMPTS_PER_HOUR) {
+          await notifyAdmin(
+            `🚨 MECE payment abuse guard: ${user.email || user.id} reached ${(recentAttempts ?? 0) + 1} payment attempts in the last hour — further orders are now blocked for an hour.\ntier=${notes.tier}${couponCode ? ` coupon=${couponCode}` : ''}`,
+          );
+        }
       }
     } catch (e) {
       console.error('[order] attempt log/alert failed:', e);

@@ -6,6 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
 import { sendUpgradeReceipt } from '@/lib/email/send';
 import { notifyAdmin } from '@/lib/telegram';
+import { DECK_SINGLE_PRICE_INR, DECK_VAULT_PRICE_INR } from '@/lib/deck-access';
 import {
   loadCoupon,
   couponHonouredAtPayment,
@@ -56,12 +57,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, tier } = body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !tier) {
+    // `tier` is required only for subscription purchases; Deck Vault purchases
+    // ('deck'/'vault') carry no tier and are identified by the order's server-set
+    // notes after the signature is verified below.
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
-    }
-
-    if (tier !== 'lite' && tier !== 'pro') {
-      return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
     }
 
     const secret = process.env.RAZORPAY_KEY_SECRET!;
@@ -88,6 +88,75 @@ export async function POST(req: Request) {
       } catch {
         return NextResponse.json({ error: 'Could not verify order with Razorpay' }, { status: 400 });
       }
+      // ── Deck Vault purchases (₹99 single deck / ₹499 whole vault) ─────────
+      // The product is read from the ORDER's server-set notes, never the client,
+      // so it cannot be spoofed. Same money rigor as the tier path: confirm the
+      // payment is real + captured + the exact expected amount before granting.
+      const product = typeof order?.notes?.product === 'string' ? order.notes.product : null;
+      if (product === 'deck' || product === 'vault') {
+        const expectedPaise = (product === 'vault' ? DECK_VAULT_PRICE_INR : DECK_SINGLE_PRICE_INR) * 100;
+        if (Number(order.amount) !== expectedPaise) {
+          return NextResponse.json({ error: 'Paid amount does not match the item' }, { status: 400 });
+        }
+        let dpay: any;
+        try {
+          dpay = await instance.payments.fetch(razorpay_payment_id);
+        } catch {
+          return NextResponse.json({ error: 'Payment could not be verified with Razorpay' }, { status: 400 });
+        }
+        if (!dpay || dpay.order_id !== razorpay_order_id) {
+          return NextResponse.json({ error: 'Payment does not belong to this order' }, { status: 400 });
+        }
+        if (dpay.status !== 'captured') {
+          return NextResponse.json({ error: 'Payment has not been captured' }, { status: 400 });
+        }
+        if (Number(dpay.amount) !== expectedPaise) {
+          return NextResponse.json({ error: 'Captured amount does not match the item' }, { status: 400 });
+        }
+
+        const db = createServiceClient();
+        if (product === 'vault') {
+          const { data: existing } = await db
+            .from('skeleton_access').select('user_id').eq('razorpay_payment_id', razorpay_payment_id).maybeSingle();
+          if (existing) return NextResponse.json({ success: true, alreadyProcessed: true });
+          const { error } = await db.from('skeleton_access').upsert(
+            { user_id: user.id, razorpay_order_id, razorpay_payment_id, amount_paise: expectedPaise },
+            { onConflict: 'user_id' },
+          );
+          if (error) {
+            console.error('[verify] vault grant failed:', error);
+            return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+          }
+          return NextResponse.json({ success: true, product: 'vault' });
+        }
+        // single deck
+        const skeletonId = typeof order?.notes?.skeleton_id === 'string' ? order.notes.skeleton_id : '';
+        if (!skeletonId) {
+          return NextResponse.json({ error: 'Deck missing from order' }, { status: 400 });
+        }
+        const { data: existing } = await db
+          .from('deck_purchases').select('id').eq('razorpay_payment_id', razorpay_payment_id).maybeSingle();
+        if (existing) return NextResponse.json({ success: true, alreadyProcessed: true });
+        const { error } = await db.from('deck_purchases').insert({
+          user_id: user.id,
+          skeleton_id: skeletonId,
+          razorpay_order_id,
+          razorpay_payment_id,
+          amount_paise: expectedPaise,
+        });
+        // 23505 = already owned (unique user_id+skeleton_id or payment_id) → idempotent success.
+        if (error && (error as { code?: string }).code !== '23505') {
+          console.error('[verify] deck grant failed:', error);
+          return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+        }
+        return NextResponse.json({ success: true, product: 'deck' });
+      }
+
+      // ── Subscription (Lite / Pro) ────────────────────────────────────────
+      if (tier !== 'lite' && tier !== 'pro') {
+        return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
+      }
+
       // Period is taken from the order's server-set notes, never from the client,
       // so the access window can't be inflated by tampering with the verify body.
       const period = isBillingPeriod(order?.notes?.period) ? order.notes.period : 'monthly';
