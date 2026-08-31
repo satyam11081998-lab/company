@@ -15,6 +15,19 @@ export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
 
+  // Early exit: if the route is public AND no session cookie exists,
+  // skip Supabase entirely — no need to refresh a session that doesn't exist.
+  // This avoids the getUser() network call that can cause MIDDLEWARE_INVOCATION_TIMEOUT
+  // on Vercel when Supabase is slow or in a distant region.
+  const isPublic = PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/'));
+  const hasSession = request.cookies.getAll().some(c => c.name.startsWith('sb-'));
+
+  if (isPublic && !hasSession) {
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set('x-pathname', pathname);
+    return response;
+  }
+
   let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
@@ -38,7 +51,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublic = PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/'));
   const isAuthPage = AUTH_ROUTES.includes(pathname);
   // Guest-previewable app routes (dashboard/practice/cases/leaderboard). These
   // are NOT in PUBLIC_ROUTES so the onboarding gate below still fires for
