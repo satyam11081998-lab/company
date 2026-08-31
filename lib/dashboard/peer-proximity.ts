@@ -33,7 +33,7 @@ export async function getPeerProximity(supabase: SupabaseClient, userId: string)
   const { count: newCount } = await supabase
     .from('users')
     .select('id', { count: 'exact', head: true })
-    .eq('is_guest', false)
+    .eq('is_guest', false).eq('is_admin', false)
     .gte('created_at', since);
   const newAspirantsThisWeek = newCount || 0;
 
@@ -48,7 +48,7 @@ export async function getPeerProximity(supabase: SupabaseClient, userId: string)
   const behindQ = supabase
     .from('users')
     .select('id, name, points')
-    .eq('is_guest', false)   // never name a throwaway anonymous session as your rival
+    .eq('is_guest', false).eq('is_admin', false)   // never name a throwaway anonymous session as your rival
     .lt('points', myPoints)
     .order('points', { ascending: false })
     .limit(1);

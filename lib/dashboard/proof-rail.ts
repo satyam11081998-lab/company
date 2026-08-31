@@ -25,11 +25,11 @@ export async function getProofRail(supabase: SupabaseClient, caseId: string | nu
   // so this is the single query guests would most distort. The embed MUST be
   // `!inner`: PostgREST only lets an embedded-column filter restrict parent rows
   // on an inner join, so a plain `users(name)` embed would make the
-  // .eq('users.is_guest', false) below a silent no-op that filters nothing.
+  // .eq('users.is_guest', false).eq('users.is_admin', false) below a silent no-op that filters nothing.
   const { data: subs, error } = await supabase
     .from('submissions')
     .select('user_id, users!inner(name, is_guest)')
-    .eq('users.is_guest', false)
+    .eq('users.is_guest', false).eq('users.is_admin', false)
     .eq('case_id', caseId)
     .gte('created_at', today + 'T00:00:00Z');
 

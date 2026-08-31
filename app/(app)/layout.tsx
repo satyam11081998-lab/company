@@ -117,7 +117,7 @@ export default async function AppLayout({
   // lock mid-shoot would be the worst possible moment to enforce it.
   // Guest (anonymous auth) users are exempt alongside demo accounts: every
   // guest contends for a session row and would storm /session-conflict.
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY && !userRow?.is_demo && !userRow?.is_guest) {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY && !userRow?.is_demo && !userRow?.is_guest && !userRow?.is_admin) {
     const sessionState = await touchSession(
       createServiceClient(),
       authUser.id,

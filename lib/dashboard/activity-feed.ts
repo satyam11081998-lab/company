@@ -30,7 +30,7 @@ export async function getCohortActivity(supabase: SupabaseClient): Promise<TapeE
       users!inner(name, is_guest),
       cases(title, type)
     `)
-    .eq('users.is_guest', false)
+    .eq('users.is_guest', false).eq('users.is_admin', false)
     .order('created_at', { ascending: false })
     .limit(10);
   const { data, error } = await (excl ? q.not('user_id', 'in', excl) : q);
