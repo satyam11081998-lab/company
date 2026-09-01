@@ -105,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Toaster />
-          <PwaProvider />
+          {/* <PwaProvider /> — hidden for now */}
           <Analytics />
           <PageTracker />
           {/* Cloudflare Turnstile — loaded ONLY when a site key is configured,
