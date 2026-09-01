@@ -34,6 +34,17 @@ import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 
 /** Realtime transport unless explicitly switched off. See the mount below. */
 const USE_REALTIME = process.env.NEXT_PUBLIC_VOICE_REALTIME !== '0';
+
+/**
+ * How long each dictation segment runs before it is closed, transcribed and a
+ * fresh one starts. Short enough that the transcript keeps appearing as you
+ * speak and a single failure is cheap; long enough that we are not hammering
+ * Whisper. The gap between segments is a couple of milliseconds (the stream is
+ * kept open), so speech is not lost across a rotation.
+ */
+const SEGMENT_MS = 18000;
+/** Auto-grow ceiling for the composer before it starts scrolling internally. */
+const COMPOSER_MAX_PX = 240;
 import EngagingLoader from '@/components/engaging-loader';
 import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { createClient } from '@/lib/supabase/client';
@@ -128,10 +139,23 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // and a multi-line textarea each add height and hid the newest turn.
   const [composerH, setComposerH] = useState(128);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<BlobPart[]>([]);
-  const micCancelledRef = useRef(false);
-  const micResolveRef = useRef<((t: string | null) => void) | null>(null);
+  // ── Continuous dictation (segment rotation) ─────────────────────────────
+  // One long recording is captured as a chain of ~SEGMENT_MS segments. Each
+  // finished segment is transcribed on its own and appended to the composer in
+  // order, so (a) the transcript appears WHILE you keep talking instead of after
+  // one long wait at the end, (b) an expired token or a dropped request loses at
+  // most one segment rather than the whole take, and (c) each Whisper call stays
+  // small and fast.
+  const micStreamRef = useRef<MediaStream | null>(null);        // kept open across segments
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);  // current segment recorder
+  const audioChunksRef = useRef<BlobPart[]>([]);                // current segment chunks
+  const rotateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const keepRecordingRef = useRef(false);   // user still wants to record (drives auto-restart)
+  const micCancelledRef = useRef(false);    // discard the in-flight segment on cancel
+  const transcribeChainRef = useRef<Promise<void>>(Promise.resolve()); // serialise → keep order
+  const composerVoiceRef = useRef(false);   // did dictation contribute to the current draft?
+  const composerTextRef = useRef<HTMLTextAreaElement>(null);    // for auto-grow
+  const recordingRef = useRef<'idle' | 'recording' | 'transcribing'>('idle');
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +242,66 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     return () => { alive = false; };
   }, [token]);
 
+  // Keep a synchronous mirror of `recording` for the timers/handlers that run
+  // outside React's render (segment rotation, the window Enter listener).
+  useEffect(() => { recordingRef.current = recording; }, [recording]);
+
+  // Auto-grow the composer so a long transcript is readable instead of trapped
+  // in a 40px slot. Grows with the text up to COMPOSER_MAX_PX, then scrolls.
+  // Runs whenever the value changes — typed OR appended by dictation.
+  useEffect(() => {
+    const el = composerTextRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_PX)}px`;
+  }, [composer, recording]);
+
+  // While recording the textarea may not hold focus (you are talking, not
+  // typing), so Enter is caught at the window: first Enter stops the mic and
+  // flushes the transcript into the box; a second Enter (now idle) sends it.
+  useEffect(() => {
+    if (recording !== 'recording') return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        finalizeMic();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [recording]);
+
+  // Clean the mic up if the component unmounts mid-recording (navigation away)
+  // so the microphone light does not stay on.
+  useEffect(() => () => { hardStopMic(); }, []);
+
+  /**
+   * A CURRENT, non-expired access token. The component captured `token` once at
+   * mount; a case interview easily outlives a Supabase access token, and the old
+   * code kept posting the stale one — which is exactly the "invalid token" the
+   * mic and Send started throwing part-way through a long session. getSession()
+   * returns the live token and refreshes it when it is at/near expiry; we also
+   * push the fresh value back into state so subsequent reads are current.
+   */
+  async function freshToken(): Promise<string | null> {
+    try {
+      const supabase = createClient();
+      let { data: { session } } = await supabase.auth.getSession();
+      const now = Math.floor(Date.now() / 1000);
+      if (session?.expires_at && session.expires_at - now < 60) {
+        const { data } = await supabase.auth.refreshSession();
+        if (data.session) session = data.session;
+      }
+      if (session?.access_token) {
+        if (session.access_token !== token) setToken(session.access_token);
+        return session.access_token;
+      }
+    } catch {
+      /* fall back to whatever we last held */
+    }
+    return token;
+  }
+
   // Refreshed on every render — see sendRef above.
   sendRef.current = send;
 
@@ -230,7 +314,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
    */
   async function send(kind: 'text' | 'voice' = 'text', content?: string): Promise<boolean> {
     const text = (content ?? composer).trim();
-    if (!text || !attempt || !token || sending) return false;
+    if (!text || !attempt || sending) return false;
+    // Always post with a live token — a long interview outlives the one we
+    // captured at mount (see freshToken).
+    const authTok = await freshToken();
+    if (!authTok) return false;
 
     const optimisticUser: AttemptMessage = {
       id: `tmp-${Date.now()}`,
@@ -243,13 +331,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     setMessages((m) => [...m, optimisticUser]);
     trackAction('send_message', 'case', kind === 'voice' ? 'Voice message' : 'Text message', { case_id: caseId });
     setComposer('');
+    composerVoiceRef.current = false; // draft is spent — next draft starts fresh
     setSending(true);
     setDraftAssistant({ id: 'draft', role: 'assistant', text: '' });
 
     try {
       const result = await postMessageStream(
         attempt.attempt_id,
-        token,
+        authTok,
         { content: text, kind },
         {
           onMeta: (meta) => {
@@ -266,7 +355,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           onError: (err) => toast.error(err),
         },
       );
-      const detail = await getAttempt(attempt.attempt_id, token);
+      const detail = await getAttempt(attempt.attempt_id, authTok);
       setMessages(detail.messages);
       setAttempt(detail.attempt);
       // Fire ONLY when the backend actually declined this turn's clarification.
@@ -294,48 +383,150 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
-  // Mic flow: tap mic -> record; tap square -> CANCEL (discard); the Send button
-  // commits by calling finalizeMic() (stop + transcribe) and then send('voice').
+  // ── Dictation ────────────────────────────────────────────────────────────
+  // Tap mic → record; the transcript streams into the composer segment by
+  // segment WHILE you speak (see SEGMENT_MS), so nothing waits for the end and a
+  // single dropped/expired request loses at most one segment. The check button
+  // (or Enter) STOPS recording and flushes the last segment into the box; the
+  // cross CANCELS. Send stays disabled while recording so speech is reviewed
+  // first — a second Enter, once idle, sends it.
+
+  /** Set the recording state AND its synchronous mirror (timers/handlers read the ref). */
+  function setRec(s: 'idle' | 'recording' | 'transcribing') {
+    recordingRef.current = s;
+    setRecording(s);
+  }
+
+  function appendToComposer(text: string) {
+    const clean = text.trim();
+    if (!clean) return;
+    composerVoiceRef.current = true; // this draft carries dictated speech
+    setComposer((prev) => {
+      const base = prev.trimEnd();
+      return base ? `${base} ${clean}` : clean;
+    });
+  }
+
+  /** Transcribe ONE finished segment. Chained so segments land in spoken order. */
+  function enqueueSegment(blob: Blob) {
+    if (blob.size === 0) return;
+    transcribeChainRef.current = transcribeChainRef.current
+      .catch(() => {}) // a failed segment must never stall the ones behind it
+      .then(async () => {
+        try {
+          const tok = await freshToken(); // long takes outlive the mount token
+          const { text, quota: q } = await transcribeAudio(blob, tok || undefined);
+          if (q) setQuota(q); // keep "minutes left" exact from the server
+          if (text) appendToComposer(text);
+          if (q && q.voice.remaining_min <= 0 && keepRecordingRef.current) {
+            toast.error('Daily voice limit reached — what you said is saved; you can keep typing.');
+            stopMic(); // flush + go idle
+          }
+        } catch (e) {
+          // Keep every segment already in the box; only THIS one is lost.
+          toast.error(e instanceof Error ? e.message : 'Part of that could not be transcribed — please re-record it.');
+        }
+      });
+  }
+
+  /** Open a fresh segment recorder on the already-open stream. */
+  function startSegment() {
+    const stream = micStreamRef.current;
+    if (!stream) return;
+    const mr = new MediaRecorder(stream);
+    mediaRecorderRef.current = mr;
+    audioChunksRef.current = [];
+    mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+    mr.onstop = () => {
+      // The recorder's OWN type, not an assumption — Safari records audio/mp4.
+      const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || 'audio/webm' });
+      audioChunksRef.current = [];
+      if (!micCancelledRef.current) enqueueSegment(blob);
+      if (keepRecordingRef.current) {
+        // Still recording? Immediately open the next segment — the stream stays
+        // open, so the gap is a couple of milliseconds.
+        startSegment();
+      } else if (recordingRef.current === 'transcribing') {
+        // This was the FINAL segment after a stop → go idle once the whole
+        // queue (this segment included) has drained into the box.
+        transcribeChainRef.current = transcribeChainRef.current.then(() => {
+          if (recordingRef.current === 'transcribing') setRec('idle');
+        });
+      }
+    };
+    mr.start();
+  }
+
   async function startMic() {
-    if (recording === 'transcribing' || sending) return;
+    if (recording !== 'idle' || sending) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
       setMicStream(stream); // drive the live waveform
-      const mr = new MediaRecorder(stream);
-      mediaRecorderRef.current = mr;
-      audioChunksRef.current = [];
       micCancelledRef.current = false;
-      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setMicStream(null);
-        const resolve = micResolveRef.current;
-        micResolveRef.current = null;
-        if (micCancelledRef.current) { audioChunksRef.current = []; setRecording('idle'); resolve?.(null); return; }
-        // The recorder's OWN type, not an assumption — Safari records audio/mp4.
-        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || 'audio/webm' });
-        if (blob.size === 0) { setRecording('idle'); resolve?.(null); return; }
-        setRecording('transcribing');
-        try {
-          const { text, quota: q } = await transcribeAudio(blob, token || undefined);
-          if (q) setQuota(q); // refresh "minutes left" from the server's exact count
-          setRecording('idle');
-          resolve?.(text || null);
-        } catch (e) {
-          toast.error(e instanceof Error ? e.message : 'Transcription failed');
-          setRecording('idle');
-          resolve?.(null);
-        }
-      };
-      mr.start();
-      setRecording('recording');
+      keepRecordingRef.current = true;
+      startSegment();
+      // Rotate on a timer: closing the open segment fires its onstop, which
+      // transcribes it and opens the next one.
+      rotateTimerRef.current = setInterval(() => {
+        const mr = mediaRecorderRef.current;
+        if (keepRecordingRef.current && mr && mr.state === 'recording') mr.stop();
+      }, SEGMENT_MS);
+      setRec('recording');
     } catch { toast.error('Microphone permission denied'); }
   }
 
-  function cancelMic() {
+  /** Release the stream + rotation timer. Leaves React state untouched. */
+  function releaseMic() {
+    if (rotateTimerRef.current) { clearInterval(rotateTimerRef.current); rotateTimerRef.current = null; }
+    micStreamRef.current?.getTracks().forEach((t) => t.stop());
+    micStreamRef.current = null;
+    setMicStream(null);
+  }
+
+  /** Hard stop, no transcription — used for unmount cleanup so the mic light dies. */
+  function hardStopMic() {
+    keepRecordingRef.current = false;
     micCancelledRef.current = true;
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') mediaRecorderRef.current.stop();
-    else setRecording('idle');
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state === 'recording') { try { mr.stop(); } catch { /* already stopped */ } }
+    releaseMic();
+  }
+
+  /** STOP + keep: close the last segment, transcribe it, then land as idle.
+   *  The flip to idle happens in the segment's onstop once the queue drains,
+   *  because MediaRecorder.stop() fires onstop asynchronously — reassigning the
+   *  chain here would race ahead of the final segment being enqueued. */
+  function stopMic() {
+    if (recordingRef.current !== 'recording') return;
+    keepRecordingRef.current = false;
+    setRec('transcribing'); // set BEFORE stop() so onstop sees the flush state
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state === 'recording') {
+      mr.stop(); // → onstop enqueues the final segment, then flips to idle
+    } else {
+      // Nothing open to flush → idle once anything already queued drains.
+      transcribeChainRef.current = transcribeChainRef.current.then(() => {
+        if (recordingRef.current === 'transcribing') setRec('idle');
+      });
+    }
+    releaseMic();
+  }
+
+  /** CANCEL: stop and discard only the in-flight segment — anything already
+   *  transcribed into the box stays (nothing said is silently thrown away). */
+  function cancelMic() {
+    keepRecordingRef.current = false;
+    micCancelledRef.current = true;
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state === 'recording') mr.stop();
+    releaseMic();
+    setRec('idle');
+  }
+
+  /** Check button / Enter while recording: stop + flush the transcript. */
+  function finalizeMic() {
+    if (recordingRef.current === 'recording') stopMic();
   }
 
   function micButtonClick() {
@@ -349,44 +540,12 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
-  /**
-   * Tick = transcribe INTO the composer. Does not send.
-   *
-   * Reverses the 2026-06-30 decision that Send should finalize and post in one
-   * tap. Owner asked for a review step (2026-08-16): dictation is a drafting
-   * tool, and a spoken sentence that Whisper mishears should be fixable before
-   * the interviewer sees it — not after, when it is already scored transcript.
-   *
-   * Appends rather than replaces, so dictating on top of typed text adds to it.
-   */
-  async function confirmMic() {
-    const text = await finalizeMic();
-    if (!text) return;
-    setComposer((prev) => {
-      const base = prev.trimEnd();
-      return base ? `${base} ${text}` : text;
-    });
-  }
-
-  function finalizeMic(): Promise<string | null> {
-    return new Promise((resolve) => {
-      if (recording !== 'recording' || !mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') { resolve(null); return; }
-      micCancelledRef.current = false;
-      micResolveRef.current = resolve;
-      mediaRecorderRef.current.stop();
-    });
-  }
-
-  // Composer Send. While RECORDING the tick owns the transcribe step, so Send is
-  // disabled rather than silently posting un-reviewed speech (see confirmMic).
-  async function handleComposerSend() {
-    if (recording === 'recording') {
-      const t = await finalizeMic();
-      if (t) await send('voice', t);
-      return;
-    }
-    if (recording === 'transcribing') return;
-    send('text');
+  // Composer Send. Disabled while recording (finalise first, then send), so
+  // speech is always reviewed before the interviewer sees it. Content dictated
+  // this cycle posts as 'voice' to preserve the existing turn-counting.
+  function handleComposerSend() {
+    if (recording !== 'idle') return;
+    send(composerVoiceRef.current ? 'voice' : 'text');
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -502,16 +661,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     setIsGuest(false);
     const supabase = createClient();
     const { data } = await supabase.auth.refreshSession();
-    const freshToken = data.session?.access_token ?? token;
-    setToken(freshToken ?? null);
+    const convertedTok = data.session?.access_token ?? token;
+    setToken(convertedTok ?? null);
 
     const rec = pendingRec;
     setPendingRec('');
-    if (!attempt || !freshToken || !rec) return;
+    if (!attempt || !convertedTok || !rec) return;
 
     setSubmitting(true);
     try {
-      const res = await submitAttempt(attempt.attempt_id, freshToken, rec);
+      const res = await submitAttempt(attempt.attempt_id, convertedTok, rec);
       const resultsPath = `/results/${res.submission_id}`;
       // A just-converted guest has no onboarding row, so middleware will bounce
       // them from the results page straight to /onboarding — and the gate
@@ -827,29 +986,44 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 </div>
               )}
 
+              {/* Live waveform sits ABOVE the box (not in place of it), so the
+                  textarea stays visible and the transcript is readable as it
+                  streams in segment by segment. */}
+              {recording !== 'idle' && (
+                <div className="mb-2 flex items-center gap-3 rounded-2xl bg-primary/5 px-3 py-2">
+                  <MicWaveform stream={micStream} className="h-6 flex-1 text-primary" />
+                  <span className="shrink-0 text-micro font-medium text-primary/80">
+                    {recording === 'transcribing' ? 'Finishing up…' : 'Listening — press Enter or ✓ to stop'}
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-end gap-2 rounded-[24px] border bg-card p-1.5 pl-3 shadow-md focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="shrink-0 rounded-full p-2 mb-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Attach a file">
                   <Paperclip className="h-5 w-5" />
                 </button>
                 <input ref={fileInputRef} type="file" className="hidden" accept="image/*,application/pdf,.doc,.docx,.txt" onChange={handleFile} />
 
-                {recording === 'recording' ? (
-                  // Live waveform replaces the text field while recording (ChatGPT-style).
-                  <div className="flex flex-1 items-center gap-3 py-2 px-1">
-                    <MicWaveform stream={micStream} className="h-8 flex-1 text-primary" />
-                    <span className="shrink-0 text-small font-medium text-primary/80">Listening…</span>
-                  </div>
-                ) : (
-                  <textarea
-                    value={composer}
-                    onChange={(e) => setComposer(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send('text'); } }}
-                    placeholder={!hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Share your structure, notes or calculations…' : 'Ask a clarification or share your structure…'}
-                    className="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
-                    rows={1}
-                    maxLength={MESSAGE_MAX_CHARS}
-                  />
-                )}
+                <textarea
+                  ref={composerTextRef}
+                  value={composer}
+                  onChange={(e) => setComposer(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      // Enter while recording is caught at the window (stop +
+                      // flush). Here we only handle the idle case: send. Either
+                      // way we swallow the newline.
+                      e.preventDefault();
+                      if (recording === 'idle') handleComposerSend();
+                    }
+                  }}
+                  placeholder={recording !== 'idle'
+                    ? 'Listening… your words appear here — edit before sending'
+                    : !hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Share your structure, notes or calculations…' : 'Ask a clarification or share your structure…'}
+                  className="min-h-[40px] max-h-[240px] flex-1 resize-y overflow-y-auto bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
+                  rows={1}
+                  maxLength={MESSAGE_MAX_CHARS}
+                />
 
                 <div className="flex items-center gap-1.5 pr-1 mb-0.5">
                   {/* TALK MODE — a distinct MODE, not another mic. Deliberately
@@ -923,10 +1097,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                       </button>
                       <button
                         type="button"
-                        onClick={confirmMic}
+                        onClick={finalizeMic}
                         className="relative shrink-0 rounded-full bg-primary p-2 text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
-                        aria-label="Transcribe into the message box"
-                        title="Transcribe — you can edit before sending"
+                        aria-label="Stop and transcribe into the message box"
+                        title="Stop — transcribe the rest, then edit before sending (or press Enter)"
                       >
                         <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-primary/50 animate-ping" />
                         <Check className="relative h-5 w-5" />

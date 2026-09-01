@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-08-08 10:20 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-08-25 22:12 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** main (frontend) / main (backend)
-**Last landed:** 2026-08-06 — influencer-growth-kit — <pending commit>
-**Last sync:** 2026-08-08 10:20 UTC
+**Branch:** main (frontend) / feat/deck-vault-cleanup (backend)
+**Last landed:** 2026-08-13 — fix-vercel-build-blocker — <pending commit; branch feat/voice-interview>
+**Last sync:** 2026-08-25 22:12 UTC
 
 ## Last 5 commits — frontend
-- a9d2f70 merge: guest mode (anonymous auth practice), flag-gated (satyam11081998-lab, 2026-08-08)
-- fcffeae fix(guest-mode): conversion sync survives the privileged-column guard (satyam11081998-lab, 2026-08-08)
-- f105830 feat(guest-mode): anonymous auth practice + / rewrites to dashboard (satyam11081998-lab, 2026-08-08)
-- ea93fe2 fix(dashboard): give HeroReadiness the same right rail as HeroCase (satyam11081998-lab, 2026-08-06)
-- 8ab6513 fix(dashboard,admin): one hero type scale; IST signup buckets; execution-tested SQL (satyam11081998-lab, 2026-08-06)
+- 6db1071 feat(landing): de-geo positioning + interactive interview sim hero (satyam11081998-lab, 2026-08-26)
+- c64de3d feat(broadcast): custom full-width HTML send + free SMTP reliability (verify, throttle, maxDuration); email assets; fix(payments+security): verified payments, test-key guard, column lock; remove nav sign-out (satyam11081998-lab, 2026-08-23)
+- 7c3c4e4 feat(broadcast): custom full-width HTML send (auto-detect) + free SMTP; email assets; fix(payments+security): verified payments, test-key guard, column lock; remove nav sign-out (satyam11081998-lab, 2026-08-23)
+- 875d45f feat(broadcast): custom full-width HTML send (auto-detect) + free SMTP; email assets; fix(payments+security): verified payments, test-key guard, column lock; remove nav sign-out (satyam11081998-lab, 2026-08-23)
+- 0e1256e Add files via upload (satyam11081998-lab, 2026-08-23)
 
 ## Last 5 commits — backend
-- 9fcc68c feat(guest-mode): guests limited to the daily pair; 403 on paid AI routes (satyam11081998-lab, 2026-08-08)
-- 2824dbc feat(solve): interviewer stops sounding like a template (satyam11081998-lab, 2026-08-01)
-- 9d80195 fix(solve): free tier gets a real clarification quota (7/12/20) and the interviewer never goes silent when it is spent (satyam11081998-lab, 2026-08-01)
-- 6a7f496 feat(deck-vault): store submissions in Google Drive vault (gdrive: paths, bucket fallback); accept TELEGRAM_CHAT_ID (satyam11081998-lab, 2026-07-17)
-- 41a5f50 feat(deck-vault): winning-deck upload -> verified discount coupons - private-bucket submissions (deck+cert, magic-byte checks), Telegram admin alert, status endpoint; corporate 60% / b-school 40% (satyam11081998-lab, 2026-07-17)
+- eadf808 chore(deps): add google-generativeai for backend Gemini synthesis (satyam11081998-lab, 2026-08-20)
+- f49a9d1 fix(deckvault): live Gemini model, tolerant JSON parse, company + SEO description (satyam11081998-lab, 2026-08-20)
+- 2eaf279 Add unified deck pipeline with Gemini AI and master audit script (satyam11081998-lab, 2026-08-20)
+- 21aee54 feat(decks): build automated case deck batch ingestion pipeline with zero-hallucination verification (satyam11081998-lab, 2026-08-19)
+- 11d29ac feat(decks): lighter watermark - no bar, 43% text (satyam11081998-lab, 2026-08-17)
 
 ## Open feature branches (not merged into main)
 - (none)
@@ -34,6 +34,7 @@
 | **Daily content + admin + keep-alive** | B | feat/daily | **BUILT** (daily scheduler live) |
 | **News pipeline** | B | feat/daily | **BUILT** (self-heal live) |
 | **Voice + image input** | B | feat/io | **BUILT** |
+| **Voice interview (talk mode)** | Cowork | feat/voice-interview | **BUILT 2026-08-13, NOT YET MERGED** — gates green (tsc EXIT 0, py_compile EXIT 0, 14/14 unit cases); needs a real-browser QA pass + the env-var raise before unflagging |
 | **Payments (Razorpay + audit trail)** | B | feat/payments | **BUILT; annual dropped 2026-06-20 (2901f0b); optional server-validated coupon path added 2026-07-17 (C7)** |
 | **Rate limiting** | B | feat/backend | **BUILT** |
 | **AI evaluation v2** | B | feat/eval | **BUILT** |
@@ -45,6 +46,7 @@
 | **Auth** | C | feat/auth | **BUILT (LinkedIn OIDC added)** |
 | **Onboarding (LinkedIn prefill)** | C | feat/auth | **BUILT (LinkedIn prefill + connected hint)** |
 | **Admin** | C | feat/admin | **BUILT (Status page, Delete User; Deck Rewards section added 2026-07-17)** |
+| **Certificates** | Cowork | (landed direct-to-main) | **BUILT & COMMITTED 2026-08-11** (464f806, 4120ca4, 5019501, e5174da + backend edafb57). Migration 0046 NOT yet run; `npm run build` NOT yet run |
 | **GD Briefs** | C | feat/gd | **BUILT (Abstract GD track + shared library, domains added)** |
 | **Leaderboard** | C | feat/leaderboard | **BUILT (college + LinkedIn opt-out, logo updated)** |
 | **Endorsements** | C | feat/endorsements | **BUILT** |

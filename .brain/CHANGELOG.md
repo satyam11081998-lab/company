@@ -11,6 +11,11 @@ A brain reading this at session start only needs the top ~15 lines.
 
 ---
 
+## 2026-09-01 — dictation-continuous-and-token — <pending commit; branch feat/solve>
+Continuous transcription via segment rotation, fresh session token per request to fix expiration, window-level Enter to commit/send, and resizable visible composer during dictation.
+touches: `components/solve/ConversationalSolve.tsx`
+breaking: no — no CONTRACTS.md surface changes   affects: nobody must re-sync
+
 ## 2026-08-13 — fix-vercel-build-blocker — <pending commit; branch feat/voice-interview>
 STATE blocker 1, open since 2026-07-17, root-caused and fixed. The owner was right that the variables "all existed" — they were never both in the SAME environment. `vercel env ls` showed `NEXT_PUBLIC_SUPABASE_URL` scoped to **Preview only** and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to **Production only**, so every production build received `undefined` for the URL. `lib/supabase/static.ts` cast it with `as string` and handed it to supabase-js, which threw `supabaseUrl is required`; `/` failed to export; and a single unexportable route fails the entire build. The live site kept serving the last successful deployment, which is exactly why it looked healthy while three weeks of work sat undeployed. The 2026-08-08 hardening of `lib/supabase/client.ts` had already solved this shape of problem for the auth pages but missed `static.ts` — the file the LANDING page uses (`app/page.tsx:63`, `lib/daily-server.ts:63`) — so `/` alone kept hard-failing. `static.ts` now carries the identical guard: placeholder client on the server so the export survives, loud throw in the browser so a real misconfiguration is never silent. Verified rather than assumed: a query through the placeholder host RESOLVES with `{data: null}` instead of rejecting, and all three consumers already degrade (testimonials fall back to the hardcoded constant, endorsements to `[]`, daily to its try/catch default), so `/` renders its zero-state. A missing env var can no longer take down a deployment.
 touches: lib/supabase/static.ts
