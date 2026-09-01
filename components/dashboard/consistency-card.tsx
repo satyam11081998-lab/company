@@ -63,8 +63,16 @@ export function ConsistencyCard({ u }: ConsistencyCardProps) {
   const cohortCadence = u.heatmap?.cohortCadence ?? 2.8;
   const palette = ['#F1ECDD', '#F5C9CF', '#E37685', '#C8102E', '#8E0A20'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // Month labels — approx position: month i lives near col (i / 12) * 52
-  const monthCols = months.map((m: string, i: number) => ({ label: m, col: Math.round(i * 52 / 12) }));
+  const monthCols: {label: string, col: number}[] = [];
+  const now = new Date();
+  let lastMonth = -1;
+  for (let w = 0; w < weeks; w++) {
+    const d = new Date(now.getTime() - (weeks - 1 - w) * 7 * 86400000);
+    if (d.getMonth() !== lastMonth) {
+      monthCols.push({ label: months[d.getMonth()], col: w });
+      lastMonth = d.getMonth();
+    }
+  }
 
   return (
     <div className="card" style={{ padding: 'var(--pad-card, 18px 20px)' }}>
