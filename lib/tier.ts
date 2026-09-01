@@ -74,6 +74,9 @@ export const TIER_LIMITS = {
     lifetimeExtraCases: Infinity,
     lifetimeExtraGuesstimates: Infinity,
     gdBriefs: true,
+    // Display/descriptive only — the REAL cap is enforced server-side in
+    // routes/news.py: Lite gets 2 NEW GD briefs per IST day (re-viewing an
+    // already-unlocked brief is free). Pro stays unlimited.
     gdBriefsLifetime: Infinity,
     cheatSheet: 'full' as const,
     cvLabTrialUses: 2,         // CV Pointer Lab is Pro; Lite gets the same 2-try preview

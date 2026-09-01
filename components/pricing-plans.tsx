@@ -106,7 +106,7 @@ export default function PricingPlans() {
               </li>
               <PlanFeature text="2 extra cases & guesstimates / day" />
               <PlanFeature text="Unlimited re-attempts" />
-              <PlanFeature text="Unlimited GD briefs + source links" />
+              <PlanFeature text="2 GD briefs / day + source links" />
               <PlanFeature text="Full cheat sheet (save & download)" />
               <PlanFeature text="12 interviewer hints per case" />
             </ul>
