@@ -16,7 +16,7 @@ export const GUESSTIMATE_WEIGHTS = {
 } as const;
 
 export interface LlmDimensionScores {
-  scoping: number; // 1..5
+  scoping: number; // 0..100
   structure: number;
   segmentation: number;
   arithmetic: number; // the LLM's (untrusted) arithmetic score — will be REPLACED
@@ -38,7 +38,9 @@ function weightedTotal(d: LlmDimensionScores): number {
     d.segmentation * GUESSTIMATE_WEIGHTS.segmentation +
     d.arithmetic * GUESSTIMATE_WEIGHTS.arithmetic +
     d.sanity * GUESSTIMATE_WEIGHTS.sanity;
-  return (t / 5) * 100;
+  // Dimensions are 0-100 and the weights sum to 1.0, so the weighted sum is the
+  // 0-100 total (previously dims were 1-5, hence the old `/ 5 * 100`).
+  return t;
 }
 
 /** Combine LLM rubric scores + the candidate's calc chain into the final, backstop-corrected score. */

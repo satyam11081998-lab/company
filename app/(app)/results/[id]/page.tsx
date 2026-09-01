@@ -10,6 +10,7 @@ import {
   SCORE_DIMENSIONS,
   SCORE_DIMENSION_LABELS,
   SCORE_DIMENSION_MAX,
+  GUESSTIMATE_DIMENSION_MAX_LEGACY,
   GUESSTIMATE_DIMENSIONS,
   GUESSTIMATE_DIMENSION_LABELS,
   GUESSTIMATE_DIMENSION_MAX,
@@ -45,6 +46,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
     improvements?: string[];
     summary?: string;
     rubric?: string;
+    scale?: number;
     // Additive (2026-09-01) — richer, evidence-based feedback. All optional so
     // older submissions (no such fields) render exactly as before.
     dimension_feedback?: Record<string, { score?: number; evidence?: string; gap?: string; to_improve?: string }>;
@@ -69,6 +71,9 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const notScored = validity?.verdict === 'gibberish' || validity?.verdict === 'off_topic';
   const summary = feedback.summary || 'No summary available yet.';
   const isGuesstimate = feedback.rubric === 'guesstimate';
+  // Guesstimate dimensions are 0-100 for submissions scored on/after 2026-09-01
+  // (feedback.scale === 100); older ones are still 1-5.
+  const guessMax = feedback.scale === 100 ? GUESSTIMATE_DIMENSION_MAX : GUESSTIMATE_DIMENSION_MAX_LEGACY;
   const backstop = feedback.backstop;
   const newBadges = (userBadgesRes.data || []) as Array<{ id: string; badges: BadgeRow }>;
   const wasDaily = !!(attemptRes.data as { counted_for_daily?: boolean } | null)?.counted_for_daily;
@@ -135,9 +140,13 @@ export default async function ResultPage({ params }: { params: { id: string } })
           <div className="mt-4 space-y-4">
             {(isGuesstimate ? GUESSTIMATE_DIMENSIONS : SCORE_DIMENSIONS).map((dim) => {
               const value = Number(breakdown[dim] ?? 0);
-              const max = isGuesstimate ? GUESSTIMATE_DIMENSION_MAX : (SCORE_DIMENSION_MAX[dim] ?? 100);
+              // Raw stored max for THIS submission's dimension (case dims are
+              // weighted 25/20/…; guesstimate dims are 0-100 new, 1-5 legacy).
+              const rawMax = isGuesstimate ? guessMax : (SCORE_DIMENSION_MAX[dim] ?? 100);
               const label = isGuesstimate ? GUESSTIMATE_DIMENSION_LABELS[dim] : SCORE_DIMENSION_LABELS[dim];
-              const percentage = Math.max(0, Math.min(100, (value / max) * 100));
+              const percentage = Math.max(0, Math.min(100, (value / rawMax) * 100));
+              // Show every dimension on a single 0-100 scale, regardless of how it is stored.
+              const shown = Math.round(percentage);
               const df = dimensionFeedback[dim];
               return (
                 <div key={dim}>
@@ -146,8 +155,8 @@ export default async function ResultPage({ params }: { params: { id: string } })
                       {label}
                     </span>
                     <span className="font-semibold text-foreground">
-                      {value}
-                      <span className="text-muted-foreground/70">/{max}</span>
+                      {shown}
+                      <span className="text-muted-foreground/70">/100</span>
                     </span>
                   </div>
                   <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">

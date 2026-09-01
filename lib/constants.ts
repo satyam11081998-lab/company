@@ -64,7 +64,7 @@ export const SCORE_DIMENSION_MAX: Record<string, number> = {
   presence: 10,
 };
 
-// --- Guesstimate rubric (5 dimensions, each scored 1..5) ---
+// --- Guesstimate rubric (5 dimensions, each scored 0..100) ---
 // Mirrors backend services/guesstimate_backstop.py + lib/scoring/apply-backstop.ts.
 export const GUESSTIMATE_DIMENSIONS = [
   'scoping',
@@ -83,8 +83,12 @@ export const GUESSTIMATE_DIMENSION_LABELS: Record<string, string> = {
   arithmetic: 'Arithmetic & Units',
   sanity: 'Sanity Check',
 };
-// each guesstimate dimension is on a 1..5 scale
-export const GUESSTIMATE_DIMENSION_MAX = 5;
+// each guesstimate dimension is on a 0..100 scale (was 1..5 before 2026-09-01).
+// Older stored submissions are still 1..5; the results page detects that via the
+// feedback's `scale` marker and normalises them for display.
+export const GUESSTIMATE_DIMENSION_MAX = 100;
+// The legacy 1..5 max, kept so historical guesstimate submissions render correctly.
+export const GUESSTIMATE_DIMENSION_MAX_LEGACY = 5;
 
 export const MIN_ANSWER_CHARS = 200;
 
