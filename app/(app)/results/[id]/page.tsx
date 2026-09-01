@@ -16,6 +16,7 @@ import {
 } from '@/lib/constants';
 import type { SubmissionRow, BadgeRow } from '@/lib/types';
 import BadgePill from '@/components/badge-pill';
+import TrackPageAction from '@/components/analytics/track-page-action';
 
 export const revalidate = false;
 
@@ -75,6 +76,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
     <div className="min-h-screen bg-muted">
 
       <main className="container max-w-4xl py-10">
+        <TrackPageAction action="view_results" category="case" label={`Score: ${score}/100`} value={{ submission_id: params.id, score, is_guesstimate: isGuesstimate }} />
         {/* Big score */}
         <Card className="flex flex-col items-center p-10 text-center">
           <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">Your score</p>

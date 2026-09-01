@@ -7,6 +7,7 @@ import { useUser } from "@/components/user-context";
 import TeamsContactBanner from "@/components/teams-contact-banner";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useTrackAction } from "@/hooks/use-track-action";
 import { VOICE_INTERVIEW_ENABLED } from "@/lib/constants";
 import {
   BILLING_PERIODS,
@@ -36,6 +37,7 @@ declare global {
 export default function UpgradePage() {
   const { user, tier, refresh } = useUser();
   const router = useRouter();
+  const trackAction = useTrackAction();
   const [loading, setLoading] = useState<string | null>(null);
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
@@ -53,7 +55,7 @@ export default function UpgradePage() {
 
     try {
       setLoading(target);
-      // 1. Create order on the backend
+      trackAction('initiate_checkout', 'payment', `${target} ${period}`, { tier: target, period });
       const res = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -98,6 +100,7 @@ export default function UpgradePage() {
 
             if (verifyRes.ok) {
               toast.success(`Successfully upgraded to ${target.toUpperCase()}!`);
+              trackAction('complete_payment', 'payment', `${target} ${period}`, { tier: target, period, amount: data.amount });
               await refresh(); // refresh user context to get updated subscription_tier
               router.push("/dashboard");
             } else {

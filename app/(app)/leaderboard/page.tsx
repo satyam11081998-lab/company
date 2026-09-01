@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { getAllTimeLeaderboard, getCohortLeaderboard } from '@/lib/dashboard/leaderboards';
 import LeaderboardClient from '@/components/leaderboard/leaderboard-client';
 import GuestLeaderboardPreview from '@/components/guest/guest-leaderboard-preview';
+import TrackPageAction from '@/components/analytics/track-page-action';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,7 @@ export default async function LeaderboardPage({
   return (
     <div className="min-h-screen bg-muted">
       <main className="container max-w-5xl py-10">
+        <TrackPageAction action="view_leaderboard" category="engagement" />
         <LeaderboardClient
           userId={user.id}
           allTime={allTime}

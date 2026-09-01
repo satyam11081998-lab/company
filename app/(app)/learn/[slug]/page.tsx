@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import DomainViewer from '@/components/domain-viewer';
+import TrackPageAction from '@/components/analytics/track-page-action';
 import { getDomainBySlug, getAllSlugs, ALL_DOMAINS, LEARNING_PATHS } from '@/lib/curriculum';
 
 
@@ -25,6 +26,7 @@ export default async function DomainPage({ params }: Props) {
   return (
     <div className="min-h-screen">
       <main className="container max-w-6xl py-10">
+        <TrackPageAction action="read_framework" category="learn" label={domain.title} value={{ slug: params.slug }} />
         <DomainViewer
           domain={domain}
           allDomains={ALL_DOMAINS}

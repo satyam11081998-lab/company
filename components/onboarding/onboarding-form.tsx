@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useTrackAction } from '@/hooks/use-track-action';
 import {
   EMPTY_ONBOARDING_FORM,
   PLACEMENT_FOCUS_OPTIONS,
@@ -33,6 +34,7 @@ interface Props {
  */
 export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false }: Props) {
   const router = useRouter();
+  const trackAction = useTrackAction();
   const [form, setForm] = useState<OnboardingFormData>({
     ...EMPTY_ONBOARDING_FORM,
     ...prefill,
@@ -106,6 +108,7 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       // goes back to /cases/<id> to finish the submit that the onboarding gate
       // interrupted — promising "here's your analysis" there would be a lie for
       // the few seconds before scoring completes.
+      trackAction('complete_onboarding', 'lifecycle', form.placement_focus ?? undefined, { college_id: form.college_id, batch_year: form.batch_year });
       toast.success(
         after.startsWith('/results/')
           ? "You're in. Here's your analysis."

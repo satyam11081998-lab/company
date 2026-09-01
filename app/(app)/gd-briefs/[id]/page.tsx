@@ -8,6 +8,7 @@ import { fetchBrief, generateBrief } from '@/lib/api';
 import type { GeneratedBriefData } from '@/lib/types';
 import { ArrowLeft, ArrowRight, ExternalLink, AlertCircle, Loader2, MessageSquare, Lightbulb, BarChart3, Quote, AlertTriangle, CheckCircle2, Lock, Star } from 'lucide-react';
 import { useUser } from '@/components/user-context';
+import { useTrackAction } from '@/hooks/use-track-action';
 import { AddToCheatSheetButton } from '@/components/cheat-sheet/add-to-cheat-sheet-button';
 import EngagingLoader from '@/components/engaging-loader';
 import { createClient } from '@/lib/supabase/client';
@@ -25,6 +26,7 @@ export default function BriefDetailPage() {
   // "already added" state instead of resetting to an empty star on every reload.
   const [savedPoints, setSavedPoints] = useState<Set<string>>(new Set());
   const { user, hasTierAccess } = useUser();
+  const trackAction = useTrackAction();
   const locked = !hasTierAccess('lite');
 
   // Free-tier rework: ONE lifetime brief. 'checking' → read gd_brief_unlocks;
@@ -66,6 +68,7 @@ export default function BriefDetailPage() {
       try {
         const cached = await fetchBrief(headlineId, token);
         if (mounted) {
+          trackAction('view_gd_brief', 'gd', cached.headline_title ?? headlineId, { headline_id: headlineId });
           setBrief(cached);
           setLoading(false);
         }
@@ -87,6 +90,7 @@ export default function BriefDetailPage() {
       try {
         const fresh = await generateBrief(headlineId, token);
         if (mounted) {
+          trackAction('view_gd_brief', 'gd', fresh.headline_title ?? headlineId, { headline_id: headlineId, generated: true });
           setBrief(fresh);
           setLoading(false);
         }

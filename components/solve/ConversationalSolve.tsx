@@ -50,6 +50,7 @@ import {
 } from '@/lib/interview-api';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS, RECOMMENDATION_MAX_CHARS } from '@/lib/limits';
+import { useTrackAction } from '@/hooks/use-track-action';
 
 interface Props {
   caseId: string;
@@ -78,6 +79,7 @@ const PENDING_REC_KEY = (caseId: string) => `mece:pending-rec:${caseId}`;
 
 export default function ConversationalSolve({ caseId, initialCase, historyPanel, lockedOverlay }: Props) {
   const router = useRouter();
+  const trackAction = useTrackAction();
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(!lockedOverlay);
   const [attempt, setAttempt] = useState<AttemptSummary | null>(null);
@@ -172,6 +174,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         const summary = await startAttempt(caseId, tok);
         if (cancelled) return;
         setAttempt(summary);
+        trackAction('start_case', 'case', initialCase.title, { case_id: caseId, type: initialCase.type, difficulty: initialCase.difficulty });
         const detail = await getAttempt(summary.attempt_id, tok);
         if (cancelled) return;
         setCaseDetail(detail.case);
@@ -238,6 +241,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       created_at: new Date().toISOString(),
     };
     setMessages((m) => [...m, optimisticUser]);
+    trackAction('send_message', 'case', kind === 'voice' ? 'Voice message' : 'Text message', { case_id: caseId });
     setComposer('');
     setSending(true);
     setDraftAssistant({ id: 'draft', role: 'assistant', text: '' });
@@ -393,6 +397,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     try {
       const res = await uploadAttemptFile(attempt.attempt_id, token, file);
       setMessages((m) => [...m, res.message]);
+      trackAction('upload_image', 'case', file.name, { case_id: caseId });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Upload failed');
     }
@@ -477,6 +482,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     setSubmitting(true);
     try {
       const res = await submitAttempt(attempt.attempt_id, token, rec);
+      trackAction('submit_case', 'case', initialCase.title, { case_id: caseId, attempt_id: attempt.attempt_id });
       router.push(`/results/${res.submission_id}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Submit failed');

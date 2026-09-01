@@ -8,12 +8,14 @@ import { sanitizeNextPath } from '@/lib/constants';
 import { getCaptchaToken } from '@/lib/turnstile';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import { useTrackAction } from '@/hooks/use-track-action';
 
 /** Reusable login/signup form. `mode` controls which action runs on submit. */
 export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
+  const trackAction = useTrackAction();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,8 +90,10 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         // exists; otherwise hold them on a confirm-your-email screen.
         if (!data.session) {
           setAwaitingConfirm(true);
+          trackAction('complete_signup', 'lifecycle', 'email (awaiting confirm)');
           return;
         }
+        trackAction('complete_signup', 'lifecycle', 'email');
         toast.success('Account created.');
         router.push(nextPath);
         router.refresh();
