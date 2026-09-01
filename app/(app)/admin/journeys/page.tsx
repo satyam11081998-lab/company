@@ -152,9 +152,23 @@ export default async function AdminJourneysPage() {
       .limit(5000),
   ]);
 
-  const pageEvents = (pageRes.data as RawPageEvent[] | null) ?? [];
-  const actions = (actionRes.data as RawAction[] | null) ?? [];
+  const rawPageEvents = (pageRes.data as RawPageEvent[] | null) ?? [];
+  const rawActions = (actionRes.data as RawAction[] | null) ?? [];
   const actionsTableMissing = !!actionRes.error && /user_actions|relation|does not exist/i.test(actionRes.error.message ?? '');
+
+  // ── Exclude ADMINS from analytics ─────────────────────────────────
+  // An admin using the actual product (testing a case, viewing pricing) is
+  // tracked under their user_id and would otherwise pollute every metric here.
+  // Filter their events out at query time. Anonymous events (no user_id) are
+  // kept — we can only identify an admin when they are signed in.
+  const { data: adminRows } = await svc.from('users').select('id').eq('is_admin', true);
+  const adminIds = new Set<string>(((adminRows ?? []) as { id: string }[]).map((r) => r.id));
+  const pageEvents = adminIds.size
+    ? rawPageEvents.filter((e) => !e.user_id || !adminIds.has(e.user_id))
+    : rawPageEvents;
+  const actions = adminIds.size
+    ? rawActions.filter((a) => !a.user_id || !adminIds.has(a.user_id))
+    : rawActions;
 
   // ── Aggregate sessions ────────────────────────────────────────────
   const sessionMap = new Map<string, {

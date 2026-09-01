@@ -12,7 +12,9 @@
  * Handles all visitors: signed-in users AND anonymous visitors.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { anonLabel } from '@/lib/analytics';
 import { Card } from '@/components/ui/card';
 import JourneyTimeline, { type TimelineEvent } from '@/components/admin/journey-timeline';
 import JourneyFunnel from '@/components/admin/journey-funnel';
@@ -75,6 +77,16 @@ export default function JourneyDashboardClient({
   referrerBreakdown, hourlyViews, topFlows,
   recentUsers, topPages, exitPages, totalViews,
 }: Props) {
+  const router = useRouter();
+  // Keep the dashboard near real-time: the page is force-dynamic, so refreshing
+  // re-runs the server fetch. Poll every 25s (only while the tab is visible, so a
+  // backgrounded admin tab doesn't hammer the DB).
+  useEffect(() => {
+    const tick = () => { if (document.visibilityState === 'visible') router.refresh(); };
+    const t = setInterval(tick, 25000);
+    return () => clearInterval(t);
+  }, [router]);
+
   const [tab, setTab] = useState<Tab>('sessions');
   const [search, setSearch] = useState('');
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
@@ -357,7 +369,7 @@ export default function JourneyDashboardClient({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium text-foreground">
-                        {s.user_name || s.user_email || 'Anonymous Visitor'}
+                        {s.user_name || s.user_email || anonLabel(s.session_id)}
                       </span>
                       <span className={`shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ${badge.color}`}>
                         <BadgeIcon className="h-2.5 w-2.5" />{badge.label}
@@ -409,7 +421,7 @@ export default function JourneyDashboardClient({
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-semibold text-foreground">
-                    {selectedSessionData.user_name || selectedSessionData.user_email || 'Anonymous Visitor'}
+                    {selectedSessionData.user_name || selectedSessionData.user_email || anonLabel(selectedSessionData.session_id)}
                   </h2>
                   {!selectedSessionData.user_id && (
                     <span className="rounded bg-orange-500/10 px-2 py-0.5 text-[11px] font-medium text-orange-600">Not signed up</span>

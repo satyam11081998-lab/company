@@ -11,18 +11,28 @@
 
 const SID_KEY = 'mece:sid';
 
-/** Get or create an anonymous session ID stored in localStorage. */
+/** Get or create an anonymous session ID stored in localStorage.
+ *  Kept short and readable (~8 chars) so the admin dashboard can show a tidy
+ *  "Anon-XXXX" code instead of a 25-char blob. */
 export function getSid(): string {
   try {
     let v = localStorage.getItem(SID_KEY);
     if (!v) {
-      v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      v = Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 5);
       localStorage.setItem(SID_KEY, v);
     }
     return v;
   } catch {
     return 'anon';
   }
+}
+
+/** A short, stable, human-readable label for an anonymous visitor's session,
+ *  e.g. "Anon-7F3A". Derived from the session id so it is consistent per visitor
+ *  and works for both new short ids and older long ones. */
+export function anonLabel(sessionId: string): string {
+  const tail = (sessionId || 'anon').replace(/[^a-z0-9]/gi, '').slice(-4).toUpperCase();
+  return `Anon-${tail || 'XXXX'}`;
 }
 
 /** Detect whether the visitor is on mobile or desktop. */
