@@ -5,7 +5,7 @@ import { LinkedInFollowPrompt } from '@/components/linkedin-follow-unlock';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, AlertTriangle, Lightbulb } from 'lucide-react';
 import {
   SCORE_DIMENSIONS,
   SCORE_DIMENSION_LABELS,
@@ -45,6 +45,12 @@ export default async function ResultPage({ params }: { params: { id: string } })
     improvements?: string[];
     summary?: string;
     rubric?: string;
+    // Additive (2026-09-01) — richer, evidence-based feedback. All optional so
+    // older submissions (no such fields) render exactly as before.
+    dimension_feedback?: Record<string, { score?: number; evidence?: string; gap?: string; to_improve?: string }>;
+    red_flags?: string[];
+    model_answer?: string;
+    validity?: { verdict?: string; relevance?: number; effort?: number; reason?: string };
     backstop?: {
       findings?: Array<{ kind: string; label: string; message: string }>;
       summary?: string;
@@ -53,8 +59,14 @@ export default async function ResultPage({ params }: { params: { id: string } })
     };
   };
   const breakdown = feedback.breakdown || {};
+  const dimensionFeedback = feedback.dimension_feedback || {};
   const strengths = feedback.strengths || [];
   const improvements = feedback.improvements || [];
+  const redFlags = feedback.red_flags || [];
+  const modelAnswer = feedback.model_answer || '';
+  const validity = feedback.validity;
+  // Hard gate: gibberish / off-topic submissions score 0 and say why.
+  const notScored = validity?.verdict === 'gibberish' || validity?.verdict === 'off_topic';
   const summary = feedback.summary || 'No summary available yet.';
   const isGuesstimate = feedback.rubric === 'guesstimate';
   const backstop = feedback.backstop;
@@ -89,6 +101,21 @@ export default async function ResultPage({ params }: { params: { id: string } })
           <p className="mt-4 max-w-xl text-body leading-relaxed text-muted-foreground">{summary}</p>
         </Card>
 
+        {notScored && (
+          <Card className="mt-6 p-5 border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+            <div className="flex gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+              <div>
+                <p className="text-body font-semibold text-foreground">This wasn&apos;t scored as a real attempt</p>
+                <p className="mt-1 text-small text-muted-foreground">
+                  {validity?.reason || 'It didn’t read as a genuine attempt to solve this case, so it scored 0.'}{' '}
+                  Give the case a real try — clarify, structure, quantify, and recommend — and you’ll get a full breakdown.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {newBadges.length > 0 && (
           <Card className="p-5 mt-6 mb-6 bg-primary/[0.03] border-primary/20">
             <p className="text-small font-semibold uppercase tracking-wider text-primary mb-3">
@@ -111,6 +138,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
               const max = isGuesstimate ? GUESSTIMATE_DIMENSION_MAX : (SCORE_DIMENSION_MAX[dim] ?? 100);
               const label = isGuesstimate ? GUESSTIMATE_DIMENSION_LABELS[dim] : SCORE_DIMENSION_LABELS[dim];
               const percentage = Math.max(0, Math.min(100, (value / max) * 100));
+              const df = dimensionFeedback[dim];
               return (
                 <div key={dim}>
                   <div className="flex items-center justify-between text-body">
@@ -128,11 +156,41 @@ export default async function ResultPage({ params }: { params: { id: string } })
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
+                  {df && (df.evidence || df.gap || df.to_improve) && (
+                    <div className="mt-2 space-y-1 rounded-lg bg-muted/50 p-3 text-small leading-relaxed">
+                      {df.evidence && df.evidence.toLowerCase() !== 'none' && (
+                        <p className="text-foreground/70"><span className="font-semibold text-foreground/80">What you did: </span>{df.evidence}</p>
+                      )}
+                      {df.gap && (
+                        <p className="text-foreground/70"><span className="font-semibold text-foreground/80">Gap: </span>{df.gap}</p>
+                      )}
+                      {df.to_improve && (
+                        <p className="text-foreground/70"><span className="font-semibold text-primary">To improve: </span>{df.to_improve}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         </Card>
+
+        {/* Red flags — gaming, ethics, or logic problems the evaluator caught */}
+        {redFlags.length > 0 && (
+          <Card className="mt-6 p-6 border-amber-300/60">
+            <h2 className="text-small font-semibold uppercase tracking-wide text-amber-700">
+              Red flags
+            </h2>
+            <ul className="mt-4 space-y-3">
+              {redFlags.map((f, idx) => (
+                <li key={idx} className="flex gap-2 text-body text-foreground/80">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         {/* Arithmetic backstop (guesstimates only) — deterministic recompute verdict */}
         {isGuesstimate && backstop && (
@@ -206,6 +264,18 @@ export default async function ResultPage({ params }: { params: { id: string } })
             </ul>
           </Card>
         </div>
+
+        {/* Model answer — how a strong candidate would actually approach this case */}
+        {modelAnswer && (
+          <Card className="mt-6 p-6 border-primary/20 bg-primary/[0.03]">
+            <h2 className="flex items-center gap-2 text-small font-semibold uppercase tracking-wide text-primary">
+              <Lightbulb className="h-4 w-4" /> How a top candidate would approach this
+            </h2>
+            <p className="mt-3 whitespace-pre-line text-body leading-relaxed text-foreground/80">
+              {modelAnswer}
+            </p>
+          </Card>
+        )}
 
         {/* GUEST MODE: someone who solved a case before signing up lands HERE
             as their first authenticated page — the score is what they created
