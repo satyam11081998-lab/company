@@ -113,10 +113,11 @@ export function runBackstop(chain: CalcChain, band?: PlausibleBand): BackstopRes
     }
   }
 
-  // corrected D4 from the count/severity of arithmetic findings
+  // corrected D4 from the count/severity of arithmetic findings — 0-100 scale
+  // (was 1-5 before 2026-09-01; must match services/guesstimate_backstop.py).
   const arithFindings = findings.filter((f) => f.kind !== 'magnitude_implausible');
   const arithmeticScore =
-    arithFindings.length === 0 ? 5 : arithFindings.length === 1 ? 3 : arithFindings.length === 2 ? 2 : 1;
+    arithFindings.length === 0 ? 100 : arithFindings.length === 1 ? 60 : arithFindings.length === 2 ? 40 : 20;
 
   const summary =
     findings.length === 0

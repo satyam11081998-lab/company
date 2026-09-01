@@ -73,6 +73,31 @@ still creates a submission but **scores 0** with an explanation.
    case entry points and BOTH guesstimate entry points now behave identically, and the same results
    page renders all of them.
 
+7. **Guesstimate dimensions → 0-100 (was 1-5).** The old 1-5 scale is why a
+   gibberish guesstimate floored at 20/100 with "1/5 each" (`(Σ dim·weight)/5·100`
+   at all-1s = 20). Now each guesstimate dimension is scored 0-100 and the weighted
+   total is the 0-100 number directly (all-0 → 0, verified). Touched:
+   `prompts/guesstimate_scoring_prompt.py` (0-100 anchors + schema),
+   `services/guesstimate_backstop.py` (arithmetic verdict 100/60/40/20 instead of
+   5/3/2/1; `_weighted_total` drops the `/5`; arithmetic clamp 0-100),
+   `services/ai_scorer.py` (LLM dims clamped 0-100; `scale:100` marker; rejection
+   dims 0), and — to keep them honest though they are NOT called at runtime —
+   `lib/scoring/apply-backstop.ts` + `arithmetic-check.ts`.
+   - **Badges:** `services/badge_awarder.py` — `perfect-structure` (structure≥25) and
+     `perfect-quant` (quant≥20) are CASE-rubric badges; now gated to
+     `case_type != guesstimate` so a 0-100 guesstimate `structure` can't false-award.
+   - **CASE dimensions are deliberately NOT rescaled in storage.** Badges and the
+     dashboard (`components/skill-mastery-grid.tsx`, `lib/readiness.ts`) aggregate
+     historical case dimensions on the 25/20/20/15/10/10 scale — rescaling storage
+     would break every past submission's dashboard and the badge thresholds. Instead
+     the **results page now displays every dimension out of 100** (percentage of its
+     stored max), so cases and guesstimates both read on one 0-100 scale to the user
+     while case internals stay put.
+   - **Backward-compat:** new guesstimate feedback carries `scale:100`; the results
+     page renders old (1-5, no marker) submissions with the legacy max
+     (`GUESSTIMATE_DIMENSION_MAX_LEGACY=5`), so history still displays correctly.
+   - frontend touched additionally: `lib/constants.ts`, `app/(app)/results/[id]/page.tsx`.
+
 ## Adversarial notes
 - **Off-topic false-positive** is the one way the gate could hurt a real user → relevance floor
   (`_OFF_TOPIC_RELEVANCE_FLOOR = 25`) means only near-zero-relevance text is zeroed.
