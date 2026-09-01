@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import GeoPattern from '@/components/geo-pattern';
 import MobileDesktopBanner from '@/components/mobile-desktop-banner';
+import PwaProvider from '@/components/pwa/pwa-provider';
 import { Analytics } from "@vercel/analytics/next";
 import PageTracker from '@/components/analytics/page-tracker';
 import Script from 'next/script';
@@ -34,6 +35,19 @@ export const metadata: Metadata = {
   creator: 'MECE',
   publisher: 'MECE',
   category: 'education',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'MECE',
+    statusBarStyle: 'default',
+  },
   robots: {
     index: true,
     follow: true,
@@ -91,6 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Toaster />
+          <PwaProvider />
           <Analytics />
           <PageTracker />
           {/* Cloudflare Turnstile — loaded ONLY when a site key is configured,
