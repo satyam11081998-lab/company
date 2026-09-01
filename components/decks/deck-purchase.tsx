@@ -60,8 +60,16 @@ export default function DeckPurchase({ skeletonId, slug }: { skeletonId: string;
               }),
             });
             const vd = await verifyRes.json();
-            if (verifyRes.ok) router.refresh();
-            else setErr(vd.error || 'Payment verification failed.');
+            if (verifyRes.ok) {
+              // Deck access is gated by the CLIENT hook useDeckAccess, which only
+              // fetches on mount, so router.refresh() (server components only) leaves
+              // the deck locked. A full reload re-runs the hook so the just-bought deck
+              // shows immediately instead of waiting for a manual refresh.
+              window.location.reload();
+              return;
+            } else {
+              setErr(vd.error || 'Payment verification failed.');
+            }
           } catch {
             setErr('Error verifying payment.');
           } finally {
