@@ -445,7 +445,7 @@ export default function JourneyDashboardClient({
 
           <Card className="p-4">
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Journey Timeline</h3>
-            <JourneyTimeline events={timelineEvents} />
+            <JourneyTimeline events={timelineEvents} userId={selectedSessionData.user_id} />
           </Card>
         </div>
       )}
