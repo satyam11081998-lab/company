@@ -4,7 +4,8 @@
 **Branches:** backend feat/eval (AI-evaluation-v2 surface) · frontend feat/solve (results page)
 **Date:** 2026-09-01
 **touches:**
-- backend `services/answer_validity.py` (NEW), `services/ai_scorer.py`, `prompts/scoring_prompt.py`, `prompts/guesstimate_scoring_prompt.py`, `routes/submit.py`
+- backend, single-answer scorer: `services/answer_validity.py` (NEW), `services/ai_scorer.py`, `prompts/scoring_prompt.py`, `prompts/guesstimate_scoring_prompt.py`, `routes/submit.py`
+- backend, CONVERSATIONAL case scorer (the live ConversationalSolve `/attempts/{id}/submit` path): `prompts/interview_prompts.py`, `services/interview_engine.py`, `routes/attempts.py`
 - frontend `app/(app)/results/[id]/page.tsx`
 **breaking:** NO. C2 · Scoring return contract is **additive-only** — every stable key
 (`score`, `breakdown`, `strengths`, `improvements`, `summary`; guesstimate `total`,
@@ -59,6 +60,19 @@ still creates a submission but **scores 0** with an explanation.
    bar, a red-flags card, and a "how a top candidate would approach this" model-answer card. All
    guarded so older submissions (without the fields) render exactly as before.
 
+6. **Conversational case scorer (`/attempts/{id}/submit`).** The live case-interview flow
+   (ConversationalSolve) scores through `interview_engine.score_conversation`, NOT `submit.py`.
+   Guesstimates there already reuse the hardened `score_guesstimate_answer`; CASES used a separate,
+   weaker "holistic" prompt (`CONVERSATION_SCORING_SYSTEM_PROMPT`) with **no validity gate, no
+   per-dimension evidence, and no enforcement**. `_score_case_conversation` now runs the SAME gate
+   (screening only the candidate's turns + final recommendation, so the interviewer's coherent prods
+   can't mask a gibberish session), the SAME evidence-based 6-dimension rubric (rewritten prompt,
+   session-framed, with `dimension_feedback`/`red_flags`/`model_answer`), and the SAME deterministic
+   enforcement by importing `_enforce_case` / `_rejection_case` / `_is_hard_reject` from `ai_scorer`
+   (lazy import — no cycle). `attempts.py` `SubmitResponse` gains the same optional fields. So BOTH
+   case entry points and BOTH guesstimate entry points now behave identically, and the same results
+   page renders all of them.
+
 ## Adversarial notes
 - **Off-topic false-positive** is the one way the gate could hurt a real user → relevance floor
   (`_OFF_TOPIC_RELEVANCE_FLOOR = 25`) means only near-zero-relevance text is zeroed.
@@ -70,7 +84,7 @@ still creates a submission but **scores 0** with an explanation.
   forward. Old submissions are NOT re-scored.
 
 ## Gates
-- `python -m py_compile` on all five backend files → **OK**.
+- `python -m py_compile` on all eight backend files (both scorers) → **OK**.
 - Pure-logic tests (clamp→sum enforcement, hard-reject floor, deterministic gate incl.
   false-positive checks on real/number-heavy answers) → **pass**.
 - Frontend `npx tsc --noEmit` scoped to the results page → **EXIT 0**.
