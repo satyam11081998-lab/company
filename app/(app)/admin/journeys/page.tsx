@@ -62,6 +62,33 @@ const FUNNEL_ACTIONS = [
   { label: 'Completed Payment', action: 'complete_payment', kind: 'action' },
 ];
 
+export interface UserSummary {
+  user_id: string;
+  name: string | null;
+  email: string | null;
+  session_count: number;
+  total_pages: number;
+  total_actions: number;
+  total_duration_ms: number;
+  last_active: string;
+  first_seen: string;
+  devices: string[];
+  top_actions: string[];
+  engagement: 'bounced' | 'browsing' | 'engaged' | 'converted';
+}
+
+export interface TopPage {
+  path: string;
+  views: number;
+  sessions: number;
+  avg_duration_ms: number | null;
+}
+
+export interface ExitPage {
+  path: string;
+  count: number;
+}
+
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
 /** Parse referrer URL to a human-readable source. */
@@ -293,10 +320,126 @@ export default async function AdminJourneysPage() {
     .slice(0, 10)
     .map(([flow, count]) => ({ flow, count }));
 
+  // ── Recently active users (grouped by user_id) ────────────────────
+  const userSessionMap = new Map<string, {
+    name: string | null;
+    email: string | null;
+    session_count: number;
+    total_pages: number;
+    total_actions: number;
+    total_duration_ms: number;
+    last_active: string;
+    first_seen: string;
+    devices: Set<string>;
+    top_action_types: Map<string, number>;
+    paths: Set<string>;
+    engagement_best: 'bounced' | 'browsing' | 'engaged' | 'converted';
+  }>();
+
+  for (const s of sessions) {
+    if (!s.user_id) continue;
+    let u = userSessionMap.get(s.user_id);
+    if (!u) {
+      const info = userMap.get(s.user_id);
+      u = {
+        name: info?.name ?? null,
+        email: info?.email ?? null,
+        session_count: 0,
+        total_pages: 0,
+        total_actions: 0,
+        total_duration_ms: 0,
+        last_active: s.started_at,
+        first_seen: s.started_at,
+        devices: new Set(),
+        top_action_types: new Map(),
+        paths: new Set(),
+        engagement_best: 'bounced',
+      };
+      userSessionMap.set(s.user_id, u);
+    }
+    u.session_count += 1;
+    u.total_pages += s.page_count;
+    u.total_actions += s.action_count;
+    u.total_duration_ms += s.total_duration_ms;
+    if (new Date(s.started_at) > new Date(u.last_active)) u.last_active = s.started_at;
+    if (new Date(s.started_at) < new Date(u.first_seen)) u.first_seen = s.started_at;
+    if (s.device) u.devices.add(s.device);
+    u.paths.add(s.first_path);
+    u.paths.add(s.last_path);
+    for (const at of s.action_types) {
+      u.top_action_types.set(at, (u.top_action_types.get(at) ?? 0) + 1);
+    }
+    // Keep the best engagement level
+    const engOrder = { bounced: 0, browsing: 1, engaged: 2, converted: 3 };
+    if (engOrder[s.engagement] > engOrder[u.engagement_best]) u.engagement_best = s.engagement;
+  }
+
+  const recentUsers: UserSummary[] = [...userSessionMap.entries()]
+    .map(([user_id, u]) => ({
+      user_id,
+      name: u.name,
+      email: u.email,
+      session_count: u.session_count,
+      total_pages: u.total_pages,
+      total_actions: u.total_actions,
+      total_duration_ms: u.total_duration_ms,
+      last_active: u.last_active,
+      first_seen: u.first_seen,
+      devices: [...u.devices],
+      top_actions: [...u.top_action_types.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([action]) => action),
+      engagement: u.engagement_best,
+    }))
+    .sort((a, b) => new Date(b.last_active).getTime() - new Date(a.last_active).getTime());
+
+  // ── Top pages (aggregate view counts + avg time) ──────────────────
+  const byPath = new Map<string, { views: number; sessions: Set<string>; durSum: number; durN: number }>();
+  const exitByPath = new Map<string, number>();
+  const seenExit = new Set<string>();
+  let totalViews = 0;
+
+  for (const ev of pageEvents) {
+    if (ev.kind === 'view') {
+      totalViews += 1;
+      const g = byPath.get(ev.path) || { views: 0, sessions: new Set<string>(), durSum: 0, durN: 0 };
+      g.views += 1;
+      g.sessions.add(ev.session_id);
+      byPath.set(ev.path, g);
+    } else if (ev.kind === 'leave' && ev.duration_ms) {
+      const g = byPath.get(ev.path);
+      if (g) { g.durSum += ev.duration_ms; g.durN += 1; }
+    }
+    // newest-first for exits (but we loaded ascending, so track last per session)
+  }
+  // Exit pages: last viewed page per session
+  for (const [sid, paths] of sessionEvents.entries()) {
+    if (paths.length > 0) {
+      const exitPath = paths[paths.length - 1];
+      exitByPath.set(exitPath, (exitByPath.get(exitPath) ?? 0) + 1);
+    }
+  }
+
+  const topPages: TopPage[] = [...byPath.entries()]
+    .map(([path, g]) => ({
+      path,
+      views: g.views,
+      sessions: g.sessions.size,
+      avg_duration_ms: g.durN ? g.durSum / g.durN : null,
+    }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 20);
+
+  const exitPages: ExitPage[] = [...exitByPath.entries()]
+    .map(([path, count]) => ({ path, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15);
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-foreground">User Journeys</h1>
+        <h1 className="text-xl font-bold text-foreground">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Track every visitor&apos;s path through the product — signed-in users and anonymous visitors alike. Where they came from, what they did, how long they stayed, and where they dropped off. Last 7 days.
         </p>
@@ -317,7 +460,12 @@ export default async function AdminJourneysPage() {
         referrerBreakdown={referrerBreakdown}
         hourlyViews={hourlyViews}
         topFlows={topFlows}
+        recentUsers={recentUsers}
+        topPages={topPages}
+        exitPages={exitPages}
+        totalViews={totalViews}
       />
     </div>
   );
 }
+

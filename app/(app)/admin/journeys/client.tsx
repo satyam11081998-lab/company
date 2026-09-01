@@ -22,7 +22,7 @@ import {
   UserX, UserCheck, Users, Globe, TrendingUp, Zap, XCircle,
   BarChart3, Route,
 } from 'lucide-react';
-import type { SessionSummary, RawPageEvent, RawAction } from './page';
+import type { SessionSummary, RawPageEvent, RawAction, UserSummary, TopPage, ExitPage } from './page';
 
 interface Props {
   sessions: SessionSummary[];
@@ -32,9 +32,13 @@ interface Props {
   referrerBreakdown: { source: string; count: number }[];
   hourlyViews: number[];
   topFlows: { flow: string; count: number }[];
+  recentUsers: UserSummary[];
+  topPages: TopPage[];
+  exitPages: ExitPage[];
+  totalViews: number;
 }
 
-type Tab = 'sessions' | 'funnel' | 'traffic' | 'flows';
+type Tab = 'sessions' | 'users' | 'pages' | 'funnel' | 'traffic' | 'flows';
 type UserTypeFilter = 'all' | 'anonymous' | 'signed_in';
 type EngagementFilter = 'all' | 'bounced' | 'browsing' | 'engaged' | 'converted';
 
@@ -69,6 +73,7 @@ function fmtDate(iso: string): string {
 export default function JourneyDashboardClient({
   sessions, pageEvents, actions, funnelStages,
   referrerBreakdown, hourlyViews, topFlows,
+  recentUsers, topPages, exitPages, totalViews,
 }: Props) {
   const [tab, setTab] = useState<Tab>('sessions');
   const [search, setSearch] = useState('');
@@ -248,6 +253,8 @@ export default function JourneyDashboardClient({
       <div className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-muted/40 p-1 w-fit">
         {([
           { key: 'sessions' as Tab, label: 'Sessions', icon: Layers },
+          { key: 'users' as Tab, label: 'Recently Active', icon: Users },
+          { key: 'pages' as Tab, label: 'Top Pages', icon: BarChart3 },
           { key: 'funnel' as Tab, label: 'Funnel', icon: FilterIcon },
           { key: 'traffic' as Tab, label: 'Traffic Sources', icon: Globe },
           { key: 'flows' as Tab, label: 'Page Flows', icon: Route },
@@ -567,6 +574,158 @@ export default function JourneyDashboardClient({
             </tbody>
           </table>
         </Card>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* ── TAB: RECENTLY ACTIVE USERS ─────────────────────────────── */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {tab === 'users' && (
+        <Card className="overflow-hidden p-0">
+          <div className="border-b border-border bg-muted/40 px-4 py-3">
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Recently Active Users</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Signed-in users sorted by last activity. {recentUsers.length} users active in the last 7 days.
+            </p>
+          </div>
+          <div className="divide-y divide-border">
+            {recentUsers.length === 0 && (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">No signed-in user activity yet.</div>
+            )}
+            {recentUsers.map(u => {
+              const badge = ENGAGEMENT_BADGES[u.engagement];
+              const BadgeIcon = badge.icon;
+              return (
+                <div key={u.user_id} className="flex items-start gap-3 px-4 py-3">
+                  {/* Avatar circle */}
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {(u.name?.[0] ?? u.email?.[0] ?? '?').toUpperCase()}
+                  </div>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground truncate">
+                        {u.name || u.email || 'Unknown'}
+                      </span>
+                      <span className={`shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ${badge.color}`}>
+                        <BadgeIcon className="h-2.5 w-2.5" />{badge.label}
+                      </span>
+                    </div>
+                    {u.name && u.email && (
+                      <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
+                    )}
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Last: {fmtDate(u.last_active)}</span>
+                      <span className="flex items-center gap-1"><Layers className="h-3 w-3" />{u.session_count} sessions</span>
+                      <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{u.total_pages} pages</span>
+                      {u.total_actions > 0 && (
+                        <span className="flex items-center gap-1 text-blue-500"><MousePointerClick className="h-3 w-3" />{u.total_actions} actions</span>
+                      )}
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{fmtDur(u.total_duration_ms)} total</span>
+                      {u.devices.map(d => (
+                        <span key={d}>{d === 'mobile' ? '📱' : '🖥'}</span>
+                      ))}
+                    </div>
+                    {/* Action tags */}
+                    {u.top_actions.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {u.top_actions.map(a => (
+                          <span key={a} className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">
+                            {a.replace(/_/g, ' ')}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* ── TAB: TOP PAGES & EXIT PAGES ────────────────────────────── */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {tab === 'pages' && (
+        <div className="space-y-4">
+          {/* Total views stat */}
+          <Card className="p-3 w-fit">
+            <div className="text-base font-bold tabular-nums text-foreground">{totalViews.toLocaleString('en-IN')}</div>
+            <div className="text-[10px] text-muted-foreground">Total page views (last 7 days)</div>
+          </Card>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Top pages */}
+            <Card className="overflow-hidden p-0">
+              <div className="border-b border-border bg-muted/40 px-4 py-3">
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Top Pages</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-xs uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium">Path</th>
+                      <th className="px-4 py-2 text-right font-medium">Views</th>
+                      <th className="px-4 py-2 text-right font-medium">Sessions</th>
+                      <th className="px-4 py-2 text-right font-medium">Avg time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {topPages.map(p => (
+                      <tr key={p.path}>
+                        <td className="max-w-[220px] truncate px-4 py-2 font-medium text-foreground">{p.path}</td>
+                        <td className="px-4 py-2 text-right tabular-nums">{p.views}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">{p.sessions}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                          {p.avg_duration_ms != null ? fmtDur(p.avg_duration_ms) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                    {topPages.length === 0 && (
+                      <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No page views yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            {/* Exit pages */}
+            <Card className="overflow-hidden p-0">
+              <div className="border-b border-border bg-muted/40 px-4 py-3">
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Where Journeys End</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-xs uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium">Exit page</th>
+                      <th className="px-4 py-2 text-right font-medium">Sessions ended</th>
+                      <th className="px-4 py-2 text-right font-medium">% of sessions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {exitPages.map(p => (
+                      <tr key={p.path}>
+                        <td className="max-w-[220px] truncate px-4 py-2 font-medium text-foreground">{p.path}</td>
+                        <td className="px-4 py-2 text-right tabular-nums">{p.count}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                          {sessions.length ? Math.round((p.count / sessions.length) * 100) : 0}%
+                        </td>
+                      </tr>
+                    ))}
+                    {exitPages.length === 0 && (
+                      <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">No sessions yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <p className="border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
+                A page with many exits and low avg time is a friction point worth fixing.
+              </p>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
   );
