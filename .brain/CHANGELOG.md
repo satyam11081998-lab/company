@@ -12,7 +12,7 @@ A brain reading this at session start only needs the top ~15 lines.
 ---
 
 ## 2026-09-01 — dictation-continuous-and-token — <pending commit; branch feat/solve>
-Continuous transcription via segment rotation, fresh session token per request to fix expiration, window-level Enter to commit/send, and resizable visible composer during dictation.
+Continuous dictation endpointed by the existing VAD (`lib/voice/vad.ts`): the mic stays OPEN and each phrase is flushed to Whisper on the natural pause between phrases, so text streams into the box while listening never stops (replaces the initial fixed-interval segment rotation). Fresh session token per request fixes 'invalid token' expiry; window-level Enter finishes/sends; the composer is resizable and stays visible during dictation.
 touches: `components/solve/ConversationalSolve.tsx`
 breaking: no — no CONTRACTS.md surface changes   affects: nobody must re-sync
 

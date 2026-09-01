@@ -31,18 +31,30 @@ import MicWaveform from '@/components/mic-waveform';
 import VoiceInterview from '@/components/solve/VoiceInterview';
 import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
+import { Vad } from '@/lib/voice/vad';
 
 /** Realtime transport unless explicitly switched off. See the mount below. */
 const USE_REALTIME = process.env.NEXT_PUBLIC_VOICE_REALTIME !== '0';
 
 /**
- * How long each dictation segment runs before it is closed, transcribed and a
- * fresh one starts. Short enough that the transcript keeps appearing as you
- * speak and a single failure is cheap; long enough that we are not hammering
- * Whisper. The gap between segments is a couple of milliseconds (the stream is
- * kept open), so speech is not lost across a rotation.
+ * Continuous dictation is endpointed by the VAD (voice-activity detector): the
+ * mic stays open the whole time and each PHRASE is flushed to Whisper the moment
+ * you pause, so text streams into the box phrase by phrase without the mic ever
+ * stopping. These tune the endpointing for dictation (snappier than talk mode):
+ *  - VAD_SILENCE_MS: a pause this long ends the phrase and sends it.
+ *  - VAD_MIN_UTTERANCE_MS: shorter blips (a breath, a click) never send.
+ *  - VAD_MAX_UTTERANCE_MS: a run-on with no pause is force-flushed by here so a
+ *    long monologue still appears and never trips /transcribe's size cap.
  */
-const SEGMENT_MS = 18000;
+const VAD_SILENCE_MS = 850;
+const VAD_MIN_UTTERANCE_MS = 500;
+const VAD_MAX_UTTERANCE_MS = 15000;
+/**
+ * While the mic is open but NOBODY is speaking, the rolling recorder is recycled
+ * this often so a long think is not uploaded as dead air (billed + risks the
+ * size cap). Recycling keeps a clean container header — see the flush helpers.
+ */
+const IDLE_RECYCLE_MS = 4000;
 /** Auto-grow ceiling for the composer before it starts scrolling internally. */
 const COMPOSER_MAX_PX = 240;
 import EngagingLoader from '@/components/engaging-loader';
@@ -139,19 +151,22 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // and a multi-line textarea each add height and hid the newest turn.
   const [composerH, setComposerH] = useState(128);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // ── Continuous dictation (segment rotation) ─────────────────────────────
-  // One long recording is captured as a chain of ~SEGMENT_MS segments. Each
-  // finished segment is transcribed on its own and appended to the composer in
-  // order, so (a) the transcript appears WHILE you keep talking instead of after
-  // one long wait at the end, (b) an expired token or a dropped request loses at
-  // most one segment rather than the whole take, and (c) each Whisper call stays
-  // small and fast.
-  const micStreamRef = useRef<MediaStream | null>(null);        // kept open across segments
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);  // current segment recorder
-  const audioChunksRef = useRef<BlobPart[]>([]);                // current segment chunks
-  const rotateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const keepRecordingRef = useRef(false);   // user still wants to record (drives auto-restart)
-  const micCancelledRef = useRef(false);    // discard the in-flight segment on cancel
+  // ── Continuous dictation (VAD-endpointed) ───────────────────────────────
+  // The mic stays open the entire time. A rolling MediaRecorder always runs, and
+  // a voice-activity detector (Vad) watches the same stream: when you PAUSE, the
+  // current phrase's recorder is stopped and sent to Whisper while a fresh one
+  // starts immediately, so listening never breaks and text lands phrase by
+  // phrase. Each recorder owns its OWN chunk array (chunksMapRef) so starting the
+  // next recorder can never clobber the one still being finalised.
+  const micStreamRef = useRef<MediaStream | null>(null);        // kept open across phrases
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);  // the rolling recorder
+  const chunksMapRef = useRef<WeakMap<MediaRecorder, BlobPart[]>>(new WeakMap()); // per-recorder audio
+  const vadRef = useRef<Vad | null>(null);
+  const recycleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recStartedAtRef = useRef(0);        // when the rolling recorder began (for idle recycle)
+  const utteringRef = useRef(false);        // true between speech-start and speech-end
+  const keepRecordingRef = useRef(false);   // user still wants to dictate (drives the loop)
+  const micCancelledRef = useRef(false);    // discard in-flight audio (cancel / unmount)
   const transcribeChainRef = useRef<Promise<void>>(Promise.resolve()); // serialise → keep order
   const composerVoiceRef = useRef(false);   // did dictation contribute to the current draft?
   const composerTextRef = useRef<HTMLTextAreaElement>(null);    // for auto-grow
@@ -383,13 +398,19 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     }
   }
 
-  // ── Dictation ────────────────────────────────────────────────────────────
-  // Tap mic → record; the transcript streams into the composer segment by
-  // segment WHILE you speak (see SEGMENT_MS), so nothing waits for the end and a
-  // single dropped/expired request loses at most one segment. The check button
-  // (or Enter) STOPS recording and flushes the last segment into the box; the
-  // cross CANCELS. Send stays disabled while recording so speech is reviewed
-  // first — a second Enter, once idle, sends it.
+  // ── Dictation (continuous, VAD-endpointed) ───────────────────────────────
+  // The mic OPENS and STAYS OPEN. A rolling MediaRecorder always runs; the Vad
+  // watches the same stream and, on each pause, the current phrase's recorder is
+  // stopped + sent to Whisper while the next one starts at once — so listening
+  // never breaks and text lands phrase by phrase. Enter / ✓ finishes (flush +
+  // review); ✗ cancels (already-transcribed text stays). Send is disabled while
+  // recording so speech is reviewed first; a second Enter, once idle, sends it.
+  //
+  // Every recorder owns its OWN chunk array (chunksMapRef) so starting the next
+  // one can never clobber the one still being finalised. Nothing here throws:
+  // getUserMedia, MediaRecorder construction/start and every stop() are guarded,
+  // and stop() always reaches idle via BOTH the drain callback and an 8s safety
+  // timeout, so a dead track can never strand the UI at "transcribing".
 
   /** Set the recording state AND its synchronous mirror (timers/handlers read the ref). */
   function setRec(s: 'idle' | 'recording' | 'transcribing') {
@@ -407,11 +428,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     });
   }
 
-  /** Transcribe ONE finished segment. Chained so segments land in spoken order. */
-  function enqueueSegment(blob: Blob) {
+  /** Transcribe ONE phrase. Chained so phrases land in the order they were spoken. */
+  function enqueuePhrase(blob: Blob) {
     if (blob.size === 0) return;
     transcribeChainRef.current = transcribeChainRef.current
-      .catch(() => {}) // a failed segment must never stall the ones behind it
+      .catch(() => {}) // a failed phrase must never stall the ones behind it
       .then(async () => {
         try {
           const tok = await freshToken(); // long takes outlive the mount token
@@ -420,107 +441,227 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           if (text) appendToComposer(text);
           if (q && q.voice.remaining_min <= 0 && keepRecordingRef.current) {
             toast.error('Daily voice limit reached — what you said is saved; you can keep typing.');
-            stopMic(); // flush + go idle
+            stopMic(); // flush what is open + go idle
           }
         } catch (e) {
-          // Keep every segment already in the box; only THIS one is lost.
+          // Keep every phrase already in the box; only THIS one is lost.
           toast.error(e instanceof Error ? e.message : 'Part of that could not be transcribed — please re-record it.');
         }
       });
   }
 
-  /** Open a fresh segment recorder on the already-open stream. */
-  function startSegment() {
+  /** Start a fresh rolling recorder on the open stream. Each recorder is given
+   *  its OWN chunk array (registered in chunksMapRef) so finalising one can never
+   *  race the next. */
+  function startCapture() {
     const stream = micStreamRef.current;
-    if (!stream) return;
-    const mr = new MediaRecorder(stream);
+    if (!stream || !keepRecordingRef.current) return;
+    let mr: MediaRecorder;
+    try {
+      mr = new MediaRecorder(stream);
+    } catch {
+      return; // stream ended between checks — release paths handle the state
+    }
+    const chunks: BlobPart[] = [];
+    chunksMapRef.current.set(mr, chunks);
+    mr.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
     mediaRecorderRef.current = mr;
-    audioChunksRef.current = [];
-    mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+    recStartedAtRef.current = performance.now();
+    try { mr.start(); } catch { /* dead track — release paths recover */ }
+  }
+
+  /** Stop this recorder and SEND its audio to Whisper (a real, spoken phrase).
+   *  `final` = this is the closing flush after a stop: release the mic and go
+   *  idle, but only once the blob is captured. */
+  function transcribeRecorder(mr: MediaRecorder, final = false) {
     mr.onstop = () => {
-      // The recorder's OWN type, not an assumption — Safari records audio/mp4.
-      const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || 'audio/webm' });
-      audioChunksRef.current = [];
-      if (!micCancelledRef.current) enqueueSegment(blob);
-      if (keepRecordingRef.current) {
-        // Still recording? Immediately open the next segment — the stream stays
-        // open, so the gap is a couple of milliseconds.
-        startSegment();
-      } else if (recordingRef.current === 'transcribing') {
-        // This was the FINAL segment after a stop → go idle once the whole
-        // queue (this segment included) has drained into the box.
+      const chunks = chunksMapRef.current.get(mr) ?? [];
+      chunksMapRef.current.delete(mr);
+      // The recorder's OWN mime type — Safari records audio/mp4, not webm.
+      const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
+      if (!micCancelledRef.current) enqueuePhrase(blob);
+      if (final) {
+        // Release the mic only NOW — stopping the track any earlier can truncate
+        // this recorder's final dataavailable and clip the last phrase.
+        micStreamRef.current?.getTracks().forEach((t) => t.stop());
+        micStreamRef.current = null;
+        setMicStream(null);
         transcribeChainRef.current = transcribeChainRef.current.then(() => {
           if (recordingRef.current === 'transcribing') setRec('idle');
         });
       }
     };
-    mr.start();
+    try { mr.stop(); } catch { /* already stopping */ }
   }
 
-  async function startMic() {
-    if (recording !== 'idle' || sending) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micStreamRef.current = stream;
-      setMicStream(stream); // drive the live waveform
-      micCancelledRef.current = false;
-      keepRecordingRef.current = true;
-      startSegment();
-      // Rotate on a timer: closing the open segment fires its onstop, which
-      // transcribes it and opens the next one.
-      rotateTimerRef.current = setInterval(() => {
-        const mr = mediaRecorderRef.current;
-        if (keepRecordingRef.current && mr && mr.state === 'recording') mr.stop();
-      }, SEGMENT_MS);
-      setRec('recording');
-    } catch { toast.error('Microphone permission denied'); }
+  /** Stop this recorder and THROW ITS AUDIO AWAY (silence between phrases). */
+  function discardRecorder(mr: MediaRecorder) {
+    mr.onstop = () => { chunksMapRef.current.delete(mr); };
+    try { mr.stop(); } catch { /* already stopping */ }
   }
 
-  /** Release the stream + rotation timer. Leaves React state untouched. */
-  function releaseMic() {
-    if (rotateTimerRef.current) { clearInterval(rotateTimerRef.current); rotateTimerRef.current = null; }
+  /** VAD says the phrase ended: flush it to Whisper and immediately roll a fresh
+   *  recorder so the next phrase is never clipped. */
+  function flushUtterance() {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state === 'recording') transcribeRecorder(mr);
+    if (keepRecordingRef.current) startCapture();
+  }
+
+  /** Between phrases the rolling recorder is only capturing silence; recycle it
+   *  periodically so a long think is not uploaded as dead air. Never fires while
+   *  a phrase is in progress. */
+  function recycleIfIdle() {
+    if (!keepRecordingRef.current || recordingRef.current !== 'recording') return;
+    if (utteringRef.current) return;
+    const mr = mediaRecorderRef.current;
+    if (!mr || mr.state !== 'recording') return;
+    if (performance.now() - recStartedAtRef.current < IDLE_RECYCLE_MS) return;
+    discardRecorder(mr);
+    startCapture();
+  }
+
+  /** Tear down the VAD, recycle timer and stream. Never touches React state. */
+  function teardownMic() {
+    vadRef.current?.stop();
+    vadRef.current = null;
+    if (recycleTimerRef.current) { clearInterval(recycleTimerRef.current); recycleTimerRef.current = null; }
     micStreamRef.current?.getTracks().forEach((t) => t.stop());
     micStreamRef.current = null;
     setMicStream(null);
   }
 
-  /** Hard stop, no transcription — used for unmount cleanup so the mic light dies. */
+  async function startMic() {
+    // Guard on the REF, not the state: `recording` state stays 'idle' during the
+    // getUserMedia await, so a second tap in that window would otherwise open a
+    // second mic. Claim synchronously; keepRecordingRef lets a cancel/unmount
+    // during the await revoke the claim so we release the just-granted stream.
+    if (recordingRef.current !== 'idle' || sending) return;
+    recordingRef.current = 'recording';
+    keepRecordingRef.current = true;
+    micCancelledRef.current = false;
+    utteringRef.current = false;
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+    } catch {
+      recordingRef.current = 'idle';
+      keepRecordingRef.current = false;
+      toast.error('Microphone permission denied');
+      return;
+    }
+    if (!keepRecordingRef.current) {
+      // Cancelled or unmounted while permission was pending → let the mic go.
+      stream.getTracks().forEach((t) => t.stop());
+      recordingRef.current = 'idle';
+      return;
+    }
+    micStreamRef.current = stream;
+    setMicStream(stream); // drive the live waveform
+    // The mic can vanish mid-take (unplugged, grabbed by another app, permission
+    // revoked). Without this the UI would sit at "Listening" against a dead track.
+    stream.getAudioTracks().forEach((t) =>
+      t.addEventListener('ended', () => {
+        if (recordingRef.current === 'recording') {
+          toast.error('Microphone disconnected — what was transcribed is saved.');
+          stopMic();
+        }
+      }),
+    );
+    startCapture();
+    const vad = new Vad(
+      stream,
+      {
+        onSpeechStart: () => { utteringRef.current = true; },
+        // A too-short blip drops back to silent WITHOUT onSpeechEnd; clear the
+        // guard so recycleIfIdle can reclaim it.
+        onStateChange: (s) => { if (s === 'silent') utteringRef.current = false; },
+        onSpeechEnd: () => {
+          utteringRef.current = false;
+          if (keepRecordingRef.current) flushUtterance();
+        },
+      },
+      { silenceMs: VAD_SILENCE_MS, minUtteranceMs: VAD_MIN_UTTERANCE_MS, maxUtteranceMs: VAD_MAX_UTTERANCE_MS },
+    );
+    vadRef.current = vad;
+    try {
+      vad.start();
+    } catch {
+      // Web Audio unavailable — fall back is impossible, so end cleanly.
+      toast.error('Voice input is not available in this browser.');
+      keepRecordingRef.current = false;
+      teardownMic();
+      setRec('idle');
+      return;
+    }
+    recycleTimerRef.current = setInterval(recycleIfIdle, 1000);
+    setRec('recording');
+  }
+
+  /** Hard stop, no transcription — unmount cleanup so the OS mic light dies. */
   function hardStopMic() {
     keepRecordingRef.current = false;
     micCancelledRef.current = true;
     const mr = mediaRecorderRef.current;
+    mediaRecorderRef.current = null;
     if (mr && mr.state === 'recording') { try { mr.stop(); } catch { /* already stopped */ } }
-    releaseMic();
+    teardownMic();
   }
 
-  /** STOP + keep: close the last segment, transcribe it, then land as idle.
-   *  The flip to idle happens in the segment's onstop once the queue drains,
-   *  because MediaRecorder.stop() fires onstop asynchronously — reassigning the
-   *  chain here would race ahead of the final segment being enqueued. */
+  /** STOP + keep: flush the phrase in progress, then land as idle once every
+   *  queued phrase has drained. Idle is reached via the drain callback AND an 8s
+   *  safety timeout, so a recorder whose onstop never fires cannot strand us. */
   function stopMic() {
     if (recordingRef.current !== 'recording') return;
     keepRecordingRef.current = false;
-    setRec('transcribing'); // set BEFORE stop() so onstop sees the flush state
+    utteringRef.current = false;
+    setRec('transcribing');
+    // Stop the VAD + recycle timer FIRST so nothing opens a new capture.
+    vadRef.current?.stop();
+    vadRef.current = null;
+    if (recycleTimerRef.current) { clearInterval(recycleTimerRef.current); recycleTimerRef.current = null; }
     const mr = mediaRecorderRef.current;
-    if (mr && mr.state === 'recording') {
-      mr.stop(); // → onstop enqueues the final segment, then flips to idle
+    mediaRecorderRef.current = null;
+    if (mr && mr.state === 'recording' && !micCancelledRef.current) {
+      transcribeRecorder(mr, true); // flush final phrase; releases the mic in onstop
     } else {
-      // Nothing open to flush → idle once anything already queued drains.
+      // Nothing open to flush → release the mic now, idle when the queue drains.
+      micStreamRef.current?.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+      setMicStream(null);
       transcribeChainRef.current = transcribeChainRef.current.then(() => {
         if (recordingRef.current === 'transcribing') setRec('idle');
       });
     }
-    releaseMic();
+    // Fail-safe: never hang on "transcribing" AND never leave the mic open, in the
+    // unlikely event a stop's onstop never fires (e.g. a track killed by the OS).
+    setTimeout(() => {
+      if (recordingRef.current === 'transcribing') {
+        micStreamRef.current?.getTracks().forEach((t) => t.stop());
+        micStreamRef.current = null;
+        setMicStream(null);
+        setRec('idle');
+      }
+    }, 8000);
   }
 
-  /** CANCEL: stop and discard only the in-flight segment — anything already
+  /** CANCEL: stop and discard only the in-flight audio — anything already
    *  transcribed into the box stays (nothing said is silently thrown away). */
   function cancelMic() {
     keepRecordingRef.current = false;
     micCancelledRef.current = true;
+    utteringRef.current = false;
+    vadRef.current?.stop();
+    vadRef.current = null;
+    if (recycleTimerRef.current) { clearInterval(recycleTimerRef.current); recycleTimerRef.current = null; }
     const mr = mediaRecorderRef.current;
-    if (mr && mr.state === 'recording') mr.stop();
-    releaseMic();
+    mediaRecorderRef.current = null;
+    if (mr && mr.state === 'recording') discardRecorder(mr);
+    micStreamRef.current?.getTracks().forEach((t) => t.stop());
+    micStreamRef.current = null;
+    setMicStream(null);
     setRec('idle');
   }
 
@@ -993,7 +1134,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 <div className="mb-2 flex items-center gap-3 rounded-2xl bg-primary/5 px-3 py-2">
                   <MicWaveform stream={micStream} className="h-6 flex-1 text-primary" />
                   <span className="shrink-0 text-micro font-medium text-primary/80">
-                    {recording === 'transcribing' ? 'Finishing up…' : 'Listening — press Enter or ✓ to stop'}
+                    {recording === 'transcribing' ? 'Finishing up…' : 'Listening — keep talking, pause to add · Enter or ✓ to finish'}
                   </span>
                 </div>
               )}
