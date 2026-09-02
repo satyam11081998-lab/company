@@ -32,6 +32,8 @@ const PROVIDER_LABEL: Record<string, string> = {
   openai: 'OpenAI',
   groq: 'Groq',
   google: 'Google',
+  realtime: 'Realtime',
+  pipeline: 'Pipeline',
 };
 
 // Rough $/unit note per provider, shown as a hint so the toggle carries context.
@@ -39,6 +41,8 @@ const PROVIDER_NOTE: Record<string, string> = {
   openai: 'Quality baseline',
   groq: '~9× cheaper',
   google: '~3.75× cheaper',
+  realtime: 'ChatGPT-style speech-to-speech · pricier',
+  pipeline: '~5× cheaper · turn-based',
 };
 
 export default function AiProvidersPage() {

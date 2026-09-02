@@ -33,10 +33,11 @@ import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import { Vad } from '@/lib/voice/vad';
 
-/** Voice runs the CHEAP pipeline (Whisper + mini + TTS) by DEFAULT — it is
- *  ~5x cheaper than the Realtime API and, unlike realtime, is per-user metered
- *  and capped. Set NEXT_PUBLIC_VOICE_REALTIME=1 to opt back into speech-to-speech. */
-const USE_REALTIME = process.env.NEXT_PUBLIC_VOICE_REALTIME === '1';
+/** Voice mode (realtime speech-to-speech vs the cheaper pipeline) is an ADMIN
+ *  toggle now, read live from the backend's /public-config at mount. The env var
+ *  is only the initial fallback shown until that fetch returns. */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const REALTIME_ENV_DEFAULT = process.env.NEXT_PUBLIC_VOICE_REALTIME === '1';
 
 /**
  * Continuous dictation is endpointed by the VAD (voice-activity detector): the
@@ -128,6 +129,23 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // ref means the overlay always calls the CURRENT send, with the current token.
   const sendRef = useRef<(kind: 'text' | 'voice', content?: string) => Promise<boolean>>();
   const [quota, setQuota] = useState<AiQuota | null>(null);
+  // Voice mode is admin-controlled at runtime (Admin -> AI providers). Read it
+  // once on mount; keep the env default until it resolves. Never throws.
+  const [useRealtime, setUseRealtime] = useState(REALTIME_ENV_DEFAULT);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/public-config`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const j = await res.json();
+        if (alive && (j.voice_mode === 'realtime' || j.voice_mode === 'pipeline')) {
+          setUseRealtime(j.voice_mode === 'realtime');
+        }
+      } catch { /* keep env default */ }
+    })();
+    return () => { alive = false; };
+  }, []);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [finalRec, setFinalRec] = useState('');
@@ -1270,7 +1288,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           and no amount of tuning removes those. Set
           NEXT_PUBLIC_VOICE_REALTIME=0 to fall straight back to the pipeline —
           it still works, so a regression is a config change, not a redeploy. */}
-      {talkMode && token && attempt && USE_REALTIME && (
+      {talkMode && token && attempt && useRealtime && (
         <VoiceInterviewRealtime
           token={token}
           caseId={caseId}
@@ -1288,7 +1306,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         />
       )}
 
-      {talkMode && token && !USE_REALTIME && (
+      {talkMode && token && !useRealtime && (
         <VoiceInterview
           token={token}
           onSend={(text) => sendRef.current!('voice', text)}
