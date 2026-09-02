@@ -13,7 +13,7 @@ declare global {
   interface Window { Razorpay: any }
 }
 
-export default function DeckPurchase({ skeletonId, slug }: { skeletonId: string; slug: string }) {
+export default function DeckPurchase({ skeletonId, slug, layout = 'row' }: { skeletonId: string; slug: string; layout?: 'row' | 'stacked' }) {
   const router = useRouter();
   const { loading, hasAccess } = useDeckAccess(skeletonId);
   const [busy, setBusy] = useState<null | 'deck' | 'vault'>(null);
@@ -89,15 +89,16 @@ export default function DeckPurchase({ skeletonId, slug }: { skeletonId: string;
     }
   }
 
+  const stacked = layout === 'stacked';
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-        <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2" disabled={busy !== null} onClick={() => buy('deck')}>
+      <div className={stacked ? 'flex w-full flex-col gap-2' : 'flex flex-col sm:flex-row items-center justify-center gap-3'}>
+        <Button size={stacked ? 'sm' : 'lg'} variant="outline" className={`gap-2 ${stacked ? 'w-full' : 'w-full sm:w-auto'}`} disabled={busy !== null} onClick={() => buy('deck')}>
           <Lock className="w-4 h-4" />
           {busy === 'deck' ? 'Starting…' : `Unlock this deck — ₹${DECK_SINGLE_PRICE_INR}`}
         </Button>
-        <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2" disabled={busy !== null} onClick={() => buy('vault')}>
+        <Button size={stacked ? 'sm' : 'lg'} variant="outline" className={`gap-2 ${stacked ? 'w-full' : 'w-full sm:w-auto'}`} disabled={busy !== null} onClick={() => buy('vault')}>
           {busy === 'vault' ? 'Starting…' : `Unlock the whole Vault — ₹${DECK_VAULT_PRICE_INR}`}
           <ArrowRight className="w-4 h-4" />
         </Button>

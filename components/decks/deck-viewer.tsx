@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, Lock, EyeOff, ArrowRight, Maximize2, Minimiz
 import { track } from '@vercel/analytics';
 import { Button } from '@/components/ui/button';
 import { useDeckAccess } from '@/lib/use-deck-access';
+import DeckPurchase from '@/components/decks/deck-purchase';
+import { TIER_PRICES } from '@/lib/tier';
 
 /**
  * Slide viewer for a public deck page.
@@ -181,7 +183,7 @@ export default function DeckViewer({
           </div>
 
           {isLocked && (
-            <div className="deck-locked-paywall absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted/40 px-6 text-center">
+            <div className="deck-locked-paywall absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-muted/40 px-6 py-6 text-center">
               <div
                 aria-hidden="true"
                 className="absolute inset-0 opacity-[0.06]"
@@ -192,17 +194,23 @@ export default function DeckViewer({
               </span>
               <div className="relative z-10 space-y-1">
                 <p className="text-base font-semibold text-foreground">
-                  Slides {unlocked + 1}&ndash;{pageCount} are Pro
+                  Slides {unlocked + 1}&ndash;{pageCount} are locked
                 </p>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  {pageCount - unlocked} more slides in this deck, plus every other winning deck in the Vault.
+                  Three ways to unlock — pick what fits:
                 </p>
               </div>
-              <Link href="/upgrade?from=deck" onClick={() => track('deck_slide_unlock', { slug })} className="relative z-10">
-                <Button size="sm" className="gap-1.5">
-                  Unlock with Pro <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
+              {/* All THREE options shown together at the lock, so mobile users who
+                  don't scroll don't miss the cheaper single-deck (₹99) and vault
+                  (₹499) unlocks and think Pro (₹599) is the only way in. */}
+              <div className="relative z-10 flex w-full max-w-[280px] flex-col gap-2">
+                {skeletonId && <DeckPurchase skeletonId={skeletonId} slug={slug} layout="stacked" />}
+                <Link href="/upgrade?from=deck" onClick={() => track('deck_slide_unlock', { slug })} className="w-full">
+                  <Button size="sm" variant="ghost" className="w-full gap-1.5 text-primary">
+                    Or go Pro — everything, ₹{TIER_PRICES.pro}/mo <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
 
