@@ -33,8 +33,10 @@ import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import { Vad } from '@/lib/voice/vad';
 
-/** Realtime transport unless explicitly switched off. See the mount below. */
-const USE_REALTIME = process.env.NEXT_PUBLIC_VOICE_REALTIME !== '0';
+/** Voice runs the CHEAP pipeline (Whisper + mini + TTS) by DEFAULT — it is
+ *  ~5x cheaper than the Realtime API and, unlike realtime, is per-user metered
+ *  and capped. Set NEXT_PUBLIC_VOICE_REALTIME=1 to opt back into speech-to-speech. */
+const USE_REALTIME = process.env.NEXT_PUBLIC_VOICE_REALTIME === '1';
 
 /**
  * Continuous dictation is endpointed by the VAD (voice-activity detector): the
