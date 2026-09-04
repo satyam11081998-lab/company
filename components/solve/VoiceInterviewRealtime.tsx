@@ -65,6 +65,7 @@ export default function VoiceInterviewRealtime({
   const [muted, setMuted] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [live, setLive] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
+  const [asstDraft, setAsstDraft] = useState('');  // interviewer reply as it streams
 
   const sessionRef = useRef<RealtimeHandle | null>(null);
   const closingRef = useRef(false);
@@ -137,7 +138,8 @@ export default function VoiceInterviewRealtime({
             onSpeakingChange: (s) => !cancelled && setPhase(s ? 'speaking' : 'listening'),
             onListeningChange: () => { lastActivityRef.current = performance.now(); },
             onUserTurn: (t) => void persist('user', t),
-            onAssistantTurn: (t) => void persist('assistant', t),
+            onAssistantDelta: (p) => !cancelled && setAsstDraft(p),
+            onAssistantTurn: (t) => { setAsstDraft(''); void persist('assistant', t); },
             onUsage: (u: any) => {
               // Shape varies by model revision; read defensively rather than
               // silently booking zero.
@@ -215,7 +217,7 @@ export default function VoiceInterviewRealtime({
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, closeSession]);
 
-  useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [live.length, messages.length]);
+  useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [live.length, messages.length, asstDraft]);
 
   function toggleMute() {
     const next = !muted;
@@ -290,6 +292,12 @@ export default function VoiceInterviewRealtime({
                 <p className="mt-0.5 text-small leading-relaxed text-foreground">{m.text}</p>
               </div>
             ))}
+            {asstDraft && (
+              <div className="text-left">
+                <span className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</span>
+                <p className="mt-0.5 text-small leading-relaxed text-foreground">{asstDraft}</p>
+              </div>
+            )}
             <div ref={tailRef} />
           </div>
         </div>

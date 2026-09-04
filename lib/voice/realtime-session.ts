@@ -25,6 +25,8 @@ export interface RealtimeCallbacks {
   onUserTurn?: (text: string) => void;
   /** A completed interviewer turn. */
   onAssistantTurn?: (text: string) => void;
+  /** Streams the interviewer reply text as it is spoken (live transcript). */
+  onAssistantDelta?: (partial: string) => void;
   /** Interviewer started/stopped speaking — drives the orb and barge-in state. */
   onSpeakingChange?: (speaking: boolean) => void;
   /** The candidate started/stopped speaking, per the far end's VAD. */
@@ -108,6 +110,7 @@ export async function startRealtimeSession(
   // 4. Data channel carries the event stream both ways.
   const dc = pc.createDataChannel('oai-events');
   let speaking = false;
+  let asstDraft = '';
   const setSpeaking = (v: boolean) => {
     if (speaking === v) return;
     speaking = v;
@@ -129,9 +132,18 @@ export async function startRealtimeSession(
         if (text) cbs.onUserTurn?.(text);
         break;
       }
-      // The interviewer's reply, as text.
-      case 'response.audio_transcript.done': {
-        const text = (evt.transcript || '').trim();
+      // The interviewer's reply, streamed as text. GA and beta use different
+      // event names for this, so accept both.
+      case 'response.audio_transcript.delta':
+      case 'response.output_audio_transcript.delta': {
+        asstDraft += evt.delta || '';
+        if (asstDraft) cbs.onAssistantDelta?.(asstDraft);
+        break;
+      }
+      case 'response.audio_transcript.done':
+      case 'response.output_audio_transcript.done': {
+        const text = (evt.transcript || asstDraft).trim();
+        asstDraft = '';
         if (text) cbs.onAssistantTurn?.(text);
         break;
       }
