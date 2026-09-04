@@ -172,22 +172,10 @@ export default function VoiceInterviewGemini({
         const ws = new WebSocket(data.ws_url);
         wsRef.current = ws;
 
-        ws.onopen = () => {
-          // Minimal setup — the ephemeral token's constraints supply the model,
-          // voice, response modality and interviewer instructions.
-          ws.send(JSON.stringify({
-            setup: {
-              model: data.model,
-              generationConfig: {
-                responseModalities: ['AUDIO'],
-                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: data.voice } } },
-              },
-              systemInstruction: { parts: [{ text: data.instructions }] },
-              inputAudioTranscription: {},
-              outputAudioTranscription: {},
-            },
-          }));
-          // start capturing mic -> 16k PCM -> realtimeInput
+        // Start streaming mic audio ONLY after Gemini acks setup (setupComplete).
+        // Sending realtimeInput before that makes Gemini close the socket.
+        const startMic = () => {
+          if (procRef.current) return;
           const source = micCtx.createMediaStreamSource(stream);
           const proc = micCtx.createScriptProcessor(4096, 1, 1);
           procRef.current = proc;
@@ -204,6 +192,22 @@ export default function VoiceInterviewGemini({
           setPhase('live');
         };
 
+        ws.onopen = () => {
+          // Setup FIRST; wait for setupComplete before sending any audio.
+          ws.send(JSON.stringify({
+            setup: {
+              model: data.model,
+              generationConfig: {
+                responseModalities: ['AUDIO'],
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: data.voice } } },
+              },
+              systemInstruction: { parts: [{ text: data.instructions }] },
+              inputAudioTranscription: {},
+              outputAudioTranscription: {},
+            },
+          }));
+        };
+
         ws.onmessage = async (ev) => {
           let text: string;
           if (typeof ev.data === 'string') text = ev.data;
@@ -211,6 +215,9 @@ export default function VoiceInterviewGemini({
           else text = new TextDecoder().decode(ev.data);
           let msg: any;
           try { msg = JSON.parse(text); } catch { return; }
+
+          if (msg.setupComplete) { startMic(); return; }
+          if (!msg.serverContent) { console.log('[gemini] msg', text.slice(0, 400)); }
 
           const sc = msg.serverContent;
           if (sc) {
@@ -248,8 +255,14 @@ export default function VoiceInterviewGemini({
           }
         };
 
-        ws.onerror = () => { if (!cancelled) { setError('Voice connection error.'); setPhase('error'); } };
-        ws.onclose = () => { if (!cancelled && !closedRef.current) setPhase('closed'); };
+        ws.onerror = (e) => { console.log('[gemini] ws error', e); if (!cancelled) { setError('Voice connection error.'); setPhase('error'); } };
+        ws.onclose = (ev) => {
+          console.log('[gemini] ws closed', ev.code, ev.reason);
+          if (!cancelled && !closedRef.current) {
+            if (ev.reason) setError(`Gemini closed the connection: ${ev.reason}`);
+            setPhase('closed');
+          }
+        };
       } catch (e: any) {
         if (!cancelled) { setError(e?.message || 'Could not start the voice session.'); setPhase('error'); }
       }
