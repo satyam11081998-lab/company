@@ -117,6 +117,7 @@ export default function VoiceInterview({
   const [phase, setPhase] = useState<Phase>('idle');
   const [level, setLevel] = useState(0);
   const [muted, setMuted] = useState(false);
+  const [liveReply, setLiveReply] = useState('');  // interviewer's text as it streams
   const [degraded, setDegraded] = useState(false);
 
   const streamRef = useRef<MediaStream | null>(null);
@@ -388,8 +389,8 @@ export default function VoiceInterview({
         },
       });
       ttsRef.current = tts;
-      registerTokenSink((chunk) => tts.push(chunk));
-      registerDoneSink(() => tts.flush());
+      registerTokenSink((chunk) => { tts.push(chunk); setLiveReply((prev) => prev + chunk); });
+      registerDoneSink(() => { tts.flush(); setLiveReply(''); });
 
       const vad = new Vad(
         stream,
@@ -647,6 +648,12 @@ export default function VoiceInterview({
                 <p className="mt-0.5 text-small leading-relaxed text-foreground">{m.content}</p>
               </div>
             ))}
+            {liveReply && (
+              <div className="text-left">
+                <span className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</span>
+                <p className="mt-0.5 text-small leading-relaxed text-foreground">{liveReply}</p>
+              </div>
+            )}
             <div ref={tailRef} />
           </div>
         </div>
