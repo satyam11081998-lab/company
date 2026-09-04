@@ -200,13 +200,13 @@ export async function fetchDailyLeaderboard(): Promise<DailyLeaderboardResponse>
  */
 export interface AiQuota {
   tier: 'free' | 'lite' | 'pro' | string;
-  voice: { used_min: number; limit_min: number; remaining_min: number };
+  voice: { used_min: number; limit_min: number; remaining_min: number; unlimited?: boolean };
   images: { used: number; limit: number; remaining: number };
   /**
    * Talk-mode (interviewer TTS) minutes. Optional so a stale backend that does
    * not send the block still typechecks — every existing reader is unaffected.
    */
-  speak?: { used_min: number; limit_min: number; remaining_min: number };
+  speak?: { used_min: number; limit_min: number; remaining_min: number; unlimited?: boolean };
 }
 
 /** Pull a JSON `detail` (FastAPI error body) so users see the friendly reason, not raw JSON. */

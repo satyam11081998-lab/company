@@ -6,6 +6,7 @@ import { priceFor, isBillingPeriod, discountedPaise } from '@/lib/tier';
 import { loadCoupon, checkCoupon, normalizeCode, isValidCodeShape } from '@/lib/coupons';
 import { notifyAdmin } from '@/lib/telegram';
 import { DECK_SINGLE_PRICE_INR, DECK_VAULT_PRICE_INR } from '@/lib/deck-access';
+import { realtimePack } from '@/lib/realtime-packs';
 
 const rateLimit = new Map<string, number>();
 
@@ -106,6 +107,16 @@ export async function POST(req: Request) {
         amount = DECK_SINGLE_PRICE_INR * 100;
         notes = { product: 'deck', skeleton_id: skeletonId, user_id: user.id };
       }
+    } else if (product === 'rt_pack') {
+      // ── Real-time minute pack ────────────────────────────────────────────
+      // Minutes + price are read from the shared pack table server-side; the
+      // client only names the pack id, never the amount.
+      const pk = realtimePack(typeof body.pack === 'string' ? body.pack : '');
+      if (!pk) {
+        return NextResponse.json({ error: 'Invalid minutes pack' }, { status: 400 });
+      }
+      amount = pk.priceInr * 100;
+      notes = { product: 'rt_pack', pack: body.pack, rt_minutes: String(pk.minutes), user_id: user.id };
     } else {
       // ── Subscription (Lite / Pro) — unchanged from before ────────────────
       const { tier } = body;

@@ -7,6 +7,7 @@ import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_
 import { sendUpgradeReceipt } from '@/lib/email/send';
 import { notifyAdmin } from '@/lib/telegram';
 import { DECK_SINGLE_PRICE_INR, DECK_VAULT_PRICE_INR } from '@/lib/deck-access';
+import { realtimePack } from '@/lib/realtime-packs';
 import {
   loadCoupon,
   couponHonouredAtPayment,
@@ -150,6 +151,66 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
         }
         return NextResponse.json({ success: true, product: 'deck' });
+      }
+
+      // ── Real-time minute packs ───────────────────────────────────────────
+      // Same money rigor as decks: verify captured + exact amount, then credit
+      // the never-expiring purchased balance. The realtime_purchases ledger's
+      // unique payment_id makes crediting idempotent (verify + webhook safe).
+      if (product === 'rt_pack') {
+        const pk = realtimePack(typeof order?.notes?.pack === 'string' ? order.notes.pack : '');
+        const minutes = Number(order?.notes?.rt_minutes || 0);
+        if (!pk || !minutes) {
+          return NextResponse.json({ error: 'Unknown minutes pack' }, { status: 400 });
+        }
+        const expectedPaise = pk.priceInr * 100;
+        if (Number(order.amount) !== expectedPaise) {
+          return NextResponse.json({ error: 'Paid amount does not match the pack' }, { status: 400 });
+        }
+        let dpay: any;
+        try {
+          dpay = await instance.payments.fetch(razorpay_payment_id);
+        } catch {
+          return NextResponse.json({ error: 'Payment could not be verified with Razorpay' }, { status: 400 });
+        }
+        if (!dpay || dpay.order_id !== razorpay_order_id) {
+          return NextResponse.json({ error: 'Payment does not belong to this order' }, { status: 400 });
+        }
+        if (dpay.status !== 'captured') {
+          return NextResponse.json({ error: 'Payment has not been captured' }, { status: 400 });
+        }
+        if (Number(dpay.amount) !== expectedPaise) {
+          return NextResponse.json({ error: 'Captured amount does not match the pack' }, { status: 400 });
+        }
+
+        const db = createServiceClient();
+        // Ledger-first: the unique payment_id guards against double-credit. If it
+        // is a duplicate (retry / webhook race), the minutes are already granted.
+        const { error: ledgerErr } = await db.from('realtime_purchases').insert({
+          razorpay_payment_id, user_id: user.id, minutes, amount_paise: expectedPaise,
+        });
+        if (ledgerErr) {
+          if ((ledgerErr as { code?: string }).code === '23505') {
+            return NextResponse.json({ success: true, alreadyProcessed: true });
+          }
+          console.error('[verify] rt_pack ledger failed:', ledgerErr);
+          return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+        }
+        const { data: bal } = await db.from('realtime_credits')
+          .select('purchased_remaining, included_remaining, included_period_start')
+          .eq('user_id', user.id).maybeSingle();
+        const { error: creditErr } = await db.from('realtime_credits').upsert({
+          user_id: user.id,
+          purchased_remaining: Number(bal?.purchased_remaining || 0) + minutes,
+          included_remaining: Number(bal?.included_remaining || 0),
+          included_period_start: bal?.included_period_start || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+        if (creditErr) {
+          console.error('[verify] rt_pack credit failed:', creditErr);
+          return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+        }
+        return NextResponse.json({ success: true, product: 'rt_pack', minutes });
       }
 
       // ── Subscription (Lite / Pro) ────────────────────────────────────────

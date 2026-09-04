@@ -30,6 +30,7 @@ import DictationButton, { type DictationHandle } from '@/components/dictation-bu
 import MicWaveform from '@/components/mic-waveform';
 import VoiceInterview from '@/components/solve/VoiceInterview';
 import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
+import RealtimeMinutes from '@/components/solve/realtime-minutes';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import { Vad } from '@/lib/voice/vad';
 
@@ -459,7 +460,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           const { text, quota: q } = await transcribeAudio(blob, tok || undefined);
           if (q) setQuota(q); // keep "minutes left" exact from the server
           if (text) appendToComposer(text);
-          if (q && q.voice.remaining_min <= 0 && keepRecordingRef.current) {
+          if (q && !q.voice.unlimited && q.voice.remaining_min <= 0 && keepRecordingRef.current) {
             toast.error('Daily voice limit reached — what you said is saved; you can keep typing.');
             stopMic(); // flush what is open + go idle
           }
@@ -866,8 +867,9 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const quotaExhausted = hasClarifications && remaining <= 0;
 
   // Voice-input allowance (per-tier, resets midnight IST). null while still loading.
+  const voiceUnlimited = quota?.voice.unlimited === true;   // Pro pipeline = unlimited
   const voiceLeft = quota?.voice.remaining_min ?? null;
-  const voiceOut = voiceLeft !== null && voiceLeft <= 0;
+  const voiceOut = !voiceUnlimited && voiceLeft !== null && voiceLeft <= 0;
 
   // Talk mode (Pro). This is the UI gate ONLY — routes/speak.py enforces the
   // tier server-side, because a client flag is a suggestion. Guests are blocked
@@ -878,7 +880,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // shipped ahead of its backend simply does not offer talk mode, rather than
   // offering a button that 404s the moment the interviewer tries to speak.
   const speakQuota = quota?.speak ?? null;
-  const speakOut = speakQuota !== null && speakQuota.remaining_min <= 0;
+  const speakOut = speakQuota !== null && !speakQuota.unlimited && speakQuota.remaining_min <= 0;
   const isPro = attempt?.tier === 'pro';
 
   /**
@@ -1141,9 +1143,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
               {voiceLeft !== null && (
                 <div className="mb-2 flex items-center justify-end gap-1.5 px-2 text-micro text-muted-foreground">
                   <Mic className="h-3 w-3" />
-                  {voiceOut
+                  {voiceUnlimited
+                    ? <span>Voice included — unlimited</span>
+                    : voiceOut
                     ? <span className="text-rose-600 dark:text-rose-400">Daily voice limit reached — type your answer</span>
                     : <span>≈{voiceLeft} min voice left today</span>}
+                </div>
+              )}
+              {useRealtime && isPro && (
+                <div className="mb-2 flex justify-end px-2">
+                  <RealtimeMinutes />
                 </div>
               )}
 
