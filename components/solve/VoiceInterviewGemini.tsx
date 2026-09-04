@@ -175,7 +175,18 @@ export default function VoiceInterviewGemini({
         ws.onopen = () => {
           // Minimal setup — the ephemeral token's constraints supply the model,
           // voice, response modality and interviewer instructions.
-          ws.send(JSON.stringify({ setup: { model: data.model } }));
+          ws.send(JSON.stringify({
+            setup: {
+              model: data.model,
+              generationConfig: {
+                responseModalities: ['AUDIO'],
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: data.voice } } },
+              },
+              systemInstruction: { parts: [{ text: data.instructions }] },
+              inputAudioTranscription: {},
+              outputAudioTranscription: {},
+            },
+          }));
           // start capturing mic -> 16k PCM -> realtimeInput
           const source = micCtx.createMediaStreamSource(stream);
           const proc = micCtx.createScriptProcessor(4096, 1, 1);
