@@ -193,19 +193,10 @@ export default function VoiceInterviewGemini({
         };
 
         ws.onopen = () => {
-          // Setup FIRST; wait for setupComplete before sending any audio.
-          ws.send(JSON.stringify({
-            setup: {
-              model: data.model,
-              generationConfig: {
-                responseModalities: ['AUDIO'],
-                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: data.voice } } },
-              },
-              systemInstruction: { parts: [{ text: data.instructions }] },
-              inputAudioTranscription: {},
-              outputAudioTranscription: {},
-            },
-          }));
+          // Setup FIRST; wait for setupComplete before sending any audio. The
+          // backend supplies the exact setup (constraints on the token carry the
+          // model, voice, instructions and transcription config).
+          ws.send(JSON.stringify({ setup: data.setup || { model: data.model } }));
         };
 
         ws.onmessage = async (ev) => {
