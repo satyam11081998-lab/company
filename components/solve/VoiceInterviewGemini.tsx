@@ -72,6 +72,9 @@ export default function VoiceInterviewGemini({
   const startedAtRef = useRef<number>(0);
   const reportedRef = useRef<number>(0);
   const closedRef = useRef(false);
+  const asstDraftRef = useRef('');
+  const userDraftRef = useRef('');
+  const [drafts, setDrafts] = useState<{ you: string; interviewer: string }>({ you: '', interviewer: '' });
 
   const reportUsage = useCallback(async (final = false) => {
     try {
@@ -208,10 +211,29 @@ export default function VoiceInterviewGemini({
                 enqueueAudio(base64ToInt16(inline.data));
               }
             }
-            const outT = sc.outputTranscription?.text;
-            const inT = sc.inputTranscription?.text;
-            if (inT) setTranscript((t) => [...t.slice(-10), { who: 'you', text: inT }]);
-            if (outT) setTranscript((t) => [...t.slice(-10), { who: 'interviewer', text: outT }]);
+            // Transcriptions arrive incrementally — accumulate into a live draft,
+            // then commit the whole turn on turnComplete (so it reads as one line,
+            // not a stream of fragments).
+            if (sc.outputTranscription?.text) {
+              asstDraftRef.current += sc.outputTranscription.text;
+              setDrafts((d) => ({ ...d, interviewer: asstDraftRef.current }));
+            }
+            if (sc.inputTranscription?.text) {
+              userDraftRef.current += sc.inputTranscription.text;
+              setDrafts((d) => ({ ...d, you: userDraftRef.current }));
+            }
+            if (sc.turnComplete) {
+              const a = asstDraftRef.current.trim();
+              const u = userDraftRef.current.trim();
+              asstDraftRef.current = '';
+              userDraftRef.current = '';
+              setTranscript((t) => [
+                ...t.slice(-8),
+                ...(u ? [{ who: 'you' as const, text: u }] : []),
+                ...(a ? [{ who: 'interviewer' as const, text: a }] : []),
+              ]);
+              setDrafts({ you: '', interviewer: '' });
+            }
           }
         };
 
@@ -260,6 +282,18 @@ export default function VoiceInterviewGemini({
             <p className="text-sm text-foreground">{m.text}</p>
           </div>
         ))}
+        {drafts.you && (
+          <div className="text-right opacity-70">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">You</span>
+            <p className="text-sm text-foreground">{drafts.you}</p>
+          </div>
+        )}
+        {drafts.interviewer && (
+          <div className="text-left opacity-70">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</span>
+            <p className="text-sm text-foreground">{drafts.interviewer}</p>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 flex gap-2">
