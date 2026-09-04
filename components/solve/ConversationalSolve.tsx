@@ -31,6 +31,7 @@ import MicWaveform from '@/components/mic-waveform';
 import VoiceInterview from '@/components/solve/VoiceInterview';
 import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
 import RealtimeMinutes from '@/components/solve/realtime-minutes';
+import VoiceInterviewGemini from '@/components/solve/VoiceInterviewGemini';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import { Vad } from '@/lib/voice/vad';
 
@@ -132,7 +133,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [quota, setQuota] = useState<AiQuota | null>(null);
   // Voice mode is admin-controlled at runtime (Admin -> AI providers). Read it
   // once on mount; keep the env default until it resolves. Never throws.
-  const [useRealtime, setUseRealtime] = useState(REALTIME_ENV_DEFAULT);
+  const [voiceMode, setVoiceMode] = useState<'pipeline' | 'realtime' | 'gemini'>(REALTIME_ENV_DEFAULT ? 'realtime' : 'pipeline');
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -140,8 +141,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         const res = await fetch(`${API_URL}/public-config`, { cache: 'no-store' });
         if (!res.ok) return;
         const j = await res.json();
-        if (alive && (j.voice_mode === 'realtime' || j.voice_mode === 'pipeline')) {
-          setUseRealtime(j.voice_mode === 'realtime');
+        if (alive && (j.voice_mode === 'realtime' || j.voice_mode === 'pipeline' || j.voice_mode === 'gemini')) {
+          setVoiceMode(j.voice_mode);
         }
       } catch { /* keep env default */ }
     })();
@@ -1150,7 +1151,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                     : <span>≈{voiceLeft} min voice left today</span>}
                 </div>
               )}
-              {useRealtime && isPro && (
+              {(voiceMode === 'realtime' || voiceMode === 'gemini') && isPro && (
                 <div className="mb-2 flex justify-end px-2">
                   <RealtimeMinutes />
                 </div>
@@ -1297,7 +1298,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           and no amount of tuning removes those. Set
           NEXT_PUBLIC_VOICE_REALTIME=0 to fall straight back to the pipeline —
           it still works, so a regression is a config change, not a redeploy. */}
-      {talkMode && token && attempt && useRealtime && (
+      {talkMode && token && attempt && voiceMode === 'realtime' && (
         <VoiceInterviewRealtime
           token={token}
           caseId={caseId}
@@ -1315,7 +1316,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         />
       )}
 
-      {talkMode && token && !useRealtime && (
+      {talkMode && token && attempt && voiceMode === 'gemini' && (
+        <VoiceInterviewGemini
+          token={token}
+          caseId={caseId}
+          attemptId={attempt.attempt_id}
+          onClose={() => setTalkMode(false)}
+        />
+      )}
+
+      {talkMode && token && voiceMode === 'pipeline' && (
         <VoiceInterview
           token={token}
           onSend={(text) => sendRef.current!('voice', text)}
