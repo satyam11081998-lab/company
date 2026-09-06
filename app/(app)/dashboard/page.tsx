@@ -8,6 +8,7 @@ import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
 import { GUESSTIMATE_DIMENSIONS, type GuesstimateDimension } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
+import FeedbackPrompt from '@/components/feedback-prompt';
 import WarmupCard from '@/components/dashboard/warmup-card';
 import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
@@ -343,6 +344,7 @@ export default async function DashboardPage() {
         todayMeta={todayMeta}
         dailyProgress={dailyProgress}
       />
+      <FeedbackPrompt completedCount={submissions.length} />
     </div>
   );
 }

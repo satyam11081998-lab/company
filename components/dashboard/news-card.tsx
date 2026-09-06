@@ -102,22 +102,23 @@ export function NewsCard({ u, brief }: NewsCardProps) {
         <p style={{ margin: 0, fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.5 }}>
           Why it matters for you: textbook M&amp;A synergy framing — your profitability focus today maps directly onto cases like this <i>at</i> partner-round depth.
         </p>
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 14, paddingTop: 8 }}>
-          <span onClick={() => brief?.id && router.push(`/gd-briefs/${brief.id}`)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', borderBottom: '1.5px solid var(--ink)', paddingBottom: 1, cursor: 'pointer' }}>Read brief →</span>
-          <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
-            or{' '}
-            <button
-              onClick={handleToCase}
-              disabled={loading || !brief?.id}
-              style={{
-                background: 'none', border: 'none', padding: 0,
-                color: 'var(--red)', fontWeight: 700, cursor: (loading || !brief?.id) ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1, font: 'inherit'
-              }}
-            >
-              {loading ? 'generating...' : 'turn it into a 15-min case'}
-            </button>
-          </span>
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 14, paddingTop: 10, flexWrap: 'wrap' }}>
+          <button
+            onClick={handleToCase}
+            disabled={loading || !brief?.id}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: 'var(--red)', color: '#fff', border: 'none',
+              padding: '10px 18px', borderRadius: 10, font: 'inherit',
+              fontSize: 13, fontWeight: 700, letterSpacing: '0.01em',
+              cursor: (loading || !brief?.id) ? 'not-allowed' : 'pointer',
+              opacity: (loading || !brief?.id) ? 0.65 : 1,
+              boxShadow: '0 3px 12px rgba(220,38,38,0.35)',
+            }}
+          >
+            {loading ? 'Generating…' : '⚡ Turn into a 15-min case'}
+          </button>
+          <span onClick={() => brief?.id && router.push(`/gd-briefs/${brief.id}`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-3)', cursor: 'pointer' }}>Read brief →</span>
         </div>
       </div>
     </div>
