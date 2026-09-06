@@ -1322,6 +1322,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           caseId={caseId}
           attemptId={attempt.attempt_id}
           onClose={() => setTalkMode(false)}
+          onSubmitSession={() => { setTalkMode(false); setSubmitOpen(true); }}
+          onTurnPersisted={async () => {
+            try {
+              const detail = await getAttempt(attempt.attempt_id, token);
+              setMessages(detail.messages);
+              setAttempt(detail.attempt);
+            } catch { /* the rail already shows the turn locally */ }
+          }}
         />
       )}
 
