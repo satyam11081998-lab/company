@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { DailyContentResponse } from '@/lib/api';
 import { useIsMobile } from '@/hooks/use-is-mobile';
+import { Bolt } from 'lucide-react';
 
 /* ── Types ── */
 interface NewsCardProps {
@@ -104,19 +105,13 @@ export function NewsCard({ u, brief }: NewsCardProps) {
         </p>
         <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 14, paddingTop: 10, flexWrap: 'wrap' }}>
           <button
+            type="button"
+            className="btn primary"
             onClick={handleToCase}
             disabled={loading || !brief?.id}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'var(--red)', color: '#fff', border: 'none',
-              padding: '10px 18px', borderRadius: 10, font: 'inherit',
-              fontSize: 13, fontWeight: 700, letterSpacing: '0.01em',
-              cursor: (loading || !brief?.id) ? 'not-allowed' : 'pointer',
-              opacity: (loading || !brief?.id) ? 0.65 : 1,
-              boxShadow: '0 3px 12px rgba(220,38,38,0.35)',
-            }}
+            style={{ opacity: (loading || !brief?.id) ? 0.6 : 1 }}
           >
-            {loading ? 'Generating…' : '⚡ Turn into a 15-min case'}
+            {loading ? 'Generating…' : (<><Bolt style={{ width: 13, height: 13 }} /> Turn into a 15-min case</>)}
           </button>
           <span onClick={() => brief?.id && router.push(`/gd-briefs/${brief.id}`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-3)', cursor: 'pointer' }}>Read brief →</span>
         </div>

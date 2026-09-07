@@ -25,6 +25,15 @@ function markSeen() {
   try { localStorage.setItem(SEEN_KEY, '1'); } catch { /* private mode — fine */ }
 }
 
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill={filled ? '#f5a623' : 'none'}
+      stroke={filled ? '#f5a623' : '#c9ced6'} strokeWidth={1.7} strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2.6l2.9 6.03 6.6.87-4.85 4.55 1.2 6.55L12 17.9l-5.85 3.1 1.2-6.55L2.5 9.5l6.6-.87z" />
+    </svg>
+  );
+}
+
 export default function FeedbackPrompt({ completedCount }: { completedCount: number }) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
@@ -92,22 +101,22 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
       style={{
         position: 'fixed', inset: 0, zIndex: 60, display: 'flex',
         alignItems: 'center', justifyContent: 'center', padding: 16,
-        background: 'rgba(15,28,51,0.45)', backdropFilter: 'blur(3px)',
+        background: 'rgba(15,28,51,0.62)', backdropFilter: 'blur(7px)',
       }}
       onClick={dismiss}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 440, background: 'var(--card, #fff)',
-          borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-          padding: '24px 24px 20px', color: 'var(--ink, #0f1c33)',
+          width: '100%', maxWidth: 440, background: '#ffffff',
+          borderRadius: 16, boxShadow: '0 24px 70px rgba(0,0,0,0.38)',
+          padding: '24px 24px 20px', color: '#0f1c33',
         }}
       >
         {done ? (
           <div style={{ textAlign: 'center', padding: '20px 8px' }}>
             <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Thank you — truly.</div>
-            <p style={{ fontSize: 14, color: 'var(--ink-3, #555)', lineHeight: 1.5, margin: 0 }}>
+            <p style={{ fontSize: 14, color: '#586074', lineHeight: 1.5, margin: 0 }}>
               This genuinely helps us make MECE better for you. We read every word.
             </p>
           </div>
@@ -116,7 +125,7 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
             <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em' }}>
               Quick question — how are you finding MECE?
             </div>
-            <p style={{ fontSize: 13.5, color: 'var(--ink-3, #555)', lineHeight: 1.55, margin: '8px 0 18px' }}>
+            <p style={{ fontSize: 13.5, color: '#586074', lineHeight: 1.55, margin: '8px 0 18px' }}>
               You&rsquo;ve done a few cases now, so your take really matters. We&rsquo;re a small team, we read
               every response, and your suggestions are worked on — not filed away. Takes 20 seconds.
             </p>
@@ -133,13 +142,9 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
                   onMouseLeave={() => setHover(0)}
                   onClick={() => setRating(n)}
                   aria-label={`${n} star${n > 1 ? 's' : ''}`}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: 28, lineHeight: 1, padding: 0,
-                    color: (hover || rating) >= n ? '#f5a623' : 'var(--ink-5, #c9ced6)',
-                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0 }}
                 >
-                  ★
+                  <StarIcon filled={(hover || rating) >= n} />
                 </button>
               ))}
             </div>
@@ -168,7 +173,7 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
 
             <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', margin: '16px 0 4px', cursor: 'pointer' }}>
               <input type="checkbox" checked={allow} onChange={(e) => setAllow(e.target.checked)} style={{ marginTop: 3 }} />
-              <span style={{ fontSize: 12.5, color: 'var(--ink-3, #555)', lineHeight: 1.5 }}>
+              <span style={{ fontSize: 12.5, color: '#586074', lineHeight: 1.5 }}>
                 You&rsquo;re welcome to feature my words as a testimonial on the MECE website.
               </span>
             </label>
@@ -196,16 +201,16 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
 
 const ta: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box', resize: 'vertical',
-  border: '1px solid var(--ink-5, #d6dae1)', borderRadius: 9,
-  padding: '9px 11px', fontSize: 13.5, font: 'inherit', color: 'var(--ink, #0f1c33)',
-  background: 'var(--bg, #fff)',
+  border: '1px solid #d6dae1', borderRadius: 9,
+  padding: '9px 11px', fontSize: 13.5, font: 'inherit', color: '#0f1c33',
+  background: '#ffffff',
 };
 const btnGhost: React.CSSProperties = {
-  background: 'none', border: 'none', color: 'var(--ink-3, #555)',
+  background: 'none', border: 'none', color: '#586074',
   fontSize: 13, fontWeight: 600, cursor: 'pointer', font: 'inherit',
 };
 const btnPrimary: React.CSSProperties = {
-  background: 'var(--red, #dc2626)', color: '#fff', border: 'none',
+  background: '#dc2626', color: '#fff', border: 'none',
   padding: '10px 18px', borderRadius: 10, fontSize: 13.5, fontWeight: 700,
   cursor: 'pointer', font: 'inherit', boxShadow: '0 3px 12px rgba(220,38,38,0.3)',
 };
