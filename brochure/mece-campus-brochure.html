@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MECE for Campuses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+<script src="mece-photos.js"></script>
+<style>
+  :root{
+    --crimson:#C8102E; --crimson-deep:#A20B24; --crimson-tint:#FBE7EA; --crimson-line:#F1C9CF;
+    --navy:#0F1C33; --navy-mid:#22395E; --navy-soft:#5A6B88;
+    --paper:#F7F3EA; --paper-deep:#EFE8D8; --white:#FFFFFF;
+    --ink:#171310; --grey:#5F594E; --grey-l:#8B8577; --line:#E8E1D2;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:"Inter",system-ui,sans-serif;color:var(--ink);background:#cfc9bd;-webkit-font-smoothing:antialiased;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  @page{size:210mm 297mm;margin:0;}
+  a{color:inherit;text-decoration:none;}
+  .pg{position:relative;width:210mm;height:297mm;margin:0 auto;overflow:hidden;background:var(--paper);page-break-after:always;break-after:page;}
+  .pg:last-child{page-break-after:auto;break-after:auto;}
+  @media screen{.pg{margin:16px auto;box-shadow:0 14px 50px rgba(15,28,51,.22);}}
+  .pad{position:relative;z-index:5;height:100%;padding:17mm 16mm 15mm;display:flex;flex-direction:column;}
+  .pad.sb{justify-content:space-between;}
+  .pad.sb .spacer{display:none;}
+
+  h1,h2,h3,h4{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.05;color:var(--navy);}
+  p{margin:0;line-height:1.6;}
+  .kick{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--crimson);}
+  .body{font-size:12.5px;line-height:1.6;color:var(--grey);}
+  .body b{color:var(--ink);font-weight:600;}
+  .accentbar{width:38px;height:4px;background:var(--crimson);border-radius:2px;}
+  .stars{color:var(--crimson);font-size:12px;letter-spacing:2px;}
+  .site{font-weight:800;color:var(--crimson);}
+
+  /* running footer with website on every page */
+  .foot{position:absolute;left:16mm;right:16mm;bottom:8mm;z-index:6;display:flex;justify-content:space-between;align-items:center;font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-l);}
+  .foot .ln{flex:1;height:1px;background:var(--line);margin:0 12px;}
+  .foot .w{color:var(--crimson);font-weight:800;}
+
+  /* geometric brand shapes */
+  .blob{position:absolute;border-radius:50%;z-index:1;}
+  .tri{position:absolute;z-index:1;}
+
+  /* section header */
+  .sec{display:flex;align-items:baseline;gap:12px;}
+  .sec .no{font-size:13px;font-weight:900;color:var(--crimson);letter-spacing:.05em;}
+  h2.h{font-size:27px;line-height:1.08;color:var(--navy);max-width:150mm;}
+  h2.h em{font-style:normal;color:var(--crimson);}
+
+  /* testimonial / endorsement card (template-style) */
+  .tcard{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px 20px 18px;position:relative;box-shadow:0 10px 26px rgba(15,28,51,.07);display:flex;flex-direction:column;}
+  .tcard .qm{position:absolute;top:12px;right:20px;font-family:Georgia,serif;font-size:62px;line-height:1;color:var(--crimson);opacity:.15;font-weight:700;}
+  .tcard .top{display:flex;align-items:center;gap:13px;}
+  .av{width:58px;height:58px;border-radius:50%;overflow:hidden;flex-shrink:0;position:relative;border:2.5px solid var(--crimson-tint);box-shadow:0 3px 9px rgba(15,28,51,.12);}
+  .av img{width:100%;height:100%;object-fit:cover;display:block;}
+  .av .mono{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;color:#fff;}
+  .av.big{width:74px;height:74px;}
+  .av.big .mono{font-size:30px;}
+  .tcard .nm{font-size:14.5px;font-weight:800;color:var(--navy);line-height:1.15;}
+  .tcard .rl{font-size:10px;font-weight:700;color:var(--crimson);margin-top:3px;line-height:1.3;text-transform:uppercase;letter-spacing:.03em;}
+  .tcard .rl .sch{color:var(--grey-l);}
+  .tcard .q{font-size:12.5px;line-height:1.55;color:var(--grey);margin-top:13px;flex:1;}
+  .tcard .li{font-size:9px;font-weight:600;color:var(--grey-l);margin-top:12px;letter-spacing:.02em;display:flex;align-items:center;gap:4px;}
+  .tcard .li b{color:var(--navy);}
+  .stars{color:var(--crimson);font-size:14px;letter-spacing:2px;}
+
+  .egrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;}
+  .egrid .tcard{justify-content:center;}
+  .tgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+  /* stat callouts */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .stat .v{font-size:48px;font-weight:900;color:var(--crimson);letter-spacing:-.03em;line-height:1;}
+  .stat .v span{color:var(--navy);}
+  .stat .k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey);margin-top:6px;line-height:1.35;}
+
+  /* product plates */
+  .plate{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 16px 40px rgba(15,28,51,.14);border:1px solid var(--line);}
+  .bar{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#F0EDE5;border-bottom:1px solid var(--line);}
+  .bar .d{width:7px;height:7px;border-radius:50%;background:#cfc9bb;}
+  .bar .d.r{background:#E5867F;}.bar .d.y{background:#E7C071;}.bar .d.g{background:#96C79A;}
+  .bar .u{margin-left:6px;background:#fff;border:1px solid var(--line);border-radius:5px;padding:3px 9px;font-size:9px;color:#8a8575;flex:1;}
+  .bar .u b{color:var(--navy);font-weight:700;}
+  .chat{display:grid;grid-template-columns:37% 1fr;}
+  .brief{background:#fff;border-right:1px solid #F0ECE2;padding:11px 12px;}
+  .brief .k{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--navy-soft);}
+  .brief h4{font-size:12px;font-weight:800;color:var(--navy);margin:4px 0 6px;line-height:1.15;}
+  .brief p{font-size:9.5px;color:var(--grey);line-height:1.5;}
+  .brief .ctx{margin-top:7px;background:var(--crimson-tint);border-radius:6px;padding:6px 8px;}
+  .brief .ctx b{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--crimson);display:block;margin-bottom:2px;font-weight:800;}
+  .brief .ctx span{font-size:9px;color:var(--grey);}
+  .thread{background:#FAFAF7;padding:11px;display:flex;flex-direction:column;gap:7px;}
+  .row{display:flex;}.row.me{justify-content:flex-end;}
+  .bub{max-width:88%;padding:7px 10px;font-size:10px;line-height:1.4;border-radius:12px;}
+  .bub.ai{background:#EEEBE4;color:#2b2822;border-bottom-left-radius:4px;}
+  .bub.me{background:var(--crimson);color:#fff;border-bottom-right-radius:4px;}
+  .who{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy-soft);margin-bottom:2px;}
+  .score{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:13px 15px;background:#fff;}
+  .ring{position:relative;width:92px;height:92px;}
+  .ring .n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring .n b{font-size:30px;font-weight:900;color:var(--navy);line-height:1;}
+  .ring .n small{font-size:9px;color:var(--grey-l);font-weight:700;}
+  .bars{display:flex;flex-direction:column;gap:6px;}
+  .barrow{display:grid;grid-template-columns:108px 1fr 34px;gap:8px;align-items:center;}
+  .barrow .lb{font-size:9.5px;color:var(--navy);font-weight:700;}
+  .barrow .tk{height:6px;background:#EEE9DD;border-radius:99px;overflow:hidden;}
+  .barrow .tk i{display:block;height:100%;background:var(--crimson);border-radius:99px;}
+  .barrow .vl{font-size:9px;font-weight:700;color:var(--grey);text-align:right;}
+
+  /* rubric cards */
+  .rubg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+  .rub{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 6px 16px rgba(15,28,51,.05);}
+  .rub .h{display:flex;justify-content:space-between;align-items:baseline;}
+  .rub .h .t{font-size:13px;font-weight:800;color:var(--navy);}
+  .rub .h .p{font-size:15px;font-weight:900;color:var(--crimson);}
+  .rub p{font-size:10px;color:var(--grey);line-height:1.45;margin-top:6px;}
+
+  /* wordmark employer wall */
+  .wall{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .lm{background:#fff;border:1px solid var(--line);border-radius:11px;height:58px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:var(--navy);letter-spacing:.01em;box-shadow:0 6px 16px rgba(15,28,51,.06);}
+  .inst{display:flex;flex-wrap:wrap;gap:9px;}
+  .chip{background:var(--navy);color:#fff;border-radius:99px;padding:9px 17px;font-size:13.5px;font-weight:700;}
+  .chip.o{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+
+  /* access */
+  .acc{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .col{border-radius:12px;overflow:hidden;}
+  .col.free{background:#fff;border:1px solid var(--line);}
+  .col.paid{background:var(--navy);}
+  .col .h{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;}
+  .col.free .h{color:var(--navy);border-bottom:1px solid var(--line);}
+  .col.paid .h{color:#fff;background:var(--crimson);}
+  .col .tagp{font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;}
+  .col.free .tagp{background:var(--paper-deep);color:var(--grey);}
+  .col.paid .tagp{background:#fff;color:var(--crimson);}
+  .col ul{list-style:none;margin:0;padding:17px 18px;display:flex;flex-direction:column;gap:13px;}
+  .col li{font-size:12px;line-height:1.4;padding-left:20px;position:relative;}
+  .col.free li{color:var(--ink);}.col.paid li{color:#EAF0FA;}
+  .col li::before{content:"✓";position:absolute;left:0;font-weight:800;font-size:10px;}
+  .col.free li::before{color:var(--crimson);}.col.paid li::before{color:#fff;}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .stp{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 18px;box-shadow:0 8px 18px rgba(15,28,51,.06);}
+  .stp .n{width:38px;height:38px;border-radius:50%;background:var(--crimson);color:#fff;font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center;}
+  .stp h3{font-size:15px;font-weight:800;color:var(--navy);margin-top:13px;}
+  .stp p{font-size:11.5px;color:var(--grey);margin-top:6px;line-height:1.5;}
+
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;}
+  .tier{border:1px solid var(--line);border-radius:14px;padding:20px 18px;background:#fff;}
+  .tier.mid{border:2px solid var(--crimson);}
+  .tier .nm{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);}
+  .tier .pr{font-size:28px;font-weight:900;color:var(--crimson);margin-top:8px;}
+  .tier .pr small{font-size:12px;font-weight:600;color:var(--grey);}
+  .tier .dsc{font-size:11.5px;color:var(--grey);margin-top:9px;line-height:1.5;}
+  .cta{background:var(--navy);border-radius:16px;padding:24px 26px;display:flex;justify-content:space-between;align-items:center;gap:16px;}
+  .cta h3{color:#fff;font-size:21px;}
+  .cta p{color:#B9C6DC;font-size:12px;margin-top:6px;max-width:100mm;}
+  .cta .btn{background:var(--crimson);color:#fff;font-weight:800;font-size:14px;padding:12px 20px;border-radius:10px;text-align:center;}
+  .cta .btn small{display:block;font-weight:600;font-size:9.5px;color:#FBD3DA;margin-top:2px;}
+  sup.d{color:var(--crimson);font-weight:800;font-size:.6em;}
+  .spacer{flex:1;}
+  .disc{font-size:8.5px;color:var(--grey-l);line-height:1.4;}
+</style>
+</head>
+<body>
+
+<!-- ============ 1 · COVER ============ -->
+<section class="pg" style="background:var(--navy);">
+  <div class="blob" style="width:300mm;height:300mm;right:-150mm;top:-120mm;background:radial-gradient(circle at center,rgba(200,16,46,.9),rgba(200,16,46,0) 62%);"></div>
+  <div class="blob" style="width:70mm;height:70mm;left:-24mm;bottom:34mm;background:rgba(34,57,94,.6);"></div>
+  <svg class="tri" style="right:26mm;bottom:34mm;width:56mm;opacity:.9;" viewBox="0 0 100 80"><polygon points="50,6 96,74 4,74" fill="#C8102E"/><polygon points="50,26 78,66 22,66" fill="#0F1C33"/></svg>
+  <div class="pad" style="color:#fff;">
+    <svg style="height:24mm;width:auto;" viewBox="0 0 507 126"><polygon points="63.38,77 80,49 96.63,77" fill="#C8102E"></polygon><polygon points="52,77 66.88,56.88 81.75,77" fill="#fff"></polygon><text x="112.6" y="63" dominant-baseline="middle" font-family="Inter" font-size="40" font-weight="800" letter-spacing="1.2" fill="#fff">MECE</text><rect x="266.1" y="40" width="2" height="46" fill="rgba(255,255,255,.3)"></rect><text x="290.1" y="52.5" dominant-baseline="middle" font-family="Inter" font-size="17" font-weight="500" fill="#C6D0E0">Method for Evaluating</text><text x="290.1" y="75.5" dominant-baseline="middle" font-family="Inter" font-size="17" font-weight="500" fill="#C6D0E0">Corporate Excellence</text></svg>
+    <div class="spacer"></div>
+    <div style="max-width:150mm;">
+      <div class="kick" style="color:#FF8A9B;">A prospectus for placement cells &amp; case clubs</div>
+      <div class="accentbar" style="margin:14px 0 16px;"></div>
+      <h1 style="color:#fff;font-size:52px;font-weight:900;line-height:1.02;">Crack placement interviews the <span style="color:#FF576F;">structured way.</span></h1>
+      <p style="color:#C6D0E0;font-size:15px;margin-top:18px;max-width:130mm;line-height:1.6;">The independent platform where a whole batch practises real case &amp; guesstimate interviews — graded on the same 100-point rubric a consulting panel uses, any hour, every time.</p>
+    </div>
+    <div class="spacer"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid rgba(255,255,255,.15);padding-top:14px;">
+      <div><div class="kick" style="color:#7E8CA8;">Trusted by aspirants at</div><p style="color:#fff;font-size:13px;font-weight:700;margin-top:6px;max-width:140mm;">IIM Indore · IIM Lucknow · IIM Mumbai · TISS · IMI Delhi · DMS IIT Delhi · IIM Raipur · XIMB</p></div>
+      <div style="text-align:right;"><div style="font-weight:900;font-size:16px;color:#fff;">mece.in</div><div style="font-size:10px;color:#9DB0CC;margin-top:2px;">team@mece.in</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · PROBLEM ============ -->
+<section class="pg">
+  <div class="blob" style="width:60mm;height:60mm;right:-18mm;top:-18mm;background:var(--crimson-tint);"></div>
+  <div class="pad sb">
+    <div class="sec"><span class="no">01</span><h2 class="h">Every placement season runs on the same <em>quiet unfairness.</em></h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+    <p style="font-size:17px;font-weight:600;color:var(--navy);line-height:1.45;margin-top:18px;max-width:150mm;">Two equally hardworking students walk into the same shortlist — one had seniors who ran drills with them all term, the other had a WhatsApp group and hope.</p>
+    <p class="body" style="margin-top:14px;max-width:150mm;">MECE began the way most placement prep does — <b>2 a.m. peer mocks, seniors' PDFs passed down like heirlooms, and feedback that changed depending on who was across the table.</b> So we replaced subjectivity with a rubric: practise any hour, get the same rigorous 100-point feedback every time — the same way for the topper and the first-generation MBA alike.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+      <div class="rub" style="padding:22px 20px;"><div style="font-size:36px;font-weight:900;color:var(--crimson);line-height:1;">01</div><h3 style="font-size:17px;font-weight:800;color:var(--navy);margin-top:12px;">Inconsistent</h3><p style="font-size:12px;color:var(--grey);margin-top:8px;line-height:1.55;">Feedback changed with whoever happened to sit across the table — a senior one day, a stranger the next.</p></div>
+      <div class="rub" style="padding:22px 20px;"><div style="font-size:36px;font-weight:900;color:var(--crimson);line-height:1;">02</div><h3 style="font-size:17px;font-weight:800;color:var(--navy);margin-top:12px;">Expensive</h3><p style="font-size:12px;color:var(--grey);margin-top:8px;line-height:1.55;">Coaching and bootcamps priced out exactly the students who needed the structured reps the most.</p></div>
+      <div class="rub" style="padding:22px 20px;"><div style="font-size:36px;font-weight:900;color:var(--crimson);line-height:1;">03</div><h3 style="font-size:17px;font-weight:800;color:var(--navy);margin-top:12px;">Unmeasurable</h3><p style="font-size:12px;color:var(--grey);margin-top:8px;line-height:1.55;">No honest, repeatable way to see whether a whole month of prep had actually changed anything.</p></div>
+    </div>
+
+    <div class="spacer"></div>
+    <div style="background:var(--navy);border-radius:14px;padding:18px 22px;display:flex;gap:18px;align-items:center;">
+      <span style="font-family:Georgia,serif;font-size:54px;color:#FF576F;line-height:.7;">&ldquo;</span>
+      <div><p style="color:#fff;font-size:16px;font-weight:600;line-height:1.4;">Judge us the way an interviewer judges you — on the work, not the signalling.</p><div class="kick" style="color:#7E8CA8;margin-top:8px;">The MECE team</div></div>
+    </div>
+  </div>
+  <div class="foot"><span>Why MECE exists</span><span class="ln"></span><span class="w">mece.in</span></div>
+</section>
+
+<!-- ============ 3 · METHOD ============ -->
+<section class="pg">
+  <div class="pad">
+    <div class="sec"><span class="no">02</span><h2 class="h">One rubric. A hundred points. <em>Six dimensions a panel actually grades on.</em></h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+    <p class="body" style="margin-top:12px;max-width:150mm;">The same criteria hit every submission, so a student tracks genuine improvement instead of a mood. Written strengths and fixes come back in about a minute.</p>
+
+    <div class="rubg" style="margin-top:7mm;">
+      <div class="rub"><div class="h"><span class="t">Structure</span><span class="p">25</span></div><p>MECE decomposition into a bespoke, logical framework; scope clarified before solving.</p></div>
+      <div class="rub"><div class="h"><span class="t">Quantitative</span><span class="p">20</span></div><p>Accurate maths, Pareto-driven prioritisation, sanity-checked against plausibility.</p></div>
+      <div class="rub"><div class="h"><span class="t">Synthesis</span><span class="p">20</span></div><p>Top-down recommendation, logic in descending importance, executive tone.</p></div>
+      <div class="rub"><div class="h"><span class="t">Business Judgment</span><span class="p">15</span></div><p>Stress-tested across macro environment, industry dynamics and company constraints.</p></div>
+      <div class="rub"><div class="h"><span class="t">Creativity</span><span class="p">10</span></div><p>Multiple distinct, testable hypotheses — structured exploration, not brainstorming.</p></div>
+      <div class="rub"><div class="h"><span class="t">Professional Tone</span><span class="p">10</span></div><p>Confident without arrogance, honest about uncertainty, ethical, humble.</p></div>
+    </div>
+
+    <div class="spacer"></div>
+    <div style="border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;">
+      <div class="kick" style="margin-bottom:9px;">Every submission runs the same five steps</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <span class="chip">Parse</span><span style="color:var(--crimson);font-weight:800;">→</span>
+        <span class="chip">Score the rubric</span><span style="color:var(--crimson);font-weight:800;">→</span>
+        <span class="chip">Verify the math</span><span style="color:var(--crimson);font-weight:800;">→</span>
+        <span class="chip">Write feedback</span><span style="color:var(--crimson);font-weight:800;">→</span>
+        <span class="chip">Rank vs the national pool</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>The method</span><span class="ln"></span><span class="w">mece.in</span></div>
+</section>
+
+<!-- ============ 4 · IN PRACTICE ============ -->
+<section class="pg">
+  <div class="pad sb">
+    <div class="sec"><span class="no">03</span><h2 class="h">A real interview on demand — <em>and an honest score a minute later.</em></h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+    <p class="body" style="margin-top:12px;max-width:150mm;">Not multiple choice. A back-and-forth interview: the student structures, the AI interviewer probes the weak link — exactly like a McKinsey or BCG round. Cases and guesstimates share one engine.</p>
+
+    <div style="margin-top:6mm;">
+      <div class="plate">
+        <div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="u">mece.in<b>/practice</b> · Market-entry case</span></div>
+        <div class="chat">
+          <div class="brief"><div class="k">Case · Market entry</div><h4>Should a South-Asian SaaS payroll firm enter Southeast Asia?</h4><p>Recommend go / no-go with a clear structure, a sized opportunity, and the two risks that matter.</p><div class="ctx"><b>Framework / Context</b><span>Market attractiveness · right-to-win · entry mode · unit economics.</span></div></div>
+          <div class="thread">
+            <div class="row"><div><div class="who">Interviewer</div><div class="bub ai">Take a minute. How will you decide whether this market is worth entering?</div></div></div>
+            <div class="row me"><div><div class="bub me">Three buckets — is it attractive, can we win, can we make money. I'd size SME payroll spend first.</div></div></div>
+            <div class="row"><div><div class="bub ai">Good. Give me a rough size — walk me through the maths.</div></div></div>
+            <div class="row me"><div><div class="bub me">~6M SMEs × ~40% digitised × ₹18k/yr ≈ ₹43,000 Cr. I'll pressure-test the digitisation rate next.</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:6mm;">
+      <div class="plate">
+        <div class="bar"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="u">mece.in<b>/results</b> · Scored on the six dimensions</span></div>
+        <div class="score">
+          <div class="ring"><svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="39" fill="none" stroke="#EEE9DD" stroke-width="10"/><circle cx="46" cy="46" r="39" fill="none" stroke="#C8102E" stroke-width="10" stroke-linecap="round" stroke-dasharray="245" stroke-dashoffset="39" transform="rotate(-90 46 46)"/></svg><div class="n"><b>84</b><small>/100</small></div></div>
+          <div class="bars">
+            <div class="barrow"><span class="lb">Structure</span><span class="tk"><i style="width:88%"></i></span><span class="vl">22/25</span></div>
+            <div class="barrow"><span class="lb">Quantitative</span><span class="tk"><i style="width:80%"></i></span><span class="vl">16/20</span></div>
+            <div class="barrow"><span class="lb">Synthesis</span><span class="tk"><i style="width:85%"></i></span><span class="vl">17/20</span></div>
+            <div class="barrow"><span class="lb">Judgment</span><span class="tk"><i style="width:80%"></i></span><span class="vl">12/15</span></div>
+            <div class="barrow"><span class="lb">Creativity</span><span class="tk"><i style="width:70%"></i></span><span class="vl">7/10</span></div>
+            <div class="barrow"><span class="lb">Prof. Tone</span><span class="tk"><i style="width:100%"></i></span><span class="vl">10/10</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div>
+      <div class="kick" style="margin-bottom:9px;">Beyond the case — the whole season, scored the same way</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div class="rub"><h3 style="font-size:14px;font-weight:800;color:var(--navy);">Daily GD Briefs</h3><p style="font-size:11px;color:var(--grey);margin-top:6px;line-height:1.5;">News &amp; abstract topics with ready angles, likely questions and opening lines.</p></div>
+        <div class="rub"><h3 style="font-size:14px;font-weight:800;color:var(--navy);">27 Industry Primers</h3><p style="font-size:11px;color:var(--grey);margin-top:6px;line-height:1.5;">Load the exact sector before a GD, guesstimate or live interview.</p></div>
+        <div class="rub"><h3 style="font-size:14px;font-weight:800;color:var(--navy);">The Deck Vault</h3><p style="font-size:11px;color:var(--grey);margin-top:6px;line-height:1.5;">Winning competition decks to model real structure and storytelling.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>The method, in practice</span><span class="ln"></span><span class="w">mece.in</span></div>
+</section>
+
+<!-- ============ 5 · ENDORSEMENTS ============ -->
+<section class="pg">
+  <div class="blob" style="width:56mm;height:56mm;left:-20mm;bottom:20mm;background:var(--crimson-tint);"></div>
+  <div class="pad sb">
+    <div class="sec"><span class="no">04</span><h2 class="h">The people who sit across the table <em>vouch for the method.</em></h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+    <p class="body" style="margin-top:11px;max-width:150mm;">Endorsements from leaders on the hiring side — verified on LinkedIn.</p>
+
+    <div class="egrid" style="margin-top:6mm;">
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av big" data-key="kadambini" data-init="K" data-c="#C8102E"><span class="mono" style="background:#C8102E;">K</span></div><div><div class="nm">Kadambini Sachan</div><div class="rl">Strategy &amp; Consulting, Accenture <span class="sch">· IIM Lucknow '22</span></div><div class="stars">★★★★★</div></div></div><div class="q">"The six-dimension scoring mirrors how we debrief real case interviews — it flags weak synthesis long before it would cost you the round."</div><div class="li">↗ <b>linkedin.com/in/kadambini-sachan</b></div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av big" data-key="rahul" data-init="R" data-c="#0F1C33"><span class="mono" style="background:#0F1C33;">R</span></div><div><div class="nm">Rahul Jayaswal</div><div class="rl">Sr. Manager, Hexaware <span class="sch">· IIM Mumbai · Ex-PwC</span></div><div class="stars">★★★★★</div></div></div><div class="q">"I've interviewed plenty of MBA candidates; the ones who structure the way MECE trains you to are the ones who walk out with the offer."</div><div class="li">↗ <b>linkedin.com/in/rahul-jayaswal</b></div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av big" data-key="saket" data-init="S" data-c="#C8102E"><span class="mono" style="background:#C8102E;">S</span></div><div><div class="nm">Saket Srivastava</div><div class="rl">Rewards HR, Shell <span class="sch">· TISS '25 · Ex-ITC</span></div><div class="stars">★★★★★</div></div></div><div class="q">"As someone on the hiring side, structured problem-solving is exactly what makes a candidate stand out."</div><div class="li">↗ <b>linkedin.com/in/saket-srivastava</b></div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av big" data-key="sanket" data-init="S" data-c="#0F1C33"><span class="mono" style="background:#0F1C33;">S</span></div><div><div class="nm">Sanket Bansod</div><div class="rl">Consulting &amp; HR, TISS <span class="sch">· 7× intern — Citi, Tata, UPL</span></div><div class="stars">★★★★★</div></div></div><div class="q">"Across seven internships the one constant that set me apart was clean structure under pressure."</div><div class="li">↗ <b>linkedin.com/in/b-sanket</b></div></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="disc">Real, published endorsements · every profile linked and verifiable at mece.in/testimonials</p>
+  </div>
+  <div class="foot"><span>From the hiring side</span><span class="ln"></span><span class="w">mece.in</span></div>
+</section>
+
+<!-- ============ 6 · STUDENT PROOF ============ -->
+<section class="pg">
+  <div class="pad">
+    <div class="sec"><span class="no">05</span><h2 class="h">The students who prepped here — <em>and where the season took them.</em></h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+
+    <div class="tgrid" style="margin-top:6mm;">
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="kishan" data-init="K" data-c="#C8102E"><span class="mono" style="background:#C8102E;">K</span></div><div><div class="nm">Kishan Jayaswal</div><div class="rl">Jindal Steel <span class="sch">· IIM Indore '27</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"MECE's structured feedback was a game-changer; it broke down my entire thought process."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="satyam" data-init="S" data-c="#0F1C33"><span class="mono" style="background:#0F1C33;">S</span></div><div><div class="nm">Satyam Kumar</div><div class="rl">XAT 99.4 <span class="sch">· IMI Delhi '27 · Ex-TCS</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"MECE caught flaws in my hypothesis-driven thinking that no one else had pointed out."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="mohit" data-init="M" data-c="#C8102E"><span class="mono" style="background:#C8102E;">M</span></div><div><div class="nm">Mohit Kumar Raj</div><div class="rl">Coca-Cola <span class="sch">· TISS '27</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"The 6-dimension scoring is brutally honest. In mocks my friends always went easy on me."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="anahita" data-init="A" data-c="#0F1C33"><span class="mono" style="background:#0F1C33;">A</span></div><div><div class="nm">Anahita Bansal</div><div class="rl">PwC US <span class="sch">· IIM Indore '27 · CFA L1</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"I prepped for finance interviews almost entirely here; the honest scoring showed me where synthesis was weak."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="mitiksha" data-init="M" data-c="#C8102E"><span class="mono" style="background:#C8102E;">M</span></div><div><div class="nm">Mitiksha Jain</div><div class="rl">Nestlé <span class="sch">· TISS '27 · Batch Rep</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"Abstract GD topics used to throw me off. The method taught me to open a few angles fast."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="srijita" data-init="S" data-c="#0F1C33"><span class="mono" style="background:#0F1C33;">S</span></div><div><div class="nm">Srijita Sengupta</div><div class="rl">ITC <span class="sch">· IMI Delhi '27 · 5× comp winner</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"I've done plenty of case competitions, but MECE is what tightened my actual thinking."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="advika" data-init="A" data-c="#C8102E"><span class="mono" style="background:#C8102E;">A</span></div><div><div class="nm">Advika Gupta</div><div class="rl">GEP Worldwide <span class="sch">· IMI Delhi '27 · Ex-TCS</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"Doing one case and one guesstimate a day slowly rewired how I break a problem down."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="anubhav" data-init="A" data-c="#0F1C33"><span class="mono" style="background:#0F1C33;">A</span></div><div><div class="nm">Anubhav Anurag</div><div class="rl">Jindal Steel <span class="sch">· DMS IIT Delhi '27</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"From an analyst background I used to overcomplicate every case — the frameworks taught me when to keep it simple."</div></div>
+      <div class="tcard"><span class="qm">&rdquo;</span><div class="top"><div class="av" data-key="richa" data-init="R" data-c="#C8102E"><span class="mono" style="background:#C8102E;">R</span></div><div><div class="nm">Richa Singh</div><div class="rl">Atomberg <span class="sch">· XIMB '27</span></div></div></div><div class="stars" style="margin-top:8px;">★★★★★</div><div class="q">"The GD briefs were a lifesaver on results day — I walked in with angles nobody else had."</div></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="disc">Every quote is a real, published testimonial with a photo &amp; LinkedIn profile at mece.in/testimonials</p>
+  </div>
+  <div class="foot"><span>What aspirants say</span><span class="ln"></span><span class="w">mece.in</span></div>
+</section>
+
+<!-- ============ 7 · WALLS + STATS ============ -->
+<section class="pg" style="background:var(--navy);">
+  <div class="blob" style="width:70mm;height:70mm;right:-24mm;top:-24mm;background:rgba(200,16,46,.5);"></div>
+  <div class="pad sb" style="color:#fff;">
+    <div class="sec"><span class="no" style="color:#FF8A9B;">06</span><h2 class="h" style="color:#fff;">The circle it runs in.</h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+    <p class="body" style="color:#A9B6CE;max-width:150mm;margin-top:14px;">Not a target list — these are the institutions MECE's own users study at, and the companies their offer letters are from. The endorsements two pages back come from leaders inside them.</p>
+
+    <div><div class="kick" style="color:#7E8CA8;">Aspirants prepare on MECE at</div>
+      <div class="inst" style="margin-top:10px;">
+        <span class="chip">IIM Indore</span><span class="chip">IIM Lucknow</span><span class="chip">IIM Mumbai</span><span class="chip">IIM Raipur</span><span class="chip">IIM Shillong</span><span class="chip">IMI Delhi</span><span class="chip">TISS</span><span class="chip">XIMB</span><span class="chip">DMS IIT Delhi</span>
+      </div>
+    </div>
+
+    <div style="margin-top:9mm;"><div class="kick" style="color:#7E8CA8;">— and intern &amp; work at</div>
+      <div class="wall" style="margin-top:10px;">
+        <div class="lm">Nestlé</div><div class="lm">ITC</div><div class="lm">PwC</div><div class="lm">Shell</div>
+        <div class="lm">Accenture</div><div class="lm">Hexaware</div><div class="lm">GEP</div><div class="lm">Jindal Steel</div>
+        <div class="lm">Coca-Cola</div><div class="lm">TCS</div><div class="lm">UPL</div><div class="lm">Atomberg</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="stats" style="border-top:1px solid rgba(255,255,255,.15);border-bottom:1px solid rgba(255,255,255,.15);padding:16px 0;">
+      <div class="stat"><div class="v" style="color:#FF576F;">27</div><div class="k" style="color:#A9B6CE;">industry primers</div></div>
+      <div class="stat"><div class="v" style="color:#FF576F;">6</div><div class="k" style="color:#A9B6CE;">scoring dimensions</div></div>
+      <div class="stat"><div class="v" style="color:#FF576F;">~60s</div><div class="k" style="color:#A9B6CE;">to written feedback</div></div>
+      <div class="stat"><div class="v" style="color:#FF576F;">500<span style="color:#fff;">+</span><sup class="d">°</sup></div><div class="k" style="color:#A9B6CE;">cases &amp; guesstimates</div></div>
+    </div>
+  </div>
+  <div class="foot"><span style="color:#7E8CA8;">The circle it runs in</span><span class="ln" style="background:rgba(255,255,255,.15);"></span><span class="w" style="color:#FF8A9B;">mece.in</span></div>
+</section>
+
+<!-- ============ 8 · FOR CAMPUS ============ -->
+<section class="pg">
+  <div class="pad sb">
+    <div class="sec"><span class="no">07</span><h2 class="h">Every student starts free. <em>Your campus turns it up for the whole batch.</em></h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+    <p class="body" style="margin-top:11px;max-width:152mm;">Students taste the whole product for free. What a campus buys is <b>volume, the campus leaderboard, and a readiness dashboard</b> — the things that turn individual practice into a batch that moves together.</p>
+
+    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;box-shadow:0 8px 20px rgba(15,28,51,.06);">
+      <div class="kick" style="margin-bottom:13px;">What your placement cell sees — a readiness dashboard</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div><div style="font-size:36px;font-weight:900;color:var(--crimson);line-height:1;">84%<sup class="d">°</sup></div><div style="font-size:11px;color:var(--grey);margin-top:6px;font-weight:600;">of the batch active every week</div></div>
+        <div><div style="font-size:36px;font-weight:900;color:var(--navy);line-height:1;">1,920<sup class="d">°</sup></div><div style="font-size:11px;color:var(--grey);margin-top:6px;font-weight:600;">scored attempts this month</div></div>
+        <div><div style="font-size:36px;font-weight:900;color:var(--crimson);line-height:1;">+22%<sup class="d">°</sup></div><div style="font-size:11px;color:var(--grey);margin-top:6px;font-weight:600;">average score lift over the season</div></div>
+      </div>
+    </div>
+
+    <div class="acc">
+      <div class="col free"><div class="h"><span>Free &amp; public</span><span class="tagp">Any student</span></div><ul><li>The full casebook — frameworks &amp; worked cases</li><li>All 27 industry primers, start to finish</li><li>Today's daily case, guesstimate &amp; GD headlines</li><li>One full GD brief + winning-deck previews</li><li>Their first scored attempts, on the house</li></ul></div>
+      <div class="col paid"><div class="h"><span>Your campus unlocks</span><span class="tagp">Whole batch</span></div><ul><li>Unlimited scored case &amp; guesstimate interviews</li><li>Unlimited GD briefs + full winning decks</li><li>Cheat sheet, résumé lab &amp; verifiable certificates</li><li>Private campus + national leaderboard</li><li>Placement-cell readiness dashboard &amp; support</li></ul></div>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="steps">
+      <div class="stp"><div class="n">1</div><h3>Tell us your batch</h3><p>Size, specialisations and timeline — one call to scope access.</p></div>
+      <div class="stp"><div class="n">2</div><h3>We provision seats &amp; your board</h3><p>Full Pro for every student, plus a private campus leaderboard.</p></div>
+      <div class="stp"><div class="n">3</div><h3>Onboard in 5 minutes</h3><p>One link; your cell tracks readiness by domain from day one.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>For your campus</span><span class="ln"></span><span class="w">mece.in</span></div>
+</section>
+
+<!-- ============ 9 · PRICING + CTA ============ -->
+<section class="pg" style="background:var(--navy);">
+  <div class="blob" style="width:64mm;height:64mm;left:-22mm;top:-22mm;background:rgba(200,16,46,.5);"></div>
+  <div class="pad sb" style="color:#fff;">
+    <div class="sec"><span class="no" style="color:#FF8A9B;">08</span><h2 class="h" style="color:#fff;">Priced for cohorts, not individuals. <span style="color:#FF576F;">Live in about a week.</span></h2></div>
+    <div class="accentbar" style="margin-top:14px;"></div>
+
+    <div class="tiers" style="margin-top:8mm;">
+      <div class="tier" style="background:#16233B;border-color:rgba(255,255,255,.12);"><div class="nm" style="color:#fff;">Case Club</div><div class="pr">₹___<small style="color:#A9B6CE;">/student</small><sup class="d">°</sup></div><div class="dsc" style="color:#A9B6CE;">Up to 60 students — a club running its own prep.</div></div>
+      <div class="tier mid" style="background:#16233B;"><div class="nm" style="color:#fff;">Whole Batch</div><div class="pr">₹___<small style="color:#A9B6CE;">/student</small><sup class="d">°</sup></div><div class="dsc" style="color:#A9B6CE;">Full cohort. Dashboard, leaderboard &amp; priority support.</div></div>
+      <div class="tier" style="background:#16233B;border-color:rgba(255,255,255,.12);"><div class="nm" style="color:#fff;">Multi-year</div><div class="pr">Custom<sup class="d">°</sup></div><div class="dsc" style="color:#A9B6CE;">Lock in so every incoming batch inherits MECE.</div></div>
+    </div>
+
+    <div class="cta" style="margin-top:9mm;background:var(--crimson);">
+      <div><h3>Forward this to your placement cell — then get a quote.</h3><p style="color:#FBD3DA;">Send your institution and rough batch size; pricing comes back within a working day. The sooner you start, the more of the season your batch gets.</p></div>
+      <div class="btn" style="background:#fff;color:var(--crimson);">team@mece.in<small style="color:var(--navy);">mece.in · Colleges &amp; placement cells</small></div>
+    </div>
+
+    <div class="spacer"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid rgba(255,255,255,.15);padding-top:14px;">
+      <svg style="height:15mm;width:auto;" viewBox="0 0 258 126"><polygon points="63.38,77 80,49 96.63,77" fill="#C8102E"></polygon><polygon points="52,77 66.88,56.88 81.75,77" fill="#fff"></polygon><text x="112.6" y="63" dominant-baseline="middle" font-family="Inter" font-size="40" font-weight="800" letter-spacing="1.2" fill="#fff">MECE</text></svg>
+      <div style="text-align:right;"><div style="font-weight:900;font-size:15px;color:#fff;">mece.in</div><div class="disc" style="color:#7E8CA8;margin-top:4px;max-width:120mm;"><sup class="d">°</sup> Prices marked are placeholders — set your real institutional pricing before publishing. Product screens are faithful recreations; testimonials &amp; endorsements are real, with photos and LinkedIn at mece.in/testimonials.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span style="color:#7E8CA8;">Bring it to your campus</span><span class="ln" style="background:rgba(255,255,255,.15);"></span><span class="w" style="color:#FF8A9B;">mece.in</span></div>
+</section>
+
+<script>
+// Load real photos into circular avatars; keep the crimson/navy monogram as fallback.
+document.querySelectorAll('.av[data-key]').forEach(av => {
+  const key = av.getAttribute('data-key');
+  const src = (window.MECE_PHOTOS||{})[key];
+  if (src){
+    const img = document.createElement('img');
+    img.src = src; img.alt = '';
+    av.innerHTML=''; av.appendChild(img);
+  }
+});
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, MessageSquareQuote, Users, Megaphone, FileText,
   FolderLock, Flag, Sparkles, Activity, BadgeCheck, BarChart3,
-  UsersRound, TicketPercent, Award, Cpu,
+  UsersRound, TicketPercent, Award, Cpu, Bot,
 } from 'lucide-react';
 
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -16,6 +16,7 @@ const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: stri
   { href: '/admin/status', label: 'Status', icon: Activity },
   { href: '/admin/ai-usage', label: 'AI usage', icon: BarChart3 },
   { href: '/admin/ai-providers', label: 'AI providers', icon: Cpu },
+  { href: '/admin/agentic', label: 'Agentic AI', icon: Bot },
   { href: '/admin/certificates', label: 'Certificates', icon: Award },
   { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
   { href: '/admin/endorsements', label: 'Endorsements', icon: BadgeCheck },
