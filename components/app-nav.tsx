@@ -122,6 +122,9 @@ export default function AppNav() {
     // Industry Primers or Case Competitions, and two nav items would look
     // selected at once.
     { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') && !isActive('/learn/casebook/industry-primers') },
+    // Prep Copilot — the per-user agentic coach. Pro-only (the backend /coach
+    // routes are the authoritative gate; this just hides the entry point).
+    ...(tier === 'pro' ? [{ href: '/coach', label: 'Prep Copilot' }] as NavLink[] : []),
     { href: '/resume', label: 'CV Pointer Lab' },
     { href: '/leaderboard', label: 'Leaderboard' },
     { href: '/skeletons', label: 'Deck Vault' },
