@@ -15,15 +15,19 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-const SEEN_KEY = 'mece_feedback_v1';
-const THRESHOLD = 5; // more than four completed
+const DONE_KEY = 'mece_feedback_done';       // submitted, or "don't show again" -> never again
+const SNOOZE_KEY = 'mece_feedback_snooze';   // last "maybe later" (ms) -> re-ask the next day
+const THRESHOLD = 5;                          // more than four completed
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-function seen(): boolean {
-  try { return localStorage.getItem(SEEN_KEY) === '1'; } catch { return false; }
+function isDone(): boolean {
+  try { return localStorage.getItem(DONE_KEY) === '1'; } catch { return false; }
 }
-function markSeen() {
-  try { localStorage.setItem(SEEN_KEY, '1'); } catch { /* private mode — fine */ }
+function snoozedRecently(): boolean {
+  try { return Date.now() - Number(localStorage.getItem(SNOOZE_KEY) || 0) < DAY_MS; } catch { return false; }
 }
+function markDone() { try { localStorage.setItem(DONE_KEY, '1'); } catch { /* private mode */ } }
+function markSnooze() { try { localStorage.setItem(SNOOZE_KEY, String(Date.now())); } catch { /* private mode */ } }
 
 function StarIcon({ filled }: { filled: boolean }) {
   return (
@@ -46,7 +50,7 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (completedCount >= THRESHOLD && !seen()) {
+    if (completedCount >= THRESHOLD && !isDone() && !snoozedRecently()) {
       const t = setTimeout(() => setOpen(true), 2500); // let the dashboard settle first
       return () => clearTimeout(t);
     }
@@ -63,8 +67,12 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
     })();
   }, []);
 
-  function dismiss() {
-    markSeen();
+  function later() {        // "Maybe later" / backdrop tap — re-ask tomorrow
+    markSnooze();
+    setOpen(false);
+  }
+  function neverAgain() {   // "Don't show again" — permanent
+    markDone();
     setOpen(false);
   }
 
@@ -81,12 +89,12 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
         allow_testimonial: allow,
         display_name: allow ? (name.trim() || null) : null,
       });
-      markSeen();
+      markDone();
       setDone(true);
       setTimeout(() => setOpen(false), 2200);
     } catch {
       // Never trap them in a form that won't close.
-      markSeen();
+      markDone();
       setDone(true);
       setTimeout(() => setOpen(false), 2000);
     } finally {
@@ -103,7 +111,7 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
         alignItems: 'center', justifyContent: 'center', padding: 16,
         background: 'rgba(15,28,51,0.62)', backdropFilter: 'blur(7px)',
       }}
-      onClick={dismiss}
+      onClick={later}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -186,11 +194,14 @@ export default function FeedbackPrompt({ completedCount }: { completedCount: num
               />
             )}
 
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end', marginTop: 20 }}>
-              <button type="button" onClick={dismiss} style={btnGhost}>Maybe later</button>
-              <button type="button" onClick={submit} disabled={sending} style={{ ...btnPrimary, opacity: sending ? 0.7 : 1 }}>
-                {sending ? 'Sending…' : 'Send feedback'}
-              </button>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
+              <button type="button" onClick={neverAgain} style={{ ...btnGhost, fontSize: 12, color: '#98a0af' }}>Don&rsquo;t show again</button>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <button type="button" onClick={later} style={btnGhost}>Maybe later</button>
+                <button type="button" onClick={submit} disabled={sending} style={{ ...btnPrimary, opacity: sending ? 0.7 : 1 }}>
+                  {sending ? 'Sending…' : 'Send feedback'}
+                </button>
+              </div>
             </div>
           </>
         )}
