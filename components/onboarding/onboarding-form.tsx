@@ -108,6 +108,7 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       // goes back to /cases/<id> to finish the submit that the onboarding gate
       // interrupted — promising "here's your analysis" there would be a lie for
       // the few seconds before scoring completes.
+      trackAction('sign_up', 'auth', linkedinConnected ? 'linkedin' : 'email');
       trackAction('complete_onboarding', 'lifecycle', form.placement_focus ?? undefined, { college_id: form.college_id, batch_year: form.batch_year });
       toast.success(
         after.startsWith('/results/')

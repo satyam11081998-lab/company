@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { LinkedInFollowPrompt } from '@/components/linkedin-follow-unlock';
+import { effectiveTier } from '@/lib/tier';
+import FirstScorePaywall from '@/components/results/first-score-paywall';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -78,6 +80,24 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const newBadges = (userBadgesRes.data || []) as Array<{ id: string; badges: BadgeRow }>;
   const wasDaily = !!(attemptRes.data as { counted_for_daily?: boolean } | null)?.counted_for_daily;
 
+  const { data: userRow } = await supabase
+    .from('users').select('*').eq('id', authUser.id).maybeSingle();
+  const tier = effectiveTier(userRow as any);
+
+  let weakDimLabel: string | null = null;
+  {
+    const dims = isGuesstimate ? GUESSTIMATE_DIMENSIONS : SCORE_DIMENSIONS;
+    let worst = Infinity;
+    for (const dim of dims) {
+      const rawMax = isGuesstimate ? guessMax : (SCORE_DIMENSION_MAX[dim] ?? 100);
+      const pct = rawMax ? Number(breakdown[dim] ?? 0) / rawMax : 1;
+      if (pct < worst) {
+        worst = pct;
+        weakDimLabel = isGuesstimate ? GUESSTIMATE_DIMENSION_LABELS[dim] : SCORE_DIMENSION_LABELS[dim];
+      }
+    }
+  }
+
   // The worked solution lives on the case (shown only after submitting).
   let solution: string | null = null;
   if (submission.case_id) {
@@ -119,6 +139,10 @@ export default async function ResultPage({ params }: { params: { id: string } })
               </div>
             </div>
           </Card>
+        )}
+
+        {tier === 'free' && !notScored && (
+          <FirstScorePaywall weakDimLabel={weakDimLabel} />
         )}
 
         {newBadges.length > 0 && (

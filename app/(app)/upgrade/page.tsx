@@ -8,6 +8,7 @@ import TeamsContactBanner from "@/components/teams-contact-banner";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useTrackAction } from "@/hooks/use-track-action";
+import TrackPageAction from "@/components/analytics/track-page-action";
 import { VOICE_INTERVIEW_ENABLED } from "@/lib/constants";
 import {
   BILLING_PERIODS,
@@ -100,7 +101,7 @@ export default function UpgradePage() {
 
             if (verifyRes.ok) {
               toast.success(`Successfully upgraded to ${target.toUpperCase()}!`);
-              trackAction('complete_payment', 'payment', `${target} ${period}`, { tier: target, period, amount: data.amount });
+              trackAction('complete_payment', 'payment', target, { amount_paise: data.amount, coupon: coupon?.code ?? null });
               await refresh(); // refresh user context to get updated subscription_tier
               router.push("/dashboard");
             } else {
@@ -165,6 +166,7 @@ export default function UpgradePage() {
 
   return (
     <div className="min-h-screen bg-muted py-10 px-4">
+      <TrackPageAction action="view_pricing" category="pricing" />
       {/* Load Razorpay SDK */}
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 

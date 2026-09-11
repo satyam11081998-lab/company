@@ -49,8 +49,22 @@ export default function GettingStartedChecklist({ scoredSolved, guesstimateSolve
     onClick?: () => void;
   }[] = [
     {
+      id: 'guess',
+      label: 'Get your first score — a 60-second guesstimate',
+      href: '/practice?tab=guesstimates',
+      cta: 'Start',
+      done: guesstimateSolved > 0,
+    },
+    {
+      id: 'case',
+      label: 'Solve your first full case',
+      href: '/practice?tab=scored',
+      cta: 'Start',
+      done: scoredSolved > 0,
+    },
+    {
       id: 'read',
-      label: 'Skim the 7-page Getting Started guide',
+      label: 'Optional: skim the Getting Started guide',
       href: '/learn/casebook/getting-started/what-it-tests',
       cta: 'Read',
       done: readGuide,
@@ -58,20 +72,6 @@ export default function GettingStartedChecklist({ scoredSolved, guesstimateSolve
         try { localStorage.setItem(READ_KEY, '1'); } catch {}
         setReadGuide(true);
       },
-    },
-    {
-      id: 'guess',
-      label: 'Solve your first guesstimate',
-      href: '/practice?tab=guesstimates',
-      cta: 'Start',
-      done: guesstimateSolved > 0,
-    },
-    {
-      id: 'case',
-      label: 'Solve your first scored case',
-      href: '/practice?tab=scored',
-      cta: 'Start',
-      done: scoredSolved > 0,
     },
   ];
 
@@ -102,7 +102,7 @@ export default function GettingStartedChecklist({ scoredSolved, guesstimateSolve
         <h3 className="text-[15px] font-bold text-foreground">Getting started</h3>
       </div>
       <p className="text-[13px] text-muted-foreground mb-4">
-        Three quick steps to your first scored answer — {doneCount} of {steps.length} done.
+        Your first score is 60 seconds away — {doneCount} of {steps.length} done.
       </p>
 
       {/* progress bar */}

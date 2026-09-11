@@ -93,10 +93,25 @@ export function nextAction(
 ): NextAction {
   // 1) cold start
   if (r.status === 'calibrating') {
+    // ACTIVATION (2026-09-11): a brand-new user's FIRST move is the 60-second
+    // guesstimate — instant score, fastest path to the "aha". Only 24% of real
+    // signups ever reach a score; a cold 25-min scored case is the wall. Once
+    // they have ANY submission we go back to prescribing scored cases below.
+    if (r.subsDone === 0) {
+      return {
+        kind: 'calibrate',
+        label: 'Try a 60-second guesstimate',
+        reason:
+          'One quick estimate, scored the instant you submit — the fastest way to see how MECE grades you. Your first real case is one tap after that.',
+        cta: 'Start guesstimate',
+        href: '/practice?tab=guesstimates',
+        paywalled: false,
+      };
+    }
     const needTypes = r.typesNeeded - r.typesDone;
     return {
       kind: 'calibrate',
-      label: r.subsDone === 0 ? 'Solve your first case' : 'Finish calibrating',
+      label: 'Finish calibrating',
       reason:
         needTypes > 0
           ? `Do ${Math.max(r.subsNeeded - r.subsDone, needTypes)} more across ${needTypes} new case type${needTypes > 1 ? 's' : ''} to unlock your readiness score.`

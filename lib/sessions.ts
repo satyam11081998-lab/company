@@ -130,9 +130,21 @@ export async function touchSession(
 
     const live = (data as LiveSession[] | null) ?? [];
     const mine = live.find((s) => s.session_id === sessionId) ?? null;
-    const other = live.find((s) => s.session_id !== sessionId) ?? null;
 
-    // Someone else holds the account and we are not already registered.
+    // ACTIVATION/UX (2026-09-11): only a RECENTLY-seen other device is a real
+    // conflict. Sessions never expire on their own, so without this a user who
+    // switched laptop -> phone gets bounced to /session-conflict for a device
+    // they simply walked away from. `last_seen_at` is heartbeat-updated every
+    // 5 min while a device is active, so a >24h-stale row means "not in use".
+    const SESSION_STALE_MS = 24 * 60 * 60 * 1000;
+    const other =
+      live.find(
+        (s) =>
+          s.session_id !== sessionId &&
+          Date.now() - new Date(s.last_seen_at).getTime() < SESSION_STALE_MS,
+      ) ?? null;
+
+    // Someone else is ACTIVELY holding the account and we are not registered.
     if (!mine && other) return { status: 'conflict', other };
 
     const ctx = requestContext();

@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-08-25 22:12 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-08 10:40 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** main (frontend) / feat/deck-vault-cleanup (backend)
-**Last landed:** 2026-08-13 — fix-vercel-build-blocker — <pending commit; branch feat/voice-interview>
-**Last sync:** 2026-08-25 22:12 UTC
+**Branch:** main (frontend) / main (backend)
+**Last landed:** 2026-09-01 — dictation-continuous-and-token — <pending commit; branch feat/solve>
+**Last sync:** 2026-09-08 10:40 UTC
 
 ## Last 5 commits — frontend
-- 6db1071 feat(landing): de-geo positioning + interactive interview sim hero (satyam11081998-lab, 2026-08-26)
-- c64de3d feat(broadcast): custom full-width HTML send + free SMTP reliability (verify, throttle, maxDuration); email assets; fix(payments+security): verified payments, test-key guard, column lock; remove nav sign-out (satyam11081998-lab, 2026-08-23)
-- 7c3c4e4 feat(broadcast): custom full-width HTML send (auto-detect) + free SMTP; email assets; fix(payments+security): verified payments, test-key guard, column lock; remove nav sign-out (satyam11081998-lab, 2026-08-23)
-- 875d45f feat(broadcast): custom full-width HTML send (auto-detect) + free SMTP; email assets; fix(payments+security): verified payments, test-key guard, column lock; remove nav sign-out (satyam11081998-lab, 2026-08-23)
-- 0e1256e Add files via upload (satyam11081998-lab, 2026-08-23)
+- 24db365 feat(coach): overhaul Prep Copilot into a live agentic experience (user-facing) (satyam, 2026-09-08)
+- 141fffc feat(coach): Pro Prep Copilot + admin demo (satyam11081998-lab, 2026-09-07)
+- 1166476 Add Agentic AI admin demo page + nav (satyam11081998-lab, 2026-09-07)
+- 5219de9 Feedback: snooze-to-next-day + explicit 'Don't show again'; solid modal + consistent SVG button (satyam11081998-lab, 2026-09-07)
+- 89cc8ce Feedback modal: solid readable card + SVG stars; GD-brief button uses shared .btn primary + lucide icon (no emoji) (satyam11081998-lab, 2026-09-07)
 
 ## Last 5 commits — backend
-- eadf808 chore(deps): add google-generativeai for backend Gemini synthesis (satyam11081998-lab, 2026-08-20)
-- f49a9d1 fix(deckvault): live Gemini model, tolerant JSON parse, company + SEO description (satyam11081998-lab, 2026-08-20)
-- 2eaf279 Add unified deck pipeline with Gemini AI and master audit script (satyam11081998-lab, 2026-08-20)
-- 21aee54 feat(decks): build automated case deck batch ingestion pipeline with zero-hallucination verification (satyam11081998-lab, 2026-08-19)
-- 11d29ac feat(decks): lighter watermark - no bar, 43% text (satyam11081998-lab, 2026-08-17)
+- 1476998 feat(coach): per-user agentic Prep Copilot (satyam11081998-lab, 2026-09-07)
+- 32c8e72 Add agentic AI orchestrator (multi-agent, multi-domain) (satyam11081998-lab, 2026-09-07)
+- e60b1c8 Gemini Live: tighten turn-taking (shorter end-of-speech silence) to cut reply lag (satyam11081998-lab, 2026-09-07)
+- 55a1d2c Gemini Live: auto-resolve a valid Live model from the key at runtime (satyam11081998-lab, 2026-09-07)
+- 3e35f4f Gemini Live: mint constrained ephemeral token via google-genai SDK + constrained WS endpoint (satyam11081998-lab, 2026-09-05)
 
 ## Open feature branches (not merged into main)
 - (none)
@@ -28,7 +28,7 @@
 | --- | --- | --- | --- |
 | **Dashboard** | A | feat/dashboard | **Wired to live data + perf + mobile + dark-mode BUILT & LIVE (2026-06-08)** |
 | **Casebook** | C | feat/casebook | Core+Toolkit BUILT; Misc BUILT; **Guesstimates section real + promoted to B, Pain&Promise page (§9.38), method modules (P2-4) BUILT; P5 cheat sheet + P6 worked solve pending; clarifying-question dropdowns on all 52 worked examples BUILT; MECE page added as first Core Framework (2026-06-20)** |
-| **Case solve UX** | A | feat/solve | **BUILT; free-tier clarification-counter fix 2026-06-20; practice-hub domains + read-only deep-links removed 2026-06-21; clarification-quota dead-end fixed 2026-08-01 (free 7 / lite 12 / pro 20, interviewer never goes silent, migration 0043)** (unified workspace §9.39–9.41) |
+| **Case solve UX** | A | feat/solve | **BUILT; free-tier clarification-counter fix 2026-06-20; practice-hub domains + read-only deep-links removed 2026-06-21; clarification-quota dead-end fixed 2026-08-01 (free 7 / lite 12 / pro 20, interviewer never goes silent, migration 0043); dictation continuous transcription and token refresh 2026-09-01** (unified workspace §9.39–9.41) |
 | **Guesstimate end-to-end** | B | feat/guesstimate | **BUILT & LIVE** (verified 2026-06-06) |
 | **Scoring backstop** | B | feat/guesstimate | **BUILT & LIVE** (verified 2026-06-06) |
 | **Daily content + admin + keep-alive** | B | feat/daily | **BUILT** (daily scheduler live) |

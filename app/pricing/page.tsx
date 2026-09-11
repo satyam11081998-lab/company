@@ -14,6 +14,7 @@ import PricingPlans from '@/components/pricing-plans';
 import TeamsContactBanner from '@/components/teams-contact-banner';
 import AuthCTA from '@/components/auth-cta';
 import { VOICE_INTERVIEW_ENABLED } from '@/lib/constants';
+import TrackPageAction from '@/components/analytics/track-page-action';
 import {
   pricingProductJsonLd,
   faqPageJsonLd,
@@ -125,6 +126,7 @@ const breadcrumbJsonLd = genericBreadcrumbJsonLd([
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <TrackPageAction action="view_pricing" category="pricing" />
       {/* JSON-LD structured data */}
       <script
         type="application/ld+json"
