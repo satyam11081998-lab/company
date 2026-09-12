@@ -54,6 +54,13 @@ export default async function ResultPage({ params }: { params: { id: string } })
     dimension_feedback?: Record<string, { score?: number; evidence?: string; gap?: string; to_improve?: string }>;
     red_flags?: string[];
     model_answer?: string;
+    // Additive (2026-09-12) — the 3-approach feedback. Optional; older/guesstimate
+    // rows without it render exactly as before.
+    approaches?: {
+      your_line?: { title?: string; exchanges?: Array<{ you_asked?: string; interviewer_said?: string; stronger_version?: string; why?: string }> };
+      top_candidate?: { title?: string; walkthrough?: string; frameworks?: string[] };
+      third_angle?: { title?: string; body?: string; insight?: string };
+    };
     validity?: { verdict?: string; relevance?: number; effort?: number; reason?: string };
     backstop?: {
       findings?: Array<{ kind: string; label: string; message: string }>;
@@ -68,6 +75,15 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const improvements = feedback.improvements || [];
   const redFlags = feedback.red_flags || [];
   const modelAnswer = feedback.model_answer || '';
+  const approaches = feedback.approaches;
+  const yourLine = approaches?.your_line;
+  const topCandidate = approaches?.top_candidate;
+  const thirdAngle = approaches?.third_angle;
+  const hasApproaches = !!(
+    (yourLine?.exchanges && yourLine.exchanges.length > 0) ||
+    topCandidate?.walkthrough ||
+    thirdAngle?.body
+  );
   const validity = feedback.validity;
   // Hard gate: gibberish / off-topic submissions score 0 and say why.
   const notScored = validity?.verdict === 'gibberish' || validity?.verdict === 'off_topic';
@@ -308,6 +324,79 @@ export default async function ResultPage({ params }: { params: { id: string } })
               {modelAnswer}
             </p>
           </Card>
+        )}
+
+        {/* Three approaches — (1) your own line tightened, (2) how a top-firm
+            candidate runs it with named frameworks, (3) the other road. Additive:
+            renders only when the scorer produced `approaches`. */}
+        {hasApproaches && (
+          <div className="mt-6 space-y-6">
+            <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
+              Three ways to run this
+            </h2>
+
+            {yourLine?.exchanges && yourLine.exchanges.length > 0 && (
+              <Card className="p-6">
+                <h3 className="text-small font-semibold uppercase tracking-wide text-foreground/70">
+                  {yourLine.title || 'Your line — tightened'}
+                </h3>
+                <div className="mt-4 space-y-4">
+                  {yourLine.exchanges.map((ex, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                      {ex.you_asked && (
+                        <p className="text-small text-muted-foreground"><span className="font-semibold text-foreground/70">You: </span>{ex.you_asked}</p>
+                      )}
+                      {ex.interviewer_said && ex.interviewer_said !== '—' && (
+                        <p className="text-small text-muted-foreground"><span className="font-semibold text-foreground/70">Interviewer: </span>{ex.interviewer_said}</p>
+                      )}
+                      {ex.stronger_version && (
+                        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-small leading-relaxed text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-200">
+                          <span className="font-semibold">Stronger: </span>{ex.stronger_version}
+                        </p>
+                      )}
+                      {ex.why && <p className="text-micro text-muted-foreground">{ex.why}</p>}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {topCandidate?.walkthrough && (
+              <Card className="p-6 border-primary/20 bg-primary/[0.03]">
+                <h3 className="text-small font-semibold uppercase tracking-wide text-primary">
+                  {topCandidate.title || 'How a top-firm candidate runs this'}
+                </h3>
+                <p className="mt-3 whitespace-pre-line text-body leading-relaxed text-foreground/80">
+                  {topCandidate.walkthrough}
+                </p>
+                {topCandidate.frameworks && topCandidate.frameworks.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {topCandidate.frameworks.map((f, idx) => (
+                      <span key={idx} className="rounded-full bg-muted px-3 py-1 text-micro font-medium text-foreground/70">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            )}
+
+            {thirdAngle?.body && (
+              <Card className="p-6">
+                <h3 className="text-small font-semibold uppercase tracking-wide text-foreground/70">
+                  {thirdAngle.title || 'The other road'}
+                </h3>
+                <p className="mt-3 whitespace-pre-line text-body leading-relaxed text-foreground/80">
+                  {thirdAngle.body}
+                </p>
+                {thirdAngle.insight && (
+                  <p className="mt-3 border-l-2 border-primary/50 pl-3 text-body font-medium text-foreground/80">
+                    {thirdAngle.insight}
+                  </p>
+                )}
+              </Card>
+            )}
+          </div>
         )}
 
         {/* GUEST MODE: someone who solved a case before signing up lands HERE
