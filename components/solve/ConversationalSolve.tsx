@@ -1474,7 +1474,7 @@ function MessageBubble({ message }: { message: AttemptMessage }) {
         <div
           className={`whitespace-pre-wrap rounded-2xl px-4 py-2 text-body ${isUser ? 'rounded-br-sm bg-primary text-primary-foreground' : 'rounded-bl-sm bg-muted text-foreground'}`}
         >
-          {message.content}
+          {isUser ? message.content : renderWithBold(message.content || '')}
         </div>
       </div>
     </div>

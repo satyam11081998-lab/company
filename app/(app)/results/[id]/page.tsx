@@ -58,7 +58,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
     // rows without it render exactly as before.
     approaches?: {
       your_line?: { title?: string; exchanges?: Array<{ you_asked?: string; interviewer_said?: string; stronger_version?: string; why?: string }> };
-      top_candidate?: { title?: string; walkthrough?: string; frameworks?: string[] };
+      top_candidate?: { title?: string; walkthrough?: string; frameworks?: string[]; flow?: Array<{ step?: string; move?: string; framework?: string }> };
       third_angle?: { title?: string; body?: string; insight?: string };
     };
     validity?: { verdict?: string; relevance?: number; effort?: number; reason?: string };
@@ -82,6 +82,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const hasApproaches = !!(
     (yourLine?.exchanges && yourLine.exchanges.length > 0) ||
     topCandidate?.walkthrough ||
+    (topCandidate?.flow && topCandidate.flow.length > 0) ||
     thirdAngle?.body
   );
   const validity = feedback.validity;
@@ -361,14 +362,32 @@ export default async function ResultPage({ params }: { params: { id: string } })
               </Card>
             )}
 
-            {topCandidate?.walkthrough && (
+            {(topCandidate?.walkthrough || (topCandidate?.flow && topCandidate.flow.length > 0)) && (
               <Card className="p-6 border-primary/20 bg-primary/[0.03]">
                 <h3 className="text-small font-semibold uppercase tracking-wide text-primary">
                   {topCandidate.title || 'How a top-firm candidate runs this'}
                 </h3>
-                <p className="mt-3 whitespace-pre-line text-body leading-relaxed text-foreground/80">
-                  {topCandidate.walkthrough}
-                </p>
+                {/* Step-by-step flow — the vertical spine of the model answer, each
+                    stage with its move and the framework it applies. */}
+                {topCandidate.flow && topCandidate.flow.length > 0 && (
+                  <ol className="mt-4 space-y-3 border-l-2 border-primary/20 pl-4">
+                    {topCandidate.flow.map((s, idx) => (
+                      <li key={idx} className="relative">
+                        <span className="absolute -left-[21px] top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-primary/70 ring-4 ring-background" />
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          {s.step && <span className="text-micro font-bold uppercase tracking-wide text-primary">{s.step}</span>}
+                          {s.framework && <span className="rounded bg-muted px-1.5 py-0.5 text-micro font-medium text-foreground/60">{s.framework}</span>}
+                        </div>
+                        {s.move && <p className="mt-0.5 text-small leading-relaxed text-foreground/80">{s.move}</p>}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {topCandidate.walkthrough && (
+                  <p className="mt-4 whitespace-pre-line text-body leading-relaxed text-foreground/80">
+                    {topCandidate.walkthrough}
+                  </p>
+                )}
                 {topCandidate.frameworks && topCandidate.frameworks.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {topCandidate.frameworks.map((f, idx) => (

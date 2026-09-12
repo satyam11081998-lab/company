@@ -33,10 +33,30 @@ export default async function OnboardingPage() {
     .order('name', { ascending: true });
   const colleges = (collegeRows as CollegeRow[] | null) ?? [];
 
+  // A guest who solved a case before signing up must land on THAT score, not a
+  // blank dashboard. The client parks the results path in sessionStorage, which
+  // works for OAuth — but an email-confirmation link opens a FRESH browser
+  // context where sessionStorage is empty, so those users were falling through
+  // to /dashboard. We resolve their most recent submission server-side here as a
+  // robust fallback (onboarding runs once, pre-completion, so the only
+  // submission a not-yet-onboarded user has is the case they just solved).
+  let fallbackResultsId: string | null = null;
+  {
+    const { data: latestSub } = await supabase
+      .from('submissions')
+      .select('id')
+      .eq('user_id', authUser.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    fallbackResultsId = (latestSub as { id?: string } | null)?.id ?? null;
+  }
+
   return (
     <div className="container max-w-3xl py-10">
       <OnboardingForm
         colleges={colleges}
+        fallbackResultsId={fallbackResultsId}
         prefill={{
           full_name:
             userRow?.full_name ??

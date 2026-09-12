@@ -19,6 +19,12 @@ interface Props {
   prefill?: Partial<OnboardingFormData>;
   /** True when the user authenticated via LinkedIn (name + photo already set). */
   linkedinConnected?: boolean;
+  /**
+   * The user's most recent submission id, resolved server-side. Used as a robust
+   * fallback destination after onboarding when sessionStorage was wiped by an
+   * email-confirmation round trip (so email-signup guests still land on their score).
+   */
+  fallbackResultsId?: string | null;
 }
 
 /**
@@ -32,7 +38,7 @@ interface Props {
  *   - Submit button gates on validation; failed fields scroll into view
  *   - Branded styling — cream cards, var(--red) accents, no third-party UI
  */
-export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false }: Props) {
+export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false, fallbackResultsId = null }: Props) {
   const router = useRouter();
   const trackAction = useTrackAction();
   const [form, setForm] = useState<OnboardingFormData>({
@@ -93,16 +99,25 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       // rather than to a dashboard they have no context for yet. Anyone who
       // arrived the ordinary way has no key set and still lands on /dashboard.
       let after = '/dashboard';
+      let parkedFound = false;
       try {
         const parked = sessionStorage.getItem('mece:after-onboarding');
         // Only ever an internal path — never trust this to build an external
         // redirect, even though we are the only writer.
         if (parked && parked.startsWith('/')) {
           after = parked;
+          parkedFound = true;
           sessionStorage.removeItem('mece:after-onboarding');
         }
       } catch {
-        /* storage unavailable — fall through to the dashboard */
+        /* storage unavailable — fall through to the fallback below */
+      }
+      // Robust fallback: an email-confirmation link opens a fresh context where
+      // sessionStorage is empty, so a guest who solved a case would otherwise land
+      // on a contextless dashboard. If nothing was parked and we know their
+      // just-scored submission, take them straight to that feedback page.
+      if (!parkedFound && fallbackResultsId) {
+        after = `/results/${fallbackResultsId}`;
       }
       // Three destinations, three honest messages. A guest returning via OAuth
       // goes back to /cases/<id> to finish the submit that the onboarding gate

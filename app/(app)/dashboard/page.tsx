@@ -215,6 +215,11 @@ export default async function DashboardPage() {
   const percentile = totalUsers > 1 ? Math.round(((totalUsers - rankNum) / (totalUsers - 1)) * 100) : null;
   const scored = submissions.filter((s) => s.score != null && s.case_type !== 'guesstimate');
   const avgScore = scored.length ? Math.round(scored.reduce((a, s) => a + (s.score as number), 0) / scored.length) : null;
+  // The warm-up is a pre-signup tap-through BASELINE. Once the user has any real
+  // scored submission it becomes noise — and worse, a low warm-up sitting at the
+  // top gets mistaken for their real case score. So it only shows on a fresh
+  // account (no real scores yet) and now renders at the BOTTOM, never the top.
+  const hasRealScore = submissions.some((s) => s.score != null);
 
   // --- (readiness/action/quota built below, after the benchmark) ---
 
@@ -315,7 +320,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
-      <WarmupCard caseId={dailyToday.case?.id ?? null} guessId={dailyToday.guesstimate?.id ?? null} />
       <DashboardClient
         userName={userName}
         points={points}
@@ -344,6 +348,11 @@ export default async function DashboardPage() {
         todayMeta={todayMeta}
         dailyProgress={dailyProgress}
       />
+      {!hasRealScore && (
+        <div className="mt-6">
+          <WarmupCard caseId={dailyToday.case?.id ?? null} guessId={dailyToday.guesstimate?.id ?? null} />
+        </div>
+      )}
       <FeedbackPrompt completedCount={submissions.length} />
     </div>
   );
