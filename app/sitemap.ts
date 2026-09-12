@@ -4,6 +4,7 @@ import type { NavNode } from '@/lib/casebook/types';
 import { GLOSSARY_TERMS } from '@/lib/glossary/terms';
 import { SITE_URL, isCanonicalisedAway } from '@/lib/seo';
 import { getIndexableDecks } from '@/lib/decks';
+import { getPublishedSeoPages } from '@/lib/seo-pages';
 
 /**
  * Public, indexable routes only.
@@ -89,6 +90,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to load decks for sitemap:', err);
   }
 
-  return [...core, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks, ...deckEntries];
+  /* Growth-Agent SEO pages (/insights/**) — published only */
+  let insightEntries: MetadataRoute.Sitemap = [];
+  try {
+    const pages = await getPublishedSeoPages();
+    if (pages.length > 0) {
+      insightEntries.push(entry('/insights', 0.7, 'daily'));
+      insightEntries.push(
+        ...pages.map((p) =>
+          entry(
+            `/insights/${p.slug}`,
+            0.7,
+            'monthly',
+            p.published_at ? new Date(p.published_at) : (p.updated_at ? new Date(p.updated_at) : now),
+          ),
+        ),
+      );
+    }
+  } catch (err) {
+    console.error('Failed to load SEO pages for sitemap:', err);
+  }
+
+  return [...core, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks, ...deckEntries, ...insightEntries];
 }
 
