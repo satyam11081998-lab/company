@@ -394,6 +394,9 @@ export default function CoachPage() {
   const [result, setResult] = useState<RunResult | null>(null);
   const [revealed, setRevealed] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [toolBusy, setToolBusy] = useState<null | 'case' | 'guesstimate'>(null);
+  const [toolResult, setToolResult] = useState<{ case_id: string; title: string; type: string } | null>(null);
+  const [toolErr, setToolErr] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const authHeader = useCallback(async (): Promise<Record<string, string>> => {
@@ -463,6 +466,33 @@ export default function CoachPage() {
     }).catch(() => {});
   }, [result]);
 
+  // CURATED TOOL: ask the copilot to actually GENERATE a case/guesstimate aimed
+  // at the candidate's weakest skill + target, then link them straight into the
+  // scored interview. Not advice — an artifact they can act on.
+  const runTool = useCallback(async (kind: 'case' | 'guesstimate') => {
+    setToolBusy(kind); setToolErr(null); setToolResult(null);
+    try {
+      const diag = observeData(result, 'diagnostician');
+      const wd = diag.weakest_dimensions;
+      const fd = Array.isArray(wd) && typeof wd[0] === 'string' ? String(wd[0]) : 'structure';
+      const headers = { 'Content-Type': 'application/json', ...(await authHeader()) };
+      const res = await fetch(`${API_URL}/coach/tool/case`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ focus_dimension: fd, target_company: company.trim(), role: domain.trim(), difficulty: 'hard', kind }),
+      });
+      if (!res.ok) {
+        let detail = res.statusText;
+        try { const j = await res.json(); if (typeof j.detail === 'string') detail = j.detail; } catch { /* not json */ }
+        throw new Error(detail || `Failed (${res.status})`);
+      }
+      setToolResult(await res.json());
+    } catch (e) {
+      setToolErr(e instanceof Error ? e.message : 'Tool failed');
+    } finally {
+      setToolBusy(null);
+    }
+  }, [authHeader, result, company, domain]);
+
   // Per-agent live status from the reveal cursor.
   const agentStatus = useMemo(() => {
     const map: Record<string, 'queued' | 'running' | 'done'> = {};
@@ -517,6 +547,10 @@ export default function CoachPage() {
   const curator = observeData(result, 'case_curator');
   const recCases = (Array.isArray(curator.recommended_cases) ? curator.recommended_cases : []) as RecCase[];
   const firstCaseHref = recCases.find((c) => c.id)?.id;
+  const diagForTool = observeData(result, 'diagnostician');
+  const toolFocusRaw = Array.isArray(diagForTool.weakest_dimensions) && typeof diagForTool.weakest_dimensions[0] === 'string'
+    ? String(diagForTool.weakest_dimensions[0]) : '';
+  const toolFocusLabel = toolFocusRaw ? prettifySkill(toolFocusRaw) : '';
 
   return (
     <div className="container max-w-6xl space-y-6 py-8 sm:py-10">
@@ -583,6 +617,34 @@ export default function CoachPage() {
           </button>
           <span className="text-micro text-muted-foreground">The copilot reads your real attempts and plans across six specialists.</span>
         </div>
+      </div>
+
+      {/* Curated tools — the copilot BUILDS artifacts for you, not just advice */}
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+        <p className="flex items-center gap-1.5 text-micro font-semibold uppercase tracking-wider text-primary"><Zap className="h-3.5 w-3.5" /> Curated tools · it builds them for you</p>
+        <p className="mt-1 text-small text-muted-foreground">
+          Generate a case or guesstimate aimed at{toolFocusLabel ? <> your weakest skill (<span className="font-semibold text-foreground">{toolFocusLabel}</span>)</> : ' your weakest skill'}
+          {company.trim() ? <> and <span className="font-semibold text-foreground">{company.trim()}</span></> : null}. Attempting it is a live, scored mock interview.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => runTool('case')} disabled={!!toolBusy}
+            className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-small font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50">
+            {toolBusy === 'case' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {toolBusy === 'case' ? 'Building…' : 'Generate a curated case'}
+          </button>
+          <button onClick={() => runTool('guesstimate')} disabled={!!toolBusy}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-small font-semibold text-foreground transition-colors hover:bg-muted/40 disabled:opacity-50">
+            {toolBusy === 'guesstimate' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
+            {toolBusy === 'guesstimate' ? 'Building…' : 'Targeted guesstimate'}
+          </button>
+        </div>
+        {toolErr && <p className="mt-2 text-xs text-primary">{toolErr}</p>}
+        {toolResult && (
+          <Link href={`/cases/${toolResult.case_id}`}
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-small font-semibold text-white transition-colors hover:bg-primary-hover">
+            <Play className="h-4 w-4" /> Start your interview: {toolResult.title} <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
       </div>
 
       {error && <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-small text-primary">{error}</div>}
