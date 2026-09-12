@@ -38,6 +38,10 @@ interface Props {
   topPages: TopPage[];
   exitPages: ExitPage[];
   totalViews: number;
+  /** Real paid conversions in the window (from payments), not a client event. */
+  paidLast7d?: number;
+  /** Distinct sessions across the whole window — honest denominator for exit %. */
+  totalSessionsInWindow?: number;
 }
 
 type Tab = 'sessions' | 'users' | 'pages' | 'funnel' | 'traffic' | 'flows';
@@ -76,6 +80,7 @@ export default function JourneyDashboardClient({
   sessions, pageEvents, actions, funnelStages,
   referrerBreakdown, hourlyViews, topFlows,
   recentUsers, topPages, exitPages, totalViews,
+  paidLast7d, totalSessionsInWindow,
 }: Props) {
   const router = useRouter();
   // Keep the dashboard near real-time: the page is force-dynamic, so refreshing
@@ -191,7 +196,7 @@ export default function JourneyDashboardClient({
           ['Signed In', `${stats.signedIn}`],
           ['Bounced', `${stats.bouncePct}%`],
           ['Engaged', `${stats.engaged}`],
-          ['Converted', `${stats.converted}`],
+          ['Converted (paid)', `${paidLast7d ?? stats.converted}`],
           ['Pages/session', stats.avgPages],
           ['Avg duration', stats.avgDur],
         ] as [string, string, string?][]).map(([label, value, sub]) => (
@@ -229,7 +234,7 @@ export default function JourneyDashboardClient({
             </div>
             <div>
               <div className="text-base font-bold tabular-nums">{stats.total ? Math.round((stats.signedIn / stats.total) * 100) : 0}%</div>
-              <div className="text-[11px] text-muted-foreground">Sign-up rate</div>
+              <div className="text-[11px] text-muted-foreground">Signed-in share</div>
             </div>
           </div>
           {(stats.anonEntries.length > 0 || stats.anonExits.length > 0) && (
@@ -348,7 +353,7 @@ export default function JourneyDashboardClient({
                 {search ? 'No sessions match your search.' : 'No sessions recorded yet.'}
               </div>
             )}
-            {filtered.map(s => {
+            {filtered.slice(0, 300).map(s => {
               const badge = ENGAGEMENT_BADGES[s.engagement];
               const BadgeIcon = badge.icon;
               return (
@@ -722,7 +727,7 @@ export default function JourneyDashboardClient({
                         <td className="max-w-[220px] truncate px-4 py-2 font-medium text-foreground">{p.path}</td>
                         <td className="px-4 py-2 text-right tabular-nums">{p.count}</td>
                         <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
-                          {sessions.length ? Math.round((p.count / sessions.length) * 100) : 0}%
+                          {(() => { const denom = totalSessionsInWindow ?? sessions.length; return denom ? Math.round((p.count / denom) * 100) : 0; })()}%
                         </td>
                       </tr>
                     ))}
