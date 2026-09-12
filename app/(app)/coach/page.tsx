@@ -478,7 +478,7 @@ export default function CoachPage() {
   // ── Gate 1: not Pro ──────────────────────────────────────────────────
   if (!isPro) {
     return (
-      <div className="mx-auto max-w-xl py-12 text-center">
+      <div className="container max-w-xl py-12 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted"><Crown className="h-6 w-6 text-navy" /></div>
         <h1 className="mt-4 text-h2 text-foreground">Prep Copilot is a Pro feature</h1>
         <p className="mx-auto mt-2 max-w-md text-body text-muted-foreground">
@@ -492,13 +492,13 @@ export default function CoachPage() {
     );
   }
   if (loadingInfo) {
-    return <div className="flex items-center gap-2 py-16 text-small text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading your copilot…</div>;
+    return <div className="container flex items-center gap-2 py-16 text-small text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading your copilot…</div>;
   }
   // ── Gate 2: Pro but not yet eligible ─────────────────────────────────
   if (info && !info.eligible) {
     const pct = Math.min(100, Math.round((info.completed / Math.max(1, info.required)) * 100));
     return (
-      <div className="mx-auto max-w-xl py-12 text-center">
+      <div className="container max-w-xl py-12 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted"><Lock className="h-6 w-6 text-navy" /></div>
         <h1 className="mt-4 text-h2 text-foreground">Warm up your copilot first</h1>
         <p className="mx-auto mt-2 max-w-md text-body text-muted-foreground">
@@ -519,7 +519,7 @@ export default function CoachPage() {
   const firstCaseHref = recCases.find((c) => c.id)?.id;
 
   return (
-    <div className="space-y-6">
+    <div className="container max-w-6xl space-y-6 py-8 sm:py-10">
       {/* Header */}
       <div>
         <p className="flex items-center gap-1.5 text-micro font-semibold uppercase tracking-wider text-primary"><Compass className="h-3.5 w-3.5" /> Agentic prep orchestration · Pro</p>
