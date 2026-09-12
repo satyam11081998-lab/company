@@ -1,24 +1,20 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-08 10:40 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-12 15:16 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
-**Last landed:** 2026-09-01 — dictation-continuous-and-token — <pending commit; branch feat/solve>
-**Last sync:** 2026-09-08 10:40 UTC
+**Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
+**Last sync:** 2026-09-12 15:16 UTC
 
 ## Last 5 commits — frontend
-- 24db365 feat(coach): overhaul Prep Copilot into a live agentic experience (user-facing) (satyam, 2026-09-08)
-- 141fffc feat(coach): Pro Prep Copilot + admin demo (satyam11081998-lab, 2026-09-07)
-- 1166476 Add Agentic AI admin demo page + nav (satyam11081998-lab, 2026-09-07)
-- 5219de9 Feedback: snooze-to-next-day + explicit 'Don't show again'; solid modal + consistent SVG button (satyam11081998-lab, 2026-09-07)
-- 89cc8ce Feedback modal: solid readable card + SVG stars; GD-brief button uses shared .btn primary + lucide icon (no emoji) (satyam11081998-lab, 2026-09-07)
+- 4824a3e feat(analytics): funnel+conversions from source-of-truth tables, IST hours, exclude internal accounts; add public /feedback page (satyam-ai-cell, 2026-09-12)
+- 41b7a28 chore: legacy-peer-deps for npm install (SatyamSK, 2026-09-12)
+- 47c5a1e docs(brain): shared-folder + dual-profile workflow; move to D:\dev\mece (satyam11081998-lab, 2026-09-12)
+- dfdec49 feat: guests land on their score post-onboarding; demote warm-up; 3-approach flow; interviewer plain-text render (satyam11081998-lab, 2026-09-12)
+- 79b754a feat(results): render the 3-approach feedback block (satyam11081998-lab, 2026-09-12)
 
 ## Last 5 commits — backend
-- 1476998 feat(coach): per-user agentic Prep Copilot (satyam11081998-lab, 2026-09-07)
-- 32c8e72 Add agentic AI orchestrator (multi-agent, multi-domain) (satyam11081998-lab, 2026-09-07)
-- e60b1c8 Gemini Live: tighten turn-taking (shorter end-of-speech silence) to cut reply lag (satyam11081998-lab, 2026-09-07)
-- 55a1d2c Gemini Live: auto-resolve a valid Live model from the key at runtime (satyam11081998-lab, 2026-09-07)
-- 3e35f4f Gemini Live: mint constrained ephemeral token via google-genai SDK + constrained WS endpoint (satyam11081998-lab, 2026-09-05)
+
 
 ## Open feature branches (not merged into main)
 - (none)
@@ -37,7 +33,7 @@
 | **Voice interview (talk mode)** | Cowork | feat/voice-interview | **BUILT 2026-08-13, NOT YET MERGED** — gates green (tsc EXIT 0, py_compile EXIT 0, 14/14 unit cases); needs a real-browser QA pass + the env-var raise before unflagging |
 | **Payments (Razorpay + audit trail)** | B | feat/payments | **BUILT; annual dropped 2026-06-20 (2901f0b); optional server-validated coupon path added 2026-07-17 (C7)** |
 | **Rate limiting** | B | feat/backend | **BUILT** |
-| **AI evaluation v2** | B | feat/eval | **BUILT** |
+| **AI evaluation v2** | B | feat/eval | **BUILT + LIVE (2026-09-12): in-character interviewer (owns facts, identity lock, no praise, plain text) + HOLISTIC scoring (junk/empty recommendation can rescue but never zero a genuine conversation) + 3-approach feedback (flow + named frameworks) + silent exemplar bank (migration-gated, approved-only). Eval 50x2: cases 100%, interviewer 100%; guesstimate approaches fix + numeric harness done, re-run pending.** |
 | **Deck Vault & DRM (library)** | A | feat/deck-vault | **BUILT & SECURED** (react-pdf + blackout + watermark); **now also receives auto-published rows from Deck Vault Rewards approvals (2026-07-17)** |
 | **Deck Vault Rewards** | Cowork | (landed direct-to-main) | **BUILT & LANDED 2026-07-17** (849a0dc, 47764c2, 1f49694 + backend 41a5f50, 6a7f496; one pending commit: Drive file_type fix). **Deploy blocked — see STATE blockers** |
 | **GD Cheat Sheet (Pro)** | B | feat/cheatsheet | **BUILT** |
