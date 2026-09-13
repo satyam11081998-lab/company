@@ -304,7 +304,7 @@ export default function VoiceInterviewRealtime({
       </div>
 
       <div className="shrink-0 border-t px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <div className="mx-auto flex max-w-2xl items-center justify-center gap-2">
+        <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={toggleMute} className="h-9">
             {muted ? <Mic className="mr-1.5 h-4 w-4" /> : <MicOff className="mr-1.5 h-4 w-4" />}
             {muted ? 'Resume' : 'Hold'}

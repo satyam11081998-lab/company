@@ -903,6 +903,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const talkState: 'active' | 'unavailable' | 'locked' | 'hidden' =
     !VOICE_INTERVIEW_ENABLED ? 'hidden'          // owner decision: not ROI positive
       : isGuest || !attempt ? 'hidden'
+      // Realtime / Gemini are CREDIT-gated server-side: Pro gets a monthly
+      // allowance and a non-Pro user gets a ONE-TIME free trial (see
+      // routes/realtime.py + services/realtime_credits.py). So on the best-UX
+      // pipelines, let ANYONE launch — the session endpoint hands back the
+      // upgrade prompt when they're out of credit. This is what gives a free
+      // user a taste of the real-time voice interview. The cheaper pipeline
+      // path below stays Pro-only in the UI (it has no free trial).
+      : (voiceMode === 'realtime' || voiceMode === 'gemini') ? 'active'
       : !isPro ? 'locked'
       : voiceOut || speakOut ? 'unavailable'
       : speakQuota === null ? 'unavailable'
@@ -1191,12 +1199,12 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                   placeholder={recording !== 'idle'
                     ? 'Listening… your words appear here — edit before sending'
                     : !hasClarifications ? 'Share your structure and analysis…' : quotaExhausted ? 'Share your structure, notes or calculations…' : 'Ask a clarification or share your structure…'}
-                  className="min-h-[40px] max-h-[240px] flex-1 resize-y overflow-y-auto bg-transparent py-2.5 px-1 text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
+                  className="min-h-[40px] max-h-[240px] flex-1 resize-y overflow-y-auto bg-transparent py-2.5 px-1 text-[13px] sm:text-[15px] outline-none placeholder:text-muted-foreground leading-tight"
                   rows={1}
                   maxLength={MESSAGE_MAX_CHARS}
                 />
 
-                <div className="flex items-center gap-1.5 pr-1 mb-0.5">
+                <div className="flex items-center gap-1 sm:gap-1.5 pr-1 mb-0.5">
                   {/* TALK MODE — a distinct MODE, not another mic. Deliberately
                       styled as a filled pill with a headphones icon so it can
                       never be mistaken for the dictation mic sitting beside it:
@@ -1283,7 +1291,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                     </button>
                   )}
 
-                  <Button type="button" onClick={handleComposerSend} disabled={sending || !attempt || recording !== 'idle' || !composer.trim()} size="icon" className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
+                  <Button type="button" onClick={handleComposerSend} disabled={sending || !attempt || recording !== 'idle' || !composer.trim()} size="icon" className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm">
                     <Send className="h-4 w-4 ml-0.5" />
                   </Button>
                 </div>
