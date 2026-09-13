@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Users, Send } from 'lucide-react';
-import { previewRecipients, sendBroadcast } from './email-actions';
+import { Mail, Users, Send, User, Sparkles } from 'lucide-react';
+import { previewRecipients, sendBroadcast, sendToOne, generateDailyDigest } from './email-actions';
+import { broadcastEmail } from '@/lib/email/templates';
 
 type SegmentType = 'all' | 'tier' | 'activity' | 'lifecycle';
+type Mode = 'segment' | 'one';
 
 const VALUE_OPTIONS: Record<SegmentType, { value: string; label: string }[]> = {
   all: [{ value: 'all', label: 'Everyone' }],
@@ -29,7 +31,12 @@ const VALUE_OPTIONS: Record<SegmentType, { value: string; label: string }[]> = {
 const inputCls =
   'h-10 w-full rounded-md border border-input bg-background px-3 text-body shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary';
 
+const EMPTY_PREVIEW =
+  '<!doctype html><html><body style="margin:0;font-family:Inter,Helvetica,Arial,sans-serif;color:#8C8A82;padding:48px 24px;text-align:center;background:#FAF9F6;">Your email preview will appear here as you type. Fill in a message on the left — or hit &ldquo;Generate today’s digest&rdquo;.</body></html>';
+
 export default function BroadcastComposer() {
+  const [mode, setMode] = useState<Mode>('segment');
+  const [oneEmail, setOneEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [heading, setHeading] = useState('');
   const [body, setBody] = useState('');
@@ -39,8 +46,25 @@ export default function BroadcastComposer() {
   const [segmentValue, setSegmentValue] = useState('all');
   const [rawHtml, setRawHtml] = useState(false);
   const [count, setCount] = useState<number | null>(null);
-  const [busy, setBusy] = useState<'preview' | 'send' | null>(null);
+  const [busy, setBusy] = useState<'preview' | 'send' | 'digest' | null>(null);
   const [log, setLog] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Live inbox preview — the EXACT HTML a recipient will receive, rebuilt as you
+  // type (client-side, using the real email template). {{UNSUBSCRIBE}} is shown
+  // as a dummy link here; it is filled in per-recipient at send time.
+  const previewHtml = useMemo(() => {
+    const b = (body || '').trim();
+    if (!b) return EMPTY_PREVIEW;
+    const looksFull = /^\s*<(?:!doctype|html)\b/i.test(b);
+    if (rawHtml || looksFull) return b.replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/g, '#');
+    return broadcastEmail({
+      heading: (heading || subject || 'Your heading').trim(),
+      bodyHtml: b.replace(/\n/g, '<br/>'),
+      ctaLabel: ctaLabel.trim() || undefined,
+      ctaUrl: ctaUrl.trim() || undefined,
+      unsubscribeUrl: '#',
+    });
+  }, [body, rawHtml, heading, subject, ctaLabel, ctaUrl]);
 
   const onTypeChange = (t: SegmentType) => {
     setSegmentType(t);
@@ -57,22 +81,58 @@ export default function BroadcastComposer() {
     setBusy(null);
   };
 
+  const doGenerateDigest = async () => {
+    setBusy('digest');
+    setLog(null);
+    const r = await generateDailyDigest();
+    if (r.success && r.html) {
+      setRawHtml(true);
+      setSubject(r.subject || 'Your daily reps are ready');
+      setBody(r.html);
+      setLog({ type: 'success', message: r.note || 'Digest generated — preview it on the right, then send.' });
+    } else {
+      setLog({ type: 'error', message: r.error || 'Could not generate the digest' });
+    }
+    setBusy(null);
+  };
+
   const doSend = async () => {
     if (!subject.trim() || !body.trim()) {
       setLog({ type: 'error', message: 'Subject and message are required.' });
       return;
     }
+    const looksLikeFullDoc = /^\s*<(?:!doctype|html)\b/i.test(body);
+    const useRaw = rawHtml || looksLikeFullDoc;
+    const html = useRaw ? body : body.replace(/\n/g, '<br/>');
+
+    // ── Single recipient ──────────────────────────────────────────────────
+    if (mode === 'one') {
+      if (!oneEmail.trim()) {
+        setLog({ type: 'error', message: 'Enter the recipient’s email address.' });
+        return;
+      }
+      if (!confirm(`Send "${subject}" to ${oneEmail.trim()}? This emails a real person.`)) return;
+      setBusy('send');
+      setLog(null);
+      const r = await sendToOne({
+        email: oneEmail.trim(),
+        subject: subject.trim(),
+        heading: (heading || subject).trim(),
+        bodyHtml: html,
+        ctaLabel: useRaw ? undefined : ctaLabel.trim() || undefined,
+        ctaUrl: useRaw ? undefined : ctaUrl.trim() || undefined,
+        bodyIsFullHtml: useRaw,
+      });
+      setLog(r.success ? { type: 'success', message: `Sent to ${oneEmail.trim()}.` } : { type: 'error', message: r.error || 'Send failed' });
+      setBusy(null);
+      return;
+    }
+
+    // ── Segment broadcast ─────────────────────────────────────────────────
     const who = VALUE_OPTIONS[segmentType].find((o) => o.value === segmentValue)?.label || 'recipients';
     if (!confirm(`Send "${subject}" to ${count ?? 'all matching'} — ${who}? This emails real users.`)) return;
     setBusy('send');
     setLog(null);
-    // Custom-HTML mode: send the pasted markup verbatim (do NOT convert newlines
-    // to <br/> — that would corrupt real HTML — and do NOT wrap it in the shell).
-    // Auto-detect a full document even if the box is unchecked, so pasting a
-    // complete email can never get double-wrapped or riddled with <br/>.
-    const looksLikeFullDoc = /^\s*<(?:!doctype|html)\b/i.test(body);
-    const useRaw = rawHtml || looksLikeFullDoc;
-    const html = useRaw ? body : body.replace(/\n/g, '<br/>');
     const r = await sendBroadcast({
       subject: subject.trim(),
       heading: (heading || subject).trim(),
@@ -84,10 +144,7 @@ export default function BroadcastComposer() {
       bodyIsFullHtml: useRaw,
     });
     if (r.success) {
-      setLog({
-        type: 'success',
-        message: `Sent to ${r.sent} of ${r.total} recipients${r.failed ? ` · ${r.failed} failed` : ''}.`,
-      });
+      setLog({ type: 'success', message: `Sent to ${r.sent} of ${r.total} recipients${r.failed ? ` · ${r.failed} failed` : ''}.` });
     } else {
       setLog({ type: 'error', message: r.error || 'Send failed' });
     }
@@ -96,118 +153,162 @@ export default function BroadcastComposer() {
 
   return (
     <Card className="p-6 border-border bg-card shadow-sm">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <Mail className="h-5 w-5 text-primary" />
-          Send Broadcast Email
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Compose a promotional or announcement email and send it to a segment. Unsubscribed users are always
-          skipped, and an unsubscribe link is added automatically.
-        </p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
+            Compose email
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Send to a segment or one person. Unsubscribed users are skipped and an unsubscribe link is added automatically.
+          </p>
+        </div>
+        <Button variant="outline" onClick={doGenerateDigest} disabled={busy !== null} className="h-10 gap-2 shrink-0">
+          <Sparkles className="h-4 w-4 text-primary" />
+          {busy === 'digest' ? 'Generating…' : "Generate today’s digest"}
+        </Button>
       </div>
 
-      <div className="grid gap-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <select value={segmentType} onChange={(e) => onTypeChange(e.target.value as SegmentType)} className={inputCls}>
-            <option value="all">All users</option>
-            <option value="tier">By tier</option>
-            <option value="activity">By activity</option>
-            <option value="lifecycle">By subscription lifecycle</option>
-          </select>
-          <select
-            value={segmentValue}
-            onChange={(e) => {
-              setSegmentValue(e.target.value);
-              setCount(null);
-            }}
-            disabled={segmentType === 'all'}
-            className={`${inputCls} disabled:opacity-50`}
-          >
-            {VALUE_OPTIONS[segmentType].map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Send-to mode */}
+      <div className="mb-4 inline-flex rounded-md border border-border p-1 bg-muted/40">
+        <button
+          type="button"
+          onClick={() => setMode('segment')}
+          className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'segment' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <Users className="h-4 w-4" /> A segment
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('one')}
+          className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'one' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <User className="h-4 w-4" /> One person
+        </button>
+      </div>
 
-        <label className="flex items-center gap-2 text-sm text-foreground select-none">
-          <input
-            type="checkbox"
-            checked={rawHtml}
-            onChange={(e) => setRawHtml(e.target.checked)}
-            className="h-4 w-4 accent-primary"
-          />
-          Send a custom, full-width HTML email (paste a complete design — it is sent exactly as-is, with no extra header or footer)
-        </label>
-
-        <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject line" className={inputCls} />
-        {!rawHtml && (
-          <input
-            value={heading}
-            onChange={(e) => setHeading(e.target.value)}
-            placeholder="Email heading (optional — defaults to the subject)"
-            className={inputCls}
-          />
-        )}
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={rawHtml ? 12 : 6}
-          placeholder={
-            rawHtml
-              ? 'Paste the FULL email HTML here (the entire document). Include {{UNSUBSCRIBE}} where the unsubscribe link should go — it is filled in per recipient.'
-              : 'Your message… (line breaks are preserved; basic HTML is allowed)'
-          }
-          className={`${inputCls} h-auto py-2 resize-y ${rawHtml ? 'font-mono text-xs' : ''}`}
-        />
-        {!rawHtml && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} placeholder="Button label (optional)" className={inputCls} />
-            <input value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="Button URL (optional)" className={inputCls} />
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          <Button variant="outline" onClick={doPreview} disabled={busy !== null} className="h-10 gap-2">
-            <Users className="h-4 w-4" />
-            {busy === 'preview' ? 'Counting…' : 'Preview recipients'}
-          </Button>
-          {count !== null && (
-            <span className="text-sm text-muted-foreground">
-              {count} recipient{count === 1 ? '' : 's'} match
-            </span>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* ── Left: the form ────────────────────────────────────────────── */}
+        <div className="grid gap-3 content-start">
+          {mode === 'one' ? (
+            <input
+              type="email"
+              value={oneEmail}
+              onChange={(e) => setOneEmail(e.target.value)}
+              placeholder="Recipient email address"
+              className={inputCls}
+            />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <select value={segmentType} onChange={(e) => onTypeChange(e.target.value as SegmentType)} className={inputCls}>
+                <option value="all">All users</option>
+                <option value="tier">By tier</option>
+                <option value="activity">By activity</option>
+                <option value="lifecycle">By subscription lifecycle</option>
+              </select>
+              <select
+                value={segmentValue}
+                onChange={(e) => {
+                  setSegmentValue(e.target.value);
+                  setCount(null);
+                }}
+                disabled={segmentType === 'all'}
+                className={`${inputCls} disabled:opacity-50`}
+              >
+                {VALUE_OPTIONS[segmentType].map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
-          <Button
-            onClick={doSend}
-            disabled={busy !== null || !subject.trim() || !body.trim()}
-            className="h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
-          >
-            <Send className="h-4 w-4" />
-            {busy === 'send' ? 'Sending…' : 'Send broadcast'}
-          </Button>
+
+          <label className="flex items-start gap-2 text-sm text-foreground select-none">
+            <input type="checkbox" checked={rawHtml} onChange={(e) => setRawHtml(e.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+            Custom full-width HTML email (sent exactly as-is — no extra header/footer)
+          </label>
+
+          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject line" className={inputCls} />
+          {!rawHtml && (
+            <input
+              value={heading}
+              onChange={(e) => setHeading(e.target.value)}
+              placeholder="Email heading (optional — defaults to the subject)"
+              className={inputCls}
+            />
+          )}
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={rawHtml ? 12 : 7}
+            placeholder={
+              rawHtml
+                ? 'Paste the FULL email HTML (whole document). Put {{UNSUBSCRIBE}} where the unsubscribe link should go — filled in per recipient.'
+                : 'Your message… (line breaks preserved; basic HTML allowed)'
+            }
+            className={`${inputCls} h-auto py-2 resize-y ${rawHtml ? 'font-mono text-xs' : ''}`}
+          />
+          {!rawHtml && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} placeholder="Button label (optional)" className={inputCls} />
+              <input value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="Button URL (optional)" className={inputCls} />
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            {mode === 'segment' && (
+              <>
+                <Button variant="outline" onClick={doPreview} disabled={busy !== null} className="h-10 gap-2">
+                  <Users className="h-4 w-4" />
+                  {busy === 'preview' ? 'Counting…' : 'Count recipients'}
+                </Button>
+                {count !== null && (
+                  <span className="text-sm text-muted-foreground">
+                    {count} recipient{count === 1 ? '' : 's'} match
+                  </span>
+                )}
+              </>
+            )}
+            <Button
+              onClick={doSend}
+              disabled={busy !== null || !subject.trim() || !body.trim() || (mode === 'one' && !oneEmail.trim())}
+              className="h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
+            >
+              <Send className="h-4 w-4" />
+              {busy === 'send' ? 'Sending…' : mode === 'one' ? 'Send email' : 'Send broadcast'}
+            </Button>
+          </div>
+
+          {log && (
+            <div
+              className={`text-sm rounded-md border p-3 ${
+                log.type === 'success'
+                  ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
+                  : 'bg-destructive/10 border-destructive/20 text-destructive'
+              }`}
+            >
+              {log.message}
+            </div>
+          )}
         </div>
 
-        {log && (
-          <div
-            className={`text-sm rounded-md border p-3 ${
-              log.type === 'success'
-                ? 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400'
-                : 'bg-destructive/10 border-destructive/20 text-destructive'
-            }`}
-          >
-            {log.message}
-          </div>
-        )}
-        <p className="text-xs text-muted-foreground">
-          Bulk email sends for free via your Google Workspace / Gmail SMTP (<code>GMAIL_USER</code> +{' '}
-          <code>GMAIL_APP_PASSWORD</code>) — best for up to a few hundred recipients per send. Set{' '}
-          <code>RESEND_API_KEY</code> to switch to the high-volume path automatically. Unsubscribed users are
-          always skipped. In the default mode an unsubscribe link is added automatically; in{' '}
-          <strong>custom HTML</strong> mode, put <code>{'{{UNSUBSCRIBE}}'}</code> in your HTML where the link should appear.
-        </p>
+        {/* ── Right: live inbox preview ─────────────────────────────────── */}
+        <div className="flex flex-col">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Live preview — how it lands in the inbox</p>
+          <iframe
+            title="Email preview"
+            srcDoc={previewHtml}
+            sandbox=""
+            className="w-full flex-1 min-h-[520px] rounded-lg border border-border bg-white"
+          />
+        </div>
       </div>
+
+      <p className="mt-4 text-xs text-muted-foreground">
+        Bulk email sends via Google Workspace / Gmail SMTP (<code>GMAIL_USER</code> + <code>GMAIL_APP_PASSWORD</code>), or set{' '}
+        <code>RESEND_API_KEY</code> for the high-volume path. The preview shows the exact HTML a recipient receives.
+      </p>
     </Card>
   );
 }
