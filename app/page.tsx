@@ -516,7 +516,7 @@ export default async function LandingPage() {
           </div>
           <h2 className="text-3xl font-bold text-foreground">How every answer is graded</h2>
           <p className="mt-2 text-[15px] text-muted-foreground max-w-md mx-auto">
-            Six dimensions, consistent scoring, zero subjectivity.
+            Six dimensions, evidence-based scoring — with a model answer and honest red-flag checks.
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

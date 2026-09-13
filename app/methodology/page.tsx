@@ -153,7 +153,7 @@ export default function MethodologyPage() {
               ['1 · Parse', 'Your answer is read for its structure — the buckets you created, the math you ran, and the recommendation you landed on.'],
               ['2 · Score the rubric', 'Each of the six dimensions is graded against fixed criteria, producing a 0–100 total with per-dimension points.'],
               ['3 · Verify the math', 'For guesstimates and quantitative cases, an arithmetic backstop independently recomputes the numbers and flags inconsistencies.'],
-              ['4 · Write feedback', 'You get specific written feedback per dimension — what worked, what was missing, and the single highest-leverage fix.'],
+              ['4 · Write feedback', 'You get an evidence-anchored breakdown per dimension — what you actually did (quoted from your answer), what was missing, and the single highest-leverage fix — plus a short model-answer outline for the case and any red flags (framework-stuffing, unsupported claims) named honestly.'],
               ['5 · Rank', 'Points are added to your running total and your live percentile against the national pool is updated.'],
             ].map(([t, d]) => (
               <Card key={t} className="p-5">

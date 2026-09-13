@@ -139,6 +139,7 @@ export default function PricingPlans() {
                 <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
               </li>
+              <PlanFeature text="Prep Copilot — AI coach: weak-spot diagnosis + a weekly plan" />
               <PlanFeature text="Unlimited practice bank" />
               <PlanFeature text="20 interviewer hints per case & model Q&A" />
               <PlanFeature text="CV Pointer Lab — unlimited" />

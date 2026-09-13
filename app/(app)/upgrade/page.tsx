@@ -315,6 +315,7 @@ export default function UpgradePage() {
                   <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
                 </li>
+                <FeatureItem text="Prep Copilot — agentic AI coach: finds your weak spots, generates made-for-you cases, and builds a weekly plan" />
                 <FeatureItem text="CV Pointer Lab — strict-fit resume bullet writer (free)" />
                 <FeatureItem text="Unlimited practice bank" />
                 <FeatureItem text="20 interviewer hints per case & model Q&A" />

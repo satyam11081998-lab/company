@@ -98,6 +98,7 @@ const FEATURES = [
   { name: 'Bookmarks', free: false, lite: false, pro: true },
   { name: 'Personal cheat-sheet', free: false, lite: false, pro: true },
   { name: 'Interviewer simulator', free: false, lite: false, pro: true },
+  { name: 'Prep Copilot (agentic AI coach)', free: false, lite: false, pro: true },
   // Voice interview: only listed when the feature actually ships. Spreading an
   // empty array is how a row disappears without leaving a hole in the table.
   ...(VOICE_INTERVIEW_ENABLED
@@ -111,7 +112,7 @@ const FEATURES = [
 const productJsonLd = pricingProductJsonLd([
   { name: 'Free', description: 'Full Casebook library, daily case & guesstimate, leaderboard & badges.', price: 0 },
   { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 12 interviewer hints per case.', price: 199 },
-  { name: 'Pro', description: 'Everything in Lite plus unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
+  { name: 'Pro', description: 'Everything in Lite plus Prep Copilot (an agentic AI coach that diagnoses your weak spots and builds a weekly plan), unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
 ]);
 
 const faqJsonLd = faqPageJsonLd(FAQS);

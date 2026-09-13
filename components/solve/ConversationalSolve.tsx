@@ -902,8 +902,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
    */
   const talkState: 'active' | 'unavailable' | 'locked' | 'hidden' =
     !VOICE_INTERVIEW_ENABLED ? 'hidden'          // owner decision: not ROI positive
-      : isGuest || !attempt ? 'hidden'
-      // Realtime / Gemini are CREDIT-gated server-side: Pro gets a monthly
+      : !attempt ? 'hidden'
+      // Realtime / Gemini are CREDIT-gated server-side (guests included — they
+      // get the same one-time trial against their anonymous id, and convert at
+      // the score): Pro gets a monthly
       // allowance and a non-Pro user gets a ONE-TIME free trial (see
       // routes/realtime.py + services/realtime_credits.py). So on the best-UX
       // pipelines, let ANYONE launch — the session endpoint hands back the
