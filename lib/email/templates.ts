@@ -12,6 +12,10 @@ const MUTED = '#5B6472';
 const BORDER = '#E7E3DC';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
+// Email IMAGES must be absolute and always point at the live host. NEXT_PUBLIC_SITE_URL
+// can resolve to localhost or a preview build when the mail is generated, which makes
+// every logo break in the recipient's inbox — so images use this fixed production base.
+const EMAIL_ASSETS = process.env.NEXT_PUBLIC_EMAIL_ASSETS_URL || 'https://mece.in';
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -47,7 +51,7 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
   <tr><td align="center">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid ${BORDER};border-radius:14px;overflow:hidden;">
       <tr><td style="background:${NAVY};padding:18px 28px;">
-        <img src="${SITE_URL}/signature/hdr-logo.png" height="30" alt="MECE" style="height:30px;display:block;border:0;outline:none;text-decoration:none;"/>
+        <img src="${EMAIL_ASSETS}/signature/hdr-logo.png" height="30" alt="MECE" style="height:30px;display:block;border:0;outline:none;text-decoration:none;"/>
       </td></tr>
       <tr><td style="height:3px;background:${RED};line-height:3px;font-size:0;">&nbsp;</td></tr>
       <tr><td style="padding:32px 28px;font-family:Inter,Helvetica,Arial,sans-serif;color:${INK};">
@@ -56,12 +60,20 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
         ${cta}
         ${o.footerNote ? `<p style="margin:22px 0 0;font-size:13px;color:${MUTED};line-height:1.55;">${o.footerNote}</p>` : ''}
       </td></tr>
-      <tr><td style="padding:22px 28px;background:${OFFWHITE};border-top:1px solid ${BORDER};font-family:Inter,Helvetica,Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.6;">
-        <strong style="color:${NAVY};">MECE</strong> — Placement interview prep for Indian MBA students.<br/>
-        <a href="${SITE_URL}" style="color:${MUTED};text-decoration:underline;">mece.in</a> &middot; <a href="mailto:team@mece.in" style="color:${MUTED};text-decoration:underline;">team@mece.in</a>${unsub}
+      <tr><td style="padding:24px 28px 8px;background:${OFFWHITE};border-top:1px solid ${BORDER};font-family:Inter,Helvetica,Arial,sans-serif;">
+        <img src="${EMAIL_ASSETS}/signature/sig-logo.png" width="128" alt="MECE" style="width:128px;max-width:60%;display:block;border:0;outline:none;text-decoration:none;"/>
+        <div style="margin:12px 0 2px;font-size:14px;font-weight:700;color:${NAVY};">Team MECE</div>
+        <div style="margin:0 0 12px;font-size:13px;color:${MUTED};line-height:1.5;">Placement interview prep for Indian MBA students.</div>
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <td style="padding-right:14px;"><a href="mailto:team@mece.in"><img src="${EMAIL_ASSETS}/signature/sig-icon-email.png" width="22" height="22" alt="Email" style="display:block;border:0;outline:none;"/></a></td>
+          <td style="padding-right:14px;"><a href="https://www.linkedin.com/company/mece-prep/"><img src="${EMAIL_ASSETS}/signature/sig-icon-linkedin.png" width="22" height="22" alt="LinkedIn" style="display:block;border:0;outline:none;"/></a></td>
+          <td><a href="https://www.instagram.com/mece.in/"><img src="${EMAIL_ASSETS}/signature/sig-icon-instagram.png" width="22" height="22" alt="Instagram" style="display:block;border:0;outline:none;"/></a></td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="padding:12px 28px 22px;background:${OFFWHITE};font-family:Inter,Helvetica,Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.6;">
+        <a href="${SITE_URL}" style="color:${MUTED};text-decoration:underline;">mece.in</a>${unsub}
       </td></tr>
     </table>
-    <div style="font-family:Inter,Helvetica,Arial,sans-serif;font-size:11px;color:#9AA1AC;padding:14px 0;">&copy; ${new Date().getFullYear()} MECE Prep. All rights reserved.</div>
   </td></tr>
 </table>
 </body></html>`;

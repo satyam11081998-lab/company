@@ -108,19 +108,23 @@ export async function sendBroadcast(input: {
   }
   if (recipients.length === 0) return { success: false, error: 'No recipients match this segment.' };
 
-  const messages = recipients.map((r) => ({
-    to: r.email,
-    subject,
-    html: input.bodyIsFullHtml
-      ? bodyHtml.replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/g, unsubscribeUrl(r.id))
-      : broadcastEmail({
-          heading,
-          bodyHtml,
-          ctaLabel: input.ctaLabel,
-          ctaUrl: input.ctaUrl,
-          unsubscribeUrl: unsubscribeUrl(r.id),
-        }),
-  }));
+  const messages = recipients.map((r) => {
+    const unsub = unsubscribeUrl(r.id);
+    return {
+      to: r.email,
+      subject,
+      html: input.bodyIsFullHtml
+        ? bodyHtml.replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/g, unsub)
+        : broadcastEmail({
+            heading,
+            bodyHtml,
+            ctaLabel: input.ctaLabel,
+            ctaUrl: input.ctaUrl,
+            unsubscribeUrl: unsub,
+          }),
+      listUnsubscribe: unsub,
+    };
+  });
 
   const result = await sendBulk(messages);
   if (result.skipped) {
@@ -168,7 +172,7 @@ export async function sendToOne(input: {
         unsubscribeUrl: unsub,
       });
 
-  const result = await sendBulk([{ to: email, subject, html }]);
+  const result = await sendBulk([{ to: email, subject, html, listUnsubscribe: (u as any)?.id ? unsub : undefined }]);
   if (result.skipped) return { success: false, error: result.error || 'Email not configured (set RESEND_API_KEY or GMAIL_*).' };
   if ((result.failed ?? 0) > 0 || (result.sent ?? 0) === 0) return { success: false, error: 'Send failed — check the address and email config.' };
   return { success: true };
@@ -231,7 +235,7 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
       .order('published_at', { ascending: false })
       .limit(3);
 
-    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">The people who crack MBB don&rsquo;t cram the night before &mdash; they do a little, every day. Here&rsquo;s today&rsquo;s set. Ten focused minutes now beats a panicked all-nighter later.</p>`;
+    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">The people who crack case interviews don&rsquo;t cram the night before &mdash; they do a little, every day. Here&rsquo;s today&rsquo;s set. Ten focused minutes now beats a panicked all-nighter later.</p>`;
 
     if (guessRow) {
       body += digestCard('Today’s guesstimate', guessRow.title, 'A fast, fun number to crack. Structure it top-down — don’t just guess.', `${_SITE}/cases/${guessRow.id}`, 'Crack the guesstimate');

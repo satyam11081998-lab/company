@@ -47,3 +47,20 @@ export async function GET(req: Request) {
     200,
   );
 }
+
+// One-click unsubscribe (RFC 8058): Gmail / Apple Mail POST here when the user
+// taps the native "Unsubscribe" in the header. Same effect as GET, no page body.
+// Pairs with the List-Unsubscribe + List-Unsubscribe-Post headers set in send.ts.
+export async function POST(req: Request) {
+  const token = new URL(req.url).searchParams.get('token');
+  const userId = verifyUnsubToken(token);
+  if (!userId) return new NextResponse('invalid token', { status: 400 });
+  try {
+    const db = createServiceClient();
+    await db.from('users').update({ marketing_opt_out: true }).eq('id', userId);
+  } catch (e) {
+    console.error('[unsubscribe] POST update failed:', e);
+    return new NextResponse('error', { status: 500 });
+  }
+  return new NextResponse('OK', { status: 200 });
+}

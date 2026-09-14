@@ -15,6 +15,28 @@ import { upgradeReceiptEmail, welcomeEmail, type UpgradeReceiptData } from './te
 const EMAIL_FROM = process.env.EMAIL_FROM || 'MECE <team@mece.in>';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
 
+/** Crude HTML → plaintext for the alt part. An email that carries a text/plain
+ *  part scores far better with spam filters than an HTML-only one; this is a
+ *  good-enough fallback when the caller didn't supply its own text. */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .replace(/<\/(p|div|tr|h1|h2|h3|li|table)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&middot;/g, ' · ').replace(/&amp;/g, '&')
+    .replace(/&#8377;/g, 'Rs ').replace(/&rsquo;/g, "'").replace(/&mdash;/g, ' — ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** RFC 2369 / 8058 one-click unsubscribe headers for a per-recipient unsub URL. */
+function unsubHeaders(url?: string): Record<string, string> {
+  return url ? { 'List-Unsubscribe': `<${url}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } : {};
+}
+
 export interface SendResult {
   sent: boolean;
   skipped?: boolean;
@@ -74,6 +96,8 @@ export interface BulkMessage {
   subject: string;
   html: string;
   text?: string;
+  /** Per-recipient unsubscribe URL → List-Unsubscribe (one-click) header. */
+  listUnsubscribe?: string;
 }
 export interface BulkResult {
   sent: number;
@@ -105,7 +129,8 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
         to: [m.to],
         subject: m.subject,
         html: m.html,
-        text: m.text,
+        text: m.text || htmlToText(m.html),
+        headers: unsubHeaders(m.listUnsubscribe),
       }));
       try {
         const res = await fetch('https://api.resend.com/emails/batch', {
@@ -174,7 +199,8 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
           to: m.to,
           subject: m.subject,
           html: m.html,
-          text: m.text,
+          text: m.text || htmlToText(m.html),
+          headers: unsubHeaders(m.listUnsubscribe),
         });
         sent += 1;
       } catch (e: any) {
