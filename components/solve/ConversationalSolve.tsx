@@ -23,10 +23,8 @@ import { Loader2, Send, Paperclip, Mic, FileText, ArrowLeft, Award, Menu, Check,
 import VoiceWave from '@/components/icons/voice-wave';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import DictationButton, { type DictationHandle } from '@/components/dictation-button';
 import MicWaveform from '@/components/mic-waveform';
 import VoiceInterview from '@/components/solve/VoiceInterview';
 import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
@@ -77,7 +75,7 @@ import {
   type AttemptSummary,
 } from '@/lib/interview-api';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
-import { MESSAGE_MAX_CHARS, RECOMMENDATION_MAX_CHARS } from '@/lib/limits';
+import { MESSAGE_MAX_CHARS } from '@/lib/limits';
 import { useTrackAction } from '@/hooks/use-track-action';
 
 interface Props {
@@ -150,7 +148,6 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   }, []);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
-  const [finalRec, setFinalRec] = useState('');
   // GUEST MODE (0045). `isGuest` is derived from the live Supabase session, not
   // from a prop: an anonymous user can convert mid-session, and the component
   // must stop gating the moment they do.
@@ -220,13 +217,12 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         } catch {
           /* storage unavailable */
         }
-        if (parked && parked.trim().length >= 20) {
+        if (parked && parked.trim()) {
           try {
             sessionStorage.removeItem(PENDING_REC_KEY(caseId));
           } catch {
             /* ignore */
           }
-          setFinalRec(parked);
           // Defer so the attempt below is loaded before we submit against it.
           setResumeRec(parked);
         }
@@ -750,13 +746,15 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     })();
   }, [resumeRec, attempt, token, isGuest, submitting, router]);
 
-  async function handleSubmit(overrideText?: string) {
+  async function handleSubmit() {
     if (!attempt || !token || submitting) return;
-    const rec = (overrideText ?? finalRec).trim();
-    if (rec.length < 20) {
-      toast.error('Your recommendation should be at least a couple of sentences.');
-      return;
-    }
+    // No separate "final recommendation" box any more — the answer lives in the
+    // conversation. Take the candidate's last real turn as the recommendation
+    // signal; the scorer reads the WHOLE transcript server-side and pulls the
+    // answer from it regardless, so a placeholder is a safe fallback for the rare
+    // case where no user turn is in client state yet (e.g. a just-ended voice run).
+    const userTurns = messages.filter((m) => m.role === 'user' && (m.content || '').trim());
+    const rec = (userTurns[userTurns.length - 1]?.content || '').trim() || '(see the full conversation above)';
 
     // ── GUEST MODE (0045): the wall lives HERE, at submit ──────────────
     // A guest works the whole case — clarifications, structure, arithmetic,
@@ -1359,12 +1357,9 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
 
       {submitOpen && (
         <SubmitDialog
-          finalRec={finalRec}
-          setFinalRec={setFinalRec}
           submitting={submitting}
           onClose={() => setSubmitOpen(false)}
           onConfirm={handleSubmit}
-          onFileAttach={() => fileInputRef.current?.click()}
         />
       )}
 
@@ -1492,67 +1487,23 @@ function MessageBubble({ message }: { message: AttemptMessage }) {
 }
 
 function SubmitDialog({
-  finalRec, setFinalRec, submitting, onClose, onConfirm, onFileAttach
+  submitting, onClose, onConfirm,
 }: {
-  finalRec: string;
-  setFinalRec: (v: string) => void;
   submitting: boolean;
   onClose: () => void;
-  onConfirm: (text?: string) => void;
-  onFileAttach: () => void;
+  onConfirm: () => void;
 }) {
-  const dictRef = useRef<DictationHandle>(null);
-  const [recording, setRecording] = useState(false);
-
-  // While recording, Send finalizes (transcribe) and submits in one tap.
-  async function handleConfirm() {
-    let rec = finalRec;
-    if (dictRef.current?.isRecording()) {
-      const t = await dictRef.current.finalize();
-      if (t) { rec = finalRec ? finalRec + ' ' + t : t; setFinalRec(rec); }
-    }
-    onConfirm(rec);
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center">
-      <Card className="w-full max-w-xl p-5">
-        <h2 className="text-h4 font-semibold text-foreground">Your final recommendation</h2>
+      <Card className="w-full max-w-md p-5">
+        <h2 className="text-h4 font-semibold text-foreground">Submit for scoring?</h2>
         <p className="mt-1 text-small text-muted-foreground">
-          State your conclusion top-down — the recommendation first, then 2-3 reasons. The scorer weights this heavily for synthesis &amp; communication.
+          Your whole conversation is scored &mdash; the interviewer already has your answer. You won&rsquo;t be able to add to this session after submitting.
         </p>
-        <Textarea
-          autoFocus
-          value={finalRec}
-          onChange={(e) => setFinalRec(e.target.value)}
-          placeholder="My recommendation is to… because (1)… (2)… (3)… Risks to watch: …"
-          className="mt-3 min-h-[160px] resize-none text-base"
-          maxLength={RECOMMENDATION_MAX_CHARS}
-        />
-        <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <DictationButton
-              ref={dictRef}
-              onRecordingChange={setRecording}
-              onTranscriptionCompleted={(text) => setFinalRec(finalRec ? finalRec + ' ' + text : text)}
-              disabled={submitting}
-            />
-            <button
-              type="button"
-              onClick={onFileAttach}
-              disabled={submitting}
-              title="Attach a file to your transcript before submitting"
-              className="flex items-center justify-center h-10 w-10 shrink-0 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-            >
-              <Paperclip className="h-5 w-5" />
-            </button>
-          </div>
-          <p className="text-small text-muted-foreground">{finalRec.trim().length} / {RECOMMENDATION_MAX_CHARS} characters</p>
-        </div>
-        <div className="mt-4 flex justify-end gap-2 border-t pt-4">
+        <div className="mt-5 flex justify-end gap-2 border-t pt-4">
           <Button variant="ghost" onClick={onClose} disabled={submitting}>Cancel</Button>
-          <Button onClick={handleConfirm} disabled={submitting || (finalRec.trim().length < 20 && !recording)} className="bg-primary text-primary-foreground hover:bg-primary-hover">
-            {submitting ? (<><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Scoring…</>) : 'Submit session'}
+          <Button onClick={onConfirm} disabled={submitting} className="bg-primary text-primary-foreground hover:bg-primary-hover">
+            {submitting ? (<><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Scoring…</>) : 'Submit'}
           </Button>
         </div>
       </Card>
