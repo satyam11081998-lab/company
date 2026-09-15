@@ -235,14 +235,14 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
       .order('published_at', { ascending: false })
       .limit(3);
 
-    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">A steady daily habit beats last-minute cramming. Here&rsquo;s today&rsquo;s practice set &mdash; about ten focused minutes.</p>`;
+    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s your practice set for today. It takes about 10 focused minutes.</p>`;
 
     if (guessRow) {
-      body += digestCard('Today’s guesstimate', guessRow.title, 'A fast, fun number to crack. Structure it top-down — don’t just guess.', `${_SITE}/cases/${guessRow.id}`, 'Crack the guesstimate');
+      body += digestCard('Today’s guesstimate', guessRow.title, 'Build your estimate step by step, make your assumptions explicit, and arrive at a defendable number.', `${_SITE}/cases/${guessRow.id}`, 'Practice the guesstimate');
     }
     if (caseRow) {
       const diff = caseRow.difficulty ? ` · ${esc(caseRow.difficulty)}` : '';
-      body += digestCard(`Today’s case${diff}`, caseRow.title, 'Clarify, structure, quantify, recommend — then let the AI interviewer grade you on the 100-point rubric.', `${_SITE}/cases/${caseRow.id}`, 'Solve today’s case');
+      body += digestCard(`Today’s case${diff}`, caseRow.title, 'Clarify, structure, quantify, and recommend — then get scored by the MECE AI interviewer.', `${_SITE}/cases/${caseRow.id}`, 'Start the case');
     }
     if (!guessRow && !caseRow) {
       body += digestCard('Practice', 'Your daily case & guesstimate', 'Your case and guesstimate for today are inside.', `${_SITE}/dashboard`, 'Open the dashboard');
@@ -257,21 +257,21 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
         <tr><td style="padding:18px 20px;">
           <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C8102E;">In the news — for your GD</p>
           <ul style="margin:0 0 12px;padding-left:18px;font-size:14px;line-height:1.55;color:#1A2233;">${items}</ul>
-          <a href="${_SITE}/gd-briefs" style="display:inline-block;background:#0F1C33;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:9px 18px;border-radius:8px;">Read the GD briefs &rarr;</a>
+          <a href="${_SITE}/gd-briefs" style="display:inline-block;background:#0F1C33;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:9px 18px;border-radius:8px;">Read today’s GD briefs &rarr;</a>
         </td></tr>
       </table>`;
     }
 
-    body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s today&rsquo;s set. A few focused minutes is enough to keep making steady progress.</p>`;
+    body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s it for today. Keep practicing.</p>`;
 
     const html = baseEmailLayout({
-      preheader: guessRow || caseRow ? 'Today’s case and guesstimate are ready in your dashboard.' : 'Today’s practice is ready in your dashboard.',
-      heading: 'Your daily reps are ready',
+      preheader: guessRow || caseRow ? 'Today’s case and guesstimate are ready — about 10 focused minutes.' : 'Today’s practice is ready in your dashboard.',
+      heading: 'Your MECE practice for today',
       contentHtml: body,
       unsubscribeUrl: '{{UNSUBSCRIBE}}',
     });
 
-    const subject = 'Today’s case and guesstimate practice';
+    const subject = 'Your MECE practice for today';
     const note = !sched ? 'No daily schedule set for today (IST) — generated a generic practice nudge. Set today’s schedule for the full case + guesstimate digest.' : undefined;
     return { success: true, subject, html, note };
   } catch (e: any) {
