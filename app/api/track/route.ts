@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 
-// The service client needs the Node runtime, and analytics must always read
-// through — never a cached response.
-export const runtime = 'nodejs';
+// Runs on the EDGE runtime, not Node. `createServiceClient` is a plain
+// fetch-based @supabase/supabase-js client with no Node built-ins, so it runs
+// fine on Edge — and analytics ingestion (by far the highest-frequency route on
+// the site: a beacon per page view + leave for every visitor) therefore stays
+// OFF the Fluid/Node Active-CPU budget entirely and rides the much-higher Edge
+// tier instead. Pinned to bom1 to sit next to the primary/Supabase region.
+// `force-dynamic` keeps the endpoint from ever being cached.
+export const runtime = 'edge';
+export const preferredRegion = 'bom1';
 export const dynamic = 'force-dynamic';
 
 interface RawEvent {
