@@ -98,6 +98,11 @@ export async function sendBroadcast(input: {
   const heading = (input.heading || input.subject || '').trim();
   const bodyHtml = (input.bodyHtml || '').trim();
   if (!subject) return { success: false, error: 'Subject is required.' };
+  // Guard against the classic slip of typing an address into the Subject box —
+  // an email-address subject is never intentional and looks broken in the inbox.
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(subject)) {
+    return { success: false, error: 'The subject line looks like an email address — enter a real subject (e.g. “Your MECE practice for today”).' };
+  }
   if (!bodyHtml) return { success: false, error: 'Message body is required.' };
 
   let recipients: Recipient[];
@@ -153,6 +158,9 @@ export async function sendToOne(input: {
   const bodyHtml = (input.bodyHtml || '').trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { success: false, error: 'Enter a valid email address.' };
   if (!subject) return { success: false, error: 'Subject is required.' };
+  // An email-address subject is never intentional (usually the address was typed
+  // into the Subject box). Refuse it so it can't land in someone's inbox.
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(subject)) return { success: false, error: 'The subject line looks like an email address — enter a real subject (e.g. “Your MECE practice for today”).' };
   if (!bodyHtml) return { success: false, error: 'Message body is required.' };
 
   const db = createServiceClient();
@@ -235,7 +243,7 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
       .order('published_at', { ascending: false })
       .limit(3);
 
-    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s your practice set for today. It takes about 10 focused minutes.</p>`;
+    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s the set — about 10 focused minutes, start to finish.</p>`;
 
     if (guessRow) {
       body += digestCard('Today’s guesstimate', guessRow.title, 'Build your estimate step by step, make your assumptions explicit, and arrive at a defendable number.', `${_SITE}/cases/${guessRow.id}`, 'Practice the guesstimate');
@@ -265,7 +273,7 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
     body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s it for today. Keep practicing.</p>`;
 
     const html = baseEmailLayout({
-      preheader: guessRow || caseRow ? 'Today’s case and guesstimate are ready — about 10 focused minutes.' : 'Today’s practice is ready in your dashboard.',
+      preheader: guessRow || caseRow ? 'A fresh guesstimate and case to sharpen your thinking.' : 'Your practice set is ready inside.',
       heading: 'Your MECE practice for today',
       contentHtml: body,
       unsubscribeUrl: '{{UNSUBSCRIBE}}',
