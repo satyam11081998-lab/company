@@ -235,7 +235,7 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
       .order('published_at', { ascending: false })
       .limit(3);
 
-    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">The people who crack case interviews don&rsquo;t cram the night before &mdash; they do a little, every day. Here&rsquo;s today&rsquo;s set. Ten focused minutes now beats a panicked all-nighter later.</p>`;
+    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">A steady daily habit beats last-minute cramming. Here&rsquo;s today&rsquo;s practice set &mdash; about ten focused minutes.</p>`;
 
     if (guessRow) {
       body += digestCard('Today’s guesstimate', guessRow.title, 'A fast, fun number to crack. Structure it top-down — don’t just guess.', `${_SITE}/cases/${guessRow.id}`, 'Crack the guesstimate');
@@ -245,7 +245,7 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
       body += digestCard(`Today’s case${diff}`, caseRow.title, 'Clarify, structure, quantify, recommend — then let the AI interviewer grade you on the 100-point rubric.', `${_SITE}/cases/${caseRow.id}`, 'Solve today’s case');
     }
     if (!guessRow && !caseRow) {
-      body += digestCard('Practice', 'Your daily case & guesstimate', 'Jump in and keep the streak alive.', `${_SITE}/dashboard`, 'Open the dashboard');
+      body += digestCard('Practice', 'Your daily case & guesstimate', 'Your case and guesstimate for today are inside.', `${_SITE}/dashboard`, 'Open the dashboard');
     }
 
     if (news && news.length > 0) {
@@ -262,16 +262,16 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
       </table>`;
     }
 
-    body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">Miss a day and momentum resets. Do today&rsquo;s set &mdash; future-you at the interview table will thank you.</p>`;
+    body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s today&rsquo;s set. A few focused minutes is enough to keep making steady progress.</p>`;
 
     const html = baseEmailLayout({
-      preheader: guessRow || caseRow ? 'Today’s guesstimate + case are live — about 12 focused minutes.' : 'Your daily practice is waiting.',
+      preheader: guessRow || caseRow ? 'Today’s case and guesstimate are ready in your dashboard.' : 'Today’s practice is ready in your dashboard.',
       heading: 'Your daily reps are ready',
       contentHtml: body,
       unsubscribeUrl: '{{UNSUBSCRIBE}}',
     });
 
-    const subject = 'Today’s guesstimate + case are live — 10 minutes to sharper thinking';
+    const subject = 'Today’s case and guesstimate practice';
     const note = !sched ? 'No daily schedule set for today (IST) — generated a generic practice nudge. Set today’s schedule for the full case + guesstimate digest.' : undefined;
     return { success: true, subject, html, note };
   } catch (e: any) {
