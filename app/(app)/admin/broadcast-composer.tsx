@@ -34,7 +34,7 @@ const inputCls =
 const EMPTY_PREVIEW =
   '<!doctype html><html><body style="margin:0;font-family:Inter,Helvetica,Arial,sans-serif;color:#8C8A82;padding:48px 24px;text-align:center;background:#FAF9F6;">Your email preview will appear here as you type. Fill in a message on the left — or hit &ldquo;Generate today’s digest&rdquo;.</body></html>';
 
-type PracticeCardT = { kind: 'case' | 'guesstimate'; title: string; hook: string; url: string };
+type PracticeCardT = { kind: 'case' | 'guesstimate'; title: string; hook: string; url: string; focus?: string };
 
 // Insert practice-card HTML just before </body> in a full custom document; for the
 // simple heading+body path the cards are concatenated onto the body instead.
@@ -160,7 +160,7 @@ export default function BroadcastComposer() {
     const r = await materializeBroadcastOption({ option: o, topic: tTopic });
     if (r.success && r.url) {
       const kind: 'case' | 'guesstimate' = o?.kind === 'guesstimate' ? 'guesstimate' : 'case';
-      setCards((prev) => [...prev, { kind, title: r.title || o.title || 'Practice', hook: o.hook || '', url: r.url! }]);
+      setCards((prev) => [...prev, { kind, title: r.title || o.title || 'Practice', hook: o.hook || '', url: r.url!, focus: (o.focus || '').trim() }]);
       setTOptions([]);
       setTLog({ type: 'success', message: `Added “${r.title || o.title}” — see it in the preview on the right.` });
     } else {
@@ -178,7 +178,14 @@ export default function BroadcastComposer() {
       setTLog({ type: 'error', message: 'Add a case or guesstimate first.' });
       return;
     }
-    const label = tTopic.trim();
+    const hasCase = cards.some((c) => c.kind === 'case');
+    const hasGuess = cards.some((c) => c.kind === 'guesstimate');
+    const both = hasCase && hasGuess;
+    const items = both ? 'a case and a guesstimate' : hasGuess ? 'a guesstimate' : 'a case';
+    // Clean, correctly-spelled label from the generator (e.g. "BlueStone Jewellery") — NEVER the
+    // admin's raw seed phrase. Used at most twice (subject + heading) and never inside the body.
+    const focus = (cards.find((c) => c.focus && c.focus.trim())?.focus || '').trim();
+
     const cardsBlock = cards
       .map((c) =>
         practiceCard({
@@ -190,21 +197,24 @@ export default function BroadcastComposer() {
         }),
       )
       .join('');
-    const intro = label
-      ? `<p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#1A2233;">${esc(label)} is on the radar \u2014 here\u2019s a targeted set to practise. About 10 focused minutes, and the MECE interviewer scores you at the end.</p>`
-      : `<p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#1A2233;">Here\u2019s a targeted set to practise \u2014 about 10 focused minutes, and the MECE interviewer scores you at the end.</p>`;
-    const closing = `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">Give it your best structured attempt. Good luck.</p>`;
+
+    const introText = `Here’s ${items} to work through. ${both ? 'Take each one' : 'Take it'} as a structured attempt — the MECE interviewer asks follow-ups and scores you at the end (about 10 focused minutes).`;
+    const intro = `<p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#1A2233;">${introText}</p>`;
+    const closing = `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">Give it your best structured attempt — good luck.</p>`;
+
+    const itemsCap = items.charAt(0).toUpperCase() + items.slice(1);
     const html = baseEmailLayout({
-      preheader: label ? `A ${label} case & guesstimate to practise.` : 'A targeted practice set for you.',
-      heading: label ? `Practice for ${esc(label)}` : 'Your targeted practice set',
+      preheader: `${itemsCap} to practise — you’re scored at the end.`,
+      heading: focus ? `Practice for ${esc(focus)}` : 'Your practice set',
       contentHtml: intro + cardsBlock + closing,
       unsubscribeUrl: '{{UNSUBSCRIBE}}',
     });
+
     setRawHtml(true);
-    setSubject(label ? `A ${label} case & guesstimate to practise` : 'Your targeted practice set');
+    setSubject(focus ? `Your practice set for ${focus}` : 'Your practice set');
     setBody(html);
     setCards([]);
-    setTLog({ type: 'success', message: 'Practice email built \u2014 preview it on the right, tweak the copy if you like, then send.' });
+    setTLog({ type: 'success', message: 'Practice email built — preview it on the right, tweak the copy if you like, then send.' });
   };
 
   const doSend = async () => {

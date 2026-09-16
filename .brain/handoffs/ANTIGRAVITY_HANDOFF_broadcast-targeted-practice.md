@@ -25,7 +25,7 @@ Case solve UX (bank-count now skips unlisted).
 scenario/prompt, worked solution) - **nothing saved, nothing sent**. The admin picks one; it is
 saved as an **UNLISTED case** and a branded **"Practice this ->"** card is injected into the
 email body, linking to the live scored `/cases/<id>`. Then they send to a segment as normal.
-Case + guesstimate can both be added to one email (multiple cards supported). A **Build the practice email** button then assembles a COMPLETE branded email (subject + intro + case/guesstimate cards + closing) via `baseEmailLayout`, same shape as *Generate today's digest* - loaded into the composer ready to preview, edit and send.
+Case + guesstimate can both be added to one email (multiple cards supported). A **Build the practice email** button then assembles a COMPLETE branded email (subject + intro + case/guesstimate cards + closing) via `baseEmailLayout`, same shape as *Generate today's digest* - loaded into the composer ready to preview, edit and send. The generator also returns a clean, correctly-spelled `focus` label (e.g. `bluestone jhwellery` -> `BlueStone Jewellery`); the email copy uses THAT for subject/heading (once each, never in the body) and never echoes the admin's raw seed phrase. Copy adapts to whether a case, a guesstimate, or both were added.
 
 Because attempting a case *is* the conversational scored interview
 (`/cases/[id]` -> `ConversationalSolve` -> interview engine -> scorer), one saved option gives a
