@@ -158,6 +158,7 @@ export const PREVIEW_ROUTES: string[] = [
   '/dashboard',
   '/practice',
   '/cases',
+  '/p', // short broadcast/WhatsApp links: /p/<code> -> /cases/<id>
   '/leaderboard',
 ];
 

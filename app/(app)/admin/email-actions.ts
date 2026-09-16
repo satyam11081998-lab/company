@@ -343,7 +343,7 @@ export async function generateBroadcastOptions(input: {
 export async function materializeBroadcastOption(input: {
   option: any;
   topic: string;
-}): Promise<{ success: boolean; case_id?: string; title?: string; type?: string; difficulty?: string; url?: string; error?: string }> {
+}): Promise<{ success: boolean; case_id?: string; code?: string; title?: string; type?: string; difficulty?: string; url?: string; error?: string }> {
   let token: string;
   try { token = await adminBearer(); } catch (e: any) { return { success: false, error: e?.message || 'Unauthorized' }; }
   if (!input.option) return { success: false, error: 'No option selected.' };
@@ -358,7 +358,10 @@ export async function materializeBroadcastOption(input: {
     if (!res.ok) return { success: false, error: (data as any)?.detail || `Save failed (${res.status}).` };
     const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
     const d = data as any;
-    return { success: true, case_id: d.case_id, title: d.title, type: d.type, difficulty: d.difficulty, url: `${site}/cases/${d.case_id}` };
+    // Short shareable link (mece.in/p/<code>) when the backend returned a code;
+    // fall back to the full /cases/<id> path for older rows without one.
+    const url = d.code ? `${site}/p/${d.code}` : `${site}/cases/${d.case_id}`;
+    return { success: true, case_id: d.case_id, code: d.code, title: d.title, type: d.type, difficulty: d.difficulty, url };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Could not save the option.' };
   }

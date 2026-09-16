@@ -108,6 +108,14 @@ hot path.
   absent (`.get()` / try-except / supabase-js `{data:null}`), so a mis-ordered deploy never 500s.
 - **RLS:** the new policy is permissive (OR) and cannot restrict any existing read.
 
+## Short share links (mece.in/p/<code>)
+Broadcast/WhatsApp links use a short 6-char code instead of the long `/cases/<uuid>`, keeping
+mece.in visible. `save_option` writes a unique `cases.code` (baseline column, FULL unique index,
+retry-on-collision — no migration) and `materialize` returns `url = <site>/p/<code>`. New route
+`app/p/[code]/page.tsx` resolves the code to the case id and redirects into `/cases/<id>`; `/p`
+is added to `PREVIEW_ROUTES` so it is reachable logged-out. The composer card, the email button,
+and the built email all use this short URL.
+
 ## Guest practice for unlisted (WhatsApp / logged-out clickers)
 So an UNREGISTERED person (e.g. from a WhatsApp group) can practise a campaign case and is
 only asked to sign in for the SCORE, unlisted cases now enable the existing guest-mode
