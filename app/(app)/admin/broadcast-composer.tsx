@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, Users, Send, User, Sparkles, Target } from 'lucide-react';
 import { previewRecipients, sendBroadcast, sendToOne, generateDailyDigest, generateBroadcastOptions, materializeBroadcastOption } from './email-actions';
-import { broadcastEmail, practiceCard } from '@/lib/email/templates';
+import { broadcastEmail, practiceCard, baseEmailLayout } from '@/lib/email/templates';
 
 type SegmentType = 'all' | 'tier' | 'activity' | 'lifecycle';
 type Mode = 'segment' | 'one';
@@ -42,6 +42,10 @@ function injectBeforeBodyClose(html: string, extra: string): string {
   if (!extra) return html;
   const i = html.toLowerCase().lastIndexOf('</body>');
   return i === -1 ? html + extra : html.slice(0, i) + extra + html.slice(i);
+}
+
+function esc(v: unknown): string {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export default function BroadcastComposer() {
@@ -163,6 +167,44 @@ export default function BroadcastComposer() {
       setTLog({ type: 'error', message: r.error || 'Could not save the option.' });
     }
     setTBusy(false);
+  };
+
+  // Assemble the picked case/guesstimate into a COMPLETE branded email (subject +
+  // intro + cards + closing), same shape as "Generate today's digest", and load it
+  // into the composer ready to preview/send. Cards are baked into the body, so they
+  // are cleared from the picker to avoid a double render.
+  const buildTargetedEmail = () => {
+    if (cards.length === 0) {
+      setTLog({ type: 'error', message: 'Add a case or guesstimate first.' });
+      return;
+    }
+    const label = tTopic.trim();
+    const cardsBlock = cards
+      .map((c) =>
+        practiceCard({
+          label: c.kind === 'guesstimate' ? 'Practice guesstimate' : 'Practice case',
+          title: c.title,
+          hook: c.hook || undefined,
+          url: c.url,
+          cta: c.kind === 'guesstimate' ? 'Practice the guesstimate' : 'Practice this case',
+        }),
+      )
+      .join('');
+    const intro = label
+      ? `<p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#1A2233;">${esc(label)} is on the radar \u2014 here\u2019s a targeted set to practise. About 10 focused minutes, and the MECE interviewer scores you at the end.</p>`
+      : `<p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#1A2233;">Here\u2019s a targeted set to practise \u2014 about 10 focused minutes, and the MECE interviewer scores you at the end.</p>`;
+    const closing = `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">Give it your best structured attempt. Good luck.</p>`;
+    const html = baseEmailLayout({
+      preheader: label ? `A ${label} case & guesstimate to practise.` : 'A targeted practice set for you.',
+      heading: label ? `Practice for ${esc(label)}` : 'Your targeted practice set',
+      contentHtml: intro + cardsBlock + closing,
+      unsubscribeUrl: '{{UNSUBSCRIBE}}',
+    });
+    setRawHtml(true);
+    setSubject(label ? `A ${label} case & guesstimate to practise` : 'Your targeted practice set');
+    setBody(html);
+    setCards([]);
+    setTLog({ type: 'success', message: 'Practice email built \u2014 preview it on the right, tweak the copy if you like, then send.' });
   };
 
   const doSend = async () => {
@@ -338,6 +380,13 @@ export default function BroadcastComposer() {
                 </button>
               </div>
             ))}
+            <Button
+              onClick={buildTargetedEmail}
+              disabled={tBusy}
+              className="mt-1 h-9 w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Mail className="h-4 w-4" /> Build the practice email
+            </Button>
           </div>
         )}
 

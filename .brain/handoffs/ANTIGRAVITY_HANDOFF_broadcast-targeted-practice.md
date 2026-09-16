@@ -25,7 +25,7 @@ Case solve UX (bank-count now skips unlisted).
 scenario/prompt, worked solution) - **nothing saved, nothing sent**. The admin picks one; it is
 saved as an **UNLISTED case** and a branded **"Practice this ->"** card is injected into the
 email body, linking to the live scored `/cases/<id>`. Then they send to a segment as normal.
-Case + guesstimate can both be added to one email (multiple cards supported).
+Case + guesstimate can both be added to one email (multiple cards supported). A **Build the practice email** button then assembles a COMPLETE branded email (subject + intro + case/guesstimate cards + closing) via `baseEmailLayout`, same shape as *Generate today's digest* - loaded into the composer ready to preview, edit and send.
 
 Because attempting a case *is* the conversational scored interview
 (`/cases/[id]` -> `ConversationalSolve` -> interview engine -> scorer), one saved option gives a
@@ -72,7 +72,7 @@ hot path.
   (admin-gated, rate-limited, `assert_daily_budget`) + `POST /broadcast/materialize` (admin-gated,
   rate-limited; no AI spend). `main.py` - router registered.
 - **Frontend:** `broadcast-composer.tsx` - "Targeted practice" panel (generate -> pick -> card),
-  cards injected into the live preview + the send path. `email-actions.ts` - `generateBroadcastOptions`
+  cards injected into the live preview + the send path, plus **Build the practice email** which produces a full branded template (subject + body) like the digest. `email-actions.ts` - `generateBroadcastOptions`
   / `materializeBroadcastOption` server actions (verify admin, forward the admin's Supabase JWT to the
   backend which re-verifies `is_admin`). `lib/email/templates.ts` - shared `practiceCard(...)`.
   `lib/types.ts` - `CaseRow.unlisted?`. `cases/[id]/page.tsx` - passes `unlisted` into the gate.
