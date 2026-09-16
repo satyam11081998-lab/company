@@ -1,6 +1,6 @@
 # ANTIGRAVITY HANDOFF — adaptive interviewer/coach (Phase 1)
 
-**STATUS: Phases 1-3 BUILT by Cowork, 2026-09-17 (FLAG-GATED OFF).** Gates: `py_compile` EXIT 0
+**STATUS: Phases 1-4 BUILT by Cowork, 2026-09-17 (FLAG-GATED OFF).** Gates: `py_compile` EXIT 0
 on all touched files; `python -m tests.test_session_signals` = 33/33 PASS; adaptive message payload
 verified against real production transcripts (no API call). NOT yet run against the live model — see
 "Before flipping the flag".
@@ -122,3 +122,45 @@ frontend: `supabase/migrations/0066_interviewer_adaptive_state.sql "components/s
 Transcript summarisation after ~12 turns (context cost); the metrics dashboard (Part 17) on /admin;
 reconcile the 0-scored engaged sessions with the validity gate; add golden eval cases as new failure
 shapes surface.
+
+---
+
+## UPDATE — Phase 4: learning-intelligence layer (flag-gated OFF)
+Moves from adaptive CONVERSATION to adaptive LEARNING. Gates: py_compile clean; `test_learning_model`
+18/18; `test_session_signals` 43/43; offline eval 8/8; learning block verified reaching the prompt.
+
+### New
+- `services/learning_model.py` (PURE) — skill+misconception taxonomy; `evaluate_intervention_outcome`
+  (did the last help land?); `update_learning_profile` (per-skill INDEPENDENCE bands = scaffolding/
+  fading, point 17); `best_modality` / `recommend_next_drill`; `build_learning_block` (minimum-
+  assistance + switch-modality-on-failure, points 8/9/16); `build_debrief` (points 27/28);
+  `merge_longitudinal_profile` (point 28). `tests/test_learning_model.py`.
+- Migration `consilio/supabase/migrations/0067_user_skill_profile.sql` — lifetime per-user skill
+  profile (service-role write, owner read). Additive, idempotent.
+
+### Modified
+- `services/interviewer_decision.py` — folds the learner model into `session_state.profile` + a
+  `last_intervention_effect`; `detect_violations` gains BEHAVIORAL declared-vs-actual checks
+  (multiple_questions, solved_when_declared_continue, revealed_full_solution_in_exam) — points 20/21.
+- `services/interview_engine.py` — injects the LEARNING SIGNALS block into the prompt each turn.
+- `prompts/interview_prompts_v2.py` — MINIMUM-ASSISTANCE objective (coached != easy), modality-switch,
+  skill/error/modality control-tag, VALID ALTERNATIVE PATHS (point 22), sanity-check + explain-why
+  coaching (points 24/25).
+- `routes/attempts.py` — submit builds the personalised debrief (`feedback_json.learning_debrief`) and
+  rolls the attempt into `user_skill_profile` (best-effort, wrapped -> never blocks a submission).
+
+breaking: **no**. Additive: `feedback_json` gains optional `learning_debrief`; `session_state` gains
+`.profile`; new `user_skill_profile` table.
+
+### Deploy delta vs Phase 2
+- Run migration **0067** alongside 0066 when enabling adaptive.
+- No new env. Behaviour still gated on `ADAPTIVE_INTERVIEWER`.
+
+### Staged next (design doc: `Claude outputs/MECE_learning_engine_phase4.md`)
+Phase 5 retrieval/teach-back + transfer tasks; Phase 6 multi-dim adaptive difficulty + assumption
+sensitivity; Phase 7 mock/training/learning modes + observability split (separate evaluator call on
+high-stakes turns); Phase 8 behavioural eval matrix; frontend debrief + "your skills" view.
+
+### Files (Phase 4, explicit adds)
+backend: `services/learning_model.py tests/test_learning_model.py services/interviewer_decision.py services/interview_engine.py prompts/interview_prompts_v2.py routes/attempts.py`
+frontend: `supabase/migrations/0067_user_skill_profile.sql`
