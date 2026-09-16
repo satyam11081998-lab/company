@@ -58,6 +58,12 @@ const VAD_MAX_UTTERANCE_MS = 15000;
  * size cap). Recycling keeps a clean container header — see the flush helpers.
  */
 const IDLE_RECYCLE_MS = 4000;
+// Coached quick-action controls for the adaptive interviewer. Public mirror of the
+// backend ADAPTIVE_INTERVIEWER flag — OFF by default, so the current experience is
+// unchanged until adaptive coaching is turned on. Each button sends a canonical phrase
+// that the backend's deterministic intent layer already classifies (hint/approach/skip).
+const COACHED_CONTROLS = process.env.NEXT_PUBLIC_ADAPTIVE_INTERVIEWER === 'true';
+
 /** Auto-grow ceiling for the composer before it starts scrolling internally. */
 const COMPOSER_MAX_PX = 240;
 import EngagingLoader from '@/components/engaging-loader';
@@ -1174,6 +1180,28 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                   <span className="shrink-0 text-micro font-medium text-primary/80">
                     {recording === 'transcribing' ? 'Finishing up…' : 'Listening — keep talking, pause to add · Enter or ✓ to finish'}
                   </span>
+                </div>
+              )}
+
+              {COACHED_CONTROLS && recording === 'idle' && (
+                <div className="mb-2 flex flex-wrap items-center gap-1.5 px-1">
+                  <span className="mr-0.5 text-micro text-muted-foreground">Stuck?</span>
+                  {[
+                    { label: 'Hint', msg: 'Can I get a hint?' },
+                    { label: 'Show approach', msg: 'Show me the approach' },
+                    { label: 'Skip', msg: "Let's skip this and move on" },
+                    { label: 'Explain', msg: 'Can you explain why this matters?' },
+                  ].map((a) => (
+                    <button
+                      key={a.label}
+                      type="button"
+                      disabled={sending || !attempt}
+                      onClick={() => send('text', a.msg)}
+                      className="rounded-full border border-border bg-card px-2.5 py-1 text-micro text-foreground/80 transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                    >
+                      {a.label}
+                    </button>
+                  ))}
                 </div>
               )}
 

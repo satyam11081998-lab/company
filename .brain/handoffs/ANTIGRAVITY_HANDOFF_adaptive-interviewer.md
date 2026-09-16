@@ -1,6 +1,6 @@
 # ANTIGRAVITY HANDOFF — adaptive interviewer/coach (Phase 1)
 
-**STATUS: BUILT by Cowork, 2026-09-17 (backend only, FLAG-GATED OFF).** Gates: `py_compile` EXIT 0
+**STATUS: Phases 1-3 BUILT by Cowork, 2026-09-17 (FLAG-GATED OFF).** Gates: `py_compile` EXIT 0
 on all touched files; `python -m tests.test_session_signals` = 33/33 PASS; adaptive message payload
 verified against real production transcripts (no API call). NOT yet run against the live model — see
 "Before flipping the flag".
@@ -64,3 +64,61 @@ notion of learner state, intent, materiality, or when to change strategy.
 
 ## Files to commit (backend, explicit adds — never `git add -A`)
 `services/session_signals.py services/interviewer_decision.py prompts/interview_prompts_v2.py tests/test_session_signals.py services/interview_engine.py`
+
+---
+
+## UPDATE — Phases 2 + 3 now built (still flag-gated OFF)
+Gates: `py_compile` EXIT 0 (7 backend files); `python -m tests.test_session_signals` = 43/43 PASS;
+`python -m tools.eval_interviewer_behavior` (OFFLINE) = 8/8 golden situations classified correctly;
+frontend `npx tsc --noEmit` EXIT 0. Live-model eval still pending (staging, needs API).
+
+### Phase 2a — two-persona bug fixed at the source
+`services/interview_engine._resolve_adaptive_llm()` — when adaptive is on, the interviewer is PINNED
+to one OpenAI model (`INTERVIEWER_ADAPTIVE_MODEL`, default gpt-4o-mini), bypassing the Groq/OpenAI
+admin toggle. The same prompt no longer ships two opposite personas. The v1 path still honours the
+toggle unchanged.
+
+### Phase 2b — persistent learner state + per-case teaching policy
+- Migration `consilio/supabase/migrations/0066_interviewer_adaptive_state.sql` — additive, idempotent:
+  `attempts.session_state jsonb default '{}'` + `cases.teaching_policy text default 'coached'`
+  (check: exam|coached). Deploy-safe in either order (reads are select("*")-safe; the write is
+  try/except -> no-op pre-migration).
+- `routes/attempts.py::post_message` now loads `session_state` + per-case `teaching_policy`, passes
+  them + a `control_out` holder into the engine, and after the turn folds the model's control tag into
+  `session_state` (hint ladder that ESCALATES on repeated stuckness and STEPS DOWN on progress; repair
+  count; mode; frustration; a light learner_level). `services/session_signals.compute_signals` takes
+  `prior_state` so the current hint rung is fed back into the prompt.
+
+### Phase 2c — deterministic guardrails + telemetry
+`services/interviewer_decision`: `StreamTagStripper` now parses the control tag; `update_session_state`
+keeps the ladder monotonic; `detect_violations` flags banned "isn't specified" phrases, rubber-stamp,
+and over-length. Streaming means we don't rewrite the live reply — violations are LOGGED
+(`[interviewer] guardrail_violation ...`) for the eval harness + metrics (Part 16/17). A buffer-then-
+check mode can be added later for hard enforcement at a latency cost.
+
+### Phase 2d — offline + live behavioural eval
+`tools/eval_interviewer_behavior.py`. OFFLINE (no API): asserts the deterministic signals classify
+every real failure situation (8/8 pass now). `--live` (staging): calls the pinned model, strips the
+tag, runs `detect_violations` + a gpt-4o-mini judge rubric, prints pass-rate. This is the release gate.
+
+### Phase 3 — coached UI controls
+`components/solve/ConversationalSolve.tsx` — a flag-gated ("Stuck?" Hint / Show approach / Skip /
+Explain) quick-action row above the composer, sending canonical phrases the intent layer classifies.
+Gated on `NEXT_PUBLIC_ADAPTIVE_INTERVIEWER === 'true'` — OFF by default, zero change to current UX.
+
+## Enable (staging) — all OFF by default
+- Backend host: `ADAPTIVE_INTERVIEWER=true`, `INTERVIEWER_ADAPTIVE_MODEL=gpt-4o-mini` (or gpt-4o to A/B),
+  `INTERVIEWER_TEACHING_POLICY=coached` (fallback; per-case `cases.teaching_policy` wins).
+- Run migration `0066_interviewer_adaptive_state.sql`.
+- Frontend (Vercel): `NEXT_PUBLIC_ADAPTIVE_INTERVIEWER=true` to show the coached controls.
+- **Then run `python -m tools.eval_interviewer_behavior --live` on staging and clear your bar before prod.**
+- Rollback = unset `ADAPTIVE_INTERVIEWER`. No deploy needed.
+
+## Files (Phases 2-3, explicit adds — never `git add -A`)
+backend: `services/session_signals.py services/interviewer_decision.py prompts/interview_prompts_v2.py services/interview_engine.py routes/attempts.py tools/eval_interviewer_behavior.py tests/test_session_signals.py`
+frontend: `supabase/migrations/0066_interviewer_adaptive_state.sql "components/solve/ConversationalSolve.tsx" .brain/handoffs/ANTIGRAVITY_HANDOFF_adaptive-interviewer.md`
+
+## Still open (Phase 4)
+Transcript summarisation after ~12 turns (context cost); the metrics dashboard (Part 17) on /admin;
+reconcile the 0-scored engaged sessions with the validity gate; add golden eval cases as new failure
+shapes surface.
