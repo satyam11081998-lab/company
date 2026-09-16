@@ -74,6 +74,8 @@ export interface CaseRow {
   content: string;
   hint: string | null;
   is_active: boolean;
+  /** Broadcast targeted-practice cases: is_active=false but attemptable by direct link (migration 0065). */
+  unlisted?: boolean | null;
   created_at: string;
   solution?: string | null;
   code?: string | null;

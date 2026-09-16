@@ -184,3 +184,33 @@ export function broadcastEmail(d: BroadcastData): string {
     unsubscribeUrl: d.unsubscribeUrl,
   });
 }
+
+
+export interface PracticeCardData {
+  label: string;   // small eyebrow, e.g. "Practice case" / "Practice guesstimate"
+  title: string;
+  hook?: string;   // one-line pull
+  url: string;     // absolute link to the live scored case
+  cta?: string;    // button label (default "Practice this")
+}
+
+/**
+ * A branded "Practice this ->" card for broadcast emails. Renders identically to
+ * the daily-digest card so a targeted case dropped into a campaign email matches
+ * the rest of the product. The link points at a live, scored /cases/<id>.
+ */
+export function practiceCard(d: PracticeCardData): string {
+  const cta = escapeHtml(d.cta || 'Practice this');
+  const hook = d.hook
+    ? `<p style="margin:0 0 12px;font-size:13px;color:${MUTED};line-height:1.5;">${escapeHtml(d.hook)}</p>`
+    : '';
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 4px;border:1px solid ${BORDER};border-radius:12px;">
+    <tr><td style="padding:18px 20px;">
+      <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${RED};">${escapeHtml(d.label)}</p>
+      <p style="margin:0 0 ${d.hook ? '4' : '12'}px;font-size:17px;font-weight:700;color:${NAVY};line-height:1.3;">${escapeHtml(d.title)}</p>
+      ${hook}
+      <a href="${d.url}" style="display:inline-block;background:${RED};color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:9px 18px;border-radius:8px;">${cta} &rarr;</a>
+    </td></tr>
+  </table>`;
+}

@@ -286,3 +286,80 @@ export async function generateDailyDigest(): Promise<{ success: boolean; subject
     return { success: false, error: e?.message || 'Could not build the digest.' };
   }
 }
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Targeted practice — company/topic-specific case or guesstimate for a broadcast.
+ * Generation + save run on the FastAPI backend (cost-metered via ai_usage_log and
+ * gated by assert_daily_budget); this action forwards the admin's Supabase JWT so
+ * the backend re-verifies is_admin. The chosen option is saved as an UNLISTED case
+ * (is_active=false, unlisted=true) — attemptable by direct link from the email and
+ * scored through the normal interview pipeline. See backend routes/broadcast.py.
+ * ─────────────────────────────────────────────────────────────────────────── */
+const BROADCAST_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+/** Verify admin AND return the caller's Supabase access token for the backend. */
+async function adminBearer(): Promise<string> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+  const { data } = await supabase.from('users').select('is_admin').eq('id', user.id).single();
+  if (!(data as Partial<UserRow>)?.is_admin) throw new Error('Forbidden: Admins only');
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error('No active session — sign in again.');
+  return token;
+}
+
+export async function generateBroadcastOptions(input: {
+  topic: string;
+  kind: 'case' | 'guesstimate';
+  difficulty: string;
+  count?: number;
+}): Promise<{ success: boolean; options?: any[]; kind?: string; error?: string }> {
+  let token: string;
+  try { token = await adminBearer(); } catch (e: any) { return { success: false, error: e?.message || 'Unauthorized' }; }
+  if (!(input.topic || '').trim()) return { success: false, error: 'Enter a company or topic to generate around.' };
+  try {
+    const res = await fetch(`${BROADCAST_API}/broadcast/generate-options`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        topic: input.topic.trim(),
+        kind: input.kind,
+        difficulty: input.difficulty,
+        count: input.count ?? 3,
+      }),
+    });
+    const data = await res.json().catch(() => ({} as any));
+    if (!res.ok) return { success: false, error: (data as any)?.detail || `Generation failed (${res.status}).` };
+    return { success: true, options: (data as any).options || [], kind: (data as any).kind };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Could not reach the generator.' };
+  }
+}
+
+export async function materializeBroadcastOption(input: {
+  option: any;
+  topic: string;
+}): Promise<{ success: boolean; case_id?: string; title?: string; type?: string; difficulty?: string; url?: string; error?: string }> {
+  let token: string;
+  try { token = await adminBearer(); } catch (e: any) { return { success: false, error: e?.message || 'Unauthorized' }; }
+  if (!input.option) return { success: false, error: 'No option selected.' };
+  try {
+    const res = await fetch(`${BROADCAST_API}/broadcast/materialize`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({ option: input.option, topic: (input.topic || '').trim() }),
+    });
+    const data = await res.json().catch(() => ({} as any));
+    if (!res.ok) return { success: false, error: (data as any)?.detail || `Save failed (${res.status}).` };
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
+    const d = data as any;
+    return { success: true, case_id: d.case_id, title: d.title, type: d.type, difficulty: d.difficulty, url: `${site}/cases/${d.case_id}` };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Could not save the option.' };
+  }
+}

@@ -3,9 +3,9 @@
 import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Users, Send, User, Sparkles } from 'lucide-react';
-import { previewRecipients, sendBroadcast, sendToOne, generateDailyDigest } from './email-actions';
-import { broadcastEmail } from '@/lib/email/templates';
+import { Mail, Users, Send, User, Sparkles, Target } from 'lucide-react';
+import { previewRecipients, sendBroadcast, sendToOne, generateDailyDigest, generateBroadcastOptions, materializeBroadcastOption } from './email-actions';
+import { broadcastEmail, practiceCard } from '@/lib/email/templates';
 
 type SegmentType = 'all' | 'tier' | 'activity' | 'lifecycle';
 type Mode = 'segment' | 'one';
@@ -34,6 +34,16 @@ const inputCls =
 const EMPTY_PREVIEW =
   '<!doctype html><html><body style="margin:0;font-family:Inter,Helvetica,Arial,sans-serif;color:#8C8A82;padding:48px 24px;text-align:center;background:#FAF9F6;">Your email preview will appear here as you type. Fill in a message on the left — or hit &ldquo;Generate today’s digest&rdquo;.</body></html>';
 
+type PracticeCardT = { kind: 'case' | 'guesstimate'; title: string; hook: string; url: string };
+
+// Insert practice-card HTML just before </body> in a full custom document; for the
+// simple heading+body path the cards are concatenated onto the body instead.
+function injectBeforeBodyClose(html: string, extra: string): string {
+  if (!extra) return html;
+  const i = html.toLowerCase().lastIndexOf('</body>');
+  return i === -1 ? html + extra : html.slice(0, i) + extra + html.slice(i);
+}
+
 export default function BroadcastComposer() {
   const [mode, setMode] = useState<Mode>('segment');
   const [oneEmail, setOneEmail] = useState('');
@@ -49,22 +59,52 @@ export default function BroadcastComposer() {
   const [busy, setBusy] = useState<'preview' | 'send' | 'digest' | null>(null);
   const [log, setLog] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Targeted practice (optional): generate a company/topic case or guesstimate,
+  // pick one, and it becomes an UNLISTED case linked from a branded card in the email.
+  const [tTopic, setTTopic] = useState('');
+  const [tKind, setTKind] = useState<'case' | 'guesstimate'>('case');
+  const [tDiff, setTDiff] = useState('medium');
+  const [tBusy, setTBusy] = useState(false);
+  const [tOptions, setTOptions] = useState<any[]>([]);
+  const [tLog, setTLog] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [cards, setCards] = useState<PracticeCardT[]>([]);
+
   // Live inbox preview — the EXACT HTML a recipient will receive, rebuilt as you
   // type (client-side, using the real email template). {{UNSUBSCRIBE}} is shown
   // as a dummy link here; it is filled in per-recipient at send time.
+  // Materialised practice cards rendered as email HTML (shared template).
+  const cardsHtml = useMemo(
+    () =>
+      cards
+        .map((c) =>
+          practiceCard({
+            label: c.kind === 'guesstimate' ? 'Practice guesstimate' : 'Practice case',
+            title: c.title,
+            hook: c.hook || undefined,
+            url: c.url,
+            cta: c.kind === 'guesstimate' ? 'Practice the guesstimate' : 'Practice this case',
+          }),
+        )
+        .join(''),
+    [cards],
+  );
+
   const previewHtml = useMemo(() => {
     const b = (body || '').trim();
-    if (!b) return EMPTY_PREVIEW;
+    if (!b && !cardsHtml) return EMPTY_PREVIEW;
     const looksFull = /^\s*<(?:!doctype|html)\b/i.test(b);
-    if (rawHtml || looksFull) return b.replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/g, '#');
+    if (rawHtml || looksFull) {
+      const doc = b.replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/g, '#');
+      return cardsHtml ? injectBeforeBodyClose(doc, cardsHtml) : doc;
+    }
     return broadcastEmail({
       heading: (heading || subject || 'Your heading').trim(),
-      bodyHtml: b.replace(/\n/g, '<br/>'),
+      bodyHtml: b.replace(/\n/g, '<br/>') + cardsHtml,
       ctaLabel: ctaLabel.trim() || undefined,
       ctaUrl: ctaUrl.trim() || undefined,
       unsubscribeUrl: '#',
     });
-  }, [body, rawHtml, heading, subject, ctaLabel, ctaUrl]);
+  }, [body, rawHtml, heading, subject, ctaLabel, ctaUrl, cardsHtml]);
 
   const onTypeChange = (t: SegmentType) => {
     setSegmentType(t);
@@ -96,14 +136,44 @@ export default function BroadcastComposer() {
     setBusy(null);
   };
 
+  const doGenerateOptions = async () => {
+    setTBusy(true);
+    setTLog(null);
+    setTOptions([]);
+    const r = await generateBroadcastOptions({ topic: tTopic, kind: tKind, difficulty: tDiff });
+    if (r.success && r.options) {
+      setTOptions(r.options);
+      if (r.options.length === 0) setTLog({ type: 'error', message: 'No options came back — try again.' });
+    } else {
+      setTLog({ type: 'error', message: r.error || 'Generation failed.' });
+    }
+    setTBusy(false);
+  };
+
+  const doUseOption = async (o: any) => {
+    setTBusy(true);
+    setTLog(null);
+    const r = await materializeBroadcastOption({ option: o, topic: tTopic });
+    if (r.success && r.url) {
+      const kind: 'case' | 'guesstimate' = o?.kind === 'guesstimate' ? 'guesstimate' : 'case';
+      setCards((prev) => [...prev, { kind, title: r.title || o.title || 'Practice', hook: o.hook || '', url: r.url! }]);
+      setTOptions([]);
+      setTLog({ type: 'success', message: `Added “${r.title || o.title}” — see it in the preview on the right.` });
+    } else {
+      setTLog({ type: 'error', message: r.error || 'Could not save the option.' });
+    }
+    setTBusy(false);
+  };
+
   const doSend = async () => {
-    if (!subject.trim() || !body.trim()) {
-      setLog({ type: 'error', message: 'Subject and message are required.' });
+    if (!subject.trim() || (!body.trim() && cards.length === 0)) {
+      setLog({ type: 'error', message: 'A subject and a message (or at least one practice card) are required.' });
       return;
     }
     const looksLikeFullDoc = /^\s*<(?:!doctype|html)\b/i.test(body);
     const useRaw = rawHtml || looksLikeFullDoc;
-    const html = useRaw ? body : body.replace(/\n/g, '<br/>');
+    let html = useRaw ? body : body.replace(/\n/g, '<br/>');
+    if (cardsHtml) html = useRaw ? injectBeforeBodyClose(html, cardsHtml) : html + cardsHtml;
 
     // ── Single recipient ──────────────────────────────────────────────────
     if (mode === 'one') {
@@ -185,6 +255,97 @@ export default function BroadcastComposer() {
         >
           <User className="h-4 w-4" /> One person
         </button>
+      </div>
+
+      {/* Targeted practice generator (optional) */}
+      <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
+        <div className="flex items-center gap-2">
+          <Target className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Targeted practice (optional)</h3>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Generate a company- or topic-specific case or guesstimate (e.g. a jewellery retailer visiting a campus). Pick
+          one and it&rsquo;s added to the email as a live &ldquo;Practice this&rdquo; card, scored through the normal interview.
+        </p>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
+          <input
+            value={tTopic}
+            onChange={(e) => setTTopic(e.target.value)}
+            placeholder="Company / topic — e.g. Titan (jewellery retail)"
+            className={inputCls}
+          />
+          <select value={tKind} onChange={(e) => setTKind(e.target.value as 'case' | 'guesstimate')} className={inputCls}>
+            <option value="case">Case</option>
+            <option value="guesstimate">Guesstimate</option>
+          </select>
+          <select value={tDiff} onChange={(e) => setTDiff(e.target.value)} className={inputCls}>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <Button variant="outline" onClick={doGenerateOptions} disabled={tBusy || !tTopic.trim()} className="h-10 gap-2 whitespace-nowrap">
+            <Sparkles className="h-4 w-4 text-primary" />
+            {tBusy && tOptions.length === 0 ? 'Generating…' : 'Generate options'}
+          </Button>
+        </div>
+
+        {tOptions.length > 0 && (
+          <div className="mt-3 grid gap-2">
+            <p className="text-xs font-medium text-muted-foreground">Pick one to add to the email:</p>
+            {tOptions.map((o, i) => (
+              <div key={i} className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{o.title}</p>
+                    {o.hook && <p className="mt-0.5 text-xs text-primary">{o.hook}</p>}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {String(o.scenario || o.prompt || '').slice(0, 200)}
+                      {String(o.scenario || o.prompt || '').length > 200 ? '…' : ''}
+                    </p>
+                    <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+                      {o.type} · {o.difficulty}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => doUseOption(o)}
+                    disabled={tBusy}
+                    className="h-8 shrink-0 gap-1 bg-primary text-primary-foreground hover:bg-primary/90 text-xs"
+                  >
+                    Use this
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {cards.length > 0 && (
+          <div className="mt-3 grid gap-1.5">
+            <p className="text-xs font-medium text-muted-foreground">In this email ({cards.length}):</p>
+            {cards.map((c, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2">
+                <span className="min-w-0 truncate text-xs text-foreground">
+                  <span className="font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">{c.kind}</span> · {c.title}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCards(cards.filter((_, j) => j !== i))}
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  aria-label="Remove card"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tLog && (
+          <div className={`mt-2 text-xs ${tLog.type === 'error' ? 'text-destructive' : 'text-green-700 dark:text-green-400'}`}>
+            {tLog.message}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -272,7 +433,7 @@ export default function BroadcastComposer() {
             )}
             <Button
               onClick={doSend}
-              disabled={busy !== null || !subject.trim() || !body.trim() || (mode === 'one' && !oneEmail.trim())}
+              disabled={busy !== null || !subject.trim() || (!body.trim() && cards.length === 0) || (mode === 'one' && !oneEmail.trim())}
               className="h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
             >
               <Send className="h-4 w-4" />

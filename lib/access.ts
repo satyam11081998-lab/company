@@ -29,9 +29,13 @@ export interface AttemptAccess {
 export async function getAttemptAccess(
   supabase: any, // server Supabase client (typed loosely to avoid generic-variance friction)
   user: UserRow | null,
-  caseRow: Pick<CaseRow, 'id' | 'type' | 'code'>,
+  caseRow: Pick<CaseRow, 'id' | 'type' | 'code' | 'unlisted'>,
 ): Promise<AttemptAccess> {
   const bucket: 'case' | 'guesstimate' = caseRow.type === 'guesstimate' ? 'guesstimate' : 'case';
+  // UNLISTED broadcast cases: attemptable by anyone with the link, regardless of tier,
+  // daily rotation, or the free/lite bank. Mirrors backend access_guard.assert_can_attempt.
+  // The SUBMIT wall still asks a guest to create an account to be scored (campaign funnel).
+  if (caseRow.unlisted) return { allowed: true, reason: 'ok', bucket, remaining: null };
   const tier = effectiveTier(user);
   if (tier === 'pro') return { allowed: true, reason: 'ok', bucket, remaining: null };
 
@@ -107,10 +111,11 @@ export async function getAttemptAccess(
       .map((r: any) => r.case_id);
     let used = 0;
     if (candidateIds.length) {
-      const { data: types } = await supabase.from('cases').select('id, type').in('id', candidateIds);
-      used = (types || []).filter(
-        (t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket,
-      ).length;
+      const { data: types } = await supabase.from('cases').select('id, type, unlisted').in('id', candidateIds);
+      // Unlisted broadcast cases are free extra practice by link — they never consume the bank.
+      used = (types || [])
+        .filter((t: any) => !t.unlisted)
+        .filter((t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket).length;
     }
     // LinkedIn follow perk (2026-07): a one-time claim permanently raises the
     // free bank by +1 case and +1 guesstimate. Authoritative twin lives in
@@ -142,10 +147,11 @@ export async function getAttemptAccess(
     .map((r: any) => r.case_id);
   let used = 0;
   if (candidateIds.length) {
-    const { data: types } = await supabase.from('cases').select('id, type').in('id', candidateIds);
-    used = (types || []).filter(
-      (t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket,
-    ).length;
+    const { data: types } = await supabase.from('cases').select('id, type, unlisted').in('id', candidateIds);
+    // Unlisted broadcast cases are free extra practice by link — they never consume the +2.
+    used = (types || [])
+      .filter((t: any) => !t.unlisted)
+      .filter((t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket).length;
   }
   const cap = bucket === 'guesstimate'
     ? (TIER_LIMITS.lite.dailyExtraGuesstimates as number)
