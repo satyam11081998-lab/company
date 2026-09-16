@@ -108,6 +108,25 @@ hot path.
   absent (`.get()` / try-except / supabase-js `{data:null}`), so a mis-ordered deploy never 500s.
 - **RLS:** the new policy is permissive (OR) and cannot restrict any existing read.
 
+## Guest practice for unlisted (WhatsApp / logged-out clickers)
+So an UNREGISTERED person (e.g. from a WhatsApp group) can practise a campaign case and is
+only asked to sign in for the SCORE, unlisted cases now enable the existing guest-mode
+(0045) start-path **regardless of the global `NEXT_PUBLIC_GUEST_MODE` flag** — scoped to
+unlisted only, so daily/other cases still require sign-in as before. Flow: logged-out visitor
+opens `/cases/<id>` (a middleware preview route) -> GuestCasePreview shows "Start the case" ->
+`ensureGuestSession(force)` mints an anonymous session -> the page re-renders into the live
+`ConversationalSolve` -> they work the whole interview -> at SUBMIT, `GuestSaveWall` (driven by
+`is_anonymous`, not the flag) asks them to create an account to see the score, converting the
+same anonymous row. Backend already allows it via the unlisted bypasses.
+- **Files (frontend):** `lib/guest.ts` (`ensureGuestSession(force=false)`),
+  `components/guest/guest-start-button.tsx` (`allowGuest` prop overrides the flag),
+  `components/guest/guest-case-preview.tsx` (unlisted -> guest-start path). Composer also now
+  shows each card's live `/cases/<id>` link (copy for WhatsApp).
+- **PREREQUISITE (infra, owner):** Supabase -> Authentication -> **enable Anonymous sign-ins**,
+  and confirm migration **0045** (guest users) is applied. Without these, the "Start the case"
+  click surfaces the diagnosable error ("turn on Anonymous sign-ins" / "has 0045 been run?").
+  No new frontend env needed — the unlisted override does not require NEXT_PUBLIC_GUEST_MODE.
+
 ## Contract note for the owner (please confirm before merge)
 This widens **C1** (cases: +`unlisted`, additive) and **C4** (two additive admin routes). Per the
 brain rules I did not edit CONTRACTS.md/STATE.md/CHANGELOG.md - bump C1 v4->v5 and add the C4 note on

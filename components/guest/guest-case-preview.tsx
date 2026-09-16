@@ -32,7 +32,10 @@ export default function GuestCasePreview({ caseRow, caseId }: { caseRow: CaseRow
   const prompt = toReadable(caseRow.content);
   // NEXT_PUBLIC_* is inlined at build time, so this is readable in a server
   // component too — no client boundary needed just to branch on the flag.
-  const guestMode = process.env.NEXT_PUBLIC_GUEST_MODE === 'true';
+  // Unlisted broadcast/WhatsApp cases are guest-practiceable on their own, even when
+  // the global guest-mode flag is off — an unregistered person can practise a campaign
+  // case and is only asked to sign in for the score.
+  const guestMode = process.env.NEXT_PUBLIC_GUEST_MODE === 'true' || !!caseRow.unlisted;
 
   return (
     <div className="min-h-screen bg-muted">
@@ -107,7 +110,7 @@ export default function GuestCasePreview({ caseRow, caseId }: { caseRow: CaseRow
                     : 'Solve it live with the interviewer and get scored on 6 dimensions.'}
                 </p>
                 <div className="mt-4">
-                  <GuestStartButton label={isGuesstimate ? 'Start solving' : 'Start the case'} />
+                  <GuestStartButton label={isGuesstimate ? 'Start solving' : 'Start the case'} allowGuest={!!caseRow.unlisted} />
                 </div>
                 <Link
                   href={`/login?next=${encodeURIComponent(next)}`}

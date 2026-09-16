@@ -31,10 +31,12 @@ export default function GuestStartButton({
   label = 'Start solving',
   className = '',
   fullWidth = true,
+  allowGuest = false,
 }: {
   label?: string;
   className?: string;
   fullWidth?: boolean;
+  allowGuest?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -43,7 +45,8 @@ export default function GuestStartButton({
 
   // Feature flag off → render nothing, so the caller's existing sign-in wall
   // remains the only path. Rollback is a env var flip, not a deploy.
-  if (!isGuestModeEnabled()) return null;
+  // allowGuest overrides the global flag for unlisted broadcast/WhatsApp cases.
+  if (!isGuestModeEnabled() && !allowGuest) return null;
 
   const busy = working || pending;
 
@@ -51,7 +54,7 @@ export default function GuestStartButton({
     setError(null);
     setWorking(true);
     try {
-      const user = await ensureGuestSession();
+      const user = await ensureGuestSession(allowGuest);
       if (!user) {
         // Guest mode flag is off — not an error, just nothing to do here.
         setError('Guest practice is not available right now. Please sign up instead.');

@@ -30,13 +30,17 @@ export function isGuestModeEnabled(): boolean {
  * Safe to call multiple times — `signInAnonymously()` is a no-op when a
  * session already exists.
  */
-export async function ensureGuestSession() {
+export async function ensureGuestSession(force = false) {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session) return session.user;
 
-  if (!isGuestModeEnabled()) return null;
+  // `force` mints a guest session even when the global flag is off — used by
+  // unlisted broadcast/WhatsApp cases, which are guest-practiceable on their own.
+  // Supabase Anonymous sign-ins must still be enabled (and migration 0045 run),
+  // or signInAnonymously below throws the diagnosable errors handled next.
+  if (!isGuestModeEnabled() && !force) return null;
 
   const captchaToken = await getCaptchaToken();
   const { data, error } = await supabase.auth.signInAnonymously(

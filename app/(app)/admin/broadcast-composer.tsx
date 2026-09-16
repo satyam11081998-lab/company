@@ -377,9 +377,12 @@ export default function BroadcastComposer() {
             <p className="text-xs font-medium text-muted-foreground">In this email ({cards.length}):</p>
             {cards.map((c, i) => (
               <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2">
-                <span className="min-w-0 truncate text-xs text-foreground">
-                  <span className="font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">{c.kind}</span> · {c.title}
-                </span>
+                <div className="min-w-0">
+                  <div className="truncate text-xs text-foreground">
+                    <span className="font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">{c.kind}</span> · {c.title}
+                  </div>
+                  <a href={c.url} target="_blank" rel="noreferrer" className="block truncate text-[11px] text-primary underline underline-offset-2" title="Open / copy this practice link (share it on WhatsApp)">{c.url}</a>
+                </div>
                 <button
                   type="button"
                   onClick={() => setCards(cards.filter((_, j) => j !== i))}
