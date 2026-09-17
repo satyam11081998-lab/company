@@ -1,17 +1,17 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-17 08:38 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-17 09:02 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-17 08:38 UTC
+**Last sync:** 2026-09-17 09:02 UTC
 
 ## Last 5 commits — frontend
+- 940f560 chore(brain): sync STATE after voice-latency (SatyamSK, 2026-09-17)
 - d54f46f perf(voice): per-turn latency instrumentation + VAD endpoint 1200->1000ms + voice-latency handoff (SatyamSK, 2026-09-17)
 - d4f148c feat(interviewer): session_state + skill-profile migrations + coached UI controls (flag-gated) (SatyamSK, 2026-09-17)
 - cad1609 feat(interviewer): session_state + teaching_policy migration + coached UI controls (flag-gated) (SatyamSK, 2026-09-17)
 - b5d4ba0 docs(brain): adaptive interviewer Phase 1 handoff (SatyamSK, 2026-09-17)
-- 5641dbd feat(broadcast): short mece.in/p links + unlisted guest practice + clean email copy (SatyamSK, 2026-09-17)
 
 ## Last 5 commits — backend
 - adc6574 feat(interviewer): adaptive learning engine (Phases 1-4) - signals, state, learner model, debrief, evals (flag-gated OFF) (SatyamSK, 2026-09-17)
