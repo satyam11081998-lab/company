@@ -124,6 +124,9 @@ export default function VoiceInterview({
   const vadRef = useRef<Vad | null>(null);
   const ttsRef = useRef<TtsQueue | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  // Voice-latency stage timers (see finishTurn). turnStart = speech end.
+  const turnStartRef = useRef(0);
+  const firstTokenRef = useRef(0);
   const chunksRef = useRef<BlobPart[]>([]);
   const phaseRef = useRef<Phase>('idle');
   const busyRef = useRef(false);
@@ -246,6 +249,10 @@ export default function VoiceInterview({
     lastActivityRef.current = performance.now();
     idleWarnedRef.current = false;
 
+    // Stage timing for voice latency — logged per turn so p50/p95 can be read
+    // off the console during QA. Server logs STT/TTS latency to ai_usage_log.
+    const tTranscript = performance.now();
+
     setPhaseSafe('thinking');
     ttsRef.current?.reset();
     let landed = false;
@@ -253,6 +260,17 @@ export default function VoiceInterview({
       landed = await onSend(text);
     } catch {
       /* the parent surfaces its own toast */
+    }
+
+    if (turnStartRef.current) {
+      const t0 = turnStartRef.current;
+      const ft = firstTokenRef.current;
+      console.log(
+        `[voice-timing] to_transcript=${Math.round(tTranscript - t0)}ms` +
+          ` first_token=${ft ? Math.round(ft - tTranscript) : '?'}ms` +
+          ` reply=${Math.round(performance.now() - tTranscript)}ms` +
+          ` total=${Math.round(performance.now() - t0)}ms`,
+      );
     }
 
     // The turn did not land. Transient causes (a dropped packet) deserve another
@@ -389,7 +407,7 @@ export default function VoiceInterview({
         },
       });
       ttsRef.current = tts;
-      registerTokenSink((chunk) => { tts.push(chunk); setLiveReply((prev) => prev + chunk); });
+      registerTokenSink((chunk) => { if (!firstTokenRef.current) firstTokenRef.current = performance.now(); tts.push(chunk); setLiveReply((prev) => prev + chunk); });
       registerDoneSink(() => { tts.flush(); setLiveReply(''); });
 
       const vad = new Vad(
@@ -419,10 +437,15 @@ export default function VoiceInterview({
           onSpeechEnd: ({ forced }) => {
             if (busyRef.current) return;
             busyRef.current = true;
+            turnStartRef.current = performance.now();
+            firstTokenRef.current = 0;
             if (forced) toast.message('That was a long answer — sending it now.');
             void finishTurn();
           },
         },
+        // Endpoint a touch snappier than the 1200ms default. NOTE: VAD timing
+        // must be confirmed by ear in a browser — too low clips thinking pauses.
+        { silenceMs: 1000 },
       );
       vadRef.current = vad;
       vad.start();
