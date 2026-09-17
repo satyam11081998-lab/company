@@ -1,20 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-12 15:16 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-17 08:38 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-12 15:16 UTC
+**Last sync:** 2026-09-17 08:38 UTC
 
 ## Last 5 commits — frontend
-- 4824a3e feat(analytics): funnel+conversions from source-of-truth tables, IST hours, exclude internal accounts; add public /feedback page (satyam-ai-cell, 2026-09-12)
-- 41b7a28 chore: legacy-peer-deps for npm install (SatyamSK, 2026-09-12)
-- 47c5a1e docs(brain): shared-folder + dual-profile workflow; move to D:\dev\mece (satyam11081998-lab, 2026-09-12)
-- dfdec49 feat: guests land on their score post-onboarding; demote warm-up; 3-approach flow; interviewer plain-text render (satyam11081998-lab, 2026-09-12)
-- 79b754a feat(results): render the 3-approach feedback block (satyam11081998-lab, 2026-09-12)
+- d54f46f perf(voice): per-turn latency instrumentation + VAD endpoint 1200->1000ms + voice-latency handoff (SatyamSK, 2026-09-17)
+- d4f148c feat(interviewer): session_state + skill-profile migrations + coached UI controls (flag-gated) (SatyamSK, 2026-09-17)
+- cad1609 feat(interviewer): session_state + teaching_policy migration + coached UI controls (flag-gated) (SatyamSK, 2026-09-17)
+- b5d4ba0 docs(brain): adaptive interviewer Phase 1 handoff (SatyamSK, 2026-09-17)
+- 5641dbd feat(broadcast): short mece.in/p links + unlisted guest practice + clean email copy (SatyamSK, 2026-09-17)
 
 ## Last 5 commits — backend
-
+- adc6574 feat(interviewer): adaptive learning engine (Phases 1-4) - signals, state, learner model, debrief, evals (flag-gated OFF) (SatyamSK, 2026-09-17)
+- 8065482 feat(interviewer): adaptive coach Phases 1-3 - signals, pinned model, persistent state, guardrails, evals (flag-gated OFF) (SatyamSK, 2026-09-17)
+- 28af05c feat(interviewer): adaptive coach Phase 1 - deterministic signals + v2 prompt (flag-gated OFF) (SatyamSK, 2026-09-17)
+- 6ee87cf feat(broadcast): targeted practice - unlisted cases + short-code links (SatyamSK, 2026-09-17)
+- 175f5df feat(broadcast): targeted practice — unlisted cases + admin generator/materialize (SatyamSK, 2026-09-17)
 
 ## Open feature branches (not merged into main)
 - (none)
