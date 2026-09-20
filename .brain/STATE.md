@@ -1,17 +1,17 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-20 17:09 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-20 17:18 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-20 17:09 UTC
+**Last sync:** 2026-09-20 17:18 UTC
 
 ## Last 5 commits — frontend
+- efcf45f feat(results): solution presentation + guest claim + Pro case figures (satyam-ai-cell, 2026-09-20)
 - a59d379 chore(brain): sync STATE after voice-latency (SatyamSK, 2026-09-17)
 - 940f560 chore(brain): sync STATE after voice-latency (SatyamSK, 2026-09-17)
 - d54f46f perf(voice): per-turn latency instrumentation + VAD endpoint 1200->1000ms + voice-latency handoff (SatyamSK, 2026-09-17)
 - d4f148c feat(interviewer): session_state + skill-profile migrations + coached UI controls (flag-gated) (SatyamSK, 2026-09-17)
-- cad1609 feat(interviewer): session_state + teaching_policy migration + coached UI controls (flag-gated) (SatyamSK, 2026-09-17)
 
 ## Last 5 commits — backend
 - be0c401 feat(figures): worked case figures as a Pro feature, split out of feedback_json (SatyamSK, 2026-09-20)
