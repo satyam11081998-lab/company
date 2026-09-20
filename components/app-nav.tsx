@@ -105,6 +105,9 @@ export default function AppNav() {
     { href: '/practice?tab=scored', label: 'Cases' },
     { href: '/practice?tab=guesstimates', label: 'Guesstimates' },
     { href: '/practice?tab=attempted', label: 'Attempted' },
+    // The scorecard was previously the only trace of a past attempt. This is
+    // the conversation behind it — see app/(app)/history.
+    { href: '/history', label: 'My conversations' },
   ];
   const GD_LINKS: NavLink[] = [
     { href: '/gd-briefs', label: 'News briefs' },

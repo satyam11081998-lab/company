@@ -55,6 +55,23 @@ export const SCORE_DIMENSION_LABELS: Record<string, string> = {
   creativity: 'Creativity',
   presence: 'Professional Tone',
 };
+/**
+ * Short axis names for the results radar.
+ *
+ * A radar axis has room for one word. The full names above are right for the
+ * scorecard bars and the tooltip, but "Synthesis & Communication" on a radar
+ * spoke either overruns the plot or gets ellipsised into something that tells
+ * the reader nothing. These are the same dimensions, named for the space.
+ */
+export const SCORE_DIMENSION_SHORT: Record<string, string> = {
+  structure: 'Structure',
+  quantitative: 'Quant',
+  synthesis: 'Synthesis',
+  business_judgment: 'Judgment',
+  creativity: 'Creativity',
+  presence: 'Presence',
+};
+
 export const SCORE_DIMENSION_MAX: Record<string, number> = {
   structure: 25,
   quantitative: 20,
@@ -83,6 +100,15 @@ export const GUESSTIMATE_DIMENSION_LABELS: Record<string, string> = {
   arithmetic: 'Arithmetic & Units',
   sanity: 'Sanity Check',
 };
+/** Short axis names for the radar — see SCORE_DIMENSION_SHORT. */
+export const GUESSTIMATE_DIMENSION_SHORT: Record<string, string> = {
+  scoping: 'Scoping',
+  structure: 'Structure',
+  segmentation: 'Segments',
+  arithmetic: 'Arithmetic',
+  sanity: 'Sanity check',
+};
+
 // each guesstimate dimension is on a 0..100 scale (was 1..5 before 2026-09-01).
 // Older stored submissions are still 1..5; the results page detects that via the
 // feedback's `scale` marker and normalises them for display.

@@ -61,6 +61,25 @@ export const TIER_LIMITS = {
     cvLabTrialUses: 2,         // CV Pointer Lab: 2 lifetime free generations
     // Talk mode. UI gate only — backend routes/speak.py enforces Pro server-side.
     voiceInterview: false,
+    // The CASE's own worked figures on the results page and the dashboard —
+    // the profit bridge, the 2x2, the driver tree the case actually decomposes
+    // into. Pro only.
+    //
+    // The line is drawn deliberately: YOUR OWN ATTEMPT stays free in full —
+    // score, radar, the marks-lost bridge, per-dimension evidence, the three
+    // approaches, your transcript. None of that was ever paid and none of it
+    // becomes paid.
+    //
+    // PRECISELY WHAT PRO BUYS: the worked FIGURES. Not "the worked answer to
+    // the case" — an earlier version of this comment said that, and it was
+    // wrong in a way that matters, because `cases.solution` (the author's
+    // prose worked solution) and `feedback_json.model_answer` (how a strong
+    // candidate would run it) both render free on the results page for every
+    // tier, and always have. Paywalling those would be taking something away;
+    // the figures are new, and they are the part that costs extra model
+    // tokens to produce. If the product ever does want the prose behind the
+    // wall, that is a separate, louder decision than this flag.
+    caseFigures: false,
   },
   lite: {
     maxReattempts: Infinity,
@@ -81,6 +100,10 @@ export const TIER_LIMITS = {
     cheatSheet: 'full' as const,
     cvLabTrialUses: 2,         // CV Pointer Lab is Pro; Lite gets the same 2-try preview
     voiceInterview: false,
+    // Lite buys VOLUME (unlimited bank, re-attempts, GD briefs). The worked
+    // case figures are a depth feature, and depth is what Pro sells — same
+    // split as Prep Copilot and the full CV Lab.
+    caseFigures: false,
   },
   pro: {
     maxReattempts: Infinity,
@@ -107,8 +130,22 @@ export const TIER_LIMITS = {
     // false would be misleading: it would say Pro lacks the entitlement, when
     // what is actually true is that nobody has the feature right now.
     voiceInterview: true,
+    caseFigures: true,
   },
 } as const;
+
+/**
+ * May this user see the CASE's worked figures?
+ *
+ * One helper, used by every call site (results page, dashboard), so the rule
+ * lives in exactly one place. Callers MUST apply it on the SERVER and withhold
+ * the data itself — not render it and hide it. A client component's props are
+ * serialised into the page payload, so anything passed down is readable in
+ * devtools whether or not it is painted.
+ */
+export function canSeeCaseFigures(user: UserRow | null): boolean {
+  return TIER_LIMITS[effectiveTier(user)].caseFigures;
+}
 
 /**
  * Friendly labels for tier display.

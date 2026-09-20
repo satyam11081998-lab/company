@@ -62,6 +62,49 @@
     --chart-4: 38 92% 46%;
     --chart-5: 40 8% 42%;
 
+    /* ── Data-visualisation palette (--viz-*) ────────────────────────────
+       SEPARATE FROM --chart-* ON PURPOSE. The --chart-* set is the brand
+       swatch list and is used elsewhere for decoration; as a CATEGORICAL
+       CHART palette it does not hold up — --chart-1 (navy, L 0.235) and
+       --chart-5 (warm gray, C 0.018) fail the lightness-band and chroma
+       floors, --chart-2 vs --chart-3 sit at ΔE 6.4 under deuteranopia (red
+       and green readers cannot separate), and none of them are redefined
+       for dark mode, so every chart currently paints near-black navy onto a
+       near-black surface.
+
+       These five are snapped to the nearest passing steps of the same brand
+       hues and verified with the palette validator: lightness band, chroma
+       floor, adjacent-pair CVD separation (protan/deutan/tritan), the
+       normal-vision floor and contrast vs the surface all PASS, in BOTH
+       modes. Slot 2 is brand crimson exactly. Assign in fixed order 1→5 and
+       never cycle — a sixth series folds into "Other".
+
+       If you change a value here, re-run the validator; do not eyeball it. */
+    --viz-1: 212 64% 40%;               /* #2563A8 brand navy, lifted to the band */
+    --viz-2: 350 85% 42%;               /* #C8102E brand crimson */
+    --viz-3: 259 44% 55%;               /* #7C5CBF */
+    --viz-4: 38 89% 36%;                /* #B0740A */
+    --viz-5: 164 72% 29%;               /* #157F63 */
+
+    /* Sequential ramp — ONE hue (brand navy), light → dark. For magnitude
+       only (a score, a share). Never use the categorical set for magnitude
+       and never a rainbow. */
+    --viz-seq-1: 212 52% 92%;
+    --viz-seq-2: 212 56% 78%;
+    --viz-seq-3: 212 60% 60%;
+    --viz-seq-4: 212 64% 42%;
+    --viz-seq-5: 214 72% 24%;
+
+    /* Status — RESERVED. Never reused as "series 4", and always shipped with
+       a label or icon so state is never carried by colour alone. */
+    --viz-good:     164 72% 29%;
+    --viz-warning:  38 89% 36%;
+    --viz-critical: 350 85% 42%;
+
+    /* The surface charts are drawn on, for axis/grid/gap calculations. */
+    --viz-surface: 40 20% 99%;
+    --viz-grid:    40 10% 88%;
+
     /* Radius — Medusa uses generous rounding */
     --radius: 0.75rem;                  /* 12px */
     --radius-sm: 0.5rem;                /* 8px */
@@ -120,6 +163,30 @@
     --card-foreground: 40 15% 92%;
     --popover:        214 40% 11%;
     --popover-foreground: 40 15% 92%;
+
+    /* ── Data-visualisation palette, dark mode ──────────────────────────
+       SELECTED, not an automatic flip of the light steps: each slot is
+       re-stepped against the dark card surface (#111b27) and re-validated.
+       Before this block existed the chart tokens were inherited from :root,
+       which painted L-0.23 navy onto a near-black background. */
+    --viz-1: 211 50% 50%;               /* #3F7CBE */
+    --viz-2: 350 68% 55%;               /* #DB4059 */
+    --viz-3: 259 48% 62%;               /* #8C6FCC */
+    --viz-4: 40 71% 42%;                /* #B5821F */
+    --viz-5: 160 58% 37%;               /* #279470 */
+
+    --viz-seq-1: 214 40% 20%;
+    --viz-seq-2: 213 44% 30%;
+    --viz-seq-3: 212 48% 42%;
+    --viz-seq-4: 211 52% 55%;
+    --viz-seq-5: 210 60% 72%;
+
+    --viz-good:     160 58% 37%;
+    --viz-warning:  40 71% 42%;
+    --viz-critical: 350 68% 55%;
+
+    --viz-surface: 214 40% 11%;
+    --viz-grid:    214 25% 22%;
 
     --navy:           214 40% 18%;
     --navy-foreground: 210 25% 92%;

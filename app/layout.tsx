@@ -10,6 +10,7 @@ import MobileDesktopBanner from '@/components/mobile-desktop-banner';
 import PwaProvider from '@/components/pwa/pwa-provider';
 import { Analytics } from "@vercel/analytics/next";
 import PageTracker from '@/components/analytics/page-tracker';
+import GuestClaimBridge from '@/components/guest/guest-claim-bridge';
 import Script from 'next/script';
 import { SITE_URL, SITE_TITLE, SITE_DESC, siteGraphJsonLd } from '@/lib/seo';
 
@@ -108,6 +109,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* <PwaProvider /> — hidden for now */}
           <Analytics />
           <PageTracker />
+          {/* Carries anonymous practice onto a real account when a guest
+              logs in to one they already had. Root-level on purpose: the
+              four login paths land on four different routes, two of them
+              after a full-page redirect. Renders nothing. */}
+          <GuestClaimBridge />
           {/* Cloudflare Turnstile — loaded ONLY when a site key is configured,
               so no third-party script reaches users until you actually turn the
               protection on. `lazyOnload` keeps it off the critical path: it is

@@ -238,10 +238,15 @@ export default function UpgradePage() {
               <ul className="space-y-3">
                 <FeatureItem text="Full Learn & Casebook library" />
                 <FeatureItem text="Today's daily case & guesstimate" />
+                {/* Named explicitly. All of this was always free and none of it
+                    is being moved behind the paywall — saying so here is what
+                    stops the new Pro figures reading as a takeaway. */}
+                <FeatureItem text="Full scored feedback — scorecard, where your marks went, the three approaches" />
+                <FeatureItem text="Every conversation you've had, kept and re-readable" />
                 <FeatureItem text="Leaderboard & badges" />
                 <FeatureItem muted text="No extra bank practice" cross />
                 <FeatureItem muted text="No re-attempts or GD briefs" cross />
-                <FeatureItem muted text="No hints or premium tools" cross />
+                <FeatureItem muted text="No worked case figures" cross />
               </ul>
               <button
                 disabled
@@ -274,6 +279,7 @@ export default function UpgradePage() {
                 <FeatureItem text="GD Briefs unlocked" />
                 <FeatureItem text="12 interviewer hints per case" />
                 <FeatureItem muted text="No bookmarks or cheat-sheet" cross />
+                <FeatureItem muted text="No worked case figures" cross />
               </ul>
               <button
                 onClick={() => handleUpgrade("lite")}
@@ -315,6 +321,7 @@ export default function UpgradePage() {
                   <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
                 </li>
+                <FeatureItem text="Worked case figures — the profit bridge, the 2×2 and the driver tree behind every case you solve, drawn from its own numbers" />
                 <FeatureItem text="Prep Copilot — agentic AI coach: finds your weak spots, generates made-for-you cases, and builds a weekly plan" />
                 <FeatureItem text="CV Pointer Lab — strict-fit resume bullet writer (free)" />
                 <FeatureItem text="Unlimited practice bank" />

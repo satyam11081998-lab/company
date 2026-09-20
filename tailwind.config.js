@@ -98,6 +98,26 @@ module.exports = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        // Validated data-viz palette — see the long note beside --viz-* in
+        // globals.css for why this is separate from `chart` above. Assign
+        // categorical slots in fixed order 1→5; never cycle.
+        viz: {
+          '1': 'hsl(var(--viz-1))',
+          '2': 'hsl(var(--viz-2))',
+          '3': 'hsl(var(--viz-3))',
+          '4': 'hsl(var(--viz-4))',
+          '5': 'hsl(var(--viz-5))',
+          seq1: 'hsl(var(--viz-seq-1))',
+          seq2: 'hsl(var(--viz-seq-2))',
+          seq3: 'hsl(var(--viz-seq-3))',
+          seq4: 'hsl(var(--viz-seq-4))',
+          seq5: 'hsl(var(--viz-seq-5))',
+          good: 'hsl(var(--viz-good))',
+          warning: 'hsl(var(--viz-warning))',
+          critical: 'hsl(var(--viz-critical))',
+          grid: 'hsl(var(--viz-grid))',
+          surface: 'hsl(var(--viz-surface))',
+        },
       },
       keyframes: {
         'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },

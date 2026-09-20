@@ -127,6 +127,14 @@ interface CaseConversation {
   difficulty: string | null;
   status: string;
   final_recommendation: string | null;
+  /** How the API found this attempt — an exact id, or a best guess. */
+  resolved_by?: 'attempt_id' | 'submission_id' | 'latest_for_user' | 'latest_for_case' | null;
+  /** How many attempts this user has on this case. > 1 with a guessed
+   *  resolution means the transcript below may belong to a different sitting. */
+  sibling_attempts?: number;
+  /** Set when this conversation was done anonymously and later claimed onto
+   *  the account (migration 0068). */
+  claimed_from?: string | null;
   messages: { role: string; kind: string; content: string | null; is_clarification: boolean; created_at: string }[];
 }
 
@@ -164,6 +172,28 @@ function CaseConversationViewer({ data }: { data: CaseConversation }) {
           </p>
         </div>
       </div>
+      {/* Provenance. An admin reading a transcript needs to know whether it is
+          definitely the right one — silently showing a neighbouring attempt is
+          worse than showing nothing. */}
+      {(data.claimed_from || (data.resolved_by && data.resolved_by !== 'attempt_id' && data.resolved_by !== 'submission_id')) && (
+        <div className="flex flex-wrap gap-1">
+          {data.claimed_from && (
+            <span className="rounded bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600">
+              solved as a guest, later claimed
+            </span>
+          )}
+          {data.resolved_by === 'latest_for_user' && (data.sibling_attempts ?? 0) > 1 && (
+            <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+              latest of {data.sibling_attempts} attempts — older event may refer to a different one
+            </span>
+          )}
+          {data.resolved_by === 'latest_for_case' && (
+            <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+              no user on this event — matched by case only
+            </span>
+          )}
+        </div>
+      )}
       <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
         {displayMessages.map((msg, i) => (
           <div key={i} className={`flex gap-2 text-xs ${msg.role === 'user' ? '' : ''}`}>
@@ -302,8 +332,16 @@ function InlineDetailViewer({ action, value, userId }: {
     setError(null);
     try {
       let url = '/api/admin/journey-detail?';
-      if ((action === 'start_case' || action === 'submit_case' || action === 'send_message' || action === 'upload_image') && value?.case_id) {
-        url += `type=case&case_id=${value.case_id}${userId ? `&user_id=${userId}` : ''}`;
+      if ((action === 'start_case' || action === 'submit_case' || action === 'send_message' || action === 'upload_image') && (value?.attempt_id || value?.case_id)) {
+        // attempt_id is EXACT and is what every solve event has carried since
+        // 0068. case_id + user_id is the legacy fallback for older events; the
+        // route resolves it to the latest attempt BY THAT USER and reports back
+        // how it resolved, so a guess is visible rather than silent.
+        const parts: string[] = ['type=case'];
+        if (value?.attempt_id) parts.push(`attempt_id=${value.attempt_id}`);
+        if (value?.case_id) parts.push(`case_id=${value.case_id}`);
+        if (userId) parts.push(`user_id=${userId}`);
+        url += parts.join('&');
       } else if (action === 'view_gd_brief' && value?.headline_id) {
         url += `type=brief&headline_id=${value.headline_id}`;
       } else if (action === 'view_results' && value?.submission_id) {
@@ -332,7 +370,7 @@ function InlineDetailViewer({ action, value, userId }: {
 
   // Only show for actions that have viewable content
   const canView = (
-    ((action === 'start_case' || action === 'submit_case' || action === 'send_message' || action === 'upload_image') && value?.case_id) ||
+    ((action === 'start_case' || action === 'submit_case' || action === 'send_message' || action === 'upload_image') && (value?.attempt_id || value?.case_id)) ||
     (action === 'view_gd_brief' && value?.headline_id) ||
     (action === 'view_results' && value?.submission_id)
   );

@@ -10,6 +10,7 @@ import type { UserRow } from '@/lib/types';
 import DashboardClient from '@/components/dashboard-client';
 import FeedbackPrompt from '@/components/feedback-prompt';
 import WarmupCard from '@/components/dashboard/warmup-card';
+import SolutionStudySection from '@/components/dashboard/solution-study-section';
 import GuestPreviewFrame from '@/components/guest/guest-preview-frame';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
 import GuestStartButton from '@/components/guest/guest-start-button';
@@ -353,6 +354,12 @@ export default async function DashboardPage() {
           <WarmupCard caseId={dailyToday.case?.id ?? null} guessId={dailyToday.guesstimate?.id ?? null} />
         </div>
       )}
+      {/* Study a solution — case decompositions + cohort stats, with the
+          attempt gate stated honestly. Renders nothing when there is nothing
+          to show, and never blocks the dashboard if it fails. */}
+      <div className="mt-6">
+        <SolutionStudySection user={userRow as UserRow | null} userId={authUser?.id ?? null} />
+      </div>
       <FeedbackPrompt completedCount={submissions.length} />
     </div>
   );

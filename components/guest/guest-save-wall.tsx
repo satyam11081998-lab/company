@@ -77,16 +77,19 @@ export default function GuestSaveWall({
       return;
     }
 
-    // IDENTITY CONFLICT. The email already belongs to a permanent account.
-    // Supabase cannot merge the two, and we deliberately do NOT re-parent the
-    // guest's rows onto the existing account: `case_attempts` carries
-    // first-attempt semantics that a merge would silently corrupt (a "first"
-    // attempt appearing twice for one case). We tell them plainly instead —
-    // silent data loss here is exactly the kind of thing that turns into a
-    // support ticket nobody can reproduce.
+    // IDENTITY CONFLICT. The email already belongs to a permanent account, and
+    // Supabase cannot merge two auth rows.
+    //
+    // This used to be where the guest's work died: we refused to re-parent it
+    // because `case_attempts` carries first-attempt semantics that a naive
+    // merge corrupts (a "first" attempt appearing twice for one case), and told
+    // them so. Migration 0068 solves that properly — claim_guest_data()
+    // renumbers the merged set chronologically — so logging in now CARRIES the
+    // work across, via GuestClaimBridge in the root layout. The copy has to say
+    // so, or people abandon here rather than lose the case they just solved.
     setState('idle');
     setError(
-      'That email already has a MECE account. Log in to it below — today’s practice won’t carry over.',
+      'That email already has a MECE account. Log in below — this session’s practice will move across to it.',
     );
   }
 
@@ -127,7 +130,9 @@ export default function GuestSaveWall({
       if (m.includes('manual linking') || m.includes('linking is disabled')) {
         setError('Account linking is not enabled yet. (Supabase: turn on Manual linking.) Use email below.');
       } else if (m.includes('already')) {
-        setError(`That ${label} account is already registered. Log in to it below — today’s practice won’t carry over.`);
+        // Same as the email path: the work is claimed onto the account they log
+        // in to (GuestClaimBridge + /api/guest/claim), so do not warn about loss.
+        setError(`That ${label} account is already registered. Log in below — this session’s practice will move across to it.`);
       } else if (m.includes('provider') && (m.includes('not enabled') || m.includes('disabled'))) {
         setError(`${label} sign-in is not enabled on this project. Use email below.`);
       } else {

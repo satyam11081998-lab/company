@@ -79,6 +79,11 @@ const FAQS = [
       'Available on Pro, the interviewer simulator runs your case the way a live interviewer would — asking follow-up questions, challenging your assumptions, and guiding you in real time, like a good mock partner.',
   },
   {
+    question: 'What are the worked case figures?',
+    answer:
+      "Every scored case gets a set of figures drawn from its own numbers \u2014 a profit bridge showing where the money actually goes, a 2\u00d72 of the levers against how controllable they are, and the driver tree a strong answer would have built. They are the worked answer to the case, so they unlock on Pro, and only for cases you have already attempted. Your own score, scorecard, where your marks went, the three approaches and your full conversation history are free on every plan.",
+  },
+  {
     question: 'What is Deck Vault?',
     answer:
       'Deck Vault is a curated collection of consulting slide templates and strategy decks. Pro subscribers get lifetime access to download and use them for case prep and presentations.',
@@ -88,6 +93,15 @@ const FAQS = [
 const FEATURES = [
   { name: 'Daily cases & guesstimates', free: '1/day', lite: '3/day', pro: 'Unlimited' },
   { name: 'Practice bank access', free: false, lite: true, pro: true },
+  // Everything about the user's OWN attempt is free and stays free. These two
+  // rows exist to make that visible on the comparison table rather than only
+  // in the Pro column — a table that lists only what is paid reads as though
+  // the free tier gets nothing, which is not true here.
+  { name: 'Scored feedback & scorecard', free: true, lite: true, pro: true },
+  { name: 'Your conversation history', free: true, lite: true, pro: true },
+  // The one paid half of the new solution view. Must stay in step with
+  // TIER_LIMITS.caseFigures in lib/tier.ts.
+  { name: "Worked case figures (profit bridge, 2\u00d72, driver tree)", free: false, lite: false, pro: true },
   { name: 'Unlimited re-attempts', free: false, lite: true, pro: true },
   { name: 'GD Briefs', free: false, lite: true, pro: true },
   // C9: this row is user-facing copy for CLARIFICATION_QUOTA and must match the
@@ -112,7 +126,7 @@ const FEATURES = [
 const productJsonLd = pricingProductJsonLd([
   { name: 'Free', description: 'Full Casebook library, daily case & guesstimate, leaderboard & badges.', price: 0 },
   { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 12 interviewer hints per case.', price: 199 },
-  { name: 'Pro', description: 'Everything in Lite plus Prep Copilot (an agentic AI coach that diagnoses your weak spots and builds a weekly plan), unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
+  { name: 'Pro', description: 'Everything in Lite plus Prep Copilot (an agentic AI coach that diagnoses your weak spots and builds a weekly plan), the worked figures behind every case you solve \u2014 profit bridge, 2\u00d72 and driver tree \u2014 unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
 ]);
 
 const faqJsonLd = faqPageJsonLd(FAQS);

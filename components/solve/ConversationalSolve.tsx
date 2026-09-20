@@ -237,7 +237,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         const summary = await startAttempt(caseId, tok);
         if (cancelled) return;
         setAttempt(summary);
-        trackAction('start_case', 'case', initialCase.title, { case_id: caseId, type: initialCase.type, difficulty: initialCase.difficulty });
+        // attempt_id makes this timeline entry resolvable to THIS conversation.
+        // Without it the admin viewer falls back to "latest attempt for this
+        // case", which shows the wrong transcript on a re-attempt.
+        trackAction('start_case', 'case', initialCase.title, { case_id: caseId, attempt_id: summary.attempt_id, type: initialCase.type, difficulty: initialCase.difficulty });
         const detail = await getAttempt(summary.attempt_id, tok);
         if (cancelled) return;
         setCaseDetail(detail.case);
@@ -368,7 +371,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       created_at: new Date().toISOString(),
     };
     setMessages((m) => [...m, optimisticUser]);
-    trackAction('send_message', 'case', kind === 'voice' ? 'Voice message' : 'Text message', { case_id: caseId });
+    trackAction('send_message', 'case', kind === 'voice' ? 'Voice message' : 'Text message', { case_id: caseId, attempt_id: attempt?.attempt_id ?? null });
     setComposer('');
     composerVoiceRef.current = false; // draft is spent — next draft starts fresh
     setSending(true);
