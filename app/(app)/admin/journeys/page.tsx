@@ -92,13 +92,46 @@ export interface ExitPage {
   count: number;
 }
 
+/** One point on the traffic trend. Views and visitors are the same measure
+ *  family and the same order of magnitude, so they share one y-axis. */
+export interface TrendPoint {
+  /** bucket start, YYYY-MM-DD (IST) */
+  date: string;
+  /** human label for the axis, e.g. "12 Sep" or "w/c 12 Sep" */
+  label: string;
+  views: number;
+  visitors: number;
+}
+
 /** Window + fetch safety caps. Events are fetched NEWEST-first then re-sorted
  *  ascending in memory, so if a cap is hit we drop the OLDEST rows in the
  *  window (never the newest), and we surface a truncation flag to the UI. */
+/** Selectable windows. `days: null` = all time.
+ *
+ *  COST NOTE: this page is a dynamic server component, so every range change is
+ *  a fresh render on Vercel's Node/Fluid budget. That is one admin, a few loads
+ *  a day — negligible — PROVIDED all-time does not pull the whole events table
+ *  into memory to aggregate. It does not: the row fetches stay capped exactly as
+ *  they are for 7 days, and the headline totals come from `count: 'exact',
+ *  head: true` (a COUNT in Postgres, no rows over the wire). Detail panels are
+ *  therefore built from the newest N events; the existing truncation banner
+ *  already says so, and it matters more the wider the window.
+ */
+const RANGES = {
+  '7d':  { days: 7,   label: 'Last 7 days' },
+  '30d': { days: 30,  label: 'Last 30 days' },
+  'all': { days: null as number | null, label: 'All time' },
+} as const;
+export type RangeKey = keyof typeof RANGES;
+
 const WINDOW_DAYS = 7;
 const PAGE_EVENTS_CAP = 20000;
 const ACTIONS_CAP = 10000;
 const SESSIONS_CAP = 1000; // sessions handed to the client (stats use all of these)
+// PostgREST returns at most 1000 rows unless a limit is given. That cap was
+// invisible while every user query was fenced to 7 days; on an all-time window
+// it would quietly stop counting at a thousand signups and report it as fact.
+const USER_ROW_CAP = 50_000;
 
 const PLACEHOLDER_EMAIL_RE = /@(seed\.mece\.in|mece-seed\.local|leaderboard\.mece\.in)$/i;
 
@@ -151,25 +184,44 @@ function istHour(iso: string): number {
   return new Date(istMs).getUTCHours();
 }
 
-export default async function AdminJourneysPage() {
+export default async function AdminJourneysPage({
+  searchParams,
+}: {
+  searchParams?: { range?: string };
+}) {
   noStore();
   const svc = createServiceClient();
 
-  const windowStart = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const rangeKey: RangeKey =
+    searchParams?.range === '30d' ? '30d' : searchParams?.range === 'all' ? 'all' : '7d';
+  const range = RANGES[rangeKey];
+
+  // null for all time. Every window filter below goes through `since()` so a
+  // null start means "no filter" rather than an invalid date silently matching
+  // nothing — the failure mode that turns an empty dashboard into a mystery.
+  const windowStart: string | null =
+    range.days === null ? null : new Date(Date.now() - range.days * 86_400_000).toISOString();
+
+  const since = <T extends { gte: (col: string, v: string) => T }>(q: T, col: string): T =>
+    windowStart ? q.gte(col, windowStart) : q;
 
   // ── Fetch recent events NEWEST-first (so a cap drops the oldest, not the
   //    newest), then sort ascending in memory for session reconstruction. ──
   const [pageRes, actionRes] = await Promise.all([
-    svc
-      .from('page_events')
-      .select('id, occurred_at, session_id, user_id, kind, path, referrer, duration_ms, device')
-      .gte('occurred_at', windowStart)
+    since(
+      svc
+        .from('page_events')
+        .select('id, occurred_at, session_id, user_id, kind, path, referrer, duration_ms, device'),
+      'occurred_at',
+    )
       .order('occurred_at', { ascending: false })
       .limit(PAGE_EVENTS_CAP),
-    svc
-      .from('user_actions')
-      .select('id, occurred_at, session_id, user_id, path, action, category, label, value, device')
-      .gte('occurred_at', windowStart)
+    since(
+      svc
+        .from('user_actions')
+        .select('id, occurred_at, session_id, user_id, path, action, category, label, value, device'),
+      'occurred_at',
+    )
       .order('occurred_at', { ascending: false })
       .limit(ACTIONS_CAP),
   ]);
@@ -310,7 +362,7 @@ export default async function AdminJourneysPage() {
   const distinctReal = async (
     table: 'case_attempts' | 'submissions',
   ): Promise<number> => {
-    const { data } = await svc.from(table).select('user_id').gte('created_at', windowStart);
+    const { data } = await since(svc.from(table).select('user_id'), 'created_at');
     const set = new Set<string>();
     for (const r of (data ?? []) as { user_id: string | null }[]) {
       if (r.user_id && keep(r.user_id)) set.add(r.user_id);
@@ -319,8 +371,12 @@ export default async function AdminJourneysPage() {
   };
 
   const [signupRows, onboardedRows, startedCount, submittedCount, paidRows] = await Promise.all([
-    svc.from('users').select('id, email, is_admin, is_demo, is_guest, created_at').gte('created_at', windowStart),
-    svc.from('users').select('id, email, is_admin, is_demo, is_guest, onboarding_completed_at').gte('onboarding_completed_at', windowStart),
+    since(svc.from('users').select('id, email, is_admin, is_demo, is_guest, created_at'), 'created_at')
+      .limit(USER_ROW_CAP),
+    since(
+      svc.from('users').select('id, email, is_admin, is_demo, is_guest, onboarding_completed_at'),
+      'onboarding_completed_at',
+    ).not('onboarding_completed_at', 'is', null).limit(USER_ROW_CAP),
     distinctReal('case_attempts'),
     distinctReal('submissions'),
     svc.from('payments').select('user_id, status, paid_at, created_at').eq('status', 'paid'),
@@ -342,7 +398,7 @@ export default async function AdminJourneysPage() {
 
   // Paid conversions inside the window (distinct real users).
   const paidUsersInWindow = new Set<string>();
-  const windowStartMs = new Date(windowStart).getTime();
+  const windowStartMs = windowStart ? new Date(windowStart).getTime() : 0;
   for (const p of (paidRows.data ?? []) as { user_id: string | null; paid_at: string | null; created_at: string }[]) {
     const when = p.paid_at ?? p.created_at;
     if (p.user_id && keep(p.user_id) && new Date(when).getTime() >= windowStartMs) paidUsersInWindow.add(p.user_id);
@@ -520,12 +576,73 @@ export default async function AdminJourneysPage() {
   // Total distinct sessions in the window (for an honest exit-% denominator).
   const totalSessionsInWindow = sessionEvents.size;
 
+  // ── Exact totals, independent of the row caps ─────────────────────
+  // `head: true` asks Postgres for a COUNT and returns no rows, so this stays
+  // cheap on an all-time window where the row fetch above is capped. It does
+  // NOT exclude internal accounts (that needs the rows) — so it is reported as
+  // "recorded", distinct from the filtered `totalViews`, rather than quietly
+  // replacing it. Two numbers that measure different things get two names.
+  const exactViewsRes = await since(
+    svc.from('page_events').select('id', { count: 'exact', head: true }).eq('kind', 'view'),
+    'occurred_at',
+  );
+  const exactViewsRecorded = exactViewsRes.count ?? null;
+
+  // ── Traffic trend ─────────────────────────────────────────────────
+  // Daily buckets up to ~60 points, weekly beyond, so all-time stays readable
+  // instead of becoming a thousand one-pixel columns.
+  const trend: TrendPoint[] = (() => {
+    const views = pageEvents.filter((e) => e.kind === 'view');
+    if (views.length === 0) return [];
+
+    const firstMs = new Date(views[0].occurred_at).getTime();
+    const startMs = windowStart ? new Date(windowStart).getTime() : firstMs;
+    const spanDays = Math.max(1, Math.ceil((Date.now() - startMs) / 86_400_000));
+    const weekly = spanDays > 60;
+    const stepMs = weekly ? 7 * 86_400_000 : 86_400_000;
+
+    // Anchor buckets to IST day starts so they line up with every other date in
+    // the product (streaks, daily_schedule, the signups chart).
+    const istDayStartMs = (ms: number) => {
+      const key = new Date(ms + 5.5 * 3600_000).toISOString().slice(0, 10);
+      return new Date(key + 'T00:00:00.000Z').getTime() - 5.5 * 3600_000;
+    };
+
+    const originMs = istDayStartMs(startMs);
+    const bucketIndex = (ms: number) => Math.floor((ms - originMs) / stepMs);
+    const lastIndex = bucketIndex(Date.now());
+
+    const byIndex = new Map<number, { views: number; visitors: Set<string> }>();
+    for (let i = 0; i <= lastIndex; i++) byIndex.set(i, { views: 0, visitors: new Set() });
+
+    for (const ev of views) {
+      const i = bucketIndex(new Date(ev.occurred_at).getTime());
+      const b = byIndex.get(i);
+      if (!b) continue;
+      b.views += 1;
+      b.visitors.add(ev.user_id ?? `anon:${ev.session_id}`);
+    }
+
+    const fmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+    return [...byIndex.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([i, b]) => {
+        const ms = originMs + i * stepMs;
+        return {
+          date: new Date(ms + 5.5 * 3600_000).toISOString().slice(0, 10),
+          label: (weekly ? 'w/c ' : '') + fmt.format(new Date(ms)),
+          views: b.views,
+          visitors: b.visitors.size,
+        };
+      });
+  })();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-foreground">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Every visitor&apos;s path through the product — signed-in and anonymous alike. Internal accounts (admin, demo, seed) are excluded. Funnel &amp; conversions are computed from source-of-truth tables. Times shown in IST. Last {WINDOW_DAYS} days.
+          Every visitor&apos;s path through the product — signed-in and anonymous alike. Internal accounts (admin, demo, seed) are excluded. Funnel &amp; conversions are computed from source-of-truth tables. Times shown in IST. {range.label}.
         </p>
       </div>
 
@@ -558,6 +675,10 @@ export default async function AdminJourneysPage() {
         totalViews={totalViews}
         paidLast7d={paidLast7d}
         totalSessionsInWindow={totalSessionsInWindow}
+        trend={trend}
+        rangeKey={rangeKey}
+        rangeLabel={range.label}
+        exactViewsRecorded={exactViewsRecorded}
       />
     </div>
   );

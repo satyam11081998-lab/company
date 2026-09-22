@@ -5,10 +5,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   UsersRound, Search, X, ShieldCheck, FlaskConical, LogOut,
-  CheckCircle2, XCircle, ChevronRight,
+  CheckCircle2, XCircle, ChevronRight, IndianRupee, AlertTriangle,
 } from 'lucide-react';
 import { getUserDetail, setDemoFlag, revokeAllSessions } from './actions';
 import type { UserDetail } from './types';
+import { formatInr, type RevenueSummary } from '@/lib/revenue';
 
 export interface AdminUserRow {
   id: string;
@@ -72,11 +73,13 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 export default function UsersAdminClient({
   users,
   signups,
+  revenue,
   truncated,
   loadError,
 }: {
   users: AdminUserRow[];
   signups: SignupBucket[];
+  revenue: RevenueSummary;
   truncated: boolean;
   loadError: string | null;
 }) {
@@ -189,6 +192,8 @@ export default function UsersAdminClient({
           Could not load users: {loadError}
         </div>
       )}
+
+      <RevenueCard revenue={revenue} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
@@ -556,5 +561,75 @@ export default function UsersAdminClient({
         </div>
       )}
     </div>
+  );
+}
+
+
+/**
+ * Money received to date.
+ *
+ * Every rupee here is backed by a Razorpay payment id that was written only
+ * after a signature check and a server-side confirmation that the payment was
+ * captured for the expected amount — see lib/revenue.ts. Subscriptions,
+ * one-off deck sales, vault access and voice-minute packs are four separate
+ * tables, and all four are counted.
+ *
+ * The opening balance is shown separately rather than folded in silently: a
+ * number you cannot decompose is a number you cannot check.
+ */
+function RevenueCard({ revenue }: { revenue: RevenueSummary }) {
+  const partial = revenue.errors.length > 0 || revenue.truncated;
+  return (
+    <Card className="p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+            <IndianRupee className="h-3.5 w-3.5 text-primary" />
+            Revenue to date
+          </p>
+          <p className="mt-1.5 text-3xl font-bold tracking-tight tabular-nums text-foreground">
+            {formatInr(revenue.totalInr)}
+          </p>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {formatInr(revenue.ledgerInr)} from{' '}
+            <b className="tabular-nums text-foreground">{revenue.paymentCount}</b>{' '}
+            verified {revenue.paymentCount === 1 ? 'payment' : 'payments'}, plus{' '}
+            {formatInr(revenue.baselineInr)} booked before this ledger started.
+          </p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Last 30 days</p>
+          <p className="mt-1.5 text-xl font-semibold tabular-nums text-foreground">
+            {formatInr(revenue.last30Inr)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
+        {revenue.streams.map((st) => (
+          <div key={st.key}>
+            <p className="text-xs text-muted-foreground">{st.label}</p>
+            <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
+              {formatInr(st.inr)}
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                ({st.count})
+              </span>
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {partial && (
+        <p className="mt-4 flex items-start gap-2 rounded-md bg-warning-soft p-3 text-xs text-foreground/90">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <span>
+            This total is a floor, not a full picture.{' '}
+            {revenue.truncated && 'One of the revenue tables hit the row cap. '}
+            {revenue.errors.length > 0 && `Could not read: ${revenue.errors.join('; ')}.`}
+          </span>
+        </p>
+      )}
+    </Card>
   );
 }

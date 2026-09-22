@@ -13,7 +13,9 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { TrendPoint } from './page';
 import { anonLabel } from '@/lib/analytics';
 import { Card } from '@/components/ui/card';
 import JourneyTimeline, { type TimelineEvent } from '@/components/admin/journey-timeline';
@@ -42,6 +44,12 @@ interface Props {
   paidLast7d?: number;
   /** Distinct sessions across the whole window — honest denominator for exit %. */
   totalSessionsInWindow?: number;
+  /** Daily (or weekly, on long windows) traffic series for the trend chart. */
+  trend?: TrendPoint[];
+  rangeKey?: '7d' | '30d' | 'all';
+  rangeLabel?: string;
+  /** COUNT(*) of view events in the window, unaffected by the row cap. */
+  exactViewsRecorded?: number | null;
 }
 
 type Tab = 'sessions' | 'users' | 'pages' | 'funnel' | 'traffic' | 'flows';
@@ -81,6 +89,7 @@ export default function JourneyDashboardClient({
   referrerBreakdown, hourlyViews, topFlows,
   recentUsers, topPages, exitPages, totalViews,
   paidLast7d, totalSessionsInWindow,
+  trend = [], rangeKey = '7d', rangeLabel = 'Last 7 days', exactViewsRecorded = null,
 }: Props) {
   const router = useRouter();
   // Keep the dashboard near real-time: the page is force-dynamic, so refreshing
@@ -188,6 +197,36 @@ export default function JourneyDashboardClient({
 
   return (
     <div className="space-y-4">
+      {/* ── Range selector ───────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2">
+        {([['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['all', 'All time']] as const).map(
+          ([key, label]) => (
+            <Link
+              key={key}
+              href={`/admin/journeys?range=${key}`}
+              scroll={false}
+              aria-current={rangeKey === key ? 'page' : undefined}
+              className={[
+                'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                rangeKey === key
+                  ? 'border-primary/40 bg-primary/5 text-primary'
+                  : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
+              ].join(' ')}
+            >
+              {label}
+            </Link>
+          ),
+        )}
+        {exactViewsRecorded !== null && (
+          <span className="ml-auto text-xs text-muted-foreground">
+            <b className="tabular-nums text-foreground">{exactViewsRecorded.toLocaleString('en-IN')}</b>{' '}
+            page views recorded in this window (all accounts)
+          </span>
+        )}
+      </div>
+
+      <TrafficTrend points={trend} rangeLabel={rangeLabel} />
+
       {/* ── Summary Tiles ────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
         {([
@@ -745,5 +784,178 @@ export default function JourneyDashboardClient({
         </div>
       )}
     </div>
+  );
+}
+
+
+/**
+ * Traffic trend — page views and distinct visitors over the selected window.
+ *
+ * One y-axis on purpose: views and visitors are the same measure family and the
+ * same order of magnitude, so a second scale would only invite a false reading
+ * of where the two lines cross. Colours are --viz-1 and --viz-2 from
+ * globals.css, in that fixed order — that pair is already documented there as
+ * validated for lightness, chroma and CVD separation in BOTH themes, so it is
+ * not re-derived here. Text stays on ink tokens; the small swatches carry
+ * identity, never the words.
+ *
+ * Buckets are daily up to ~60 points and weekly beyond, so an all-time window
+ * stays legible instead of collapsing into one-pixel columns.
+ */
+function TrafficTrend({ points, rangeLabel }: { points: TrendPoint[]; rangeLabel: string }) {
+  const [hover, setHover] = useState<number | null>(null);
+
+  const W = 1000, H = 260;
+  const PAD = { t: 16, r: 18, b: 30, l: 48 };
+  const iw = W - PAD.l - PAD.r;
+  const ih = H - PAD.t - PAD.b;
+
+  const max = Math.max(1, ...points.map((p) => Math.max(p.views, p.visitors)));
+  // A round-ish ceiling so the top gridline is a number a person would say.
+  const step = Math.pow(10, Math.max(0, Math.floor(Math.log10(max)) - 1));
+  const top = Math.ceil(max / (step * 5)) * step * 5 || 1;
+
+  const x = (i: number) => PAD.l + (points.length <= 1 ? iw / 2 : (i / (points.length - 1)) * iw);
+  const y = (v: number) => PAD.t + ih - (v / top) * ih;
+  const path = (key: 'views' | 'visitors') =>
+    points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p[key]).toFixed(1)}`).join(' ');
+
+  const totalViews = points.reduce((n, p) => n + p.views, 0);
+  const last = points.length ? points[points.length - 1] : null;
+  const active = hover !== null && points[hover] ? points[hover] : null;
+
+  // Label roughly six x-ticks whatever the bucket count, so they never collide.
+  const tickEvery = Math.max(1, Math.ceil(points.length / 6));
+
+  if (points.length === 0) {
+    return (
+      <Card className="p-6">
+        <h2 className="text-sm font-semibold text-foreground">Traffic trend</h2>
+        <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+          No page views recorded in this window.
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Traffic trend</h2>
+          <p className="text-xs text-muted-foreground">
+            {rangeLabel} · {points.length} {points[0]?.label.startsWith('w/c') ? 'weeks' : 'days'} ·{' '}
+            <b className="tabular-nums text-foreground">{totalViews.toLocaleString('en-IN')}</b> views
+          </p>
+        </div>
+        <div className="flex items-center gap-4 text-xs">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full" style={{ background: 'hsl(var(--viz-1))' }} aria-hidden="true" />
+            Page views
+          </span>
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full" style={{ background: 'hsl(var(--viz-2))' }} aria-hidden="true" />
+            Visitors
+          </span>
+        </div>
+      </div>
+
+      <div className="relative mt-3">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full"
+          style={{ height: 'clamp(180px, 26vw, 260px)' }}
+          role="img"
+          aria-label={`Traffic trend, ${rangeLabel}: ${totalViews} page views`}
+          onMouseLeave={() => setHover(null)}
+          onMouseMove={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            const px = ((e.clientX - r.left) / r.width) * W;
+            const i = Math.round(((px - PAD.l) / iw) * (points.length - 1));
+            setHover(Math.min(points.length - 1, Math.max(0, i)));
+          }}
+        >
+          {/* recessive grid + y labels */}
+          {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+            <g key={f}>
+              <line
+                x1={PAD.l} x2={W - PAD.r} y1={y(top * f)} y2={y(top * f)}
+                stroke="hsl(var(--viz-grid))" strokeWidth={1}
+              />
+              <text
+                x={PAD.l - 8} y={y(top * f) + 4} textAnchor="end"
+                className="fill-muted-foreground" style={{ fontSize: 11 }}
+              >
+                {Math.round(top * f).toLocaleString('en-IN')}
+              </text>
+            </g>
+          ))}
+
+          {/* x labels */}
+          {points.map((p, i) =>
+            i % tickEvery === 0 || i === points.length - 1 ? (
+              <text
+                key={p.date} x={x(i)} y={H - 8} textAnchor="middle"
+                className="fill-muted-foreground" style={{ fontSize: 11 }}
+              >
+                {p.label}
+              </text>
+            ) : null,
+          )}
+
+          {/* crosshair */}
+          {hover !== null && (
+            <line
+              x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={PAD.t + ih}
+              stroke="hsl(var(--border-strong))" strokeWidth={1} strokeDasharray="3 3"
+            />
+          )}
+
+          <path d={path('views')} fill="none" stroke="hsl(var(--viz-1))" strokeWidth={2}
+                strokeLinejoin="round" strokeLinecap="round" />
+          <path d={path('visitors')} fill="none" stroke="hsl(var(--viz-2))" strokeWidth={2}
+                strokeLinejoin="round" strokeLinecap="round" />
+
+          {/* endpoint emphasis — a 2px surface ring so overlapping dots stay readable */}
+          {last && (
+            <>
+              <circle cx={x(points.length - 1)} cy={y(last.views)} r={4.5}
+                      fill="hsl(var(--viz-1))" stroke="hsl(var(--card))" strokeWidth={2} />
+              <circle cx={x(points.length - 1)} cy={y(last.visitors)} r={4.5}
+                      fill="hsl(var(--viz-2))" stroke="hsl(var(--card))" strokeWidth={2} />
+            </>
+          )}
+
+          {hover !== null && points[hover] && (
+            <>
+              <circle cx={x(hover)} cy={y(points[hover].views)} r={4.5}
+                      fill="hsl(var(--viz-1))" stroke="hsl(var(--card))" strokeWidth={2} />
+              <circle cx={x(hover)} cy={y(points[hover].visitors)} r={4.5}
+                      fill="hsl(var(--viz-2))" stroke="hsl(var(--card))" strokeWidth={2} />
+            </>
+          )}
+        </svg>
+
+        {active && (
+          <div
+            className="pointer-events-none absolute top-0 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs shadow-sm"
+            style={{
+              left: `${(x(hover as number) / W) * 100}%`,
+              transform: `translateX(${(hover as number) > points.length / 2 ? '-105%' : '5%'})`,
+            }}
+          >
+            <div className="font-medium text-foreground">{active.label}</div>
+            <div className="mt-1 flex items-center gap-1.5 text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'hsl(var(--viz-1))' }} />
+              <b className="tabular-nums text-foreground">{active.views.toLocaleString('en-IN')}</b> views
+            </div>
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'hsl(var(--viz-2))' }} />
+              <b className="tabular-nums text-foreground">{active.visitors.toLocaleString('en-IN')}</b> visitors
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }

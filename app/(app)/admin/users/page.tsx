@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/service';
 import UsersAdminClient, { type AdminUserRow, type SignupBucket } from './users-admin-client';
 import { effectiveTier } from '@/lib/tier';
+import { getRevenueSummary } from '@/lib/revenue';
 
 // Admin gating happens in the parent admin layout (users.is_admin).
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,10 @@ export default async function AdminUsersPage() {
     .eq('is_guest', false)
     .order('created_at', { ascending: false })
     .limit(LIST_LIMIT);
+
+  // Money received, from Razorpay-verified rows across all four revenue tables.
+  // Read in parallel with the rest — it must never slow the user list down.
+  const revenuePromise = getRevenueSummary(svc);
 
   const { count: guestCount } = await svc
     .from('users')
@@ -127,10 +132,13 @@ export default async function AdminUsersPage() {
     if (bucket) bucket.count += 1;
   }
 
+  const revenue = await revenuePromise;
+
   return (
     <UsersAdminClient
       users={users}
       signups={buckets}
+      revenue={revenue}
       truncated={raw.length >= LIST_LIMIT}
       loadError={error?.message ?? null}
     />
