@@ -111,6 +111,11 @@ export default function AppNav() {
   ];
   const GD_LINKS: NavLink[] = [
     { href: '/gd-briefs', label: 'News briefs' },
+    // Topic Radar sits between the daily headlines and the abstract track: the
+    // propositions a panel actually puts in front of you, each tracked across a
+    // month of news. `active` is explicit so /gd-briefs/radar/* lights up Radar
+    // rather than News briefs (whose href is a prefix of it).
+    { href: '/gd-briefs/radar', label: 'Topic Radar', active: isActive('/gd-briefs/radar') },
     { href: '/gd-briefs/abstract', label: 'Abstract GD' },
   ];
   // Derived from the casebook tree, NOT hand-listed — 27 primers that would

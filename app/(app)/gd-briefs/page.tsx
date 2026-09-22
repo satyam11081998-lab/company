@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { fetchHeadlines, generateBrief } from '@/lib/api';
 import type { NewsHeadline } from '@/lib/types';
-import { Newspaper, Sparkles, ArrowRight, ExternalLink, Loader2, AlertCircle, Lock } from 'lucide-react';
+import { Newspaper, Sparkles, ArrowRight, ExternalLink, Loader2, AlertCircle, Lock, Radar } from 'lucide-react';
 import { useUser } from '@/components/user-context';
 import { createClient } from '@/lib/supabase/client';
 
@@ -107,12 +107,24 @@ export default function GdBriefsPage() {
                   : 'Browse the news free; unlimited GD briefs on Lite/Pro.')
               : 'Click any headline to generate a full GD brief.'}
           </p>
-          <Link
-            href="/gd-briefs/abstract"
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2 text-small font-semibold text-primary transition-colors hover:bg-primary/10"
-          >
-            Practice Abstract GD topics →
-          </Link>
+          {/* Two ways on from the daily headlines: the tracked topics a panel is
+              likely to actually ask (Topic Radar), and the abstract track. */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href="/gd-briefs/radar"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3.5 py-2 text-small font-semibold text-white transition-colors hover:bg-primary-hover"
+            >
+              <Radar className="h-4 w-4" />
+              Topic Radar — what they&apos;ll actually ask
+              <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-micro font-semibold">New</span>
+            </Link>
+            <Link
+              href="/gd-briefs/abstract"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2 text-small font-semibold text-primary transition-colors hover:bg-primary/10"
+            >
+              Practice Abstract GD topics →
+            </Link>
+          </div>
         </div>
 
         {locked && (
