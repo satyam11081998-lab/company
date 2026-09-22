@@ -591,10 +591,19 @@ function RevenueCard({ revenue }: { revenue: RevenueSummary }) {
             {formatInr(revenue.totalInr)}
           </p>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {formatInr(revenue.ledgerInr)} from{' '}
-            <b className="tabular-nums text-foreground">{revenue.paymentCount}</b>{' '}
-            verified {revenue.paymentCount === 1 ? 'payment' : 'payments'}, plus{' '}
-            {formatInr(revenue.baselineInr)} booked before this ledger started.
+            {revenue.paymentCount === 0 ? (
+              <>
+                No customer payments recorded yet — this is the opening balance of{' '}
+                {formatInr(revenue.baselineInr)}.
+              </>
+            ) : (
+              <>
+                {formatInr(revenue.ledgerInr)} from{' '}
+                <b className="tabular-nums text-foreground">{revenue.paymentCount}</b>{' '}
+                customer {revenue.paymentCount === 1 ? 'payment' : 'payments'}, plus{' '}
+                {formatInr(revenue.baselineInr)} booked before this ledger started.
+              </>
+            )}
           </p>
         </div>
 
@@ -606,6 +615,19 @@ function RevenueCard({ revenue }: { revenue: RevenueSummary }) {
         </div>
       </div>
 
+      {revenue.excluded.count > 0 && (
+        <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+          <b className="tabular-nums text-foreground">{formatInr(revenue.excluded.inr)}</b> across{' '}
+          {revenue.excluded.count} verified{' '}
+          {revenue.excluded.count === 1 ? 'payment is' : 'payments are'} set aside and not counted
+          {revenue.excluded.reasons.length > 0 && <> — {revenue.excluded.reasons.join(', ')}</>}. A
+          Razorpay id proves a payment happened, not that it came from a customer. If one of these was
+          a real sale, or a real sale is missing, the list lives in{' '}
+          <code className="rounded bg-muted px-1 py-0.5">lib/revenue.ts</code>.
+        </p>
+      )}
+
+      {revenue.paymentCount > 0 && (
       <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
         {revenue.streams.map((st) => (
           <div key={st.key}>
@@ -619,6 +641,7 @@ function RevenueCard({ revenue }: { revenue: RevenueSummary }) {
           </div>
         ))}
       </div>
+      )}
 
       {partial && (
         <p className="mt-4 flex items-start gap-2 rounded-md bg-warning-soft p-3 text-xs text-foreground/90">
