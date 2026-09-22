@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-22 18:25 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-22 18:46 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-22 18:25 UTC
+**Last sync:** 2026-09-22 18:46 UTC
 
 ## Last 5 commits — frontend
+- bcae17c feat(admin): verified revenue tile + 30d/all-time analytics with a traffic trend (satyam-ai-cell, 2026-09-23)
+- 9cfaafc chore(brain): sync STATE after gd-radar polish (satyam-ai-cell, 2026-09-22)
 - 646ead2 fix(gd): brand cleanup, verified numbers, 13-question drill; admin supports Gemini (satyam-ai-cell, 2026-09-22)
 - f74961a chore(brain): sync STATE after topic-radar (satyam-ai-cell, 2026-09-22)
 - d514a60 feat(gd): Topic Radar - tracked GD topics with a month-long evidence trail (satyam-ai-cell, 2026-09-22)
-- fbbd1b1 fix(tier): expire pro/lite at 4 sites that read subscription_tier raw (SatyamSK, 2026-09-22)
-- c54b8f7 chore(brain): sync STATE after solution-presentation + case-figures (satyam-ai-cell, 2026-09-20)
 
 ## Last 5 commits — backend
+- 61975a9 feat(ai): run the GD brief surface on the Gemini free tier (SatyamSK, 2026-09-22)
 - 0c35e28 feat(news): feed prober for the GD topic pipeline (SatyamSK, 2026-09-22)
 - 3e33e5b Update session_signals.py (satyam11081998-lab, 2026-09-21)
 - d0e63a0 Update learning_model.py (satyam11081998-lab, 2026-09-21)
 - 4a43edd Update interview_engine.py (satyam11081998-lab, 2026-09-21)
-- 026c70d Update interviewer_decision.py (satyam11081998-lab, 2026-09-21)
 
 ## Open feature branches (not merged into main)
 - (none)
