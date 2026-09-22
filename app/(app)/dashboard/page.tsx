@@ -7,6 +7,7 @@ import { nextAction, computeFreeQuota } from '@/lib/next-action';
 import { SCORE_DIMENSIONS, type ScoreDimension } from '@/lib/constants';
 import { GUESSTIMATE_DIMENSIONS, type GuesstimateDimension } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
+import { effectiveTier } from '@/lib/tier';
 import DashboardClient from '@/components/dashboard-client';
 import FeedbackPrompt from '@/components/feedback-prompt';
 import WarmupCard from '@/components/dashboard/warmup-card';
@@ -197,7 +198,7 @@ export default async function DashboardPage() {
     dailyToday.guesstimate?.id ?? null,
   );
 
-  const tier = userRow?.subscription_tier ?? 'free';
+  const tier = effectiveTier(userRow);
   const streak = userRow?.streak_count ?? 0;
   const points = userRow?.points ?? 0;
   const userName = (userRow?.name ?? authUser.email ?? 'there').split(' ')[0];

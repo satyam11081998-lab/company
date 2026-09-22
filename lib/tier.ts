@@ -1,6 +1,15 @@
 import type { SubscriptionTier, UserRow } from '@/lib/types';
 
 /**
+ * Minimal row shape for computing the effective tier: any object carrying
+ * the two subscription columns. Lets narrow DB selects (admin lists, quota
+ * routes) be passed without casting to the full UserRow -- the body only
+ * ever reads these two fields, and UserRow satisfies this shape, so every
+ * existing caller is unaffected.
+ */
+type TierBearingRow = Partial<Pick<UserRow, 'subscription_tier' | 'subscription_expires_at'>>;
+
+/**
  * Tier hierarchy. Higher number = more access.
  * Used for permission checks like `hasTier(user, 'lite')` which is true for lite OR pro.
  */
@@ -14,7 +23,7 @@ const TIER_LEVELS: Record<SubscriptionTier, number> = {
  * Returns true if the user's current effective tier is AT LEAST the required tier.
  * Handles expired subscriptions — if expires_at is past, user falls back to 'free'.
  */
-export function hasTier(user: UserRow | null, required: SubscriptionTier): boolean {
+export function hasTier(user: TierBearingRow | null, required: SubscriptionTier): boolean {
   if (!user) return required === 'free';
   const effective = effectiveTier(user);
   return TIER_LEVELS[effective] >= TIER_LEVELS[required];
@@ -24,7 +33,7 @@ export function hasTier(user: UserRow | null, required: SubscriptionTier): boole
  * Computes the user's actual tier right now (taking expiry into account).
  * Use this anywhere you display tier or check permissions.
  */
-export function effectiveTier(user: UserRow | null): SubscriptionTier {
+export function effectiveTier(user: TierBearingRow | null): SubscriptionTier {
   if (!user) return 'free';
   if (!user.subscription_tier || user.subscription_tier === 'free') return 'free';
   if (!user.subscription_expires_at) return user.subscription_tier;

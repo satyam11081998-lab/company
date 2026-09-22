@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { UserRow } from '@/lib/types';
+import { effectiveTier } from '@/lib/tier';
 import type { UserDetail } from './types';
 
 /**
@@ -102,7 +103,7 @@ export async function getUserDetail(
         weeklyHoursTarget: u.weekly_hours_target ?? null,
         goalText: u.goal_text ?? null,
 
-        tier: u.subscription_tier ?? 'free',
+        tier: effectiveTier(u),
         subStartedAt: u.subscription_started_at ?? null,
         subExpiresAt: u.subscription_expires_at ?? null,
         isAdmin: !!u.is_admin,

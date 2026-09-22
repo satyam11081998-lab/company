@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/service';
 import UsersAdminClient, { type AdminUserRow, type SignupBucket } from './users-admin-client';
+import { effectiveTier } from '@/lib/tier';
 
 // Admin gating happens in the parent admin layout (users.is_admin).
 export const dynamic = 'force-dynamic';
@@ -94,7 +95,7 @@ export default async function AdminUsersPage() {
     createdAt: u.created_at,
     points: u.points ?? 0,
     streak: u.streak_count ?? 0,
-    tier: u.subscription_tier ?? 'free',
+    tier: effectiveTier(u),
     expiresAt: u.subscription_expires_at ?? null,
     isAdmin: !!u.is_admin,
     isDemo: !!u.is_demo,

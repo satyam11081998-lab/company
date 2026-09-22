@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { computeFreeQuota } from '@/lib/next-action';
 import type { ReadinessSubmission } from '@/lib/readiness';
 import type { SubscriptionTier } from '@/lib/types';
+import { effectiveTier } from '@/lib/tier';
 
 // Use the service-role client when the env var is configured (production /
 // staging where SUPABASE_SERVICE_ROLE_KEY is set). In local dev that key is
@@ -142,10 +143,10 @@ async function runPost(briefId: string | undefined) {
   // ─── 3. Quota check (sync helper, correct signature) ──────────────────
   const { data: userRow } = await supabase
     .from('users')
-    .select('subscription_tier')
+    .select('subscription_tier, subscription_expires_at')
     .eq('id', user.id)
     .maybeSingle();
-  const tier: SubscriptionTier = (userRow?.subscription_tier as SubscriptionTier) ?? 'free';
+  const tier: SubscriptionTier = effectiveTier(userRow);
 
   // Pull this user's submissions so computeFreeQuota can count today's first
   // attempts. Same shape consumed everywhere else in the app.
