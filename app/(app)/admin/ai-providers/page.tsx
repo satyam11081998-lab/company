@@ -26,11 +26,16 @@ type Feature = {
   current: string;
   model: string | null;
   groq_available: boolean;
+  /** additive: per-provider key presence, so a provider with no key is shown disabled
+   *  instead of failing on click. Optional — an older backend simply omits it. */
+  available?: Record<string, boolean>;
+  gemini_available?: boolean;
 };
 
 const PROVIDER_LABEL: Record<string, string> = {
   openai: 'OpenAI',
   groq: 'Groq',
+  gemini: 'Gemini',
   google: 'Google',
   realtime: 'Realtime',
   pipeline: 'Pipeline',
@@ -40,6 +45,7 @@ const PROVIDER_LABEL: Record<string, string> = {
 const PROVIDER_NOTE: Record<string, string> = {
   openai: 'Quality baseline',
   groq: '~9× cheaper',
+  gemini: 'Free tier · no per-call cost',
   google: '~3.75× cheaper',
   realtime: 'ChatGPT-style speech-to-speech · pricier',
   pipeline: '~5× cheaper · turn-based',
@@ -165,10 +171,12 @@ export default function AiProvidersPage() {
                     )}
                     {f.providers.map((p) => {
                       const active = f.current === p;
-                      const disabled =
-                        locked ||
-                        saving === f.feature ||
-                        (p === 'groq' && !f.groq_available);
+                      // A provider with no API key on the backend is shown disabled
+                      // rather than failing on click. Falls back to the old
+                      // groq-only check when the backend predates `available`.
+                      const keyMissing =
+                        f.available ? f.available[p] === false : p === 'groq' && !f.groq_available;
+                      const disabled = locked || saving === f.feature || keyMissing;
                       return (
                         <button
                           key={p}
@@ -176,8 +184,8 @@ export default function AiProvidersPage() {
                           disabled={disabled}
                           onClick={() => !active && setProvider(f.feature, p)}
                           title={
-                            p === 'groq' && !f.groq_available
-                              ? 'GROQ_API_KEY not configured on the backend'
+                            keyMissing
+                              ? `${PROVIDER_LABEL[p] || p} has no API key configured on the backend`
                               : PROVIDER_NOTE[p]
                           }
                           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${

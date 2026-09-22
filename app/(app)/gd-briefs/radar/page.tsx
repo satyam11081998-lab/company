@@ -53,7 +53,7 @@ export default function TopicRadarPage() {
             </span>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">Topic Radar</h1>
-              <p className="mt-1 max-w-2xl text-muted-foreground">
+              <p className="mt-1 text-muted-foreground">
                 The discussions a panel is actually likely to put in front of you this season — each one
                 tracked across a month of news, so you walk in current rather than merely informed.
               </p>

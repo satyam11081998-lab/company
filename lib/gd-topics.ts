@@ -99,17 +99,6 @@ export interface GdStakeholder {
   side?: 'gain' | 'cost' | 'call';
 }
 
-/** Where a topic is in its life. Decides what a panel is most likely to ask today. */
-export type Phase = 'announced' | 'contested' | 'clarifying' | 'deciding' | 'aftermath';
-
-export const PHASES: { id: Phase; label: string; asks: string }[] = [
-  { id: 'announced',  label: 'Just announced', asks: 'What happened, and what do you make of it?' },
-  { id: 'contested',  label: 'Objections in',  asks: 'Whose side are you on?' },
-  { id: 'clarifying', label: 'Facts firming up', asks: 'Are the objections still valid, now that we know more?' },
-  { id: 'deciding',   label: 'Decision due',   asks: 'Should this happen at all?' },
-  { id: 'aftermath',  label: 'Playing out',    asks: 'Did it work? What does the data show?' },
-];
-
 export interface GdDossier {
   /** the two or three numbers the whole topic hangs on */
   hook: { value: string; label: string }[];
@@ -119,8 +108,6 @@ export interface GdDossier {
   tension: string;
   framings: string[];
 
-  phase: Phase;
-  phaseNote: string;
   /** what moved since a reader's last visit */
   changed: { tag: 'Answered' | 'New rule' | 'New front' | 'Reversal'; text: string }[];
   trail: TrailEntry[];
@@ -143,7 +130,12 @@ export interface GdDossier {
 
   quiz: GdQuiz[];
   glossary: { term: string; def: string }[];
+  /** the spoken drill */
   rehearse: string;
+  /** points a strong sixty seconds actually uses — tick them off while you speak */
+  rehearseChecklist: string[];
+  /** what a strong answer sounds like, revealed after the attempt */
+  rehearseModel: string;
 }
 
 export interface GdTopic {
@@ -184,7 +176,7 @@ const UPI_MDR: GdTopic = {
     ],
     hookCaption: 'Those two numbers sitting next to each other are the whole discussion.',
     read:
-      'From 15 October, NPCI’s framework puts a 0.4% merchant discount rate on UPI payments above ₹2,000 at large merchants, capped at ₹300 on transactions of ₹75,000 and above, with a flat ₹5 instead of the percentage in thin-margin categories such as fuel. Merchants receiving up to ₹1 lakh a month keep zero MDR, and person-to-person transfers stay free at any amount. The case for it is that free infrastructure is not free: somebody funds the uptime, the fraud systems and the security, and so far that has been banks and the exchequer. The case against is being made by the people who will pay — petrol dealers, who say they work on roughly half a per cent, plan to stop accepting UPI above ₹2,000 from 16 October, and the Retailers Association of India says acceptance should be incentivised, not taxed. The finance minister says MDR is neither a tax nor a cess. So the real question is not whether UPI is free. It is who has been paying for it, and whether moving that bill to the merchant is the cheapest way to keep the system alive.',
+      'From 15 October, NPCI’s framework puts a 0.4% merchant discount rate on UPI payments above ₹2,000 at large merchants, capped at ₹300 on transactions of ₹75,000 and above, with a flat ₹5 instead of the percentage in four named categories — railways, telecom, insurance and fuel. Merchants receiving up to ₹1 lakh a month through their UPI QR code keep zero MDR, and person-to-person transfers stay free at any amount. The case for it is that free infrastructure is not free: somebody funds the uptime, the fraud systems and the security, and so far that has been banks and the exchequer. The case against is being made by the people who will pay — petrol dealers, who say they work on roughly half a per cent, plan to stop accepting UPI above ₹2,000 from 16 October, and the Retailers Association of India says acceptance should be incentivised, not taxed. The finance minister says MDR is neither a tax nor a cess. So the real question is not whether UPI is free. It is who has been paying for it, and whether moving that bill to the merchant is the cheapest way to keep the system alive.',
     tension:
       'A payment system can be free to use, free to accept, or financially self-sustaining. It cannot be all three. India has spent six years pretending otherwise, and the bill has been sitting with banks and the taxpayer.',
     framings: [
@@ -193,9 +185,6 @@ const UPI_MDR: GdTopic = {
       '“Is zero-MDR a subsidy or a right?” — the abstract cut, where sentiment beats most candidates.',
     ],
 
-    phase: 'clarifying',
-    phaseNote:
-      'Your SIP interviews fall between this phase and the decision on 15 October. Prepare the “are the objections still valid” answer — it is the one where anybody who read only the first week of coverage will be visibly a week out of date.',
     changed: [
       {
         tag: 'Answered',
@@ -207,14 +196,14 @@ const UPI_MDR: GdTopic = {
       },
       {
         tag: 'New front',
-        text: 'Tax has entered the argument. 18% GST applies to the MDR fee itself — not to your payment — with collections estimated at about ₹5,184 crore a year. That gives the “this is not a tax” position a much harder question to answer, and almost nobody in your room will know it yet.',
+        text: 'Tax has entered the argument. Reports say 18% GST may apply to the fee itself — never to your payment — and that eligible merchants can claim input tax credit on it. Use it carefully: it is reported rather than settled, and the credit means it really only bites the merchant who cannot claim. That second half is the part nobody in your room will have.',
       },
     ],
     trail: [
       {
         when: '22 Sep', sort: '2026-09-22', label: 'New numbers',
         note: 'NPCI and government data reframe the scale of the policy — and open a tax question nobody had asked.',
-        adds: 'More than 96% of UPI merchant volume is at or below ₹2,000 and stays free · small merchant = up to ₹1 lakh a month received via UPI · 18% GST on the fee, about ₹5,184 crore a year · share of higher-value transactions up from 15.1% in FY23 to 20.1% in the June quarter of FY27.',
+        adds: 'More than 96% of UPI merchant volume is at or below ₹2,000 and stays free · small merchant = up to ₹1 lakh a month received via UPI · 18% GST reported as likely on the fee itself, not the payment, with input tax credit for merchants who can claim; one estimate puts collections near ₹5,184 crore a year · share of higher-value transactions up from 15.1% in FY23 to 20.1% in the June quarter of FY27.',
         source: 'Business Today, 22 Sep 2026',
       },
       {
@@ -305,14 +294,16 @@ const UPI_MDR: GdTopic = {
       { figure: '₹2,000', what: 'The threshold above which the fee applies', trust: 'safe', source: 'Reported widely, Sep 2026', quote: 'The UPI merchant fee applies only to transactions above ₹2,000.' },
       { figure: '15 Oct 2026', what: 'The day the framework takes effect', trust: 'safe', source: 'Reported widely, Sep 2026', quote: 'The NPCI UPI MDR framework takes effect on 15 October 2026.' },
       { figure: '>96%', what: 'Share of UPI merchant transaction volume at or below ₹2,000 — unaffected', trust: 'safe', source: 'Business Today, 22 Sep 2026', quote: 'More than 96% of UPI merchant transaction volume is at or below ₹2,000 and carries no fee (NPCI data, reported 22 September 2026).' },
-      { figure: '₹1 lakh/month', what: 'Merchants receiving up to this through UPI pay no fee', trust: 'single', source: 'Business Today, 22 Sep 2026', quote: 'Merchants receiving up to ₹1 lakh a month through UPI are not liable for the merchant fee (reported 22 September 2026).' },
-      { figure: '18% GST', what: 'Applies to the fee itself, not to the payment. About ₹5,184 crore a year estimated', trust: 'single', source: 'Business Today, 22 Sep 2026', quote: '18% GST applies to the UPI merchant fee itself — not to the transaction value — with collections estimated at about ₹5,184 crore a year (reported 22 September 2026).' },
+      { figure: '₹1 lakh/month', what: 'Received through a UPI QR code — below this a merchant pays nothing. It is an account classification by your bank or payment provider, not a GST or turnover test', trust: 'safe', source: 'Business Standard 16 Sep & Business Today 22 Sep 2026', quote: 'Merchants receiving up to ₹1 lakh a month through their UPI QR code are exempt from the merchant fee (reported September 2026).' },
+      { figure: '18% GST', what: 'Reported as likely to apply to the fee itself — never to your payment — and eligible merchants can claim input tax credit on it. Reported, not settled', trust: 'single', source: 'Business Standard & Business Today, 16–22 Sep 2026', quote: 'Reports say the UPI merchant fee may attract 18% GST — on the fee, not on the transaction — with eligible merchants able to claim input tax credit (September 2026). The finance ministry has separately said there is no GST on UPI transactions themselves.' },
+      { figure: '₹5,184 crore', what: 'One estimate of annual GST collections on the fee. A single report, and it depends on the GST treatment being settled', trust: 'estimate', source: 'Business Today, 22 Sep 2026', quote: 'One estimate puts annual GST collections on the UPI merchant fee at about ₹5,184 crore (Business Today, 22 September 2026) — a single reported estimate.' },
+      { figure: 'Free', what: 'RuPay debit card payments stay free of the fee, alongside UPI payments up to ₹2,000', trust: 'safe', source: 'SCC Online, 19 Sep 2026', quote: 'RuPay debit card payments and UPI payments up to ₹2,000 remain free of the merchant fee (reported September 2026).' },
       { figure: '15.1% → 20.1%', what: 'Share of higher-value transactions, FY23 to the June quarter of FY27 — the exempt base is shrinking', trust: 'single', source: 'Business Today, 22 Sep 2026', quote: 'The share of higher-value UPI transactions rose from 15.1% in FY23 to 20.1% in the June quarter of FY27 (reported 22 September 2026).' },
-      { figure: '₹300', what: 'Cap on the fee per transaction, for payments of ₹75,000 and above', trust: 'single', source: 'Sep 2026', quote: 'The UPI merchant fee is capped at ₹300 per transaction for payments of ₹75,000 and above.' },
-      { figure: '₹5 flat', what: 'Charged instead of the percentage in thin-margin categories such as fuel', trust: 'single', source: 'Medianama, Sep 2026', quote: 'Thin-margin categories such as fuel face a flat ₹5 charge rather than 0.4% on UPI payments above ₹2,000.' },
+      { figure: '₹300', what: 'Hard cap on the fee for any single payment. It only starts to bite at ₹75,000, because 0.4% of ₹75,000 is exactly ₹300 — the cap is arithmetic, not a separate rule', trust: 'safe', source: 'SCC Online & others, Sep 2026', quote: 'The UPI merchant fee is capped at ₹300 on any single payment, which begins to bind at ₹75,000 (reported September 2026).' },
+      { figure: '₹5 flat', what: 'Charged instead of the 0.4% in four named categories: railways, telecom, insurance and fuel', trust: 'safe', source: 'Business Standard & Medianama, 16–19 Sep 2026', quote: 'Railways, telecom, insurance and fuel face a flat ₹5 charge rather than 0.4% on UPI payments above ₹2,000 (reported September 2026).' },
       { figure: 'Zero', what: 'Fee on person-to-person transfers, at any amount', trust: 'safe', source: 'Reported widely, Sep 2026', quote: 'Person-to-person UPI transfers remain free at any amount.' },
       { figure: '~0.5%', what: 'Petrol pump operating margin, as stated by the dealers’ association', trust: 'estimate', source: 'MP Petroleum Dealers Association, via Medianama', quote: 'The Madhya Pradesh Petroleum Dealers Association says petrol pumps work on margins of roughly 0.5%.' },
-      { figure: '₹17,700/mo', what: 'Loss per pump the dealers’ association estimates, from about ₹590 a day', trust: 'estimate', source: 'Ajay Singh, MP Petroleum Dealers Association', quote: 'The MP Petroleum Dealers Association estimates a loss of about ₹590 a day, roughly ₹17,700 a month, per pump — an association estimate, not a measured figure.' },
+      { figure: '₹17,700/mo', what: 'Loss per pump the dealers’ association estimates — about ₹590 a day over roughly 100 payments above ₹2,000. Check the arithmetic: ₹590 ÷ 100 = ₹5.90, which is the flat ₹5 plus 18% GST. Their figure already assumes the fuel carve-out AND the tax', trust: 'estimate', source: 'Ajay Singh, MP Petroleum Dealers Association, via Medianama', quote: 'The MP Petroleum Dealers Association estimates about ₹590 a day, roughly ₹17,700 a month, per pump — which works out to ₹5.90 per transaction, i.e. the flat ₹5 plus 18% GST (association estimate, September 2026).' },
       { figure: '60 million', what: 'Merchants accepting digital payments in India, about 90% of them small', trust: 'estimate', source: 'Payments Council of India, cited Mar 2025', quote: 'The Payments Council of India puts the number of merchants accepting digital payments at about 60 million, roughly 90% of them small (cited March 2025).' },
     ],
     missing: [
@@ -347,13 +338,13 @@ const UPI_MDR: GdTopic = {
         who: 'The finance minister: this is not a tax',
         attrib: 'Nirmala Sitharaman',
         argument: 'The fee is neither a tax nor a cess. Nothing accrues to government; it funds the rails. The 2025 assurance was that the government would not levy a charge on UPI, and it has not — a network operator setting a merchant fee is a different thing, and conflating the two is sloppy.',
-        weak: '18% GST applies to the fee, with collections estimated at about ₹5,184 crore a year. Something does accrue to government. A merchant ₹17,700 a month worse off will not feel the distinction either, and the line between a levy and a framework is thinner than the phrasing suggests.',
+        weak: 'Reports say 18% GST may apply to the fee, so something does accrue to government — though a merchant who can claim input tax credit recovers it, which blunts the point. Where it truly lands is the merchant who cannot claim: the small and unregistered, the people the exemption was written to protect. And a merchant ₹17,700 a month worse off will not feel the levy-versus-framework distinction either.',
       },
       {
         who: 'Fuel dealers: 0.4% of a 0.5% margin is most of the business',
         attrib: 'Ajay Singh, MP Petroleum Dealers Association',
         argument: 'A percentage fee on a business that keeps half a per cent is not a cost of acceptance, it is a claim on the margin itself. Pumps are already exempt from the fee on cards — so the same sale is free on one rail and charged on another, and the cheaper rail is the one being penalised. Refusing UPI above ₹2,000 is the only lever a dealer has.',
-        weak: 'The flat ₹5 exists precisely for this, and ₹5 on a ₹2,000 fill is a quarter of a per cent, not 0.4%. The ₹17,700 figure is also the association’s own estimate of its own loss, which is the weakest kind of number in any argument.',
+        weak: 'Not that the flat fee answers it — do the arithmetic and their ₹590 a day over ~100 payments is ₹5.90 each, which is the ₹5 plus GST, so they have already allowed for the carve-out. The real weakness is scale: ₹5.90 on a ₹2,000 fill is about 0.3%, and against a 0.5% margin that is roughly 60% of the margin on that one sale — painful, but it falls fast as the ticket rises (on a ₹5,000 fill it is about 0.12%, under a quarter of the margin). So the honest claim is “most of the margin on our smallest qualifying sales”, not “most of the business”. And it is still their own estimate of their own loss.',
       },
       {
         who: 'Organised retail: you do not tax the behaviour you spent a decade building',
@@ -378,8 +369,8 @@ const UPI_MDR: GdTopic = {
       {
         name: 'Percentage fees versus flat fees on thin margins',
         idea: 'A percentage fee scales with the value of the sale; a flat fee scales with the number of sales. Which is fair depends entirely on whether the merchant’s margin is a percentage of value or a fixed amount per sale.',
-        applied: 'Fuel is the clearest case in the Indian economy: value per sale is high, margin per sale is thin and roughly fixed, so a percentage fee eats the margin while a flat fee does not. That is why fuel is carved out at ₹5 — and why the dealers’ objection survives the carve-out only if ₹5 is still large against margin per sale. This is the one place in the discussion where doing the arithmetic out loud wins the room.',
-        say: 'The fight is not about 0.4%, it is about percentage versus flat. On a ₹2,000 fill, ₹5 is a quarter of a per cent and survivable; 0.4% on a half-per-cent margin is most of the business. The design question the framework got right for fuel is the one it has not answered for pharmacy, grocery or travel.',
+        applied: 'Fuel is the clearest case in the Indian economy: value per sale is high, margin per sale is thin and roughly fixed, so a percentage fee eats the margin while a flat fee does not. That is why railways, telecom, insurance and fuel are carved out at ₹5. But the carve-out does not settle it, and the dealers’ own number shows why: their ₹590 a day across about 100 payments is ₹5.90 each — the ₹5 plus GST. On a ₹2,000 fill that is roughly 0.3%, which is most of a half-per-cent margin on that sale; on a ₹5,000 fill it is about 0.12%, which is not. A flat fee is regressive in ticket size, and that is the sentence that wins the room.',
+        say: 'The fight is not about 0.4%, it is about percentage versus flat — and the flat fee is not automatically the kind answer. With GST the ₹5 is about ₹5.90, which on a ₹2,000 fill is roughly 0.3%, against a margin of about half a per cent. It only becomes generous as the ticket grows. The framework got the shape right for fuel and has not answered it at all for pharmacy, grocery or travel.',
       },
       {
         name: 'Bright lines get gamed — say so before it happens',
@@ -411,8 +402,8 @@ const UPI_MDR: GdTopic = {
       },
       {
         when: 'Nobody has mentioned the tax angle — and they won’t have',
-        say: '“One thing worth adding: 18% GST applies to this fee, with collections estimated at about ₹5,184 crore a year. So the claim that nothing accrues to government is not quite right, and that changes how we should read the ‘this is not a tax’ defence.”',
-        why: 'Six days old, almost nobody will have it, and it lands on the weakest joint in the strongest position. This is the single highest-value sentence in the brief.',
+        say: '“One thing worth adding: reports suggest 18% GST may apply to this fee — on the fee, not on the payment — and that merchants can claim input tax credit on it. So it is not simply a tax grab. But the credit is only worth something to a merchant who can claim it, which means the cost lands hardest on exactly the small and unregistered merchants the exemption was written for.”',
+        why: 'Almost nobody will have this, and it is stronger for being fair: you concede the obvious rebuttal before it is made, then show where the argument genuinely survives. Say “reports suggest” — the treatment is not settled.',
       },
       {
         when: 'The traps — what most of the room will get wrong',
@@ -477,6 +468,95 @@ const UPI_MDR: GdTopic = {
         right: 3,
         why: 'It is the dealers’ association’s own estimate of its own loss — the most quotable and least verified number in the story. Say “the dealers’ association puts it at” and the same sentence becomes an asset instead of a liability.',
       },
+      {
+        q: 'What is the most a merchant can be charged on one payment?',
+        options: ['There is no cap', '₹300', '₹1,000', '0.4%, uncapped'],
+        right: 1,
+        why: 'Capped at ₹300. Worth knowing why that number: 0.4% of ₹75,000 is exactly ₹300, so the cap only starts to bind above ₹75,000. It is arithmetic, not a separate rule — and saying that shows you read the framework rather than a summary of it.',
+      },
+      {
+        q: 'Which categories pay a flat ₹5 instead of the 0.4%?',
+        options: [
+          'Only fuel',
+          'Railways, telecom, insurance and fuel',
+          'Groceries and pharmacies',
+          'Anything sold by a small merchant',
+        ],
+        right: 1,
+        why: 'Four named categories. The common version of this answer is “fuel”, because fuel is the one making noise — but the carve-out is broader, and knowing the full list is what lets you ask the better question: why these four and not pharmacy or grocery?',
+      },
+      {
+        q: 'A shop receives ₹80,000 a month through its UPI QR code. Does it pay the fee?',
+        options: [
+          'Yes, on everything above ₹2,000',
+          'No — it is under the ₹1 lakh a month line',
+          'Only if it is GST-registered',
+          'Only if it is a chain',
+        ],
+        right: 1,
+        why: 'The exemption runs to ₹1 lakh a month received through a UPI QR code, and it is an account classification your bank or payment provider applies — not a GST or turnover test. Most people in the room will assume “small” means “not a chain”.',
+      },
+      {
+        q: 'Does 18% GST apply to your UPI payment?',
+        options: [
+          'Yes, on payments above ₹2,000',
+          'No — reports say it may apply to the merchant fee itself, and merchants may be able to claim input tax credit on it',
+          'Yes, on all UPI payments',
+          'No, GST never touches payments in any form',
+        ],
+        right: 1,
+        why: 'The distinction matters and it is easy to get wrong in public. The GST that is being reported applies to the fee, not to the transaction — the finance ministry has separately said there is no GST on UPI transactions. And because eligible merchants can claim input tax credit, the tax argument only really bites for merchants who cannot claim.',
+      },
+      {
+        q: 'Which of these is reported but not yet settled?',
+        options: [
+          'The 0.4% rate',
+          'The 15 October start date',
+          'The GST treatment of the fee',
+          'That person-to-person payments stay free',
+        ],
+        right: 2,
+        why: 'The rate, the date and the person-to-person exemption are carried by several newsrooms. The GST treatment is reported as something that “may” apply. If you use it, say “reports suggest” — the gap between those two phrasings is the whole difference between sounding careful and sounding caught out.',
+      },
+      {
+        q: 'The dealers say ₹590 a day over about 100 payments. What does that per-transaction number tell you?',
+        options: [
+          'They are being charged 0.4% like everyone else',
+          'It is ₹5.90 each — the flat ₹5 plus 18% GST, so their estimate already allows for the fuel carve-out',
+          'They have miscalculated',
+          'It includes the ₹300 cap',
+        ],
+        right: 1,
+        why: 'Divide before you argue. ₹590 ÷ 100 = ₹5.90, and ₹5 × 1.18 = ₹5.90. The usual rebuttal — “but fuel gets a flat ₹5” — is already priced into their number, so anyone who reaches for it has not checked. The argument that does work is about scale: ₹5.90 on a ₹2,000 fill is roughly 0.3% against a half-per-cent margin, and it falls fast as the ticket grows.',
+      },
+      {
+        q: 'What is the fuel dealers’ strongest argument — not their loudest one?',
+        options: [
+          'That they will lose about ₹17,700 a month',
+          'That petrol pumps are already exempt from the fee on card payments, so the cheaper rail is the one being penalised',
+          'That UPI should always be free',
+          'That customers will be angry',
+        ],
+        right: 1,
+        why: 'The ₹17,700 is their own estimate and the easiest thing to attack. The card exemption is a fact about existing policy, and it exposes a genuine inconsistency — the same sale is free on one rail and charged on another. Always find the version of an argument that does not depend on the arguer.',
+      },
+      {
+        q: 'Do RuPay debit card payments carry the fee?',
+        options: ['Yes, above ₹2,000', 'No — they stay free', 'Only at large merchants', 'Only for fuel'],
+        right: 1,
+        why: 'They stay free, alongside UPI payments up to ₹2,000. It is a small fact that does real work: it shows the policy is about one rail above one size, not about digital payments in general — which is the correction you will need when someone says India is taxing digital payments.',
+      },
+      {
+        q: 'One month after it starts, what single piece of data would tell you whether it worked?',
+        options: [
+          'Total UPI transaction volume',
+          'The number of merchants complaining',
+          'Whether payment values start bunching just below ₹2,000',
+          'The share price of payment companies',
+        ],
+        right: 2,
+        why: 'Any bright line gets gamed, and this one is trivially easy to game — split the bill, tap twice. If there is a spike at ₹1,999, the framework has added friction without funding anything. Naming the metric before the data exists is the most senior-sounding move available on this topic.',
+      },
     ],
     glossary: [
       { term: 'MDR (merchant discount rate)', def: 'The fee a merchant pays to accept a digital payment, usually a percentage of the sale, shared between the bank that serves the merchant, the bank that holds the customer’s account, and the network.' },
@@ -487,6 +567,18 @@ const UPI_MDR: GdTopic = {
     ],
     rehearse:
       'Large merchants should pay a fee to accept UPI. Argue for or against in sixty seconds, and end by naming what your position costs.',
+    rehearseChecklist: [
+      'Got a fact in within the first ten seconds — the rate, the threshold or the date',
+      'Said who actually pays, before anyone could get it wrong',
+      'Named the scale: it touches under 4% of merchant volume',
+      'Used the reframe — the cost existed already, this moves who carries it',
+      'Attributed at least one number to whoever said it',
+      'Took a side out loud, rather than surveying both',
+      'Named what your own position costs',
+      'Finished inside sixty seconds without rushing the last line',
+    ],
+    rehearseModel:
+      'From 15 October a large merchant pays 0.4% on UPI payments above ₹2,000 — capped at ₹300, and nothing at all for merchants under ₹1 lakh a month or on money you send a person. NPCI puts that at under 4% of merchant volume. I would support it, and I would start by saying the cost was never zero: banks and the exchequer have been carrying it since 2020, and this moves the bill rather than creating it. The objection I take seriously is the fuel dealers’ — not their ₹17,700 estimate, which is their own, but the fact that pumps are already exempt from the fee on cards, so the cheaper rail is the one being charged. What my position costs is this: it bites hardest where margins are thin, which is why the flat-fee design matters more than the rate. And I would watch for bunching at ₹1,999 in November — if that appears, we have added friction without funding anything.',
   },
 };
 

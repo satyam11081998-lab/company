@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { useUser } from '@/components/user-context';
 import { AddToCheatSheetButton } from '@/components/cheat-sheet/add-to-cheat-sheet-button';
-import { getTopic, PHASES, TRUST_COPY, type GdTopic, type TrailEntry, type GdQuiz } from '@/lib/gd-topics';
+import { getTopic, TRUST_COPY, type GdTopic, type TrailEntry, type GdQuiz } from '@/lib/gd-topics';
 import { domainMeta } from '@/lib/cheat-domains';
 import {
   ArrowLeft, ArrowRight, Lock, Flame, Pin, CalendarClock, Sparkles,
@@ -57,9 +57,6 @@ export default function TopicBriefPage() {
       </div>
     );
   }
-  const d = topic.dossier;
-  const phase = PHASES.find((p) => p.id === d.phase);
-  const phaseIndex = PHASES.findIndex((p) => p.id === d.phase);
 
   return (
     <div className="min-h-screen bg-muted">
@@ -99,47 +96,10 @@ export default function TopicBriefPage() {
           <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight tracking-tight text-foreground">
             {topic.proposition}
           </h1>
-          <p className="mt-3 max-w-3xl text-body leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-body leading-relaxed text-muted-foreground">
             {topic.standfirst}
           </p>
         </div>
-
-        {/* ── Where this stands ──────────────────────────────── */}
-        <Card className="mt-6 p-6 animate-slide-up">
-          <SectionLabel icon={<CalendarClock className="h-4 w-4" />}>Where this stands right now</SectionLabel>
-          <p className="mt-2 max-w-3xl text-small text-muted-foreground">
-            A topic gets asked differently depending on how far it has travelled. This is where it has got to,
-            and the question a panel is most likely to put to you today.
-          </p>
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {PHASES.map((p, i) => {
-              const done = i < phaseIndex;
-              const now = i === phaseIndex;
-              return (
-                <div
-                  key={p.id}
-                  className={[
-                    'rounded-lg border p-3 transition-colors',
-                    now ? 'border-primary bg-accent' : 'border-border bg-card',
-                    done ? 'opacity-60' : '',
-                  ].join(' ')}
-                >
-                  <div className={['text-label', now ? 'text-primary' : 'text-muted-foreground'].join(' ')}>
-                    {p.label}
-                  </div>
-                  <p className={['mt-1.5 text-small leading-snug', now ? 'text-foreground' : 'text-muted-foreground'].join(' ')}>
-                    {p.asks}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-          {phase ? (
-            <p className="mt-4 border-t border-border pt-3 text-small text-muted-foreground">{d.phaseNote}</p>
-          ) : null}
-        </Card>
 
         {/* ── Tabs ───────────────────────────────────────────── */}
         <div className="sticky top-14 z-10 -mx-6 mt-6 border-b border-border bg-muted px-6 md:top-16">
@@ -222,7 +182,7 @@ function ReadPanel({ topic }: { topic: GdTopic }) {
   const d = topic.dossier!;
   return (
     <div className="space-y-5">
-      <Card className="border-l-[3px] border-l-primary p-6 animate-slide-up">
+      <Card className="p-6 animate-slide-up">
         <div className="grid gap-6 sm:grid-cols-[auto_1fr]">
           <div className="shrink-0">
             {d.hook.map((h) => (
@@ -233,18 +193,18 @@ function ReadPanel({ topic }: { topic: GdTopic }) {
                 <div className="text-small text-muted-foreground">{h.label}</div>
               </div>
             ))}
-            <p className="max-w-[22ch] text-small text-muted-foreground">{d.hookCaption}</p>
+            <p className=" text-small text-muted-foreground">{d.hookCaption}</p>
           </div>
           <div>
             <SectionLabel icon={<MessageSquare className="h-4 w-4" />}>If you have sixty seconds</SectionLabel>
-            <p className="mt-3 max-w-[66ch] text-strong leading-relaxed text-foreground/90">{d.read}</p>
+            <p className="mt-3 text-strong leading-relaxed text-foreground/90">{d.read}</p>
           </div>
         </div>
       </Card>
 
       <Card className="p-6 animate-slide-up">
         <SectionLabel icon={<Lightbulb className="h-4 w-4" />}>The tension in one line</SectionLabel>
-        <p className="mt-3 max-w-[66ch] text-strong leading-relaxed text-foreground/90">{d.tension}</p>
+        <p className="mt-3 text-strong leading-relaxed text-foreground/90">{d.tension}</p>
       </Card>
 
       <Card className="p-6 animate-slide-up">
@@ -287,7 +247,7 @@ function MovedPanel({ topic }: { topic: GdTopic }) {
       {/* the trail */}
       <Card className="p-6">
         <SectionLabel icon={<CalendarClock className="h-4 w-4" />}>Everything that moved this argument</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           A month of reporting, newest first, with a few older entries pinned because the argument makes no sense
           without them. Each one says what it <em>did</em> to the debate — and what you can now quote.
         </p>
@@ -301,7 +261,7 @@ function MovedPanel({ topic }: { topic: GdTopic }) {
       {/* open questions */}
       <Card className="p-6">
         <SectionLabel icon={<CircleHelp className="h-4 w-4" />}>Still unanswered</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           Naming a question nobody has answered is worth more in a discussion than guessing at it. When one does get
           answered, we tell you at the top of this page and rewrite the line that depended on it.
         </p>
@@ -329,7 +289,7 @@ function MovedPanel({ topic }: { topic: GdTopic }) {
       {/* who hasn't spoken */}
       <Card className="p-6">
         <SectionLabel icon={<EarOff className="h-4 w-4" />}>Who hasn&apos;t spoken — and why that helps you</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           A gap you can name is worth more than a fact eight other people also read.
         </p>
         <ul className="mt-4 space-y-3">
@@ -345,7 +305,7 @@ function MovedPanel({ topic }: { topic: GdTopic }) {
       {/* bridges */}
       <Card className="p-6">
         <SectionLabel icon={<Link2 className="h-4 w-4" />}>This connects to other topics you are preparing</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           Connecting two topics sounds two years more senior than knowing both separately. These are the live
           bridges this week — each comes with the sentence that makes the link.
         </p>
@@ -409,7 +369,7 @@ function FactsPanel({ topic }: { topic: GdTopic }) {
     <div className="space-y-5">
       <Card className="p-6">
         <SectionLabel icon={<BarChart3 className="h-4 w-4" />}>Every number, with where it came from</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           Nothing here was written by a machine — each figure comes from the reporting, and each one tells you how
           safely you can say it out loud. Tap the star to keep a point on your cheat sheet, attribution and all.
         </p>
@@ -442,7 +402,7 @@ function FactsPanel({ topic }: { topic: GdTopic }) {
                       <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${tone}`}>
                         {t.label}
                       </span>
-                      <p className="mt-1 max-w-[22ch] text-micro text-muted-foreground">{t.hint}</p>
+                      <p className="mt-1 text-micro text-muted-foreground">{t.hint}</p>
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 align-top text-small text-muted-foreground">{f.source}</td>
                     <td className="px-3 py-3 align-top">
@@ -475,28 +435,30 @@ function FactsPanel({ topic }: { topic: GdTopic }) {
 
 function WhoPanel({ topic }: { topic: GdTopic }) {
   const d = topic.dossier!;
-  const edge = (side?: string) =>
-    side === 'gain' ? 'border-l-[3px] border-l-success'
-    : side === 'cost' ? 'border-l-[3px] border-l-primary'
-    : side === 'call' ? 'border-l-[3px] border-l-navy-soft'
-    : '';
   return (
     <div className="space-y-5">
       <Card className="p-6">
         <SectionLabel icon={<Users className="h-4 w-4" />}>Who pays, who gains, who decides</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           Most people argue whether it is fair. Better candidates say who it lands on, and where the cost goes next.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {d.stakeholders.map((s) => (
-            <div key={s.who} className={`rounded-lg border border-border bg-card p-4 ${edge(s.side)}`}>
-              <div className="flex items-baseline justify-between gap-2">
+            <div key={s.who} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
                 <h3 className="text-body font-semibold text-foreground">{s.who}</h3>
-                {s.badge ? (
-                  <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                    {s.badge}
-                  </span>
-                ) : null}
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {s.side ? (
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {s.side === 'gain' ? 'Gains' : s.side === 'cost' ? 'Pays' : 'Decides'}
+                    </span>
+                  ) : null}
+                  {s.badge ? (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {s.badge}
+                    </span>
+                  ) : null}
+                </span>
               </div>
               <p className="mt-2 text-body text-foreground/90">{s.want}</p>
               <p className="mt-2.5 border-t border-border pt-2.5 text-small text-muted-foreground">{s.lever}</p>
@@ -507,7 +469,7 @@ function WhoPanel({ topic }: { topic: GdTopic }) {
 
       <Card className="p-6">
         <SectionLabel icon={<ArrowRight className="h-4 w-4" />}>What happens next, and after that</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           The first consequence is where everybody stops. Two steps further is where the marks are.
         </p>
         <ul className="mt-5 space-y-3">
@@ -532,7 +494,7 @@ function SidesPanel({ topic }: { topic: GdTopic }) {
   return (
     <Card className="p-6">
       <SectionLabel icon={<Users className="h-4 w-4" />}>Both sides, argued at full strength</SectionLabel>
-      <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+      <p className="mt-2 text-small text-muted-foreground">
         Every position here belongs to someone who is actually arguing it, put at its strongest, with its weak point
         named underneath. You are not looking for the right answer — you are looking for the argument you will have
         to survive.
@@ -566,7 +528,7 @@ function ThinkPanel({ topic }: { topic: GdTopic }) {
     <div className="space-y-5">
       <Card className="p-6">
         <SectionLabel icon={<Lightbulb className="h-4 w-4" />}>Three ways to think about it that most people won&apos;t</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           Naming a framework earns nothing. Using one to say something a newspaper reader could not is the whole
           trick — so each of these comes with the sentence you can actually say.
         </p>
@@ -611,7 +573,7 @@ function SayPanel({ topic }: { topic: GdTopic }) {
     <div className="space-y-5">
       <Card className="p-6">
         <SectionLabel icon={<Quote className="h-4 w-4" />}>Openings, for the situation you actually land in</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           One opening line is useless, because you rarely speak first.
         </p>
         <div className="mt-5 space-y-3">
@@ -666,7 +628,7 @@ function TestPanel({ topic }: { topic: GdTopic }) {
     <div className="space-y-5">
       <Card className="p-6">
         <SectionLabel icon={<ListChecks className="h-4 w-4" />}>Check you actually have it</SectionLabel>
-        <p className="mt-2 max-w-[70ch] text-small text-muted-foreground">
+        <p className="mt-2 text-small text-muted-foreground">
           The wrong answers are the mistakes people genuinely make in the room.
         </p>
         <div className="mt-5 space-y-3">
@@ -676,24 +638,7 @@ function TestPanel({ topic }: { topic: GdTopic }) {
         </div>
       </Card>
 
-      <Card className="border-0 bg-navy p-6 text-navy-foreground">
-        <h3 className="flex items-center gap-2 text-h3">
-          <Mic className="h-5 w-5" /> Now say it out loud
-        </h3>
-        <p className="mt-2 max-w-[60ch] text-body text-navy-foreground/85">
-          Reading a brief is not practice. Sixty seconds, spoken — then you know whether you can hold it.
-        </p>
-        <p className="mt-4 rounded-md border border-navy-soft/50 bg-navy-mid p-4 text-strong leading-relaxed">
-          &ldquo;{d.rehearse}&rdquo;
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {['Structure', 'Numbers you actually used', 'Handled the counter', 'Took a position', 'Attribution'].map((r) => (
-            <span key={r} className="rounded-full border border-navy-soft/55 px-2.5 py-1 text-xs text-navy-foreground/90">
-              {r}
-            </span>
-          ))}
-        </div>
-      </Card>
+      <RehearseCard topic={topic} />
 
       <Card className="p-6">
         <SectionLabel icon={<CircleHelp className="h-4 w-4" />}>Jargon, defined once</SectionLabel>
@@ -704,12 +649,164 @@ function TestPanel({ topic }: { topic: GdTopic }) {
                 <span className="mr-1 text-primary">+</span>
                 {g.term}
               </summary>
-              <p className="mt-2 max-w-[68ch] text-body text-muted-foreground">{g.def}</p>
+              <p className="mt-2 text-body text-muted-foreground">{g.def}</p>
             </details>
           ))}
         </div>
       </Card>
     </div>
+  );
+}
+
+/**
+ * The spoken drill. A sixty-second countdown, the points a strong answer uses as
+ * a checklist you tick while you speak, and a model answer revealed only after
+ * the attempt — showing it earlier just gives you something to read aloud.
+ */
+function RehearseCard({ topic }: { topic: GdTopic }) {
+  const d = topic.dossier!;
+  const [left, setLeft] = useState(60);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const [hit, setHit] = useState<Set<number>>(new Set());
+  const [showModel, setShowModel] = useState(false);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!running) return;
+    timer.current = setInterval(() => {
+      setLeft((n) => {
+        if (n <= 1) {
+          setRunning(false);
+          setDone(true);
+          return 0;
+        }
+        return n - 1;
+      });
+    }, 1000);
+    return () => { if (timer.current) clearInterval(timer.current); };
+  }, [running]);
+
+  const reset = () => { setLeft(60); setRunning(false); setDone(false); setHit(new Set()); setShowModel(false); };
+  const toggle = (i: number) =>
+    setHit((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+
+  const mm = String(Math.floor(left / 60)).padStart(2, '0');
+  const ss = String(left % 60).padStart(2, '0');
+
+  return (
+    <Card className="border-0 bg-navy p-6 text-navy-foreground">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h3 className="flex items-center gap-2 text-h3">
+            <Mic className="h-5 w-5" /> Now say it out loud
+          </h3>
+          <p className="mt-2 text-body text-navy-foreground/85">
+            Reading a brief is not practice. Sixty seconds, spoken, with the points a strong answer uses in front of
+            you — tick them as you land them.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={['font-mono-data text-3xl font-bold tabular-nums', left <= 10 && left > 0 ? 'text-warning' : ''].join(' ')}>
+            {mm}:{ss}
+          </span>
+          <div className="flex gap-2">
+            {!running && !done ? (
+              <button
+                onClick={() => setRunning(true)}
+                className="rounded-full bg-white px-4 py-1.5 text-small font-semibold text-navy transition-opacity hover:opacity-90"
+              >
+                Start
+              </button>
+            ) : null}
+            {running ? (
+              <button
+                onClick={() => { setRunning(false); setDone(true); }}
+                className="rounded-full border border-navy-soft/60 px-4 py-1.5 text-small font-semibold transition-colors hover:bg-navy-mid"
+              >
+                Stop
+              </button>
+            ) : null}
+            {(done || left < 60) && !running ? (
+              <button
+                onClick={reset}
+                className="rounded-full border border-navy-soft/60 px-4 py-1.5 text-small font-medium transition-colors hover:bg-navy-mid"
+              >
+                Again
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-4 rounded-md border border-navy-soft/50 bg-navy-mid p-4 text-strong leading-relaxed">
+        &ldquo;{d.rehearse}&rdquo;
+      </p>
+
+      <div className="mt-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-label text-navy-foreground/70">What a strong sixty seconds uses</span>
+          <span className="font-mono-data text-small tabular-nums text-navy-foreground/70">
+            {hit.size} of {d.rehearseChecklist.length}
+          </span>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {d.rehearseChecklist.map((c, i) => {
+            const on = hit.has(i);
+            return (
+              <button
+                key={i}
+                onClick={() => toggle(i)}
+                aria-pressed={on}
+                className={[
+                  'flex items-start gap-2.5 rounded-md border px-3 py-2 text-left text-small transition-colors',
+                  on
+                    ? 'border-white/40 bg-navy-mid text-navy-foreground'
+                    : 'border-navy-soft/40 text-navy-foreground/75 hover:bg-navy-mid',
+                ].join(' ')}
+              >
+                <span
+                  className={[
+                    'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold',
+                    on ? 'border-white bg-white text-navy' : 'border-navy-soft/70',
+                  ].join(' ')}
+                  aria-hidden="true"
+                >
+                  {on ? '✓' : ''}
+                </span>
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {done ? (
+        <div className="mt-5 border-t border-navy-soft/40 pt-4">
+          {!showModel ? (
+            <button
+              onClick={() => setShowModel(true)}
+              className="rounded-full bg-white px-4 py-2 text-small font-semibold text-navy transition-opacity hover:opacity-90"
+            >
+              Show me a strong answer
+            </button>
+          ) : (
+            <>
+              <div className="text-label text-navy-foreground/70">One strong sixty seconds</div>
+              <p className="mt-2 text-body leading-relaxed text-navy-foreground/90">{d.rehearseModel}</p>
+              <p className="mt-3 text-small text-navy-foreground/60">
+                Not the only good answer — the opposite position, argued as tightly, scores the same. What it shows is
+                the shape: a fact early, who pays, the reframe, one conceded objection, and the cost of your own view.
+              </p>
+            </>
+          )}
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
@@ -748,7 +845,7 @@ function QuizCard({ q, index }: { q: GdQuiz; index: number }) {
         })}
       </div>
       {answered ? (
-        <p className="mt-3 border-l-2 border-success pl-3 text-small text-muted-foreground">{q.why}</p>
+        <p className="mt-3 rounded-md bg-muted p-3 text-small text-muted-foreground">{q.why}</p>
       ) : null}
     </div>
   );
