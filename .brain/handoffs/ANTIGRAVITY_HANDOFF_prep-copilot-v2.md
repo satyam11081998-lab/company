@@ -106,3 +106,36 @@ Pricing/quota (C9) untouched. Scoring stays GPT-only (platform lock preserved).
 - Whether to seed a few hand-authored packs (e.g., Area Sales Manager) as high-confidence anchors.
 
 git: stage ONLY the new copilot files + `main.py` (NOT `session_signals.py`), commit, **push**, then `node .brain\sync.mjs`.
+
+---
+
+## UPDATE 2026-09-24 — v2 FRONTEND BUILT (isolated) + /coach replaced
+
+Frontend commit `5a6dc9e` (ahead of origin — push it). New, fully isolated:
+- `lib/copilot/types.ts` — TS mirror of the backend Pack/Scenario/Feedback shapes.
+- `lib/copilot/api.ts` — isolated client (Bearer auth → `${NEXT_PUBLIC_API_URL}/copilot/*`).
+- `components/copilot/CopilotClient.tsx` — the whole UX: role/company intake → grounded pack
+  (rubric bars, frameworks, what-they-assess + "numbers expected", sources with confidence badge)
+  → text interview → scored debrief (per-competency, fixes, red flags, model answer, worked solution).
+- `app/(app)/coach/page.tsx` — REPLACED: now a 6-line wrapper rendering `<CopilotClient/>`.
+
+**Isolation (verified):** the copilot frontend imports ONLY its own modules + `@/components/ui/button`,
+`@/components/user-context`, `@/lib/supabase/client`, `next/link`, `react`. ZERO imports from
+`components/solve/*`, the scorer, `interview-api`, or the old coach. The old consulting coach backend
+(`routes/coach.py`) stays deployed but is unlinked from the UI.
+
+**Gates:** targeted `tsc --noEmit` on the 4 new/changed files = clean. Run `npm run build` before deploy.
+
+### ENABLE CHECKLIST (to make it live)
+1. **Push frontend:** `git -C D:\dev\mece\consilio push` → Vercel redeploys → `/coach` renders the v2 UI
+   (shows a graceful "being set up" state until step 3).
+2. **DB:** run `consilio-backend/migrations/2026-09-23_copilot_v2.sql` (idempotent; 5 service-role-only tables).
+3. **Backend env (Render):** ensure `GEMINI_API_KEY` is set (research); set **`COPILOT_V2_ENABLED=true`**.
+   Optional: `COPILOT_RESEARCH_MODEL` (default gemini-2.5-flash), `COPILOT_PACK_TTL_DAYS`.
+4. **Smoke test** as a Pro user: /coach → "BNY asset management" → Build my prep → verify the pack has
+   real `sources[]` URLs + a role-specific rubric + "numbers expected" → Start practice → a few turns →
+   Submit → scored debrief. Confirm the fallback: with `GEMINI_API_KEY` unset it returns a low-confidence
+   role-typical pack, not a 500.
+
+**Cost note:** enabling = real Gemini (research) + GPT (scoring) spend per Pro user, capped by
+`assert_daily_budget()`. It does NOT touch Vercel Fluid CPU (all AI runs on the Render backend).
