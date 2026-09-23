@@ -1,17 +1,17 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-23 10:55 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-23 18:50 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-23 10:55 UTC
+**Last sync:** 2026-09-23 18:50 UTC
 
 ## Last 5 commits — frontend
+- 87df11b perf(middleware): exclude /api + static/font assets from the matcher to cut Fluid Active CPU (SatyamSK, 2026-09-24)
+- f5d550b chore(brain): sync STATE after prep-copilot-v2 (SatyamSK, 2026-09-23)
 - b2ed4fc docs(brain): handoff for Prep Copilot v2 (isolated backend) (SatyamSK, 2026-09-23)
 - 3c1ee71 chore(brain): sync STATE after upgrade-page fix (satyam-ai-cell, 2026-09-23)
 - 8a09ac1 fix(upgrade): stop marking every billing period as the current plan (satyam-ai-cell, 2026-09-23)
-- 0d465fd chore(brain): sync STATE after revenue filter fix (satyam-ai-cell, 2026-09-23)
-- f28d000 chore(brain): sync STATE after revenue filter fix (satyam-ai-cell, 2026-09-23)
 
 ## Last 5 commits — backend
 - 45d95e6 feat(copilot): isolated role/company-aware Prep Copilot v2 (backend, flag-gated OFF) (SatyamSK, 2026-09-23)
