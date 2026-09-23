@@ -1,3 +1,5 @@
+import type { AtlasData } from './atlas-types';
+
 export type Tier = 'free' | 'lite' | 'pro';
 export type Difficulty = 'easy' | 'moderate' | 'challenging';
 export type PageKind =
@@ -25,6 +27,9 @@ export type Block =
   | { type: 'columns'; columns: Block[][] }
   | { type: 'caseSection'; label: CaseSectionLabel; title?: string; blocks: Block[] }
   | { type: 'divider' }
+  /** Searchable, sourced data atlas. `atlas` is a type-only reference, so the
+   *  dataset itself is never pulled into files that merely import Block. */
+  | { type: 'dataAtlas'; atlas: AtlasData }
   | {
       type: 'dialogue';
       title?: string;

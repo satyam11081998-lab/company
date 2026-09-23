@@ -18,6 +18,7 @@ import { DividerBlock } from './blocks/divider';
 import { Dialogue } from './blocks/dialogue';
 import { Drill } from './blocks/drill';
 import { Comparison } from './blocks/comparison';
+import { DataAtlasBlock } from './blocks/data-atlas';
 
 const slugify = (text: string) =>
   text
@@ -104,6 +105,9 @@ export function BlockRenderer({ block, isHero }: { block: Block; isHero?: boolea
       
     case 'comparison':
       return <Comparison {...block} />;
+
+    case 'dataAtlas':
+      return <DataAtlasBlock data={block.atlas} />;
     
     default:
       // Fallback for unhandled block types (should not happen with strict types)
