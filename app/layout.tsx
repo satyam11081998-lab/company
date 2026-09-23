@@ -49,6 +49,12 @@ export const metadata: Metadata = {
     title: 'MECE',
     statusBarStyle: 'default',
   },
+  // Modern standard tag browsers now expect. Next still emits the (now-deprecated)
+  // apple-mobile-web-app-capable from appleWebApp.capable above for older iOS
+  // Safari; this adds the standard <meta name="mobile-web-app-capable">.
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   robots: {
     index: true,
     follow: true,
