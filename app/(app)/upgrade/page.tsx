@@ -157,12 +157,37 @@ export default function UpgradePage() {
     return "quarter";
   })();
 
-  // True only when the card's tier AND the selected period match what the user holds.
+  /** The card's tier matches what the user holds — says nothing about duration. */
+  const isCurrentTier = (cardTier: "free" | "lite" | "pro") => cardTier === current;
+
+  /**
+   * True only when the card's tier AND the selected period are what the user
+   * actually holds.
+   *
+   * The null case is the whole point. `purchasedPeriod` is null whenever the
+   * duration is unknowable — a comp grant from the admin panel writes
+   * `subscription_expires_at: null`, so there is no window to measure. The
+   * previous version returned `true` in that case, which meant an unknown
+   * period matched EVERY period: a Pro comp-grant user saw "Current Plan" on
+   * both the 1-month and the 3-month card at once, and neither was true.
+   *
+   * An unknown duration must therefore match NO duration. What the user is
+   * owed instead is a plain statement of what they hold, which is the banner
+   * below the header — that is feedback the per-card badge cannot give without
+   * guessing.
+   */
   const isCurrentPlan = (cardTier: "free" | "lite" | "pro") => {
-    if (cardTier !== current) return false;
-    if (cardTier === "free" || purchasedPeriod === null) return true;
+    if (!isCurrentTier(cardTier)) return false;
+    if (cardTier === "free") return true;
+    if (purchasedPeriod === null) return false;
     return period === purchasedPeriod;
   };
+
+  const expiresOn = user?.subscription_expires_at
+    ? new Date(user.subscription_expires_at).toLocaleDateString("en-IN", {
+        day: "numeric", month: "short", year: "numeric",
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-muted py-10 px-4">
@@ -187,6 +212,21 @@ export default function UpgradePage() {
 
         {/* Colleges & clubs — highlighted institutional group-access banner */}
         <TeamsContactBanner />
+
+        {/* What the user currently holds. Shown once, above the toggle, because
+            the plan you are on does not change when you flip the period —
+            and because a comp grant has no duration to badge a card with. */}
+        {current !== "free" && (
+          <div className="-mt-4 flex justify-center">
+            <p className="rounded-lg border border-border bg-card px-4 py-2 text-sm text-muted-foreground">
+              You&apos;re on <b className="text-foreground">{current === "pro" ? "Pro" : "Lite"}</b>
+              {purchasedPeriod && (
+                <> &middot; {BILLING_PERIOD_LABELS[purchasedPeriod]} plan</>
+              )}
+              {expiresOn ? <> &middot; renews or ends {expiresOn}</> : <> &middot; no expiry date</>}
+            </p>
+          </div>
+        )}
 
         {/* Billing period toggle */}
         <div className="flex justify-center -mt-4">
