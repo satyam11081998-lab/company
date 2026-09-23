@@ -1,17 +1,17 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-22 19:10 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-23 10:52 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-22 19:10 UTC
+**Last sync:** 2026-09-23 10:52 UTC
 
 ## Last 5 commits — frontend
+- 8a09ac1 fix(upgrade): stop marking every billing period as the current plan (satyam-ai-cell, 2026-09-23)
+- 0d465fd chore(brain): sync STATE after revenue filter fix (satyam-ai-cell, 2026-09-23)
 - f28d000 chore(brain): sync STATE after revenue filter fix (satyam-ai-cell, 2026-09-23)
 - acaed85 fix(admin): count only customer payments as revenue (satyam-ai-cell, 2026-09-23)
 - 307c5bf chore(brain): sync STATE after admin revenue + analytics ranges (satyam-ai-cell, 2026-09-23)
-- bcae17c feat(admin): verified revenue tile + 30d/all-time analytics with a traffic trend (satyam-ai-cell, 2026-09-23)
-- 9cfaafc chore(brain): sync STATE after gd-radar polish (satyam-ai-cell, 2026-09-22)
 
 ## Last 5 commits — backend
 - 61975a9 feat(ai): run the GD brief surface on the Gemini free tier (SatyamSK, 2026-09-22)
