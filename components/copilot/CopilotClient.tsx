@@ -13,14 +13,14 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   Loader2, Send, ArrowRight, ArrowLeft, Target, BookOpen, ListChecks,
-  ShieldCheck, RotateCcw, Lock, Bot, ExternalLink, Sparkles, Calculator,
+  ShieldCheck, RotateCcw, Lock, Bot, ExternalLink, Sparkles, Calculator, Wrench,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/components/user-context';
 import {
   getCopilotStatus, buildPack, startPractice, sendPracticeMessage, submitPractice,
 } from '@/lib/copilot/api';
-import type { CopilotPack, CopilotScenario, CopilotFeedback, CopilotMessage } from '@/lib/copilot/types';
+import type { CopilotPack, CopilotScenario, CopilotFeedback, CopilotMessage, CopilotStatus } from '@/lib/copilot/types';
 
 type Step = 'intake' | 'pack' | 'interview' | 'debrief';
 
@@ -41,7 +41,7 @@ function ConfidenceBadge({ c }: { c: string }) {
 
 export default function CopilotClient() {
   const { isPro } = useUser();
-  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<CopilotStatus | null>(null);
   const [step, setStep] = useState<Step>('intake');
   const [role, setRole] = useState('');
   const [company, setCompany] = useState('');
@@ -63,12 +63,11 @@ export default function CopilotClient() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!isPro) { setEnabled(false); return; }
     getCopilotStatus()
-      .then((s) => { if (!cancelled) setEnabled(!!s.enabled); })
-      .catch(() => { if (!cancelled) setEnabled(false); });
+      .then((s) => { if (!cancelled) setStatus(s); })
+      .catch(() => { if (!cancelled) setStatus({ enabled: false, research_available: false }); });
     return () => { cancelled = true; };
-  }, [isPro]);
+  }, []);
 
   async function onBuildPack() {
     const r = role.trim();
@@ -124,7 +123,7 @@ export default function CopilotClient() {
   }
 
   // ---- gates ---------------------------------------------------------------
-  if (!isPro) {
+  if (status && status.enabled && !status.preview && !isPro) {
     return (
       <Shell>
         <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 text-center">
@@ -140,15 +139,15 @@ export default function CopilotClient() {
       </Shell>
     );
   }
-  if (enabled === null) {
+  if (status === null) {
     return <Shell><div className="flex items-center justify-center py-24 text-muted-foreground"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading your Prep Copilot…</div></Shell>;
   }
-  if (enabled === false) {
+  if (!status.enabled) {
     return (
       <Shell>
         <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 text-center">
-          <Sparkles className="mx-auto h-8 w-8 text-navy" />
-          <h1 className="mt-4 text-h2 text-foreground">Prep Copilot is being set up</h1>
+          <Wrench className="mx-auto h-8 w-8 text-navy" />
+          <h1 className="mt-4 text-h2 text-foreground">Prep Copilot is under development</h1>
           <p className="mt-2 text-body text-muted-foreground">We’re putting the finishing touches on the new role-aware Copilot. Check back shortly.</p>
         </div>
       </Shell>
@@ -158,6 +157,12 @@ export default function CopilotClient() {
   // ---- flow ----------------------------------------------------------------
   return (
     <Shell>
+      {status.preview && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-small text-amber-700 dark:text-amber-400">
+          <Wrench className="mt-0.5 h-4 w-4 shrink-0" />
+          <span><strong>Under development — owner preview.</strong> Very new and rough; expect bugs. Only you see this — everyone else gets an under-development screen.</span>
+        </div>
+      )}
       <div className="mb-6 flex items-center gap-2">
         <Bot className="h-6 w-6 text-navy" />
         <h1 className="text-h2 text-foreground">Prep Copilot</h1>

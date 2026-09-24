@@ -85,8 +85,11 @@ export interface CopilotFeedback {
 }
 
 export interface CopilotStatus {
-  enabled: boolean;
+  enabled: boolean;          // = available: can THIS viewer use it right now
   research_available: boolean;
+  available?: boolean;
+  preview?: boolean;         // owner/tester preview while not yet launched
+  launched?: boolean;        // global flag on (live for every Pro user)
 }
 
 export type CopilotMessage = { role: 'candidate' | 'interviewer'; content: string };
