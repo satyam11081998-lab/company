@@ -130,15 +130,6 @@ export const ATLAS_CORE: AtlasSection[] = [
       kicker: 'Age decides who can buy what. Cut the population before you multiply by it.',
       aha:
         "India's fertility rate is 1.93 — already below the 2.1 replacement line. The young country is a stock, not a flow: the cohorts coming behind are smaller.",
-      visual: {
-        kind: 'stack',
-        unitNote: 'Share of 1.48 bn people, 2026',
-        segments: [
-          { label: 'Children 0–14', pct: 24, display: '≈354 mn' },
-          { label: 'Working age 15–64', pct: 69, display: '≈1.02 bn' },
-          { label: 'Seniors 65+', pct: 7, display: '≈103 mn' },
-        ],
-      },
       facts: [
         {
           id: 'age-split',
@@ -275,17 +266,6 @@ export const ATLAS_CORE: AtlasSection[] = [
           keywords: ['mpce', 'urban spending', 'city', 'consumption', 'price point'],
         },
       ],
-      visual: {
-        kind: 'pyramid',
-        unitNote:
-          'Household monthly spend, derived from HCES 2023-24 at an assumed household size of 4.5',
-        tiers: [
-          { label: 'Top of the urban distribution', band: 'well above ₹31,000', pct: 10 },
-          { label: 'Average urban household', band: '≈₹31,000 a month', pct: 20 },
-          { label: 'Average rural household', band: '≈₹18,500 a month', pct: 30 },
-          { label: 'Below the rural average', band: 'under ₹18,500 a month', pct: 40 },
-        ],
-      },
       facts: [
         {
           id: 'hh-spend-rural',
@@ -357,17 +337,6 @@ export const ATLAS_CORE: AtlasSection[] = [
       kicker: 'Working-age is not working. Confusing the two inflates consumer numbers by about 60%.',
       aha:
         'Agriculture is 43% of the jobs and 18% of the output. That one sentence is worth more in a group discussion than any other statistic on this page.',
-      visual: {
-        kind: 'bars',
-        unitNote: 'Share of all workers, Jan–Dec 2025',
-        items: [
-          { label: 'Agriculture', value: 43.0, display: '43.0%' },
-          { label: 'Trade, transport & the rest', value: 19.8, display: '≈19.8%', muted: true },
-          { label: 'Other services', value: 13.1, display: '13.1%' },
-          { label: 'Manufacturing', value: 12.1, display: '12.1%' },
-          { label: 'Construction', value: 12.0, display: '12.0%' },
-        ],
-      },
       facts: [
         {
           id: 'lfpr',

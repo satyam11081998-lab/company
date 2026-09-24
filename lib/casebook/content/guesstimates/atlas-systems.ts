@@ -17,15 +17,6 @@ export const ATLAS_SYSTEMS: AtlasSection[] = [
     kicker: 'Sector shares give you a top-down route into almost any industry question.',
     aha:
       'Services are 55% of output. Industry is 27%. Agriculture is 18% — and employs more than twice its output share. Output and jobs are different questions.',
-    visual: {
-      kind: 'stack',
-      unitNote: 'Share of gross value added at current prices, 2024-25',
-      segments: [
-        { label: 'Services', pct: 54.9, display: '54.9%' },
-        { label: 'Industry', pct: 27.1, display: '27.1%' },
-        { label: 'Agriculture & allied', pct: 17.9, display: '17.9%' },
-      ],
-    },
     facts: [
       {
         id: 'gva-split',
@@ -218,21 +209,6 @@ export const ATLAS_SYSTEMS: AtlasSection[] = [
     kicker: 'Vehicles are the cleanest place to learn the stock-and-flow move, because both numbers are published.',
     aha:
       'Annual sales × vehicle life ≈ the vehicles on the road. Two-wheelers: 2.17 crore a year × 12 years ≈ 260 mn — which is exactly the registered stock. When a chain closes like that, you can say so out loud, and the room notices.',
-    visual: {
-      kind: 'ratio',
-      unitNote: 'Registered vehicles, 2022',
-      pairs: [
-        {
-          aLabel: 'Two-wheelers',
-          aValue: 260,
-          aDisplay: '≈260 mn',
-          bLabel: 'Cars',
-          bValue: 50,
-          bDisplay: '≈50 mn',
-          note: 'Roughly five two-wheelers for every car — about 185 against 35 per 1,000 people',
-        },
-      ],
-    },
     facts: [
       {
         id: 'two-wheelers',
@@ -326,17 +302,6 @@ export const ATLAS_SYSTEMS: AtlasSection[] = [
       'These are the multipliers. The discipline is choosing the right population to multiply — national, urban, or one city.',
     aha:
       'Almost every wrong guesstimate applies an urban rate to the whole country. Water at 135 litres a day is a design norm for a piped city, not what 1.48 bn people receive.',
-    visual: {
-      kind: 'bars',
-      unitNote: 'Per person per day, where a daily figure is meaningful',
-      items: [
-        { label: 'Water (urban design norm)', value: 135, display: '135 litres' },
-        { label: 'Electricity', value: 3.8, display: '3.8 kWh' },
-        { label: 'Foodgrain', value: 0.66, display: '660 g' },
-        { label: 'Milk', value: 0.47, display: '471 g' },
-        { label: 'Municipal waste (urban)', value: 0.35, display: '350 g' },
-      ],
-    },
     facts: [
       {
         id: 'electricity',
@@ -702,62 +667,6 @@ export const ATLAS_SYSTEMS: AtlasSection[] = [
       'The move that separates a good answer from a memorised one: build the number twice, from two unrelated directions, and say whether they agree.',
     aha:
       'You do not need to be right. You need to be able to show you would have noticed if you were wrong.',
-    visual: {
-      kind: 'chain',
-      unitNote: 'Each chain is built from numbers on this page, then tested against an independent figure',
-      chains: [
-        {
-          goal: 'Two-wheelers on Indian roads',
-          steps: [
-            { md: 'Two-wheelers sold in a year', value: '2.17 crore' },
-            { md: 'Average life before scrappage', value: '× 12 years' },
-          ],
-          result: '≈260 mn',
-          check: 'Registered stock (MoRTH): ≈260 mn',
-          verdict: 'holds',
-        },
-        {
-          goal: 'Cars on Indian roads',
-          steps: [
-            { md: 'Passenger vehicles sold in a year', value: '46.4 lakh' },
-            { md: 'Average life', value: '× 11 years' },
-          ],
-          result: '≈51 mn',
-          check: 'Registered stock (MoRTH): ≈50 mn',
-          verdict: 'holds',
-        },
-        {
-          goal: 'People who actually use a smartphone',
-          steps: [
-            { md: 'Smartphones shipped a year', value: '152 mn' },
-            { md: 'Replacement cycle', value: '× 4.5 years' },
-          ],
-          result: '≈680 mn',
-          check: 'Active mobile connections 1,194 mn, of which a large share are feature phones and second SIMs',
-          verdict: 'holds',
-        },
-        {
-          goal: 'What Indian households spend in a year',
-          steps: [
-            { md: 'Average spend per person per month', value: '≈₹5,183' },
-            { md: 'Twelve months, 1.48 bn people', value: '× 12 × 1.48 bn' },
-          ],
-          result: '≈₹92 lakh crore',
-          check: 'National accounts put private consumption at ₹213 lakh crore',
-          verdict: 'watch',
-        },
-        {
-          goal: 'UPI transactions per adult per day',
-          steps: [
-            { md: 'UPI transactions a day', value: '791 mn' },
-            { md: 'Adults aged 15+', value: '÷ 1,120 mn' },
-          ],
-          result: '≈0.7 a day',
-          check: 'Only a minority of adults transact on UPI at all, so per active user it is nearer 2 a day',
-          verdict: 'watch',
-        },
-      ],
-    },
     facts: [
       {
         id: 'survey-vs-accounts',

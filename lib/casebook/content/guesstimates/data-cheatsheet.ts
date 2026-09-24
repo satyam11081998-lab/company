@@ -33,10 +33,10 @@ export const dataCheatsheet: Page = {
   title: "The India Data Atlas",
   titleEmphasize: "Data",
   subtitle:
-    "Around sixty anchor numbers for sizing almost anything — each one sourced, dated, and paired with the number that checks it. Search it; don't scroll it.",
+    "Seventy-seven anchor numbers for sizing almost anything, laid out as twelve slides — each figure sourced, dated, and paired with the number that checks it. Search it; don't scroll it.",
   kind: "framework",
   meta: {
-    readingTimeMin: 14,
+    readingTimeMin: 12,
     tags: [
       "guesstimate",
       "market-sizing",
@@ -52,7 +52,7 @@ export const dataCheatsheet: Page = {
     {
       type: "hook",
       emphasize: "how old it is",
-      md: "Every guesstimate is a chain of multiplications hanging off one or two **anchor numbers**. Most candidates memorise a list of them and get caught out by the same three things: the anchor has drifted, they multiplied a per-household rate by the population, or they could not say where the number came from. So this sheet does the opposite of a list. Every figure carries **where it came from and how old it is**, every big one names **what it unlocks** and **what independently checks it** — and there is a search box, because sixty numbers is past the point where scrolling helps.",
+      md: "Every guesstimate is a chain of multiplications hanging off one or two **anchor numbers**. Most candidates memorise a list of them and get caught out by the same three things: the anchor has drifted, they multiplied a per-household rate by the population, or they could not say where the number came from. So this sheet does the opposite of a list. It is built as **twelve slides**, each one chart-led with a single takeaway at the foot; every figure carries **where it came from and how old it is**; and there is a search box, because seventy-seven numbers is well past the point where scrolling helps.",
     },
 
     { type: "heading", level: 2, text: "How to use it in thirty seconds", emphasize: "thirty seconds" },
