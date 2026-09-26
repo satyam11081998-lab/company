@@ -21,6 +21,10 @@ import ConversationalSolve from '@/components/solve/ConversationalSolve';
 import GuestCasePreview from '@/components/guest/guest-case-preview';
 import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { getAttemptAccess } from '@/lib/access';
+import RegionMismatch from '@/components/region/region-mismatch';
+import { contentMarketOf, isIntlMarket } from '@/lib/market';
+import { requestRegion } from '@/lib/market-page';
+import { withAdminPreview } from '@/lib/admin-preview';
 import type { CaseRow, CaseAttemptRow, UserRow } from '@/lib/types';
 import { ArrowRight, Lock } from 'lucide-react';
 
@@ -40,6 +44,13 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
     const { data } = await supabase.from('cases').select('*').eq('id', params.id).maybeSingle();
     const guestCase = data as CaseRow | null;
     if (!guestCase) notFound();
+    // MARKETS (0070): a logged-out visitor sees the bank for the region the
+    // middleware placed them in. A case from the other bank would sign them up
+    // for something their account could never attempt.
+    const region = requestRegion();
+    if ((guestCase.market ?? 'IN') !== contentMarketOf(region)) {
+      return <RegionMismatch viewerIsIntl={isIntlMarket(region)} />;
+    }
     return <GuestCasePreview caseRow={guestCase} caseId={params.id} />;
   }
   const authUser = user;
@@ -75,10 +86,28 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
       } | null;
     }
   >;
-  const fullUser = userRes.data as UserRow | null;
+  // withAdminPreview: an admin previewing the US version is treated as US here.
+  const fullUser = withAdminPreview(userRes.data as UserRow | null);
   const userRating = (ratingRes.data as { rating: string } | null)?.rating || null;
 
-  const access = await getAttemptAccess(supabase, fullUser, { id: caseRow.id, type: caseRow.type, code: caseRow.code, unlisted: caseRow.unlisted });
+  // MARKETS (0070): an account practises only its own bank. The backend
+  // refuses the attempt regardless (services/markets.py); this renders the
+  // refusal as a page instead of a dead workspace. A copilot-private case is
+  // always its owner's.
+  const ownsCase = (caseRow as CaseRow & { owner_id?: string | null }).owner_id === authUser.id;
+  if (!ownsCase && (caseRow.market ?? 'IN') !== contentMarketOf(fullUser?.market)) {
+    return <RegionMismatch viewerIsIntl={isIntlMarket(fullUser?.market)} />;
+  }
+
+  const access = await getAttemptAccess(supabase, fullUser, {
+    id: caseRow.id,
+    type: caseRow.type,
+    code: caseRow.code,
+    unlisted: caseRow.unlisted,
+    // Owner-private cases pass the market gate by ownership (above); hand the
+    // gate the viewer's own market so it does not re-refuse them.
+    market: ownsCase ? contentMarketOf(fullUser?.market) : caseRow.market,
+  });
   const hasAttempted = attempts.length > 0;
 
   const historyPanel = hasAttempted ? (

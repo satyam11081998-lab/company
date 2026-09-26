@@ -181,8 +181,10 @@ export async function fetchDailyToday(): Promise<DailyContentResponse> {
  * Fetch the leaderboard for today's daily case.
  * Top 20 scorers, ranked by score desc, then submitted_at asc.
  */
-export async function fetchDailyLeaderboard(): Promise<DailyLeaderboardResponse> {
-  const res = await fetch(`${API_URL}/daily/leaderboard`, {
+export async function fetchDailyLeaderboard(market?: 'IN' | 'US'): Promise<DailyLeaderboardResponse> {
+  // `market=US` (2026-09-25) → the international daily's board. Absent = India, unchanged.
+  const qs = market === 'US' ? '?market=US' : '';
+  const res = await fetch(`${API_URL}/daily/leaderboard${qs}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
     cache: 'no-store',

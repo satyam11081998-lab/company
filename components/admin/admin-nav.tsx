@@ -5,12 +5,13 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, MessageSquareQuote, Users, Megaphone, FileText,
   FolderLock, Flag, Sparkles, Activity, BadgeCheck, BarChart3,
-  UsersRound, TicketPercent, Award, Cpu, Bot, Rocket,
+  UsersRound, TicketPercent, Award, Cpu, Bot, Rocket, Globe,
 } from 'lucide-react';
 
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
   { href: '/admin', label: 'Operations', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Users', icon: UsersRound },
+  { href: '/admin/us-market', label: 'US & Europe', icon: Globe },
   { href: '/admin/journeys', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
   { href: '/admin/status', label: 'Status', icon: Activity },

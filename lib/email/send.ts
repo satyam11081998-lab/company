@@ -85,7 +85,7 @@ export async function sendUpgradeReceipt(to: string, data: UpgradeReceiptData): 
 }
 
 /** Compose + send the one-time welcome email (on onboarding completion). */
-export async function sendWelcomeEmail(to: string, data: { name?: string | null }): Promise<SendResult> {
+export async function sendWelcomeEmail(to: string, data: { name?: string | null; intl?: boolean }): Promise<SendResult> {
   if (!to) return { sent: false, skipped: true };
   const { subject, html, text } = welcomeEmail(data);
   return sendTransactional({ to, subject, html, text });

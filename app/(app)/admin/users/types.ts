@@ -37,6 +37,8 @@ export interface UserDetail {
   subExpiresAt: string | null;
   isAdmin: boolean;
   isDemo: boolean;
+  /** Account market (0070): 'IN' | 'US' | 'EU', null = not stamped yet (India). */
+  market: 'IN' | 'US' | 'EU' | null;
 
   points: number;
   streak: number;
@@ -49,6 +51,8 @@ export interface UserDetail {
   payments: Array<{
     id: string; tier: string; amountPaise: number; status: string;
     createdAt: string; paidAt: string | null; paymentId: string | null;
+    /** INR | USD | EUR — amountPaise is in minor units of this currency. */
+    currency: string;
   }>;
   couponsUsed: Array<{
     id: string; code: string; tier: string; period: string;

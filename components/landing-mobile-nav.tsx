@@ -19,7 +19,11 @@ const LINKS = [
  * The panel is portaled to <body> so the nav's backdrop-blur / overflow-hidden
  * containing block cannot clip it.
  */
-export default function LandingMobileNav() {
+/**
+ * `links` (2026-09-25): the US site passes its own list; the India landing
+ * passes nothing and gets the unchanged LINKS above.
+ */
+export default function LandingMobileNav({ links = LINKS }: { links?: { href: string; label: string }[] } = {}) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -71,7 +75,7 @@ export default function LandingMobileNav() {
                 </button>
               </div>
               <nav className="container flex flex-col pb-4">
-                {LINKS.map((l) => (
+                {links.map((l) => (
                   <Link
                     key={l.href}
                     href={l.href}

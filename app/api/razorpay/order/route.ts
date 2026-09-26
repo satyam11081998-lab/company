@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { priceFor, isBillingPeriod, discountedPaise } from '@/lib/tier';
+import { isBillingPeriod, discountedPaise, listMinor } from '@/lib/tier';
+import { currencyOf, type Currency, type Market } from '@/lib/market';
+import { marketForCheckout } from '@/lib/market-server';
 import { loadCoupon, checkCoupon, normalizeCode, isValidCodeShape } from '@/lib/coupons';
 import { notifyAdmin } from '@/lib/telegram';
 import { DECK_SINGLE_PRICE_INR, DECK_VAULT_PRICE_INR } from '@/lib/deck-access';
@@ -67,6 +69,19 @@ export async function POST(req: Request) {
       );
     }
 
+    // ── Market + currency, decided SERVER-SIDE from the account ─────────
+    // Never from the request body: the client cannot pick its own price list.
+    // `users.market` is locked (0070) — stamped once from the edge IP country +
+    // timezone, writable only by the service role. A NULL market (an account
+    // that has not loaded a page since 0070) is stamped here from this request.
+    const mk = await marketForCheckout(guardDb, user.id, req);
+    if (!mk.ok) {
+      console.error('[order] market read failed:', mk.error);
+      return NextResponse.json({ error: 'Could not start checkout. Please try again.' }, { status: 503 });
+    }
+    const market: Market = mk.market;
+    const currency: Currency = currencyOf(market);
+
     const body = await req.json();
     // `product` selects a Deck Vault purchase ('deck' = one deck ₹99,
     // 'vault' = whole vault ₹499). Absent → a Lite/Pro subscription (unchanged).
@@ -75,6 +90,13 @@ export async function POST(req: Request) {
     let amount: number;                       // paise, computed server-side ONLY
     let notes: Record<string, string>;        // server-set; the client can inject nothing
     let couponCode = '';
+
+    // Deck Vault, real-time minute packs and coupons are India-only products,
+    // priced only in rupees. International accounts are refused server-side,
+    // not merely hidden in the UI.
+    if ((product === 'deck' || product === 'vault' || product === 'rt_pack') && currency !== 'INR') {
+      return NextResponse.json({ error: 'This item is not available in your region.' }, { status: 403 });
+    }
 
     if (product === 'deck' || product === 'vault') {
       // ── Deck Vault purchases ─────────────────────────────────────────────
@@ -130,13 +152,27 @@ export async function POST(req: Request) {
       if (!isBillingPeriod(period)) {
         return NextResponse.json({ error: 'Invalid billing period specified' }, { status: 400 });
       }
-      amount = priceFor(tier as 'lite' | 'pro', period) * 100; // INR -> paise, single source of truth
+      // Minor units (paise / cents) in the ACCOUNT's currency. For India this
+      // is byte-identical to the old `priceFor(tier, period) * 100`.
+      amount = listMinor(tier as 'lite' | 'pro', period, currency);
       notes = { tier, period, user_id: user.id };
+      // Only non-INR orders carry currency/market notes, so an India order's
+      // notes object is exactly what it always was.
+      if (currency !== 'INR') {
+        notes.currency = currency;
+        notes.market = market;
+      }
 
       // Optional coupon. Fully backward-compatible: a missing coupon leaves the
       // flow exactly as before. An INVALID coupon is a hard 400 — never silently
       // charge full price when the user believes a discount applies.
       couponCode = normalizeCode(body.coupon);
+      if (couponCode && currency !== 'INR') {
+        // C7's commission ledger (coupon_redemptions) is single-currency INR:
+        // mixing cents into paise would corrupt every payout total. Coupons are
+        // India-only until that ledger carries a currency.
+        return NextResponse.json({ error: 'Coupons are not available for your region yet.' }, { status: 400 });
+      }
       if (couponCode) {
         if (!isValidCodeShape(couponCode)) {
           return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 });
@@ -165,12 +201,30 @@ export async function POST(req: Request) {
 
     const options = {
       amount,
-      currency: "INR",
+      currency,
       receipt: `rcpt_${Date.now()}_${user.id.substring(0, 5)}`,
       notes,
     };
 
-    const order = await instance.orders.create(options);
+    let order: any;
+    try {
+      order = await instance.orders.create(options);
+    } catch (e) {
+      if (currency !== 'INR') {
+        // Most likely cause: International Payments not yet activated on the
+        // Razorpay account (Dashboard → Settings → International payments).
+        console.error('[order] international order create failed:', e);
+        await notifyAdmin(
+          `⚠️ MECE: a ${currency} order failed to create for ${user.email || user.id} (${notes.tier}). ` +
+          `Check that International Payments is enabled on Razorpay.`,
+        );
+        return NextResponse.json(
+          { error: 'International checkout is temporarily unavailable. Please try again later or email team@mece.in.' },
+          { status: 503 },
+        );
+      }
+      throw e;
+    }
 
     // Log the attempt (audit trail + the counter the abuse guard reads above).
     // Non-blocking: a logging failure must never block a legitimate checkout.
@@ -185,8 +239,8 @@ export async function POST(req: Request) {
           user_id: user.id,
           razorpay_order_id: order.id,
           tier: notes.tier,
-          amount_paise: amount,
-          currency: 'INR',
+          amount_paise: amount, // minor units of `currency` (cents for USD/EUR)
+          currency,
           status: 'created',
         });
         if ((recentAttempts ?? 0) + 1 >= MAX_ATTEMPTS_PER_HOUR) {

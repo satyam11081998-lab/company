@@ -3,7 +3,13 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
+import { periodDays, isBillingPeriod, discountedPaise, listMinor, BILLING_PERIOD_LABELS } from '@/lib/tier';
+import {
+  orderCurrency,
+  violatesDomesticWall,
+  refundDomesticWallViolation,
+  DOMESTIC_WALL_MESSAGE,
+} from '@/lib/payments-region';
 import { sendUpgradeReceipt } from '@/lib/email/send';
 import { notifyAdmin } from '@/lib/telegram';
 import { DECK_SINGLE_PRICE_INR, DECK_VAULT_PRICE_INR } from '@/lib/deck-access';
@@ -114,6 +120,14 @@ export async function POST(req: Request) {
         if (Number(dpay.amount) !== expectedPaise) {
           return NextResponse.json({ error: 'Captured amount does not match the item' }, { status: 400 });
         }
+        // Region wall — rupee products need a domestic instrument (see lib/payments-region.ts).
+        if (violatesDomesticWall(orderCurrency(order) ?? 'INR', dpay)) {
+          await refundDomesticWallViolation(instance, {
+            paymentId: razorpay_payment_id, orderId: razorpay_order_id, userId: user.id,
+            email: user.email, source: 'verify', amountMinor: Number(dpay.amount),
+          });
+          return NextResponse.json({ error: DOMESTIC_WALL_MESSAGE }, { status: 403 });
+        }
 
         const db = createServiceClient();
         if (product === 'vault') {
@@ -182,6 +196,13 @@ export async function POST(req: Request) {
         if (Number(dpay.amount) !== expectedPaise) {
           return NextResponse.json({ error: 'Captured amount does not match the pack' }, { status: 400 });
         }
+        if (violatesDomesticWall(orderCurrency(order) ?? 'INR', dpay)) {
+          await refundDomesticWallViolation(instance, {
+            paymentId: razorpay_payment_id, orderId: razorpay_order_id, userId: user.id,
+            email: user.email, source: 'verify', amountMinor: Number(dpay.amount),
+          });
+          return NextResponse.json({ error: DOMESTIC_WALL_MESSAGE }, { status: 403 });
+        }
 
         const db = createServiceClient();
         // Ledger-first: the unique payment_id guards against double-credit. If it
@@ -230,8 +251,18 @@ export async function POST(req: Request) {
       // discounted amount in good faith.
       const couponCode = typeof order?.notes?.coupon === 'string' ? order.notes.coupon : '';
       let couponRow: CouponRow | null = null;
-      const listPaise = priceFor(tier, period) * 100;
+      // The ORDER's currency, as Razorpay recorded it — server truth, set by
+      // /order from the account's locked market. INR orders are unchanged.
+      const currency = orderCurrency(order);
+      if (!currency) {
+        return NextResponse.json({ error: 'Unsupported order currency' }, { status: 400 });
+      }
+      const listPaise = listMinor(tier, period, currency);
       let expectedPaise = listPaise;
+      if (couponCode && currency !== 'INR') {
+        // /order never attaches a coupon to a non-INR order; one here was not made by us.
+        return NextResponse.json({ error: 'The coupon on this order is not valid' }, { status: 400 });
+      }
       if (couponCode) {
         couponRow = await loadCoupon(createServiceClient(), couponCode);
         const ok = couponHonouredAtPayment(couponRow, user.id, razorpay_payment_id);
@@ -269,6 +300,21 @@ export async function POST(req: Request) {
       }
       if (Number(payment.amount) !== expectedPaise) {
         return NextResponse.json({ error: 'Captured amount does not match the selected plan' }, { status: 400 });
+      }
+      if (String(payment.currency || currency).toUpperCase() !== currency) {
+        return NextResponse.json({ error: 'Captured currency does not match the order' }, { status: 400 });
+      }
+
+      // REGION WALL (2026-09-25). India pricing is honoured only for a domestic
+      // instrument. Checked BEFORE the replay guard so a retried /verify for a
+      // refused payment is refused again rather than reported as "already
+      // processed" (which the client renders as a successful upgrade).
+      if (violatesDomesticWall(currency, payment)) {
+        await refundDomesticWallViolation(instance, {
+          paymentId: razorpay_payment_id, orderId: razorpay_order_id, userId: user.id,
+          email: user.email, source: 'verify', amountMinor: Number(payment.amount),
+        });
+        return NextResponse.json({ error: DOMESTIC_WALL_MESSAGE }, { status: 403 });
       }
 
       // Privileged writes MUST run as the service role. Migration 0006's
@@ -316,8 +362,8 @@ export async function POST(req: Request) {
           razorpay_payment_id,
           razorpay_signature,
           tier,
-          amount_paise: amountPaise,
-          currency: 'INR',
+          amount_paise: amountPaise, // minor units of `currency`
+          currency,
           status: 'paid',
           paid_at: now.toISOString(),
         });
@@ -353,8 +399,9 @@ export async function POST(req: Request) {
           name: recipient?.name ?? null,
           tierLabel: tier === 'pro' ? 'Pro' : 'Lite',
           periodLabel: BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'],
-          amountInr: Math.round(Number(order.amount) / 100),
+          amountInr: currency === 'INR' ? Math.round(Number(order.amount) / 100) : Number(order.amount) / 100,
           expiresAt: expiresAt.toISOString(),
+          ...(currency !== 'INR' ? { currency } : {}),
         });
         // Visibility: a paying customer with no receipt is a silent failure —
         // surface it on Telegram so it can be fixed (usually missing/incorrect

@@ -142,6 +142,10 @@ export const PUBLIC_ROUTES: string[] = [
   '/terms',
   '/refund',
   '/pricing',
+  // International (US + Europe) marketing site, 2026-09-25: /us, /us/pricing,
+  // /us/case-interview-examples, /us/market-sizing-questions. Public and
+  // indexable — every one is in the sitemap.
+  '/us',
   // Added to the sitemap in f105830 but never to this list, so every crawler
   // hitting it got a 307 to /login and the page could not be indexed. Any route
   // added to app/sitemap.ts MUST also appear here — the sitemap's own comment

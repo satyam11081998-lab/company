@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { REALTIME_PACKS, type RealtimePackId } from '@/lib/realtime-packs';
 import { Zap } from 'lucide-react';
+import { useOptionalUser } from '@/components/user-context';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -27,6 +28,9 @@ export default function RealtimeMinutes() {
   const [busy, setBusy] = useState<RealtimePackId | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  // Minute packs are a rupee-only product (the order API refuses them for
+  // international accounts), so international users see their balance only.
+  const canBuy = !(useOptionalUser()?.isIntl ?? false);
 
   const loadBalance = useCallback(async () => {
     try {
@@ -112,15 +116,17 @@ export default function RealtimeMinutes() {
         <div className="flex items-center gap-1.5">
           <Zap className="h-3.5 w-3.5" />
           <span>{balance === null ? 'Real-time minutes' : `${balance} real-time min left`}</span>
-          <button
-            type="button"
-            className="font-semibold text-primary hover:underline"
-            onClick={() => setOpen((o) => !o)}
-          >
-            Buy minutes
-          </button>
+          {canBuy && (
+            <button
+              type="button"
+              className="font-semibold text-primary hover:underline"
+              onClick={() => setOpen((o) => !o)}
+            >
+              Buy minutes
+            </button>
+          )}
         </div>
-        {open && (
+        {canBuy && open && (
           <div className="flex flex-wrap justify-end gap-1.5 pt-1">
             {(Object.keys(REALTIME_PACKS) as RealtimePackId[]).map((id) => (
               <Button

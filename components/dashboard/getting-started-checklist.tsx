@@ -20,12 +20,14 @@ import { REPLAY_EVENT } from '@/components/onboarding/welcome-tour';
 interface Props {
   scoredSolved: number;
   guesstimateSolved: number;
+  /** International accounts (0070): no casebook step — it is India-only. */
+  intl?: boolean;
 }
 
 const READ_KEY = 'mece_gs_read_guide';
 const DISMISS_KEY = 'mece_gs_checklist_dismissed';
 
-export default function GettingStartedChecklist({ scoredSolved, guesstimateSolved }: Props) {
+export default function GettingStartedChecklist({ scoredSolved, guesstimateSolved, intl = false }: Props) {
   const [mounted, setMounted] = useState(false);
   const [readGuide, setReadGuide] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -74,6 +76,11 @@ export default function GettingStartedChecklist({ scoredSolved, guesstimateSolve
       },
     },
   ];
+
+  if (intl) {
+    const i = steps.findIndex((st) => st.id === 'read');
+    if (i >= 0) steps.splice(i, 1);
+  }
 
   const doneCount = steps.filter((s) => s.done).length;
   const allDone = doneCount === steps.length;

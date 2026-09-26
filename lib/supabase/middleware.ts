@@ -1,6 +1,59 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { PUBLIC_ROUTES, AUTH_ROUTES, isPreviewPath } from '@/lib/constants';
+import {
+  detectRegion,
+  isCrawler,
+  isIntlMarket,
+  isIndiaOnlyPath,
+  isMarket,
+  INTL_TWIN,
+  MARKET_STAMP_COOKIE,
+  REGION_COOKIE,
+  REGION_HEADER,
+  TZ_COOKIE,
+  type Market,
+} from '@/lib/market';
+import { ensureUserMarket } from '@/lib/market-server';
+import { createServiceClient } from '@/lib/supabase/service';
+
+/* ── International markets (2026-09-25) ─────────────────────────────────────
+ * Every page request is placed in a market BEFORE anything renders:
+ *   - logged-out visitor → detectRegion(IP country, timezone cookie)
+ *   - logged-in account  → users.market (stamped once, then locked)
+ * The result is written to the `x-mece-region` REQUEST header (always
+ * overwritten, so a client-sent value is never trusted) and to the readable
+ * `mece_rg` cookie that <RegionProbe/> checks.
+ *
+ * Humans in a non-India market are routed from the India marketing pages to
+ * their twins ('/' → '/us', '/pricing' → '/us/pricing') and away from the
+ * India-only product surfaces. Crawlers are NEVER geo-routed — see isCrawler().
+ */
+const REGION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const STAMP_COOKIE_MAX_AGE = 60 * 60 * 12;       // re-verify the account's market twice a day
+
+function readTz(request: NextRequest): string | null {
+  const raw = request.cookies.get(TZ_COOKIE)?.value;
+  if (!raw) return null;
+  try { return decodeURIComponent(raw); } catch { return raw; }
+}
+
+function setRegionCookie(res: NextResponse, value: string) {
+  res.cookies.set(REGION_COOKIE, value, {
+    path: '/',
+    maxAge: REGION_COOKIE_MAX_AGE,
+    sameSite: 'lax',
+    httpOnly: false, // <RegionProbe/> reads it
+    secure: process.env.NODE_ENV === 'production',
+  });
+}
+
+/** Redirect that keeps any auth cookies the session refresh just rotated. */
+function redirectKeepingCookies(url: URL, from: NextResponse | null): NextResponse {
+  const res = NextResponse.redirect(url);
+  from?.cookies.getAll().forEach((c) => res.cookies.set(c));
+  return res;
+}
 
 /**
  * Refresh the Supabase session on every request and guard protected routes.
@@ -15,6 +68,14 @@ export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
 
+  // Visitor placement from request signals. Overwrites any client-sent value.
+  const bot = isCrawler(request.headers.get('user-agent'));
+  const visitor = detectRegion({
+    ipCountry: request.headers.get('x-vercel-ip-country'),
+    timeZone: readTz(request),
+  });
+  requestHeaders.set(REGION_HEADER, visitor.market);
+
   // Early exit: if the route is public AND no session cookie exists,
   // skip Supabase entirely — no need to refresh a session that doesn't exist.
   // This avoids the getUser() network call that can cause MIDDLEWARE_INVOCATION_TIMEOUT
@@ -23,8 +84,21 @@ export async function updateSession(request: NextRequest) {
   const hasSession = request.cookies.getAll().some(c => c.name.startsWith('sb-'));
 
   if (isPublic && !hasSession) {
+    // Geo-route logged-out HUMANS off the India marketing pages / India-only
+    // surfaces. Crawlers see every URL as it is (hreflang joins the twins).
+    if (!bot && isIntlMarket(visitor.market)) {
+      const twin = INTL_TWIN[pathname] ?? (isIndiaOnlyPath(pathname) ? '/us' : null);
+      if (twin) {
+        const url = request.nextUrl.clone();
+        url.pathname = twin;
+        const res = NextResponse.redirect(url);
+        setRegionCookie(res, `${visitor.market}.${visitor.basis}`);
+        return res;
+      }
+    }
     const response = NextResponse.next({ request: { headers: requestHeaders } });
     response.headers.set('x-pathname', pathname);
+    if (!bot) setRegionCookie(response, `${visitor.market}.${visitor.basis}`);
     return response;
   }
 
@@ -50,6 +124,59 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // ── Account market: stamp once, then honour the lock ─────────────────
+  // `mece_mkt=<userId>:<market>` caches that the stamp exists so this costs
+  // one users read per browser per 12h, not one per request. Fails OPEN to
+  // the visitor's detected region: a bookkeeping hiccup must never block a
+  // page — money decisions re-read the account server-side at checkout.
+  let accountMarket: Market | null = null;
+  // /upgrade picks a price list, so it never trusts the 12h cache: it reads the
+  // account's market fresh (one query, on a rarely-visited page).
+  const isUpgradePage = pathname === '/upgrade';
+  if (user) {
+    const cached = request.cookies.get(MARKET_STAMP_COOKIE)?.value || '';
+    const [cachedUid, cachedMk] = cached.split(':');
+    if (!isUpgradePage && cachedUid === user.id && isMarket(cachedMk)) {
+      accountMarket = cachedMk;
+    } else if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const r = await ensureUserMarket(createServiceClient(), user.id, {
+          ipCountry: request.headers.get('x-vercel-ip-country'),
+          timeZone: readTz(request),
+        });
+        if (r.ok && r.market) {
+          accountMarket = r.market;
+          supabaseResponse.cookies.set(MARKET_STAMP_COOKIE, `${user.id}:${r.market}`, {
+            path: '/', maxAge: STAMP_COOKIE_MAX_AGE, sameSite: 'lax', httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+          });
+        }
+      } catch (e) {
+        console.error('[middleware] market stamp failed (fail-open):', e);
+      }
+    }
+  }
+  const effectiveMarket: Market = accountMarket ?? visitor.market;
+  if (!bot) {
+    setRegionCookie(supabaseResponse, accountMarket ? `${accountMarket}.acct` : `${visitor.market}.${visitor.basis}`);
+  }
+
+  // International accounts (and logged-out international humans that reach
+  // here with a stale session cookie) never land on the India marketing pages
+  // or the India-only surfaces. Logged-in → the practice hub; logged-out → /us.
+  if (!bot && isIntlMarket(effectiveMarket)) {
+    const twin = INTL_TWIN[pathname];
+    const indiaOnly = isIndiaOnlyPath(pathname);
+    // "/" for a signed-in user is the dashboard rewrite (guest mode) — leave it.
+    const rootWithUser = pathname === '/' && !!user && process.env.NEXT_PUBLIC_GUEST_MODE === 'true';
+    if ((twin && !rootWithUser) || indiaOnly) {
+      const url = request.nextUrl.clone();
+      url.pathname = indiaOnly ? (user ? '/practice' : '/us') : (twin as string);
+      if (indiaOnly) url.search = '';
+      return redirectKeepingCookies(url, supabaseResponse);
+    }
+  }
 
   const isAuthPage = AUTH_ROUTES.includes(pathname);
   // Guest-previewable app routes (dashboard/practice/cases/leaderboard). These
@@ -154,6 +281,21 @@ export async function updateSession(request: NextRequest) {
   // buys. The real boundary is unchanged and lives where it always did:
   // lib/access.ts and services/access_guard.py still refuse a guest on any
   // non-daily case, and assert_can_submit still gates scoring.
+
+  // International accounts (guests included) get the USD/EUR checkout at the
+  // SAME URL, after the onboarding gate above has had its say: /upgrade
+  // is rewritten to the separate /upgrade/intl route (its own JS chunk, so the
+  // India checkout and its rupee table are never downloaded). Decided only on
+  // a fresh account read (above) — never on the visitor's IP.
+  if (isUpgradePage && user && accountMarket && isIntlMarket(accountMarket)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/upgrade/intl';
+    const rewritten = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    supabaseResponse.cookies.getAll().forEach((cookie) => rewritten.cookies.set(cookie));
+    rewritten.headers.set('x-pathname', pathname);
+    return rewritten;
+  }
+
 
   // ── "/" serves the dashboard, without changing the URL ───────────────
   // GUEST MODE (0045). The owner's requirement is that mece.in IS the

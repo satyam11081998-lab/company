@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { CASEBOOK_TREE } from '@/lib/casebook/tree';
 import type { NavNode } from '@/lib/casebook/types';
 import { GLOSSARY_TERMS } from '@/lib/glossary/terms';
-import { SITE_URL, isCanonicalisedAway } from '@/lib/seo';
+import { SITE_URL, isCanonicalisedAway, HREFLANG_HOME, HREFLANG_PRICING } from '@/lib/seo';
 import { getIndexableDecks } from '@/lib/decks';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
 
@@ -36,14 +36,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority,
   });
 
+  const withAlt = (path: string, priority: number, languages?: Record<string, string>) => ({
+    ...entry(path, priority, 'weekly'),
+    ...(languages
+      ? { alternates: { languages: Object.fromEntries(Object.entries(languages).map(([k, v]) => [k, `${SITE_URL}${v === '/' ? '' : v}`])) } }
+      : {}),
+  });
   const core = [
-    entry('', 1, 'weekly'),
+    withAlt('', 1, HREFLANG_HOME),
     // The definitive MECE reference. Highest-priority non-home URL: it is the
     // page that has to rank for our own brand term and for the concept.
     entry('/learn/mece-framework', 0.9, 'monthly'),
     entry('/methodology', 0.8, 'monthly'),
     entry('/about', 0.6, 'monthly'),
-    entry('/pricing', 0.7, 'monthly'),
+    { ...withAlt('/pricing', 0.7, HREFLANG_PRICING), changeFrequency: 'monthly' as const },
     entry('/testimonials', 0.6, 'weekly'),
     entry('/glossary', 0.6, 'weekly'),
     entry('/privacy', 0.2, 'yearly'),
@@ -111,6 +117,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to load SEO pages for sitemap:', err);
   }
 
-  return [...core, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks, ...deckEntries, ...insightEntries];
+  /* International (US + Europe) site — 2026-09-25. hreflang alternates are
+     declared both here and in each page's metadata, so crawlers see the
+     India ⇄ US pairing from either direction. */
+  const intlEntries: MetadataRoute.Sitemap = [
+    withAlt('/us', 0.9, HREFLANG_HOME),
+    withAlt('/us/pricing', 0.7, HREFLANG_PRICING),
+    withAlt('/us/case-interview-examples', 0.8),
+    withAlt('/us/market-sizing-questions', 0.8),
+  ];
+
+  return [...core, ...intlEntries, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks, ...deckEntries, ...insightEntries];
 }
 

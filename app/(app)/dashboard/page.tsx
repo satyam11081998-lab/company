@@ -29,6 +29,9 @@ import { getDemoUserIdsCached, notInList } from '@/lib/dashboard/demo-users';
 import { getNodeOpenTargets } from '@/lib/dashboard/node-to-case';
 import { getTodayMeta } from '@/lib/dashboard/today-meta';
 import { getDailyProgress } from '@/lib/dashboard/daily-progress';
+import { contentMarketOf } from '@/lib/market';
+import { requestRegion } from '@/lib/market-page';
+import { runMarketScoped, scopeUsersToMarket } from '@/lib/market-db';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,7 +77,10 @@ export default async function DashboardPage() {
     // is cookie-backed, and a cold-start guest has no cookie — any hiccup there
     // is swallowed by getDailyTodayServerSide's catch and returns all-nulls,
     // which made the whole actions block silently render nothing.
-    const guestDaily = await getDailyTodayServerSide('static');
+    // MARKETS (0070): the cold-start visitor gets the daily of the region the
+    // middleware placed them in.
+    const guestContent = contentMarketOf(requestRegion());
+    const guestDaily = await getDailyTodayServerSide('static', guestContent);
     // The synthetic dashboard is GONE. It was a picture of someone else's
     // progress — 24 invented submissions, a fake streak, CTAs wired to
     // /practice and `demo-case-N` ids. Every complaint about this page traced
@@ -95,7 +101,7 @@ export default async function DashboardPage() {
             dashboard. */}
         <div className="container flex min-h-[60vh] max-w-md flex-col items-center justify-center py-10 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Practise a real case, right now
+            {guestContent === 'US' ? 'Practice a real case interview, right now' : 'Practise a real case, right now'}
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
             Today&apos;s case and guesstimate are open to everyone — no account, no email. You only sign up when you
@@ -125,8 +131,12 @@ export default async function DashboardPage() {
   const demoIds = await getDemoUserIdsCached();
   const exclDemo = notInList(demoIds);
 
+  // MARKETS (0070): the account's locked market decides its daily pair, its
+  // rank pool and its rival. India accounts (and unstamped ones) → 'IN'.
+  const content = contentMarketOf(layoutUserRow?.market);
+
   // Fetch daily content first since other queries (proof rail) depend on it
-  const dailyToday = await getDailyTodayServerSide();
+  const dailyToday = await getDailyTodayServerSide('session', content);
 
   // Parallel fetches for performance. The users query is removed from this
   // Promise.all — replaced by the cached layoutUserRow above. One fewer DB
@@ -155,14 +165,14 @@ export default async function DashboardPage() {
     getHeatmap(supabase, authUser.id),
     getGrowthDeltas(supabase, authUser.id),
     getRecent(supabase, authUser.id),
-    getPeerProximity(svc, authUser.id),
-    getCohortActivity(svc),
+    getPeerProximity(svc, authUser.id, content),
+    getCohortActivity(svc, content),
     getProofRail(svc, dailyToday.case?.id ?? null),
     getSkillGraph(supabase, authUser.id),
   ]);
 
   const [nodeTargets, todayMeta] = await Promise.all([
-    getNodeOpenTargets(supabase, authUser.id, skillGraph.nodes as any),
+    getNodeOpenTargets(supabase, authUser.id, skillGraph.nodes as any, content),
     getTodayMeta(svc, dailyToday.case?.id ?? null)
   ]);
 
@@ -206,11 +216,20 @@ export default async function DashboardPage() {
   // --- peer comparison (O(1) rank, restored from the original dashboard) ---
   // Demo/showcase accounts are excluded so a seeded Pro history cannot push
   // every real user down a rank or dilute the percentile (demoIds resolved above).
-  const rankQ = svc.from('users').select('id', { count: 'exact', head: true }).gt('points', points);
-  const totalQ = svc.from('users').select('id', { count: 'exact', head: true });
+  // MARKETS (0070): ranked within the account's own market.
+  const rankQ = (scoped: boolean) => {
+    const base = svc.from('users').select('id', { count: 'exact', head: true }).gt('points', points);
+    const q = scoped ? scopeUsersToMarket(base, content) : base;
+    return exclDemo ? q.not('id', 'in', exclDemo) : q;
+  };
+  const totalQ = (scoped: boolean) => {
+    const base = svc.from('users').select('id', { count: 'exact', head: true });
+    const q = scoped ? scopeUsersToMarket(base, content) : base;
+    return exclDemo ? q.not('id', 'in', exclDemo) : q;
+  };
   const [rankCountRes, totalCountRes] = await Promise.all([
-    exclDemo ? rankQ.not('id', 'in', exclDemo) : rankQ,
-    exclDemo ? totalQ.not('id', 'in', exclDemo) : totalQ,
+    runMarketScoped(content, rankQ),
+    runMarketScoped(content, totalQ),
   ]);
   const rankNum = (rankCountRes.count ?? 0) + 1;
   const totalUsers = totalCountRes.count ?? 0;
@@ -349,6 +368,7 @@ export default async function DashboardPage() {
         nodeTargets={nodeTargets}
         todayMeta={todayMeta}
         dailyProgress={dailyProgress}
+        intl={content === 'US'}
       />
       {!hasRealScore && (
         <div className="mt-6">
@@ -359,7 +379,7 @@ export default async function DashboardPage() {
           attempt gate stated honestly. Renders nothing when there is nothing
           to show, and never blocks the dashboard if it fails. */}
       <div className="mt-6">
-        <SolutionStudySection user={userRow as UserRow | null} userId={authUser?.id ?? null} />
+        <SolutionStudySection user={userRow as UserRow | null} userId={authUser?.id ?? null} market={content} />
       </div>
       <FeedbackPrompt completedCount={submissions.length} />
     </div>

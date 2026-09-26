@@ -11,6 +11,7 @@ import PwaProvider from '@/components/pwa/pwa-provider';
 import { Analytics } from "@vercel/analytics/next";
 import PageTracker from '@/components/analytics/page-tracker';
 import GuestClaimBridge from '@/components/guest/guest-claim-bridge';
+import RegionProbe from '@/components/region/region-probe';
 import Script from 'next/script';
 import { SITE_URL, SITE_TITLE, SITE_DESC, siteGraphJsonLd } from '@/lib/seo';
 
@@ -120,6 +121,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               four login paths land on four different routes, two of them
               after a full-page redirect. Renders nothing. */}
           <GuestClaimBridge />
+          {/* Writes the browser timezone for region placement (lib/market.ts).
+              Renders nothing; client-only, so "/" stays static. */}
+          <RegionProbe />
           {/* Cloudflare Turnstile — loaded ONLY when a site key is configured,
               so no third-party script reaches users until you actually turn the
               protection on. `lazyOnload` keeps it off the critical path: it is

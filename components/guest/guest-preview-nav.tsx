@@ -21,8 +21,10 @@ const LINKS = [
   { href: '/learn/casebook', label: 'Casebook', icon: BookOpen },
 ];
 
-export default function GuestPreviewNav() {
+export default function GuestPreviewNav({ intl = false }: { intl?: boolean }) {
   const pathname = usePathname() || '';
+  // International visitors (0070): the casebook is India-only, so no tab for it.
+  const links = intl ? LINKS.filter((l) => l.href !== '/learn/casebook') : LINKS;
   const { navigate, overlay } = useNavLoading('Loading…');
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
@@ -33,7 +35,7 @@ export default function GuestPreviewNav() {
         <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 pr-1">
           <Eye className="h-3.5 w-3.5" /> Preview
         </span>
-        {LINKS.map(({ href, label, icon: Icon }) => {
+        {links.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
             <button

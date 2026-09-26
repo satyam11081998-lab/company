@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getDemoUserIdsCached, notInList } from './demo-users';
+import type { ContentMarket } from '@/lib/market';
+import { runMarketScoped, scopeUsersToMarket } from '@/lib/market-db';
 
 /**
  * Real leaderboard + rivalry data. Everything here is computed from live rows
@@ -217,6 +219,11 @@ export async function getAllTimeLeaderboard(
   svc: SupabaseClient,
   userId: string,
   limit = 50,
+  /**
+   * MARKETS (0070): each market has its own board. 'IN' = India accounts
+   * (incl. not-yet-stamped); 'US' = US + Europe accounts. Default 'IN'.
+   */
+  market: ContentMarket = 'IN',
 ): Promise<LeaderboardView> {
   // Over-fetch: the solve gate drops users below it, so pull a generous pool and
   // gate/slice down to `limit` qualifying rows (gated-out users sit at the tail).
@@ -235,24 +242,34 @@ export async function getAllTimeLeaderboard(
   // DEPLOY ORDER: 0045 must run BEFORE this ships, or `is_guest` does not exist
   // and these queries error (unlike getDemoUserIdsCached, a column filter
   // cannot fail open).
-  const poolQ = svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('is_guest', false).eq('is_admin', false).order('points', { ascending: false }).limit(poolSize);
-  const totalQ = svc.from('users').select('id', { count: 'exact', head: true }).eq('is_guest', false).eq('is_admin', false);
+  const scope = <Q,>(q: Q, scoped: boolean): Q => (scoped ? scopeUsersToMarket(q, market) : q);
+  const poolQ = (scoped: boolean) => {
+    const q = scope(svc.from('users').select('id, name, avatar_url, points, college_id, college_other, linkedin_url, show_linkedin').eq('is_guest', false).eq('is_admin', false), scoped).order('points', { ascending: false }).limit(poolSize);
+    return excl ? q.not('id', 'in', excl) : q;
+  };
+  const totalQ = (scoped: boolean) => {
+    const q = scope(svc.from('users').select('id', { count: 'exact', head: true }).eq('is_guest', false).eq('is_admin', false), scoped);
+    return excl ? q.not('id', 'in', excl) : q;
+  };
   const [{ data: poolRows }, meRes, totalRes] = await Promise.all([
-    excl ? poolQ.not('id', 'in', excl) : poolQ,
+    runMarketScoped(market, poolQ),
     svc.from('users').select('points').eq('id', userId).maybeSingle(),
-    excl ? totalQ.not('id', 'in', excl) : totalQ,
+    runMarketScoped(market, totalQ),
   ]);
   const pool = (poolRows as any[]) || [];
   const poolSubCounts = await subCountsFor(svc, pool.map((r) => r.id));
   const rows = gateAndSlice(pool, poolSubCounts, limit);
   const myPoints = (meRes.data as any)?.points ?? 0;
-  const aboveQ = svc
-    .from('users').select('id', { count: 'exact', head: true }).eq('is_guest', false).eq('is_admin', false).gt('points', myPoints);
-  const { count: aboveCount } = await (excl ? aboveQ.not('id', 'in', excl) : aboveQ);
+  const aboveQ = (scoped: boolean) => {
+    const q = scope(svc
+      .from('users').select('id', { count: 'exact', head: true }).eq('is_guest', false).eq('is_admin', false), scoped).gt('points', myPoints);
+    return excl ? q.not('id', 'in', excl) : q;
+  };
+  const { count: aboveCount } = await runMarketScoped(market, aboveQ);
   const myRank = (aboveCount ?? 0) + 1;
   const total = totalRes.count ?? rows.length;
   const collegeNames = await collegeNamesFor(svc, rows.map((r) => r.college_id));
-  return buildView(svc, rows, userId, myRank, myPoints, total, 'All India', poolSubCounts, collegeNames);
+  return buildView(svc, rows, userId, myRank, myPoints, total, market === 'US' ? 'US & Europe' : 'All India', poolSubCounts, collegeNames);
 }
 
 /** COHORT leaderboard — everyone at the viewer's college. */

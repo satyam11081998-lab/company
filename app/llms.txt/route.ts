@@ -2,6 +2,7 @@ import { CASEBOOK_TREE } from '@/lib/casebook/tree';
 import type { NavNode } from '@/lib/casebook/types';
 import { getPage } from '@/lib/casebook/content';
 import { SITE_URL, SITE_DESC, extractPageDescription, cleanNavTitle } from '@/lib/seo';
+import { usLlmsSection } from '@/lib/us-market/llms';
 
 export const dynamic = 'force-static';
 
@@ -26,6 +27,7 @@ export async function GET() {
     `- [About](${SITE_URL}/about): the team behind MECE`,
     `- [Sign up](${SITE_URL}/signup): free account`,
     '',
+    ...usLlmsSection(SITE_URL, false),
   ];
 
   const walk = (nodes: NavNode[], sectionTitle: string | null) => {

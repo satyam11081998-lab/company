@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createStaticClient } from '@/lib/supabase/static';
 import type { DailyContentResponse } from '@/lib/api';
+import { marketToday, type ContentMarket } from '@/lib/market';
 
 /**
  * Today's date in IST (Asia/Kolkata), YYYY-MM-DD.
@@ -48,7 +49,14 @@ export async function getDailyTodayServerSide(
    * anon-key client that exists for exactly this case.
    */
   mode: 'session' | 'static' = 'session',
+  /**
+   * Which market's daily pair (2026-09-25). 'IN' (default) is the unchanged
+   * India path below. 'US' reads `market_daily_schedule` on the US Eastern
+   * calendar day and carries no GD brief (GD is an India-only surface).
+   */
+  market: ContentMarket = 'IN',
 ): Promise<DailyContentResponse> {
+  if (market === 'US') return getMarketDailyServerSide(mode, market);
   const today = todayIstDate();
   const empty: DailyContentResponse = {
     date: today,
@@ -132,6 +140,60 @@ export async function getDailyTodayServerSide(
     // identical to the feature being switched off — which cost real debugging
     // time. Still returns `empty` (never throw into a page render), but says so.
     console.error('[daily] getDailyTodayServerSide failed; returning empty set:', err);
+    return empty;
+  }
+}
+
+
+/**
+ * The international daily pair. Same resilience contract as the India reader:
+ * never throws, falls back to the most recent pair on/before today (the US
+ * cron may not have run yet at US midnight), and returns null fields on any
+ * miss — including before migration 0070, when the table does not exist.
+ */
+async function getMarketDailyServerSide(
+  mode: 'session' | 'static',
+  market: Exclude<ContentMarket, 'IN'>,
+): Promise<DailyContentResponse> {
+  const today = marketToday(market);
+  const empty: DailyContentResponse = {
+    date: today,
+    case: null,
+    guesstimate: null,
+    guesstimate_code: null,
+    guesstimate_title: null,
+    brief: null,
+  };
+  try {
+    const supabase = mode === 'static' ? createStaticClient() : createClient();
+    const { data: rows, error } = await supabase
+      .from('market_daily_schedule')
+      .select('case_id, guesstimate_id, scheduled_date')
+      .eq('market', market)
+      .lte('scheduled_date', today)
+      .order('scheduled_date', { ascending: false })
+      .limit(1);
+    if (error) return empty;
+    const sched = (rows?.[0] ?? null) as { case_id?: string | null; guesstimate_id?: string | null } | null;
+    const ids = [sched?.case_id, sched?.guesstimate_id].filter(Boolean) as string[];
+    if (!ids.length) return empty;
+    const { data: cases } = await supabase
+      .from('cases')
+      .select('id, title, type, difficulty')
+      .in('id', ids);
+    const byId = new Map(((cases ?? []) as Array<{ id: string; title: string; type: string; difficulty: string }>).map((c) => [c.id, c]));
+    const c = sched?.case_id ? byId.get(sched.case_id) ?? null : null;
+    const g = sched?.guesstimate_id ? byId.get(sched.guesstimate_id) ?? null : null;
+    return {
+      date: today,
+      case: c ? { id: c.id, title: c.title, type: c.type, difficulty: c.difficulty } : null,
+      guesstimate: g ? { id: g.id, title: g.title, type: g.type, difficulty: g.difficulty } : null,
+      guesstimate_code: g?.id ?? null,
+      guesstimate_title: g?.title ?? null,
+      brief: null,
+    };
+  } catch (err) {
+    console.error('[daily] getMarketDailyServerSide failed; returning empty set:', err);
     return empty;
   }
 }

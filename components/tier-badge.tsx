@@ -2,7 +2,7 @@
 
 import { Star, Zap, Circle } from 'lucide-react';
 import type { SubscriptionTier } from '@/lib/types';
-import { TIER_LABELS } from '@/lib/tier';
+import { TIER_LABELS } from '@/lib/tier-core';
 
 export default function TierBadge({ tier, size = 'sm', className = '' }: { 
   tier: SubscriptionTier; 

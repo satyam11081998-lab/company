@@ -91,8 +91,12 @@ export async function GET(req: Request) {
   // minute double-billed the (AI) classifier every day (audit F5). We keep only the
   // schedule-daily kick as a redundant trigger — it is row-idempotent on
   // daily_schedule.scheduled_date, so a double-fire is a cheap no-op.
+  // `?market=US` (second Vercel cron, after US Eastern midnight) kicks the
+  // international daily instead. The default — no param — is the unchanged
+  // India kick.
+  const market = new URL(req.url).searchParams.get('market');
   const results = await Promise.all([
-    kick(api, secret, '/cron/schedule-daily'),
+    kick(api, secret, market === 'US' ? '/cron/schedule-daily-us' : '/cron/schedule-daily'),
   ]);
 
   // Always 200: the kick was delivered. Completion is guaranteed by the

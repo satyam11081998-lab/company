@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { withAdminPreview } from '@/lib/admin-preview';
 
 export async function GET() {
   const supabase = createClient();
@@ -15,5 +16,6 @@ export async function GET() {
   if (error || !userRow) {
     return NextResponse.json({ error: 'user not found' }, { status: 404 });
   }
-  return NextResponse.json(userRow);
+  // Keeps an admin's US preview (display only) across client refreshes.
+  return NextResponse.json(withAdminPreview(userRow as { is_admin: boolean; market?: 'IN' | 'US' | 'EU' | null }));
 }

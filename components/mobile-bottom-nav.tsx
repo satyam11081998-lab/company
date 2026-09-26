@@ -44,6 +44,16 @@ const PRIMARY = [
   { href: '/learn/casebook/industry-primers/asset-management', icon: Building2, label: 'Primers' },
 ];
 
+// International accounts (US + Europe, 2026-09-25): the focused product. GD
+// briefs and the primers are India-only surfaces (the middleware refuses them
+// too), so their tabs give way to the leaderboard and the conversation history.
+const PRIMARY_INTL = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/practice', icon: Brain, label: 'Practice' },
+  { href: '/history', icon: FileText, label: 'History' },
+  { href: '/leaderboard', icon: Trophy, label: 'Ranks' },
+];
+
 // Routes that live behind "More" — used to light up the More tab when active.
 // `/learn/casebook` is listed so the generic casebook lights up More, but the
 // primers prefix must NOT, or both Primers and More would appear selected.
@@ -51,7 +61,7 @@ const SECONDARY_PREFIXES = ['/resume', '/leaderboard', '/skeletons', '/cheat-she
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { user, isPro } = useUser();
+  const { user, isPro, isIntl } = useUser();
   const [moreOpen, setMoreOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -79,9 +89,14 @@ export default function MobileBottomNav() {
   // Industry Primers is its own tab now, so it must not also light up More even
   // though it sits under the /learn/casebook prefix listed above.
   const inPrimers = pathname?.startsWith('/learn/casebook/industry-primers') ?? false;
-  const moreActive = !inPrimers && SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
+  const moreActive = isIntl
+    ? ['/profile', '/upgrade'].some((p) => pathname === p || pathname.startsWith(p + '/'))
+    : !inPrimers && SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
-  const moreLinks = [
+  const tabs = isIntl ? PRIMARY_INTL : PRIMARY;
+  const moreLinks = isIntl ? [
+    { href: '/profile', icon: User, label: 'Profile' },
+  ] : [
     { href: '/learn/casebook/case-competitions/why-they-matter', icon: Medal, label: 'Case Competitions' },
     { href: '/learn/casebook', icon: FileText, label: 'Learn' },
     { href: '/resume', icon: FileText, label: 'CV Pointer Lab' },
@@ -101,7 +116,7 @@ export default function MobileBottomNav() {
             The /practice redirect that made these dead ends is gone — gated
             surfaces now show their real content behind a "Log in to continue"
             overlay, which sells the product better than a missing tab. */}
-        {PRIMARY.map((tab) => {
+        {tabs.map((tab) => {
           const active = isActive(tab.href);
           const Icon = tab.icon;
           return (

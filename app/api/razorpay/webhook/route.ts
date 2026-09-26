@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServiceClient } from '@/lib/supabase/service';
-import { priceFor, periodDays, isBillingPeriod, discountedPaise, BILLING_PERIOD_LABELS } from '@/lib/tier';
+import Razorpay from 'razorpay';
+import { periodDays, isBillingPeriod, discountedPaise, listMinor, BILLING_PERIOD_LABELS } from '@/lib/tier';
+import {
+  orderCurrency,
+  violatesDomesticWall,
+  refundDomesticWallViolation,
+} from '@/lib/payments-region';
 import { sendUpgradeReceipt } from '@/lib/email/send';
 import { notifyAdmin } from '@/lib/telegram';
 import {
@@ -124,13 +130,22 @@ export async function POST(req: Request) {
 
         const period = isBillingPeriod(notes.period) ? notes.period : 'monthly';
 
+        // Order currency as Razorpay recorded it (server truth). Mirrors /verify.
+        const currency = orderCurrency(order);
+        if (!currency) {
+          return NextResponse.json({ ok: false, reason: 'unsupported currency' }, { status: 200 });
+        }
+
         // Coupon-aware expected amount — mirrors /api/razorpay/verify exactly.
         // notes.coupon is server-set at order creation; the DB row is the source
         // of truth for ownership + %. Expiry is gated at order time, not here.
         const couponCode = typeof notes.coupon === 'string' ? notes.coupon : '';
         let couponRow: CouponRow | null = null;
-        const listPaise = priceFor(tier, period) * 100;
+        const listPaise = listMinor(tier, period, currency);
         let expectedPaise = listPaise;
+        if (couponCode && currency !== 'INR') {
+          return NextResponse.json({ ok: false, reason: 'coupon on non-INR order' }, { status: 200 });
+        }
         if (couponCode) {
           couponRow = await loadCoupon(supabase, couponCode);
           if (!couponHonouredAtPayment(couponRow, uid, paymentId)) {
@@ -140,6 +155,23 @@ export async function POST(req: Request) {
         }
         if (Number(order.amount) !== expectedPaise) {
           return NextResponse.json({ ok: false, reason: 'amount mismatch' }, { status: 200 });
+        }
+
+        // REGION WALL — mirrors /verify. An INR order paid with a foreign card
+        // grants nothing and is refunded (idempotently: whichever of /verify or
+        // this handler gets there first refunds; the other sees it refunded).
+        if (violatesDomesticWall(currency, payment)) {
+          const keyId = process.env.RAZORPAY_KEY_ID;
+          const keySecret = process.env.RAZORPAY_KEY_SECRET;
+          if (keyId && keySecret) {
+            await refundDomesticWallViolation(
+              new Razorpay({ key_id: keyId, key_secret: keySecret }) as any,
+              { paymentId, orderId: order.id, userId: uid, source: 'webhook', amountMinor: Number(payment?.amount || order.amount) },
+            );
+          } else {
+            await notifyAdmin(`🚨 MECE region wall (webhook): foreign card on INR order ${order.id} / ${paymentId} — Razorpay keys missing, REFUND MANUALLY.`);
+          }
+          return NextResponse.json({ ok: false, reason: 'domestic wall — refunded' }, { status: 200 });
         }
 
         const now = new Date();
@@ -154,8 +186,8 @@ export async function POST(req: Request) {
           razorpay_order_id: order.id,
           razorpay_payment_id: paymentId,
           tier,
-          amount_paise: Number(order.amount),
-          currency: 'INR',
+          amount_paise: Number(order.amount), // minor units of `currency`
+          currency,
           status: 'paid',
           paid_at: now.toISOString(),
         });
@@ -186,8 +218,9 @@ export async function POST(req: Request) {
               name: target.name ?? null,
               tierLabel: tier === 'pro' ? 'Pro' : 'Lite',
               periodLabel: BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'],
-              amountInr: Math.round(Number(order.amount) / 100),
+              amountInr: currency === 'INR' ? Math.round(Number(order.amount) / 100) : Number(order.amount) / 100,
               expiresAt: expiresAt.toISOString(),
+              ...(currency !== 'INR' ? { currency } : {}),
             });
           }
         } catch (e) {
@@ -204,7 +237,7 @@ export async function POST(req: Request) {
           razorpay_payment_id: payment.id,
           tier: notes.tier === 'pro' ? 'pro' : 'lite',
           amount_paise: Number(payment.amount || 0),
-          currency: 'INR',
+          currency: orderCurrency(payment) ?? 'INR',
           status: 'failed',
         });
       }

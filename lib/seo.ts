@@ -173,13 +173,14 @@ export function organizationJsonLd() {
       'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for MBA & PGDM students. It is distinct from the MECE problem-solving principle (Mutually Exclusive, Collectively Exhaustive) used in management consulting.',
     slogan: 'Placement interview prep, the structured way.',
     foundingDate: '2025',
-    areaServed: 'IN',
+    // India first; the US + Europe product launched 2026-09 at /us.
+    areaServed: ['IN', 'US', 'Europe'],
     email: 'team@mece.in',
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'team@mece.in',
       contactType: 'customer support',
-      areaServed: 'IN',
+      areaServed: ['IN', 'US', 'Europe'],
       availableLanguage: ['English', 'Hindi'],
     },
     knowsAbout: [
@@ -592,4 +593,88 @@ export function blocksToMarkdown(blocks: Block[], depth = 0): string {
     }
   }
   return out.filter(Boolean).join('\n\n');
+}
+
+
+/* ── International (US + Europe) site — 2026-09-25 ───────────────────── */
+
+export const US_SITE_TITLE = 'AI Case Interview Practice for Consulting Recruiting | MECE';
+export const US_SITE_DESC =
+  'Practice case interviews and market sizing questions with an AI interviewer that pushes back like McKinsey, BCG and Bain. Scored on six dimensions in about a minute. Free daily case.';
+
+/**
+ * hreflang pairs. India is `/`, the international site is `/us`. x-default
+ * stays on India's `/` (the primary market) — Google falls back to it only for
+ * locales we have not listed. Europe is served English at /us (en-GB, en-IE).
+ */
+export const HREFLANG_HOME = {
+  'en-IN': '/',
+  'en-US': '/us',
+  'en-GB': '/us',
+  'en-IE': '/us',
+  'x-default': '/',
+} as const;
+
+export const HREFLANG_PRICING = {
+  'en-IN': '/pricing',
+  'en-US': '/us/pricing',
+  'en-GB': '/us/pricing',
+  'en-IE': '/us/pricing',
+  'x-default': '/pricing',
+} as const;
+
+/** SoftwareApplication for the international site: USD offers, US audience. */
+export function usSoftwareApplicationJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'MECE',
+    applicationCategory: 'EducationalApplication',
+    applicationSubCategory: 'Case interview preparation',
+    operatingSystem: 'Web browser',
+    url: absoluteUrl('/us'),
+    description: US_SITE_DESC,
+    inLanguage: 'en-US',
+    publisher: { '@id': ORG_ID },
+    isPartOf: { '@id': WEBSITE_ID },
+    audience: {
+      '@type': 'EducationalAudience',
+      educationalRole: 'student',
+      audienceType: 'MBA and undergraduate candidates recruiting for consulting, finance and strategy roles',
+    },
+    featureList: [
+      'Live AI case interview that answers clarifying questions and pushes back',
+      'Consulting case bank set in US markets: profitability, market entry, M&A, pricing, growth, operations',
+      'Market sizing (guesstimate) practice with an arithmetic check',
+      'Six-dimension scoring with written feedback in about a minute',
+      'A free daily case and market sizing question',
+      'Leaderboard for candidates in the US and Europe',
+    ],
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'USD',
+      lowPrice: 0,
+      highPrice: 119,
+      offerCount: 5,
+      url: absoluteUrl('/us/pricing'),
+      seller: { '@id': ORG_ID },
+    },
+  };
+}
+
+/** ItemList for index pages (case examples, market sizing questions). */
+export function itemListJsonLd(opts: { name: string; url: string; items: { name: string; url: string }[] }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: opts.name,
+    url: absoluteUrl(opts.url),
+    numberOfItems: opts.items.length,
+    itemListElement: opts.items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      url: absoluteUrl(it.url),
+    })),
+  };
 }

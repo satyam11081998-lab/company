@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { getCachedUserRow } from '@/lib/supabase/auth-cached';
+import { viewerContentMarket } from '@/lib/market-page';
+import { marketScoped } from '@/lib/market-db';
 
 import PracticeHub from '@/components/practice-hub';
 import LoginToContinueOverlay from '@/components/guest/login-to-continue-overlay';
@@ -27,11 +30,24 @@ export default async function PracticePage({
   // one. `!user` alone is not the test.
   const isGuest = !user || user.is_anonymous === true;
 
-  const casesRes = await supabase
-    .from('cases')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
+  // MARKETS (0070): one bank per market. Signed-in (incl. guests) → the
+  // account's locked market; logged-out → the region the middleware detected.
+  const userRow = user ? await getCachedUserRow(user.id) : null;
+  const content = viewerContentMarket(userRow, !!user);
+  const casesRes = await marketScoped(
+    content,
+    () => supabase
+      .from('cases')
+      .select('*')
+      .eq('is_active', true)
+      .eq('market', content)
+      .order('created_at', { ascending: false }),
+    () => supabase
+      .from('cases')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+  );
 
   let attemptedCaseIds: string[] = [];
   if (user) {

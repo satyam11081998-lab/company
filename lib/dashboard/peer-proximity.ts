@@ -1,5 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getDemoUserIdsCached, notInList } from './demo-users';
+import type { ContentMarket } from '@/lib/market';
+import { runMarketScoped, scopeUsersToMarket } from '@/lib/market-db';
 
 export interface PeerInfo {
   name: string;
@@ -22,7 +24,12 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
  * days we return `competitor: null` rather than inventing a pace, so the UI
  * falls back to an honest line instead of a fake "gaining 150/day".
  */
-export async function getPeerProximity(supabase: SupabaseClient, userId: string): Promise<PeerProximityData> {
+export async function getPeerProximity(
+  supabase: SupabaseClient,
+  userId: string,
+  /** MARKETS (0070): rivals and "new this week" come from the viewer's own market. */
+  market: ContentMarket = 'IN',
+): Promise<PeerProximityData> {
   const since = new Date(Date.now() - WEEK_MS).toISOString();
 
   // GUEST MODE (0045): "N new aspirants this week" is a social-proof number
@@ -30,11 +37,14 @@ export async function getPeerProximity(supabase: SupabaseClient, userId: string)
   // so without this filter the figure would be dominated by guests who never
   // signed up — inflating it by an order of magnitude and making it a lie.
   // Filtered in SQL, not via a materialised id list (guests are unbounded).
-  const { count: newCount } = await supabase
-    .from('users')
-    .select('id', { count: 'exact', head: true })
-    .eq('is_guest', false).eq('is_admin', false)
-    .gte('created_at', since);
+  const { count: newCount } = await runMarketScoped(market, (scoped) => {
+    const q = supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_guest', false).eq('is_admin', false)
+      .gte('created_at', since);
+    return scoped ? scopeUsersToMarket(q, market) : q;
+  });
   const newAspirantsThisWeek = newCount || 0;
 
   const { data: me } = await supabase.from('users').select('points').eq('id', userId).maybeSingle();
@@ -45,14 +55,19 @@ export async function getPeerProximity(supabase: SupabaseClient, userId: string)
   // Demo/showcase accounts are skipped: naming a seeded account as your
   // real rival is the kind of detail that destroys trust in the number.
   const excl = notInList(await getDemoUserIdsCached());
-  const behindQ = supabase
-    .from('users')
-    .select('id, name, points')
-    .eq('is_guest', false).eq('is_admin', false)   // never name a throwaway anonymous session as your rival
-    .lt('points', myPoints)
-    .order('points', { ascending: false })
-    .limit(1);
-  const { data: behind } = await (excl ? behindQ.not('id', 'in', excl) : behindQ).maybeSingle();
+  const behindQ = (scoped: boolean) => {
+    const base = supabase
+      .from('users')
+      .select('id, name, points')
+      .eq('is_guest', false).eq('is_admin', false)   // never name a throwaway anonymous session as your rival
+      .lt('points', myPoints);
+    const q = (scoped ? scopeUsersToMarket(base, market) : base)
+      .order('points', { ascending: false })
+      .limit(1);
+    return excl ? q.not('id', 'in', excl) : q;
+  };
+  const { data: behindRows } = await runMarketScoped(market, behindQ);
+  const behind = ((behindRows as any[] | null) ?? [])[0] ?? null;
   if (!behind) return { competitor: null, newAspirantsThisWeek };
 
   const ptsBehind = myPoints - ((behind as any).points ?? 0);

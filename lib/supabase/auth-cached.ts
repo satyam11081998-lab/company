@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { sessionIdFromAccessToken } from '@/lib/sessions';
 import type { UserRow } from '@/lib/types';
+import { withAdminPreview } from '@/lib/admin-preview';
 
 /**
  * Request-scoped auth + user row helpers.
@@ -60,5 +61,7 @@ export const getCachedUserRow = cache(async (userId: string): Promise<UserRow | 
     .select('*')
     .eq('id', userId)
     .maybeSingle();
-  return (data as UserRow | null) ?? null;
+  // Admins previewing the US version see market 'US' here (display only —
+  // see lib/admin-preview.ts). Everyone else: the row exactly as stored.
+  return withAdminPreview((data as UserRow | null) ?? null);
 });

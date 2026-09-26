@@ -29,6 +29,7 @@ import MicWaveform from '@/components/mic-waveform';
 import VoiceInterview from '@/components/solve/VoiceInterview';
 import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
 import RealtimeMinutes from '@/components/solve/realtime-minutes';
+import { useOptionalUser } from '@/components/user-context';
 import VoiceInterviewGemini from '@/components/solve/VoiceInterviewGemini';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import { Vad } from '@/lib/voice/vad';
@@ -110,6 +111,9 @@ interface DraftAssistant {
 const PENDING_REC_KEY = (caseId: string) => `mece:pending-rec:${caseId}`;
 
 export default function ConversationalSolve({ caseId, initialCase, historyPanel, lockedOverlay }: Props) {
+  // The voice allowance resets at 00:00 IST; international users are told
+  // "daily" rather than an India time zone they have no reason to know.
+  const voiceResetText = (useOptionalUser()?.isIntl ?? false) ? 'daily' : 'at midnight IST';
   const router = useRouter();
   const trackAction = useTrackAction();
   const [token, setToken] = useState<string | null>(null);
@@ -701,7 +705,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     if (recording === 'recording') { cancelMic(); return; }
     if (recording === 'idle') {
       if (voiceOut) {
-        toast.error(`Daily voice limit reached (${quota?.voice.limit_min} min). Resets at midnight IST — you can still type.`);
+        toast.error(`Daily voice limit reached (${quota?.voice.limit_min} min). Resets ${voiceResetText} — you can still type.`);
         return;
       }
       startMic();
@@ -927,7 +931,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
 
   const talkUnavailableReason =
     voiceOut || speakOut
-      ? 'Daily voice limit reached — resets at midnight IST'
+      ? `Daily voice limit reached — resets ${voiceResetText}`
       : 'Voice interview is not available right now';
 
   // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND

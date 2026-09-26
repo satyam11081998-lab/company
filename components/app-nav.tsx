@@ -45,7 +45,7 @@ const INDUSTRY_PRIMERS = CASEBOOK_TREE.flatMap((section) => section.children ?? 
  * Reads user from UserContext — no auth fetches here.
  */
 export default function AppNav() {
-  const { user, tier, isFree } = useUser();
+  const { user, tier, isFree, isIntl } = useUser();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -94,7 +94,11 @@ export default function AppNav() {
   const PRIMARY_LINKS: NavLink[] = [
     { href: '/dashboard', label: 'Dashboard' },
   ];
-  const TRAILING_LINKS: NavLink[] = [
+  // International accounts (US + Europe) get the focused product: dashboard,
+  // practice and the leaderboard. The India-only surfaces (casebook, primers,
+  // GD, CV lab, deck vault, cheat sheet, copilot) are also refused by the
+  // middleware, so hiding them here is presentation, not the gate.
+  const TRAILING_LINKS: NavLink[] = isIntl ? [] : [
     { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
   ];
 
@@ -124,7 +128,10 @@ export default function AppNav() {
     href: `/learn/casebook/${p.slug}`,
     label: p.title,
   }));
-  const MORE_LINKS: NavLink[] = [
+  const MORE_LINKS: NavLink[] = isIntl ? [
+    { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/profile', label: 'Profile' },
+  ] : [
     // "Learn" owns the casebook EXCEPT the two tracks promoted above — without
     // both exclusions it would light up as active while the user is plainly in
     // Industry Primers or Case Competitions, and two nav items would look
@@ -143,7 +150,9 @@ export default function AppNav() {
 
   // Render order of the bar: Dashboard, then these three groups, then Case
   // Competitions, then More. `head` is where the trigger label itself goes.
-  const NAV_GROUPS = [
+  const NAV_GROUPS = isIntl ? [
+    { label: 'Practice', head: '/practice', links: PRACTICE_LINKS.slice(1), isOpen: isActive('/practice'), scroll: false },
+  ] : [
     { label: 'Practice', head: '/practice', links: PRACTICE_LINKS.slice(1), isOpen: isActive('/practice'), scroll: false },
     { label: 'GD Briefs', head: '/gd-briefs', links: GD_LINKS, isOpen: isActive('/gd-briefs'), scroll: false },
     {
@@ -380,14 +389,16 @@ export default function AppNav() {
                   desktop bar is hidden. It must therefore carry every group's
                   contents too — listing just PRIMARY + MORE would silently drop
                   Practice, GD Briefs and the primers on tablet widths. */}
-              {[
+              {(isIntl
+                ? [...PRIMARY_LINKS, ...PRACTICE_LINKS, ...MORE_LINKS]
+                : [
                 ...PRIMARY_LINKS,
                 ...PRACTICE_LINKS,
                 ...GD_LINKS,
                 ...TRAILING_LINKS,
                 ...MORE_LINKS,
                 ...PRIMER_LINKS,
-              ].map(({ href, label, active }) => {
+              ]).map(({ href, label, active }) => {
                 const linkActive = active ?? isActive(href);
                 return (
                   <Link

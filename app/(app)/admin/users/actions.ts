@@ -55,7 +55,7 @@ export async function getUserDetail(
         ? svc.from('colleges').select('short_name, name').eq('id', u.college_id).maybeSingle()
         : Promise.resolve({ data: null }),
       safe<any>(svc.from('payments')
-        .select('id, tier, amount_paise, status, created_at, paid_at, razorpay_payment_id')
+        .select('id, tier, amount_paise, currency, status, created_at, paid_at, razorpay_payment_id')
         .eq('user_id', userId).order('created_at', { ascending: false }).limit(50)),
       safe<any>(svc.from('coupon_redemptions')
         .select('id, code, tier, period, paid_paise, discount_paise, created_at')
@@ -108,6 +108,7 @@ export async function getUserDetail(
         subExpiresAt: u.subscription_expires_at ?? null,
         isAdmin: !!u.is_admin,
         isDemo: !!u.is_demo,
+        market: u.market === 'IN' || u.market === 'US' || u.market === 'EU' ? u.market : null,
 
         points: u.points ?? 0,
         streak: u.streak_count ?? 0,
@@ -120,6 +121,7 @@ export async function getUserDetail(
         payments: payments.map((p: any) => ({
           id: p.id, tier: p.tier, amountPaise: p.amount_paise, status: p.status,
           createdAt: p.created_at, paidAt: p.paid_at, paymentId: p.razorpay_payment_id ?? null,
+          currency: typeof p.currency === 'string' ? p.currency.toUpperCase() : 'INR',
         })),
         couponsUsed: coupons.map((c: any) => ({
           id: c.id, code: c.code, tier: c.tier, period: c.period,
@@ -183,5 +185,36 @@ export async function revokeAllSessions(
     return { success: true, data: { count: data?.length ?? 0 } };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Failed to revoke sessions.' };
+  }
+}
+
+
+/**
+ * Change an account's market (0070). The ONLY way a locked market changes:
+ * users.market is not writable by the browser (column grant) and the guard
+ * trigger reverts it for any non-service-role writer. Use for support cases —
+ * an Indian student abroad, or someone mis-placed by a corporate VPN at signup.
+ *
+ * Moving a market changes the account's price list, case bank, daily pair and
+ * leaderboard from the next page load. Existing subscriptions are untouched.
+ */
+export async function setUserMarket(
+  userId: string,
+  market: 'IN' | 'US' | 'EU',
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (market !== 'IN' && market !== 'US' && market !== 'EU') {
+      return { success: false, error: 'Unknown market.' };
+    }
+    const svc = createServiceClient();
+    const { data, error } = await svc
+      .from('users').update({ market }).eq('id', userId).select('id');
+    if (error) return { success: false, error: error.message };
+    if (!data || data.length === 0) return { success: false, error: 'No rows updated.' };
+    revalidatePath('/admin/users');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Failed to update.' };
   }
 }

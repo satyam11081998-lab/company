@@ -54,6 +54,11 @@ export interface DashboardClientProps {
   todayMeta: import('@/lib/dashboard/today-meta').TodayMeta;
   /** Whether today's daily case/guesstimate are already done, + their scores. */
   dailyProgress?: import('@/lib/dashboard/daily-progress').DailyProgress;
+  /**
+   * International account (0070, US + Europe). Hides the India-only surfaces
+   * (GD news brief, casebook links); everything else is shared.
+   */
+  intl?: boolean;
 }
 
 export default function DashboardClient(props: DashboardClientProps) {
@@ -148,6 +153,7 @@ export default function DashboardClient(props: DashboardClientProps) {
         <GettingStartedChecklist
           scoredSolved={scored.length}
           guesstimateSolved={guesstimateSolved}
+          intl={props.intl}
         />
       )}
 
@@ -164,11 +170,12 @@ export default function DashboardClient(props: DashboardClientProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr',
+          gridTemplateColumns: isMobile || props.intl ? '1fr' : '1.5fr 1fr',
           gap: isMobile ? 12 : 'var(--gap-grid, 16px)',
         }}
       >
-        <NewsCard u={u} brief={props.initialDaily?.brief || undefined} />
+        {/* GD news briefs are India-only; the guesstimate takes the full row. */}
+        {!props.intl && <NewsCard u={u} brief={props.initialDaily?.brief || undefined} />}
         <GuesstimateCard
           u={u}
           daily={props.initialDaily?.guesstimate || undefined}
@@ -190,6 +197,7 @@ export default function DashboardClient(props: DashboardClientProps) {
         // Personal recent activity feeds the side panel's "Recent attempts"
         // list, filtered by the selected node's cluster.
         recentFeed={activityFeed}
+        hideLearn={props.intl}
       />
 
       {/* COMMAND PANEL */}

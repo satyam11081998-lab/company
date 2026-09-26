@@ -14,6 +14,9 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { touchSession } from '@/lib/sessions';
 import { isPreviewPath } from '@/lib/constants';
 import type { UserRow } from '@/lib/types';
+import { isIntlMarket } from '@/lib/market';
+import { requestRegion } from '@/lib/market-page';
+import UsPreviewBar from '@/components/admin/us-preview-bar';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +53,7 @@ function GuestChrome({ children, showPreviewNav }: { children: React.ReactNode; 
     <>
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full">
         <div className="container flex h-14 md:h-16 items-center justify-between gap-2">
-          <Link href="/" className="flex items-center -ml-2 shrink-0" aria-label="MECE home">
+          <Link href={isIntlMarket(requestRegion()) ? '/us' : '/'} className="flex items-center -ml-2 shrink-0" aria-label="MECE home">
             <Logo isLanding={true} className="" />
           </Link>
           <div className="flex items-center gap-1.5 md:gap-4 shrink-0">
@@ -67,13 +70,13 @@ function GuestChrome({ children, showPreviewNav }: { children: React.ReactNode; 
             </Link>
           </div>
         </div>
-        {showPreviewNav && <GuestPreviewNav />}
+        {showPreviewNav && <GuestPreviewNav intl={isIntlMarket(requestRegion())} />}
       </nav>
       <main className="min-h-[calc(100vh-64px)] flex flex-col relative w-full overflow-x-clip max-w-[100vw]">
         <div className="flex-1 pb-10">
           {children}
         </div>
-        <Footer className="pb-12" />
+        <Footer className="pb-12" intl={isIntlMarket(requestRegion())} />
       </main>
       <FeedbackLauncher />
     </>
@@ -155,11 +158,12 @@ export default async function AppLayout({
   return (
     <UserProvider initialUser={user}>
       <AppNav />
+      {user.admin_preview && <UsPreviewBar />}
       <main className="min-h-[calc(100vh-64px)] flex flex-col relative w-full overflow-x-clip max-w-[100vw]">
         <div className="flex-1 pb-24 xl:pb-10 min-h-[calc(100vh-3.5rem)] xl:min-h-0">
           {children}
         </div>
-        <Footer className="pb-24 xl:pb-12" />
+        <Footer className="pb-24 xl:pb-12" intl={isIntlMarket(user.market)} />
       </main>
       <MobileBottomNav />
       <FeedbackLauncher />

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Lock, Sparkles } from 'lucide-react';
 import { useUser } from '@/components/user-context';
 import type { SubscriptionTier } from '@/lib/types';
-import { TIER_LABELS } from '@/lib/tier';
+import { TIER_LABELS } from '@/lib/tier-core';
 
 interface TierGateProps {
   required: SubscriptionTier;

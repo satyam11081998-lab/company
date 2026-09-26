@@ -19,6 +19,7 @@ import {
   pricingProductJsonLd,
   faqPageJsonLd,
   genericBreadcrumbJsonLd,
+  HREFLANG_PRICING,
 } from '@/lib/seo';
 
 /* ── Metadata ──────────────────────────────────────────────────────── */
@@ -27,7 +28,8 @@ export const metadata: Metadata = {
   title: 'Pricing',
   description:
     'MECE pricing plans — Free, Lite (₹199/mo), and Pro (₹499/mo). Start practicing MBA placement interviews for free, upgrade when ready.',
-  alternates: { canonical: '/pricing' },
+  // hreflang (2026-09-25): India pricing here, international at /us/pricing.
+  alternates: { canonical: '/pricing', languages: { ...HREFLANG_PRICING } },
 };
 
 /* ── Static data ───────────────────────────────────────────────────── */

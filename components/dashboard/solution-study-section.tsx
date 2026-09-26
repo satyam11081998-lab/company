@@ -1,4 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import type { ContentMarket } from '@/lib/market';
+import { marketScoped } from '@/lib/market-db';
 import { getAttemptAccess, type AttemptReason } from '@/lib/access';
 import { getCaseInsights } from '@/lib/dashboard/case-insights';
 import SolutionStudy, { type GateInfo } from './solution-study';
@@ -24,9 +26,12 @@ import type { CaseRow, UserRow } from '@/lib/types';
 export default async function SolutionStudySection({
   user,
   userId,
+  market = 'IN',
 }: {
   user: UserRow | null;
   userId: string | null;
+  /** MARKETS (0070): top-up cases come from the viewer's own bank only. */
+  market?: ContentMarket;
 }) {
   if (!userId) return null;
 
@@ -55,15 +60,26 @@ export default async function SolutionStudySection({
   }
 
   // Top up with recent active cases so a new account still has something here.
-  const { data: recent } = await svc
-    .from('cases')
-    .select('id, type, code, unlisted')
-    .eq('is_active', true)
-    .or('unlisted.is.null,unlisted.eq.false')
-    .order('created_at', { ascending: false })
-    .limit(12);
+  const { data: recent } = await marketScoped(
+    market,
+    () => svc
+      .from('cases')
+      .select('id, type, code, unlisted, market')
+      .eq('is_active', true)
+      .eq('market', market)
+      .or('unlisted.is.null,unlisted.eq.false')
+      .order('created_at', { ascending: false })
+      .limit(12),
+    () => svc
+      .from('cases')
+      .select('id, type, code, unlisted')
+      .eq('is_active', true)
+      .or('unlisted.is.null,unlisted.eq.false')
+      .order('created_at', { ascending: false })
+      .limit(12),
+  );
 
-  const recentRows = (recent ?? []) as Array<Pick<CaseRow, 'id' | 'type' | 'code' | 'unlisted'>>;
+  const recentRows = (recent ?? []) as Array<Pick<CaseRow, 'id' | 'type' | 'code' | 'unlisted' | 'market'>>;
   const ids = [...attemptedIds];
   for (const r of recentRows) {
     if (ids.length >= 6) break;
@@ -84,6 +100,9 @@ export default async function SolutionStudySection({
         type: (i.type ?? 'case') as CaseRow['type'],
         code: null as unknown as CaseRow['code'],
         unlisted: false as unknown as CaseRow['unlisted'],
+        // Attempted cases (not in the top-up list) are the user's own history,
+        // which can only be in their own market's bank.
+        market: market as CaseRow['market'],
       };
       try {
         const access = await getAttemptAccess(svc, user, row);

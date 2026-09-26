@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { validateOnboarding, type OnboardingFormData } from '@/lib/types-onboarding';
 import { notifyAdmin } from '@/lib/telegram';
 import { sendWelcomeEmail } from '@/lib/email/send';
+import { isIntlMarket } from '@/lib/market';
 
 /**
  * POST /api/onboarding/complete
@@ -75,7 +76,14 @@ export async function POST(req: Request) {
     // automatically when there is no email address (e.g. an anonymous guest).
     try {
       if (user.email) {
-        await sendWelcomeEmail(user.email, { name: patch.full_name });
+        // International accounts (0070) get the US-voice welcome. Read with the
+        // session client (RLS: own row); any failure → the India email, as before.
+        let intl = false;
+        try {
+          const { data: mk } = await supabase.from('users').select('market').eq('id', user.id).maybeSingle();
+          intl = isIntlMarket((mk as { market?: string | null } | null)?.market);
+        } catch { /* pre-0070 or read failure: India copy */ }
+        await sendWelcomeEmail(user.email, { name: patch.full_name, intl });
       }
     } catch (e) {
       console.error('[onboarding] welcome email failed:', e);

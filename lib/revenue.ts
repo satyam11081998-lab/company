@@ -100,9 +100,16 @@ export interface RevenueSummary {
   truncated: boolean;
   /** table read failed; the total is missing that stream */
   errors: string[];
+  /**
+   * International subscription sales (USD / EUR), kept OUT of every rupee
+   * figure above — adding cents to paise would silently inflate the INR
+   * totals. Whole currency units, real customers only. Empty until the first
+   * international sale.
+   */
+  international: { currency: 'USD' | 'EUR'; amount: number; count: number; last30: number }[];
 }
 
-interface Row { amount_paise: number | null; when: string | null; userId: string | null; payId: string }
+interface Row { amount_paise: number | null; when: string | null; userId: string | null; payId: string; currency?: string }
 
 const paise = (rows: Row[]) => rows.reduce((n, r) => n + (Number(r.amount_paise) || 0), 0);
 
@@ -131,7 +138,12 @@ export async function getRevenueSummary(svc: SupabaseClient): Promise<RevenueSum
     dateCol: string,
     extra?: (q: any) => any,
   ): Promise<Row[]> {
-    let q = svc.from(table).select(`amount_paise, razorpay_payment_id, user_id, ${dateCol}`).limit(ROW_CAP);
+    // `payments` carries a currency column (baseline 0001); the product tables
+    // are rupee-only by construction and have none.
+    const cols = table === 'payments'
+      ? `amount_paise, currency, razorpay_payment_id, user_id, ${dateCol}`
+      : `amount_paise, razorpay_payment_id, user_id, ${dateCol}`;
+    let q = svc.from(table).select(cols).limit(ROW_CAP);
     if (extra) q = extra(q);
     const { data, error } = await q;
     if (error) {
@@ -149,16 +161,22 @@ export async function getRevenueSummary(svc: SupabaseClient): Promise<RevenueSum
         when: r[dateCol] ?? null,
         userId: (r.user_id as string | null) ?? null,
         payId: String(r.razorpay_payment_id),
+        currency: typeof r.currency === 'string' ? r.currency.toUpperCase() : 'INR',
       }));
   }
 
-  const [subs, decks, vault, minutes] = await Promise.all([
+  const [allSubs, decks, vault, minutes] = await Promise.all([
     // paid only — a refunded row has been flipped to 'refunded' by the webhook
     read('payments', 'paid_at', (q) => q.eq('status', 'paid')),
     read('deck_purchases', 'created_at'),
     read('skeleton_access', 'granted_at'),
     read('realtime_purchases', 'created_at'),
   ]);
+
+  // Rupee subscriptions feed every INR figure below (unchanged behaviour —
+  // before 2026-09-25 every row was INR). USD/EUR rows are reported apart.
+  const subs = allSubs.filter((r) => (r.currency ?? 'INR') === 'INR');
+  const intlSubs = allSubs.filter((r) => r.currency === 'USD' || r.currency === 'EUR');
 
   // ── Separate real sales from our own money ────────────────────────
   // `reasonToDrop` returns null for a genuine customer payment, or a short
@@ -199,7 +217,21 @@ export async function getRevenueSummary(svc: SupabaseClient): Promise<RevenueSum
     paise(all.filter((r) => r.when && new Date(r.when).getTime() >= cutoff)) / 100,
   );
 
+  const intlKept = keep(intlSubs);
+  const international = (['USD', 'EUR'] as const)
+    .map((c) => {
+      const rows = intlKept.filter((r) => r.currency === c);
+      return {
+        currency: c,
+        amount: Math.round(paise(rows)) / 100,
+        count: rows.length,
+        last30: Math.round(paise(rows.filter((r) => r.when && new Date(r.when).getTime() >= cutoff))) / 100,
+      };
+    })
+    .filter((x) => x.count > 0);
+
   return {
+    international,
     totalInr: REVENUE_BASELINE_INR + ledgerInr,
     ledgerInr,
     baselineInr: REVENUE_BASELINE_INR,

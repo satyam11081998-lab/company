@@ -12,12 +12,13 @@ import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, 
 import ScrollAnimations from '@/components/scroll-animations';
 import InterviewSim from '@/components/landing/interview-sim';
 import { GdBriefVignette, LeaderboardVignette, DeckVaultVignette, CountUp } from '@/components/landing-vignettes';
-import { faqPageJsonLd } from '@/lib/seo';
+import { faqPageJsonLd, HREFLANG_HOME } from '@/lib/seo';
 import GuestPracticeActions from '@/components/guest/guest-practice-actions';
 import { getDailyTodayServerSide } from '@/lib/daily-server';
 
 export const metadata = {
-  alternates: { canonical: '/' },
+  // hreflang (2026-09-25): India here, the international site at /us.
+  alternates: { canonical: '/', languages: { ...HREFLANG_HOME } },
 };
 
 /** Homepage FAQ — also emitted as FAQPage JSON-LD for AEO + entity disambiguation. */

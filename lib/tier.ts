@@ -1,46 +1,23 @@
 import type { SubscriptionTier, UserRow } from '@/lib/types';
+import type { Currency } from '@/lib/market';
+import { effectiveTier } from '@/lib/tier-core';
+import { isBillingPeriod, type BillingPeriod } from '@/lib/billing';
+import { INTL_TIER_PRICING } from '@/lib/pricing-intl';
 
-/**
- * Minimal row shape for computing the effective tier: any object carrying
- * the two subscription columns. Lets narrow DB selects (admin lists, quota
- * routes) be passed without casting to the full UserRow -- the body only
- * ever reads these two fields, and UserRow satisfies this shape, so every
- * existing caller is unaffected.
- */
-type TierBearingRow = Partial<Pick<UserRow, 'subscription_tier' | 'subscription_expires_at'>>;
-
-/**
- * Tier hierarchy. Higher number = more access.
- * Used for permission checks like `hasTier(user, 'lite')` which is true for lite OR pro.
- */
-const TIER_LEVELS: Record<SubscriptionTier, number> = {
-  free: 0,
-  lite: 1,
-  pro: 2,
-};
-
-/**
- * Returns true if the user's current effective tier is AT LEAST the required tier.
- * Handles expired subscriptions — if expires_at is past, user falls back to 'free'.
- */
-export function hasTier(user: TierBearingRow | null, required: SubscriptionTier): boolean {
-  if (!user) return required === 'free';
-  const effective = effectiveTier(user);
-  return TIER_LEVELS[effective] >= TIER_LEVELS[required];
-}
-
-/**
- * Computes the user's actual tier right now (taking expiry into account).
- * Use this anywhere you display tier or check permissions.
- */
-export function effectiveTier(user: TierBearingRow | null): SubscriptionTier {
-  if (!user) return 'free';
-  if (!user.subscription_tier || user.subscription_tier === 'free') return 'free';
-  if (!user.subscription_expires_at) return user.subscription_tier;
-  const expiresAt = new Date(user.subscription_expires_at);
-  if (expiresAt.getTime() < Date.now()) return 'free';
-  return user.subscription_tier;
-}
+// Re-exports (2026-09-25 split): every name that used to be defined here is
+// still importable from '@/lib/tier'. See lib/tier-core.ts (tier identity, no
+// prices), lib/billing.ts (periods) and lib/pricing-intl.ts (USD/EUR table).
+export { hasTier, effectiveTier, TIER_LABELS } from '@/lib/tier-core';
+export {
+  BILLING_PERIODS,
+  BILLING_PERIOD_LABELS,
+  BILLING_PERIOD_SUFFIX,
+  BILLING_PERIOD_DAYS,
+  isBillingPeriod,
+  periodDays,
+} from '@/lib/billing';
+export type { BillingPeriod } from '@/lib/billing';
+export { INTL_TIER_PRICING, isCurrency } from '@/lib/pricing-intl';
 
 /**
  * Per-tier limits. Centralized so we can tune later without touching feature code.
@@ -157,41 +134,6 @@ export function canSeeCaseFigures(user: UserRow | null): boolean {
 }
 
 /**
- * Friendly labels for tier display.
- */
-export const TIER_LABELS: Record<SubscriptionTier, string> = {
-  free: 'Free',
-  lite: 'Lite',
-  pro: 'Pro',
-};
-
-/**
- * Billing periods. Monthly is the established baseline; quarter and annual are
- * prepay options that simply grant a longer access window (see BILLING_PERIOD_DAYS).
- */
-export type BillingPeriod = 'monthly' | 'quarter';
-
-// Only monthly and a 3-month prepay are offered (annual was removed).
-export const BILLING_PERIODS: BillingPeriod[] = ['monthly', 'quarter'];
-
-export const BILLING_PERIOD_LABELS: Record<BillingPeriod, string> = {
-  monthly: 'Monthly',
-  quarter: '3 months',
-};
-
-/** Short suffix shown next to a price, e.g. "₹999 /yr". */
-export const BILLING_PERIOD_SUFFIX: Record<BillingPeriod, string> = {
-  monthly: '/mo',
-  quarter: '/3 mo',
-};
-
-/** Access window granted per period — drives `subscription_expires_at`. */
-export const BILLING_PERIOD_DAYS: Record<BillingPeriod, number> = {
-  monthly: 30,
-  quarter: 91,
-};
-
-/**
  * Full price matrix in INR. Two options only: monthly and a 3-month prepay
  * (cheaper per month; maps to a longer expiry window, not a new feature).
  */
@@ -209,21 +151,32 @@ export const TIER_PRICES: Record<Exclude<SubscriptionTier, 'free'>, number> = {
   pro: TIER_PRICING.pro.monthly,
 };
 
-export function isBillingPeriod(v: unknown): v is BillingPeriod {
-  return v === 'monthly' || v === 'quarter';
-}
-
-/** Price in INR for a tier + period. Unknown periods fall back to monthly. */
+/**
+ * Price for a tier + period in WHOLE units of `currency` (INR by default, so
+ * every existing two-argument caller keeps getting rupees). Unknown periods
+ * fall back to monthly; an unknown currency falls back to INR.
+ */
 export function priceFor(
   tier: Exclude<SubscriptionTier, 'free'>,
   period: BillingPeriod = 'monthly',
+  currency: Currency = 'INR',
 ): number {
-  return TIER_PRICING[tier][isBillingPeriod(period) ? period : 'monthly'];
+  const p = isBillingPeriod(period) ? period : 'monthly';
+  if (currency === 'USD' || currency === 'EUR') return INTL_TIER_PRICING[currency][tier][p];
+  return TIER_PRICING[tier][p];
 }
 
-/** Access window (days) for a billing period. Unknown periods fall back to monthly. */
-export function periodDays(period: BillingPeriod = 'monthly'): number {
-  return BILLING_PERIOD_DAYS[isBillingPeriod(period) ? period : 'monthly'];
+/**
+ * List price in MINOR units (paise / cents) — what Razorpay's `amount` field
+ * takes for every currency it supports here (INR, USD and EUR are all
+ * 2-decimal currencies). Single source for order, verify and the webhook.
+ */
+export function listMinor(
+  tier: Exclude<SubscriptionTier, 'free'>,
+  period: BillingPeriod,
+  currency: Currency = 'INR',
+): number {
+  return priceFor(tier, period, currency) * 100;
 }
 
 /**
@@ -274,7 +227,23 @@ export function couponCoversTier(scope: string, tier: 'lite' | 'pro'): boolean {
 export function perMonthEquivalent(
   tier: Exclude<SubscriptionTier, 'free'>,
   period: BillingPeriod = 'monthly',
+  currency: Currency = 'INR',
 ): number {
   const months = period === 'quarter' ? 3 : 1;
-  return Math.round(priceFor(tier, period) / months);
+  const raw = priceFor(tier, period, currency) / months;
+  // Rupees round to whole units (unchanged). Dollars/euros keep cents —
+  // "$39.67/mo" is honest where "$40/mo" would overstate the saving.
+  return currency === 'INR' ? Math.round(raw) : Math.round(raw * 100) / 100;
+}
+
+/** Whole-percent saving of a prepay period against paying monthly. */
+export function periodSavingPct(
+  tier: Exclude<SubscriptionTier, 'free'>,
+  period: BillingPeriod,
+  currency: Currency = 'INR',
+): number {
+  const months = period === 'quarter' ? 3 : 1;
+  const full = priceFor(tier, 'monthly', currency) * months;
+  const paid = priceFor(tier, period, currency);
+  return full > 0 ? Math.round((1 - paid / full) * 100) : 0;
 }

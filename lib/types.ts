@@ -50,6 +50,14 @@ export interface UserRow {
   // excluded from leaderboards, activity feeds, peer proximity and the
   // session-lock — same treatment as `is_demo`.
   is_guest?: boolean | null;
+  // International markets (migration 0070, 2026-09-25). 'IN' | 'US' | 'EU';
+  // NULL = not stamped yet (treated as India everywhere). Service-role write
+  // only — stamped once by middleware, then locked. See lib/market.ts.
+  market?: 'IN' | 'US' | 'EU' | null;
+  // Request-only flag, never a DB column: set by lib/admin-preview.ts when an
+  // ADMIN is viewing the app as a US user. `market` above is then 'US' for
+  // display; money paths always re-read the real market server-side.
+  admin_preview?: boolean;
 }
 
 export interface PaymentRow {
@@ -92,6 +100,8 @@ export interface CaseRow {
     explainer?: string;
   } | null;
   source_brief_id?: string | null;
+  /** Which bank the case belongs to (migration 0070). Absent/NULL = India. */
+  market?: 'IN' | 'US' | null;
 }
 
 export interface FeedbackJson {

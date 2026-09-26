@@ -1,6 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { getDemoUserIdsCached, notInList } from './demo-users';
+import type { ContentMarket } from '@/lib/market';
+import { runMarketScoped, scopeUsersToMarket } from '@/lib/market-db';
 
 export interface TapeEvent {
   who: string;
@@ -10,7 +12,11 @@ export interface TapeEvent {
   t: string;
 }
 
-export async function getCohortActivity(supabase: SupabaseClient): Promise<TapeEvent[]> {
+export async function getCohortActivity(
+  supabase: SupabaseClient,
+  /** MARKETS (0070): the tape shows the viewer's own market only. */
+  market: ContentMarket = 'IN',
+): Promise<TapeEvent[]> {
   // Query recent global submissions
   // Demo/showcase accounts are filtered out — the live tape is social proof,
   // so it must only ever show real aspirants.
@@ -20,20 +26,24 @@ export async function getCohortActivity(supabase: SupabaseClient): Promise<TapeE
   // row — the embed is already `!inner`, which is what makes an embedded-column
   // filter actually restrict the parent rows (a plain `users(...)` embed would
   // make .eq('users.is_guest', …) a silent no-op).
-  const q = supabase
-    .from('submissions')
-    .select(`
-      id,
-      score,
-      created_at,
-      user_id,
-      users!inner(name, is_guest),
-      cases(title, type)
-    `)
-    .eq('users.is_guest', false).eq('users.is_admin', false)
-    .order('created_at', { ascending: false })
-    .limit(10);
-  const { data, error } = await (excl ? q.not('user_id', 'in', excl) : q);
+  const build = (scoped: boolean) => {
+    const base = supabase
+      .from('submissions')
+      .select(`
+        id,
+        score,
+        created_at,
+        user_id,
+        users!inner(name, is_guest),
+        cases(title, type)
+      `)
+      .eq('users.is_guest', false).eq('users.is_admin', false);
+    const q = (scoped ? scopeUsersToMarket(base, market, 'users') : base)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    return excl ? q.not('user_id', 'in', excl) : q;
+  };
+  const { data, error } = await runMarketScoped(market, build);
 
   if (error || !data) return [];
 

@@ -1,6 +1,7 @@
 import type { CaseRow, UserRow } from '@/lib/types';
 import { effectiveTier, TIER_LIMITS } from '@/lib/tier';
 import { LINKEDIN_FOLLOW_PERK } from '@/lib/constants';
+import { contentMarketOf, marketToday, zonedMidnightIso, dayTimeZoneOf } from '@/lib/market';
 
 function todayIst(): string {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -13,7 +14,9 @@ export type AttemptReason =
   | 'free-reattempt'
   | 'lite-quota'
   /** Anonymous guest reaching past today's daily pair — the sign-up moment. */
-  | 'guest-non-daily';
+  | 'guest-non-daily'
+  /** The case belongs to another market's bank (0070). Mirrors access_guard.py. */
+  | 'wrong-market';
 
 export interface AttemptAccess {
   allowed: boolean;
@@ -29,9 +32,17 @@ export interface AttemptAccess {
 export async function getAttemptAccess(
   supabase: any, // server Supabase client (typed loosely to avoid generic-variance friction)
   user: UserRow | null,
-  caseRow: Pick<CaseRow, 'id' | 'type' | 'code' | 'unlisted'>,
+  caseRow: Pick<CaseRow, 'id' | 'type' | 'code' | 'unlisted'> & { market?: CaseRow['market'] },
 ): Promise<AttemptAccess> {
   const bucket: 'case' | 'guesstimate' = caseRow.type === 'guesstimate' ? 'guesstimate' : 'case';
+  // MARKETS (0070). An account practises only its own market's bank. Checked
+  // first — before unlisted and before Pro — exactly like the backend gate.
+  // `market` absent on the row (caller didn't select it / pre-0070) = India.
+  const userContent = contentMarketOf(user?.market);
+  if ((caseRow.market ?? 'IN') !== userContent) {
+    return { allowed: false, reason: 'wrong-market', bucket, remaining: 0 };
+  }
+  if (userContent === 'US') return getIntlAttemptAccess(supabase, user, caseRow, bucket);
   // UNLISTED broadcast cases: attemptable by anyone with the link, regardless of tier,
   // daily rotation, or the free/lite bank. Mirrors backend access_guard.assert_can_attempt.
   // The SUBMIT wall still asks a guest to create an account to be scored (campaign funnel).
@@ -153,6 +164,104 @@ export async function getAttemptAccess(
       .filter((t: any) => !t.unlisted)
       .filter((t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket).length;
   }
+  const cap = bucket === 'guesstimate'
+    ? (TIER_LIMITS.lite.dailyExtraGuesstimates as number)
+    : (TIER_LIMITS.lite.dailyExtraCases as number);
+  return used >= cap
+    ? { allowed: false, reason: 'lite-quota', bucket, remaining: 0 }
+    : { allowed: true, reason: 'ok', bucket, remaining: cap - used };
+}
+
+
+/**
+ * The international twin of the rules above — identical tiers and quotas,
+ * but the "daily pair" comes from `market_daily_schedule` and the day rolls
+ * over at US Eastern midnight. Mirrors backend services/access_guard.py.
+ * Kept separate so the India path above stays byte-for-byte what it was.
+ */
+async function getIntlAttemptAccess(
+  supabase: any,
+  user: UserRow | null,
+  caseRow: Pick<CaseRow, 'id' | 'type' | 'code' | 'unlisted'>,
+  bucket: 'case' | 'guesstimate',
+): Promise<AttemptAccess> {
+  if (caseRow.unlisted) return { allowed: true, reason: 'ok', bucket, remaining: null };
+  const tier = effectiveTier(user);
+  if (tier === 'pro') return { allowed: true, reason: 'ok', bucket, remaining: null };
+
+  const today = marketToday('US');
+  const { data: schedRows } = await supabase
+    .from('market_daily_schedule')
+    .select('case_id, guesstimate_id, scheduled_date')
+    .eq('market', 'US')
+    .lte('scheduled_date', today)
+    .order('scheduled_date', { ascending: false })
+    .limit(1);
+  const sched = schedRows?.[0] as { case_id?: string; guesstimate_id?: string } | undefined;
+  const dailyRefs = new Set<string>([sched?.case_id, sched?.guesstimate_id].filter(Boolean) as string[]);
+  const isDaily = dailyRefs.has(caseRow.id);
+
+  const uid = user?.id ?? '';
+  const { data: priorRows } = await supabase
+    .from('case_attempts')
+    .select('id')
+    .eq('user_id', uid)
+    .eq('case_id', caseRow.id)
+    .limit(1);
+  const isFirst = !(priorRows && priorRows.length);
+
+  if (user?.is_guest && !isDaily) return { allowed: false, reason: 'guest-non-daily', bucket, remaining: 0 };
+  if (isDaily) {
+    if (user?.is_guest) return { allowed: true, reason: 'ok', bucket, remaining: null };
+    if (tier === 'free' && !isFirst) return { allowed: false, reason: 'free-reattempt', bucket, remaining: 0 };
+    return { allowed: true, reason: 'ok', bucket, remaining: null };
+  }
+
+  const countBank = async (ids: string[]) => {
+    if (!ids.length) return 0;
+    const { data: types } = await supabase.from('cases').select('id, type, unlisted').in('id', ids);
+    return (types || [])
+      .filter((t: any) => !t.unlisted)
+      .filter((t: any) => (t.type === 'guesstimate' ? 'guesstimate' : 'case') === bucket).length;
+  };
+
+  if (tier === 'free') {
+    if (!user) return { allowed: false, reason: 'free-non-daily', bucket, remaining: 0 };
+    const { data: firstRows } = await supabase
+      .from('case_attempts')
+      .select('case_id, counted_for_daily')
+      .eq('user_id', uid)
+      .eq('is_first_attempt', true);
+    const used = await countBank(
+      (firstRows || [])
+        .filter((r: any) => !r.counted_for_daily && !dailyRefs.has(r.case_id))
+        .map((r: any) => r.case_id),
+    );
+    const perkBonus = user?.linkedin_follow_claimed_at
+      ? (bucket === 'guesstimate' ? LINKEDIN_FOLLOW_PERK.extraGuesstimates : LINKEDIN_FOLLOW_PERK.extraCases)
+      : 0;
+    const cap = (bucket === 'guesstimate'
+      ? (TIER_LIMITS.free.lifetimeExtraGuesstimates as number)
+      : (TIER_LIMITS.free.lifetimeExtraCases as number)) + perkBonus;
+    return used >= cap
+      ? { allowed: false, reason: 'free-extra-used', bucket, remaining: 0 }
+      : { allowed: true, reason: 'ok', bucket, remaining: cap - used };
+  }
+
+  // lite, non-daily
+  if (!isFirst) return { allowed: true, reason: 'ok', bucket, remaining: null };
+  const startIso = zonedMidnightIso(today, dayTimeZoneOf('US'));
+  const { data: todayRows } = await supabase
+    .from('case_attempts')
+    .select('case_id, counted_for_daily, created_at')
+    .eq('user_id', uid)
+    .eq('is_first_attempt', true)
+    .gte('created_at', startIso);
+  const used = await countBank(
+    (todayRows || [])
+      .filter((r: any) => !r.counted_for_daily && !dailyRefs.has(r.case_id))
+      .map((r: any) => r.case_id),
+  );
   const cap = bucket === 'guesstimate'
     ? (TIER_LIMITS.lite.dailyExtraGuesstimates as number)
     : (TIER_LIMITS.lite.dailyExtraCases as number);

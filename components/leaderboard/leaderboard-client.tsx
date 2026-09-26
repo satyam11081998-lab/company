@@ -19,6 +19,8 @@ interface Props {
   cohort: LeaderboardView | null;
   cohortName: string | null;
   initialTab?: Tab;
+  /** Content market of the viewer (0070). 'US' = the international board. */
+  market?: 'IN' | 'US';
 }
 
 const SITE = 'https://www.mece.in';
@@ -46,8 +48,9 @@ function TierChip({ points, className = '' }: { points: number; className?: stri
   );
 }
 
-export default function LeaderboardClient({ userId, allTime, cohort, cohortName, initialTab = 'all' }: Props) {
-  const [tab, setTab] = useState<Tab>(initialTab);
+export default function LeaderboardClient({ userId, allTime, cohort, cohortName, initialTab = 'all', market = 'IN' }: Props) {
+  const intl = market === 'US';
+  const [tab, setTab] = useState<Tab>(market === 'US' && initialTab === 'cohort' ? 'all' : initialTab);
   const [daily, setDaily] = useState<DailyLeaderboardResponse | null>(null);
   const [dailyLoading, setDailyLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -55,11 +58,16 @@ export default function LeaderboardClient({ userId, allTime, cohort, cohortName,
   useEffect(() => {
     if (tab === 'daily' && !daily && !dailyLoading) {
       setDailyLoading(true);
-      fetchDailyLeaderboard().then(setDaily).catch(() => {}).finally(() => setDailyLoading(false));
+      fetchDailyLeaderboard(intl ? 'US' : undefined).then(setDaily).catch(() => {}).finally(() => setDailyLoading(false));
     }
-  }, [tab, daily, dailyLoading]);
+  }, [tab, daily, dailyLoading, intl]);
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  // International accounts: their own board, and no college cohort (the
+  // college list is India's campuses).
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = intl ? [
+    { id: 'all', label: 'US & Europe', icon: <Globe2 className="h-4 w-4" /> },
+    { id: 'daily', label: "Today's Daily", icon: <Zap className="h-4 w-4" /> },
+  ] : [
     { id: 'all', label: 'All India', icon: <Globe2 className="h-4 w-4" /> },
     { id: 'daily', label: "Today's Daily", icon: <Zap className="h-4 w-4" /> },
     { id: 'cohort', label: cohortName || 'My Cohort', icon: <GraduationCap className="h-4 w-4" /> },
@@ -73,7 +81,9 @@ export default function LeaderboardClient({ userId, allTime, cohort, cohortName,
           <span className="badge-pill mb-3"><Trophy className="h-3.5 w-3.5" /> Leaderboards</span>
           <h1 className="text-4xl font-bold tracking-tight text-foreground">Where do you stand?</h1>
           <p className="mt-1 text-[15px] text-muted-foreground">
-            All-India, today&apos;s daily case, and your own college cohort — live, and updated as people solve.
+            {intl
+              ? <>Everyone practicing in the US and Europe, plus today&apos;s daily case — live, and updated as people solve.</>
+              : <>All-India, today&apos;s daily case, and your own college cohort — live, and updated as people solve.</>}
           </p>
         </div>
       </div>

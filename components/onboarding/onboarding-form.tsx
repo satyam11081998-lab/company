@@ -25,7 +25,20 @@ interface Props {
    * email-confirmation round trip (so email-signup guests still land on their score).
    */
   fallbackResultsId?: string | null;
+  /**
+   * International account (0070, US + Europe). The college list is India's
+   * campuses, so the school is typed instead, and the recruiting vocabulary
+   * is the US one. Same fields, same API, same validation.
+   */
+  intl?: boolean;
 }
+
+// US recruiting vocabulary for the same three stored values.
+const INTL_FOCUS_OPTIONS: typeof PLACEMENT_FOCUS_OPTIONS = [
+  { value: 'summer', label: 'Summer internship recruiting', hint: 'Internship offers (MBA or undergrad)' },
+  { value: 'final', label: 'Full-time recruiting', hint: 'Full-time offers, including return offers' },
+  { value: 'both', label: 'Both', hint: "I'll prep for whichever comes up first" },
+];
 
 /**
  * Single-scroll onboarding form.
@@ -38,13 +51,16 @@ interface Props {
  *   - Submit button gates on validation; failed fields scroll into view
  *   - Branded styling — cream cards, var(--red) accents, no third-party UI
  */
-export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false, fallbackResultsId = null }: Props) {
+export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false, fallbackResultsId = null, intl = false }: Props) {
   const router = useRouter();
   const trackAction = useTrackAction();
   const [form, setForm] = useState<OnboardingFormData>({
     ...EMPTY_ONBOARDING_FORM,
+    // International: no campus picker — the school is always typed ("Other").
+    ...(intl ? { college_id: '__other__' } : {}),
     ...prefill,
   });
+  const focusOptions = intl ? INTL_FOCUS_OPTIONS : PLACEMENT_FOCUS_OPTIONS;
   const [errors, setErrors] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [collegeSearch, setCollegeSearch] = useState('');
@@ -162,8 +178,9 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
           One quick set-up, then you&apos;re in.
         </h1>
         <p style={{ marginTop: 8, fontSize: 14, color: 'var(--ink-3)', maxWidth: 540 }}>
-          We use this to personalise your cases, your cohort, and the GD feature
-          coming next. It takes about 30 seconds.
+          {intl
+            ? 'We use this to personalize your practice and your leaderboard. It takes about 30 seconds.'
+            : 'We use this to personalise your cases, your cohort, and the GD feature coming next. It takes about 30 seconds.'}
         </p>
       </header>
 
@@ -185,6 +202,25 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       </Field>
 
       {/* ── College ────────────────────────────────────────────────── */}
+      {intl ? (
+      <Field
+        label="School / university"
+        required
+        error={errors.has('college_other') ? 'Required' : undefined}
+        hint="Your business school, college or university."
+        dataField="college_other"
+      >
+        <input
+          type="text"
+          value={form.college_other}
+          onChange={(e) => update('college_other', e.target.value)}
+          placeholder="e.g. Wharton, Booth, Kellogg, NYU Stern, INSEAD, LBS"
+          style={inputStyle(errors.has('college_other'))}
+          data-field="college_other"
+          autoComplete="organization"
+        />
+      </Field>
+      ) : (
       <Field
         label="College / B-school"
         required
@@ -244,13 +280,14 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
           />
         )}
       </Field>
+      )}
 
       {/* ── Batch year ─────────────────────────────────────────────── */}
       <Field
         label="Graduation year"
         required
         error={errors.has('batch_year') ? 'Required' : undefined}
-        hint="The year you finish your MBA."
+        hint={intl ? 'The year you graduate.' : 'The year you finish your MBA.'}
         dataField="batch_year"
       >
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -269,13 +306,13 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
 
       {/* ── Placement focus ────────────────────────────────────────── */}
       <Field
-        label="What are you prepping for?"
+        label={intl ? 'What are you recruiting for?' : 'What are you prepping for?'}
         required
         error={errors.has('placement_focus') ? 'Required' : undefined}
         dataField="placement_focus"
       >
         <div style={{ display: 'grid', gap: 10 }}>
-          {PLACEMENT_FOCUS_OPTIONS.map((o) => {
+          {focusOptions.map((o) => {
             const selected = form.placement_focus === o.value;
             return (
               <label
@@ -322,7 +359,7 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
         }}
       >
         <div style={{ fontSize: 11, color: 'var(--ink-4)', letterSpacing: '0.08em', fontWeight: 700, textTransform: 'uppercase' }}>
-          Optional — helps us personalise (skip if you want)
+          {intl ? 'Optional — helps us personalize (skip if you want)' : 'Optional — helps us personalise (skip if you want)'}
         </div>
 
         <Field label="LinkedIn URL" optional dataField="linkedin_url">
@@ -388,7 +425,7 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
           <textarea
             value={form.goal_text}
             onChange={(e) => update('goal_text', e.target.value)}
-            placeholder="e.g. PPO from BCG by Day 1, or top decile in summers."
+            placeholder={intl ? 'e.g. An MBB summer internship offer, or nailing my first-round case interviews.' : 'e.g. PPO from BCG by Day 1, or top decile in summers.'}
             rows={3}
             style={{ ...inputStyle(false), resize: 'vertical', minHeight: 80 }}
           />

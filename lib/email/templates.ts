@@ -83,17 +83,32 @@ export interface UpgradeReceiptData {
   name?: string | null;
   tierLabel: string; // 'Pro' | 'Lite'
   periodLabel: string; // 'Monthly' | '3 months' | 'Annual'
-  amountInr: number; // rupees
+  amountInr: number; // WHOLE units of `currency` (rupees unless currency says otherwise — name kept for back-compat)
   expiresAt?: string | null; // ISO
+  /** International orders (2026-09-25). Absent → INR, byte-identical to before. */
+  currency?: 'INR' | 'USD' | 'EUR';
+}
+
+/** Receipt amount labels. INR output is exactly what the template always printed. */
+function receiptAmount(d: UpgradeReceiptData): { html: string; text: string } {
+  if (d.currency === 'USD' || d.currency === 'EUR') {
+    const sym = d.currency === 'USD' ? '$' : '&euro;';
+    const txt = d.currency === 'USD' ? 'USD ' : 'EUR ';
+    const n = d.amountInr.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    return { html: `${sym}${n}`, text: `${txt}${n}` };
+  }
+  return { html: `&#8377;${d.amountInr.toLocaleString('en-IN')}`, text: `Rs ${d.amountInr.toLocaleString('en-IN')}` };
 }
 
 /** Transactional payment/upgrade confirmation. */
 export function upgradeReceiptEmail(d: UpgradeReceiptData): { subject: string; html: string; text: string } {
   const firstName = d.name ? escapeHtml(d.name.split(' ')[0]) : null;
   const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
+  const intl = d.currency === 'USD' || d.currency === 'EUR';
   const expiry = d.expiresAt
-    ? new Date(d.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+    ? new Date(d.expiresAt).toLocaleDateString(intl ? 'en-US' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
     : null;
+  const amount = receiptAmount(d);
   const row = (k: string, v: string, last = false) =>
     `<tr><td style="padding:12px 16px;${last ? '' : 'border-bottom:1px solid ' + BORDER + ';'}font-size:14px;color:${MUTED};">${k}</td><td style="padding:12px 16px;${last ? '' : 'border-bottom:1px solid ' + BORDER + ';'}font-size:14px;text-align:right;font-weight:600;color:${INK};">${v}</td></tr>`;
   const content = `
@@ -101,7 +116,7 @@ export function upgradeReceiptEmail(d: UpgradeReceiptData): { subject: string; h
     <p style="margin:0 0 14px;">Your upgrade to <strong>MECE ${escapeHtml(d.tierLabel)}</strong> is confirmed — welcome aboard. Your account now has full access to everything in the ${escapeHtml(d.tierLabel)} plan.</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;border:1px solid ${BORDER};border-radius:10px;border-collapse:separate;">
       ${row('Plan', `${escapeHtml(d.tierLabel)} &middot; ${escapeHtml(d.periodLabel)}`)}
-      ${row('Amount paid', `&#8377;${d.amountInr.toLocaleString('en-IN')}`, !expiry)}
+      ${row('Amount paid', amount.html, !expiry)}
       ${expiry ? row('Access until', expiry, true) : ''}
     </table>
     <p style="margin:0;">Jump back in and put it to work:</p>`;
@@ -118,7 +133,7 @@ export function upgradeReceiptEmail(d: UpgradeReceiptData): { subject: string; h
 Your upgrade to MECE ${d.tierLabel} is confirmed.
 
 Plan: ${d.tierLabel} (${d.periodLabel})
-Amount paid: Rs ${d.amountInr.toLocaleString('en-IN')}${expiry ? `\nAccess until: ${expiry}` : ''}
+Amount paid: ${amount.text}${expiry ? `\nAccess until: ${expiry}` : ''}
 
 Go to your dashboard: ${SITE_URL}/dashboard
 
@@ -127,9 +142,10 @@ Go to your dashboard: ${SITE_URL}/dashboard
 }
 
 /** Transactional welcome email, sent once when a user finishes onboarding. */
-export function welcomeEmail(d: { name?: string | null }): { subject: string; html: string; text: string } {
+export function welcomeEmail(d: { name?: string | null; intl?: boolean }): { subject: string; html: string; text: string } {
   const firstName = d.name ? escapeHtml(d.name.split(' ')[0]) : null;
   const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
+  if (d.intl) return welcomeEmailIntl(firstName, greeting, d.name ?? null);
   const content = `
     <p style="margin:0 0 14px;">${greeting}</p>
     <p style="margin:0 0 14px;">Welcome to <strong>MECE</strong> — you're all set. We built MECE to make case-interview and guesstimate prep something you do a little of every day, and get sharper each time.</p>
@@ -155,6 +171,44 @@ Start here:
 - Your daily case + guesstimate, every day
 - The AI interviewer that scores your structure
 - GD briefs on live news + industry primers
+
+Start your first case: ${SITE_URL}/dashboard
+
+- MECE / mece.in`;
+  return {
+    subject: firstName ? `Welcome to MECE, ${firstName}` : 'Welcome to MECE',
+    html,
+    text,
+  };
+}
+
+/** International (US + Europe) welcome — no GD briefs or primers; US recruiting voice. */
+function welcomeEmailIntl(firstName: string | null, greeting: string, rawName: string | null) {
+  const content = `
+    <p style="margin:0 0 14px;">${greeting}</p>
+    <p style="margin:0 0 14px;">Welcome to <strong>MECE</strong> — you're all set. MECE is case interview practice with an AI interviewer that pushes back like a real one, built for consulting, finance and strategy recruiting.</p>
+    <p style="margin:0 0 8px;">Here's where to start:</p>
+    <ul style="margin:0 0 16px;padding-left:20px;color:${INK};font-size:15px;line-height:1.7;">
+      <li>Your <strong>daily case + market sizing question</strong> — a fresh pair every day.</li>
+      <li>A <strong>case bank built for US recruiting</strong> — profitability, market entry, M&amp;A, pricing and more.</li>
+      <li><strong>Scored feedback in about a minute</strong> on structure, math, synthesis and business judgment.</li>
+    </ul>
+    <p style="margin:0;">Your first case is waiting:</p>`;
+  const html = baseEmailLayout({
+    preheader: 'Welcome to MECE — your case interview prep starts now.',
+    heading: firstName ? `Welcome to MECE, ${firstName}!` : 'Welcome to MECE!',
+    contentHtml: content,
+    cta: { label: 'Start your first case', url: `${SITE_URL}/dashboard` },
+    footerNote: 'Questions or feedback? Just reply to this email — a real person reads it.',
+  });
+  const text = `${rawName ? `Hi ${rawName.split(' ')[0]},` : 'Hi there,'}
+
+Welcome to MECE — you're all set. Case interview practice with an AI interviewer, built for consulting, finance and strategy recruiting.
+
+Start here:
+- Your daily case + market sizing question, every day
+- A case bank built for US recruiting
+- Scored feedback in about a minute
 
 Start your first case: ${SITE_URL}/dashboard
 

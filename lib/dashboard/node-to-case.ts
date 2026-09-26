@@ -1,3 +1,5 @@
+import type { ContentMarket } from '@/lib/market';
+import { marketScoped } from '@/lib/market-db';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export interface NodeOpenTarget {
@@ -54,16 +56,28 @@ function practiceHref(cluster: string): string {
 export async function getNodeOpenTargets(
   supabase: SupabaseClient, 
   userId: string, 
-  nodes: { id: string, cluster: string, state: string }[]
+  nodes: { id: string, cluster: string, state: string }[],
+  /** MARKETS (0070): only recommend cases from the viewer's own bank. */
+  market: ContentMarket = 'IN',
 ): Promise<Map<string, NodeOpenTarget>> {
   const result = new Map<string, NodeOpenTarget>();
 
   // 1. Fetch cases mapped to these nodes
-  const { data: cases } = await supabase
-    .from('cases')
-    .select('id, skill_node, difficulty, created_at')
-    .not('skill_node', 'is', null)
-    .in('skill_node', nodes.map(n => n.id));
+  const nodeIds = nodes.map(n => n.id);
+  const { data: cases } = await marketScoped(
+    market,
+    () => supabase
+      .from('cases')
+      .select('id, skill_node, difficulty, created_at')
+      .not('skill_node', 'is', null)
+      .eq('market', market)
+      .in('skill_node', nodeIds),
+    () => supabase
+      .from('cases')
+      .select('id, skill_node, difficulty, created_at')
+      .not('skill_node', 'is', null)
+      .in('skill_node', nodeIds),
+  );
 
   // 2. Fetch user's attempts for these cases to find active ones
   const caseIds = (cases || []).map(c => c.id);

@@ -19,21 +19,34 @@ export function CaseEditor() {
   const [estMinutes, setEstMinutes] = useState(25);
   const [pointsReward, setPointsReward] = useState(85);
   const [mcqExplainer, setMcqExplainer] = useState('');
+  // MARKETS (0070): the list shows one bank at a time. Default India, so this
+  // screen behaves exactly as before — the 100 seeded US rows are newer than
+  // every India case and would otherwise push India off the 50-row list.
+  const [market, setMarket] = useState<'IN' | 'US'>('IN');
 
   const supabase = createClient();
 
   useEffect(() => {
     fetchCases();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [market]);
 
   const fetchCases = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const base = 'id, title, type, skill_node, skill_cluster, interview_meta, mcq';
+    let { data, error } = await supabase
       .from('cases')
-      .select('id, title, type, skill_node, skill_cluster, interview_meta, mcq')
+      .select(`${base}, market`)
+      .eq('market', market)
       .order('created_at', { ascending: false })
       .limit(50);
-    if (data) setCases(data);
+    if (error && /market/i.test(error.message || '')) {
+      // Pre-0070 database: no market column, every case is India.
+      ({ data, error } = market === 'IN'
+        ? await supabase.from('cases').select(base).order('created_at', { ascending: false }).limit(50) as any
+        : { data: [], error: null });
+    }
+    setCases(data ?? []);
     setLoading(false);
   };
 
@@ -92,7 +105,21 @@ export function CaseEditor() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="border-r pr-6 max-h-[500px] overflow-y-auto">
-          <h3 className="font-medium text-sm mb-2 text-muted-foreground">Recent Cases</h3>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h3 className="font-medium text-sm text-muted-foreground">Recent Cases</h3>
+            <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
+              {(['IN', 'US'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => { setSelectedCase(null); setMarket(m); }}
+                  className={`rounded px-2 py-0.5 font-semibold ${market === m ? 'bg-primary text-white' : 'text-muted-foreground'}`}
+                >
+                  {m === 'IN' ? 'India' : 'US'}
+                </button>
+              ))}
+            </div>
+          </div>
           {loading ? <p>Loading...</p> : (
             <div className="flex flex-col gap-2">
               {cases.map(c => (

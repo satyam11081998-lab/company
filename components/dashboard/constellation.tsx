@@ -151,6 +151,8 @@ export function LegendDot({ color, filled, ring, label }: LegendDotProps) {
 /* ─────────────── ConstellationSection ─────────────── */
 
 interface ConstellationSectionProps {
+  /** International accounts (0070): the casebook is India-only — hide its links. */
+  hideLearn?: boolean;
   u: import('./hero').UserVariant;
   filter: string;
   userState: string;
@@ -161,7 +163,7 @@ interface ConstellationSectionProps {
   recentFeed?: import('@/lib/dashboard/recent').ActivityItem[];
 }
 
-export function ConstellationSection({ u, filter, userState, skillGraph, nodeTargets, recentFeed }: ConstellationSectionProps) {
+export function ConstellationSection({ u, filter, userState, skillGraph, nodeTargets, recentFeed, hideLearn = false }: ConstellationSectionProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
   const [hover, setHover] = useState<string | null>(null);
@@ -823,6 +825,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
                   <Play style={{ width: 12, height: 12, fill: 'currentColor' }} />
                 </button>
               )}
+              {!hideLearn && (
               <button
                 className="btn"
                 style={{ justifyContent: 'center', fontSize: 12.5 }}
@@ -832,6 +835,7 @@ export function ConstellationSection({ u, filter, userState, skillGraph, nodeTar
               >
                 Read the brief
               </button>
+              )}
             </div>
           )}
         </div>

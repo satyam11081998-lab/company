@@ -15,6 +15,9 @@ const GATED = [
   '/leaderboard',
   '/gd-briefs',
   '/cases',
+  // Short practice links (/p/<code>) only redirect into /cases — crawling them
+  // spends budget on redirects to disallowed URLs.
+  '/p/',
   '/cheat-sheet',
   '/home',
   '/skeletons',

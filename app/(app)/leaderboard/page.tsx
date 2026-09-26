@@ -4,6 +4,8 @@ import { getAllTimeLeaderboard, getCohortLeaderboard } from '@/lib/dashboard/lea
 import LeaderboardClient from '@/components/leaderboard/leaderboard-client';
 import GuestLeaderboardPreview from '@/components/guest/guest-leaderboard-preview';
 import TrackPageAction from '@/components/analytics/track-page-action';
+import { getCachedUserRow } from '@/lib/supabase/auth-cached';
+import { contentMarketOf } from '@/lib/market';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,9 +23,13 @@ export default async function LeaderboardPage({
   // owner-scoped under RLS). Only public display fields (name/avatar/points)
   // and aggregate ranks reach the client — never email.
   const svc = createServiceClient();
+  // MARKETS (0070): each market ranks among its own accounts.
+  const market = contentMarketOf((await getCachedUserRow(user.id))?.market);
   const [allTime, cohortRes] = await Promise.all([
-    getAllTimeLeaderboard(svc, user.id, 50),
-    getCohortLeaderboard(svc, user.id, 50),
+    getAllTimeLeaderboard(svc, user.id, 50, market),
+    market === 'US'
+      ? Promise.resolve({ view: null, collegeName: null })
+      : getCohortLeaderboard(svc, user.id, 50),
   ]);
 
   const tabParam = searchParams?.tab;
@@ -42,6 +48,7 @@ export default async function LeaderboardPage({
           cohort={cohortRes.view}
           cohortName={cohortRes.collegeName}
           initialTab={initialTab}
+          market={market}
         />
       </main>
     </div>

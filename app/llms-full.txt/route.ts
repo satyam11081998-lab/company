@@ -8,6 +8,7 @@ import {
   isCanonicalisedAway,
 } from '@/lib/seo';
 import { meceFrameworkMarkdown } from '@/lib/mece-framework';
+import { usLlmsSection } from '@/lib/us-market/llms';
 
 export const dynamic = 'force-static';
 
@@ -31,6 +32,9 @@ export async function GET() {
     // resource for the term the whole site is named after.
     meceFrameworkMarkdown(SITE_URL),
     '',
+    '---',
+    '',
+    ...usLlmsSection(SITE_URL, true),
     '---',
     '',
   ];

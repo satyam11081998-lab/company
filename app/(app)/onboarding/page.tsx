@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached';
 import type { CollegeRow } from '@/lib/types-onboarding';
 import OnboardingForm from '@/components/onboarding/onboarding-form';
+import { isIntlMarket } from '@/lib/market';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,15 +24,20 @@ export default async function OnboardingPage() {
   const linkedinConnected =
     authUser.app_metadata?.provider === 'linkedin_oidc' || providers.includes('linkedin_oidc');
 
-  // Load college taxonomy (public read, no RLS hop).
+  // Load college taxonomy (public read, no RLS hop). International accounts
+  // (0070) type their school — the taxonomy is India's campuses.
   const supabase = createClient();
-  const { data: collegeRows } = await supabase
-    .from('colleges')
-    .select('*')
-    .eq('is_active', true)
-    .order('tier', { ascending: true })
-    .order('name', { ascending: true });
-  const colleges = (collegeRows as CollegeRow[] | null) ?? [];
+  const intl = isIntlMarket(userRow?.market);
+  let colleges: CollegeRow[] = [];
+  if (!intl) {
+    const { data: collegeRows } = await supabase
+      .from('colleges')
+      .select('*')
+      .eq('is_active', true)
+      .order('tier', { ascending: true })
+      .order('name', { ascending: true });
+    colleges = (collegeRows as CollegeRow[] | null) ?? [];
+  }
 
   // A guest who solved a case before signing up must land on THAT score, not a
   // blank dashboard. The client parks the results path in sessionStorage, which
@@ -66,6 +72,7 @@ export default async function OnboardingPage() {
             '',
         }}
         linkedinConnected={linkedinConnected}
+        intl={intl}
       />
     </div>
   );

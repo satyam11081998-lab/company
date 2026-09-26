@@ -4,7 +4,11 @@ import Logo from '@/components/logo';
 import { Linkedin } from 'lucide-react';
 import { LINKEDIN_COMPANY_URL } from '@/lib/constants';
 
-export default function Footer({ className = "" }: { className?: string }) {
+/**
+ * `intl` (0070): the international (US + Europe) footer — no GD briefs or
+ * casebook links (India-only surfaces); points at the US practice pages.
+ */
+export default function Footer({ className = "", intl = false }: { className?: string; intl?: boolean }) {
   return (
     <footer className={`bg-navy border-t border-navy-mid/30 pt-10 pb-6 px-6 md:px-12 ${className}`}>
       <div className="max-w-7xl w-full mx-auto">
@@ -15,7 +19,9 @@ export default function Footer({ className = "" }: { className?: string }) {
               <Logo full variant="light" className="!h-[107px] md:!h-[133px]" />
             </Link>
             <p className="text-sm text-navy-foreground/70 leading-relaxed max-w-sm mb-6">
-              The premier platform for MBA & PGDM students to master consulting, finance, and product management interviews through structured, MECE-driven practice.
+              {intl
+                ? 'Case interview practice with an AI interviewer: cases and market sizing for consulting, finance and strategy recruiting, scored in about a minute.'
+                : 'The premier platform for MBA & PGDM students to master consulting, finance, and product management interviews through structured, MECE-driven practice.'}
             </p>
             <a
               href={LINKEDIN_COMPANY_URL}
@@ -33,17 +39,34 @@ export default function Footer({ className = "" }: { className?: string }) {
             {/* Product Column */}
             <div>
               <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Product</h4>
+              {intl ? (
+              <ul className="space-y-3.5">
+                <li><Link href="/practice" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Practice Cases</Link></li>
+                <li><Link href="/practice?tab=guesstimates" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Market Sizing</Link></li>
+                <li><Link href="/leaderboard" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Leaderboard</Link></li>
+                <li><Link href="/us/pricing" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Pricing</Link></li>
+              </ul>
+              ) : (
               <ul className="space-y-3.5">
                 <li><Link href="/cases" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Practice Cases</Link></li>
                 <li><Link href="/gd-briefs" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">GD Briefs</Link></li>
                 <li><Link href="/leaderboard" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Leaderboard</Link></li>
                 <li><Link href="/upgrade" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Pricing & Upgrade</Link></li>
               </ul>
+              )}
             </div>
 
             {/* Resources Column */}
             <div>
               <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Resources</h4>
+              {intl ? (
+              <ul className="space-y-3.5">
+                <li><Link href="/us/case-interview-examples" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Case Interview Examples</Link></li>
+                <li><Link href="/us/market-sizing-questions" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Market Sizing Questions</Link></li>
+                <li><Link href="/methodology" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">How Scoring Works</Link></li>
+                <li><Link href="/glossary" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Consulting Glossary</Link></li>
+              </ul>
+              ) : (
               <ul className="space-y-3.5">
                 <li><Link href="/learn/mece-framework" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">The MECE Framework</Link></li>
                 <li><Link href="/methodology" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Our Methodology</Link></li>
@@ -51,6 +74,7 @@ export default function Footer({ className = "" }: { className?: string }) {
                 <li><Link href="/learn/casebook/cases/profitability/regional-dairy-cooperative" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Worked Case Interviews</Link></li>
                 <li><Link href="/learn/casebook/guesstimates/pain-and-promise" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Guesstimates Guide</Link></li>
               </ul>
+              )}
             </div>
 
             {/* Legal Column */}
@@ -58,7 +82,7 @@ export default function Footer({ className = "" }: { className?: string }) {
               <h4 className="text-white font-bold tracking-wider uppercase text-xs mb-5">Company</h4>
               <ul className="space-y-3.5">
                 <li><Link href="/about" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="/testimonials" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Stories &amp; Reviews</Link></li>
+                {!intl && <li><Link href="/testimonials" className="text-sm text-navy-foreground/60 hover:text-white transition-colors">Stories &amp; Reviews</Link></li>}
                 <li>
                   <a
                     href={LINKEDIN_COMPANY_URL}

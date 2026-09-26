@@ -7,7 +7,7 @@ import {
   UsersRound, Search, X, ShieldCheck, FlaskConical, LogOut,
   CheckCircle2, XCircle, ChevronRight, IndianRupee, AlertTriangle,
 } from 'lucide-react';
-import { getUserDetail, setDemoFlag, revokeAllSessions } from './actions';
+import { getUserDetail, setDemoFlag, revokeAllSessions, setUserMarket } from './actions';
 import type { UserDetail } from './types';
 import { formatInr, type RevenueSummary } from '@/lib/revenue';
 
@@ -158,6 +158,19 @@ export default function UsersAdminClient({
           ? 'Flagged as a demo account. Hidden from the leaderboard and all cohort stats.'
           : 'Demo flag removed. This account now counts like any other.',
       });
+    } else {
+      setLog({ type: 'error', message: res.error || 'Failed.' });
+    }
+    setBusy(false);
+  }
+
+  async function changeMarket(market: 'IN' | 'US' | 'EU') {
+    if (!detail || market === (detail.market ?? 'IN')) return;
+    setBusy(true);
+    const res = await setUserMarket(detail.id, market);
+    if (res.success) {
+      setDetail({ ...detail, market });
+      setLog({ type: 'success', message: `Market set to ${market}. Their prices, case bank and leaderboard switch on their next page load (within 12 hours on an open session).` });
     } else {
       setLog({ type: 'error', message: res.error || 'Failed.' });
     }
@@ -399,6 +412,9 @@ export default function UsersAdminClient({
                   <TierPill tier={detail.tier} />
                   {detail.isAdmin && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">admin</span>}
                   {detail.isDemo && <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400">demo</span>}
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+                    market {detail.market ?? 'IN (unstamped)'}
+                  </span>
                   {!detail.onboardedAt && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">onboarding incomplete</span>}
                 </div>
 
@@ -471,7 +487,11 @@ export default function UsersAdminClient({
                             <span className="ml-2 text-muted-foreground">{dateTime(p.createdAt)}</span>
                           </span>
                           <span className="flex items-center gap-3">
-                            <span className="tabular-nums text-foreground">{rupees(p.amountPaise)}</span>
+                            <span className="tabular-nums text-foreground">
+                              {p.currency === 'USD' || p.currency === 'EUR'
+                                ? `${p.currency === 'USD' ? '$' : '€'}${(p.amountPaise / 100).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+                                : rupees(p.amountPaise)}
+                            </span>
                             <span className="text-xs uppercase text-muted-foreground">{p.status}</span>
                           </span>
                         </li>
@@ -543,6 +563,27 @@ export default function UsersAdminClient({
                     </ul>
                   </section>
                 )}
+
+                <section className="rounded-lg border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground">Market</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Decides this account&apos;s prices (INR / USD / EUR), case bank, daily pair and leaderboard.
+                    Set automatically at signup from location and locked; change it only for support cases.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    {(['IN', 'US', 'EU'] as const).map((m) => (
+                      <Button
+                        key={m}
+                        variant={(detail.market ?? 'IN') === m ? 'default' : 'outline'}
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => changeMarket(m)}
+                      >
+                        {m === 'IN' ? 'India (INR)' : m === 'US' ? 'US (USD)' : 'Europe (EUR)'}
+                      </Button>
+                    ))}
+                  </div>
+                </section>
 
                 <section className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
                   <h3 className="text-sm font-semibold text-foreground">Demo account</h3>
@@ -641,6 +682,21 @@ function RevenueCard({ revenue }: { revenue: RevenueSummary }) {
           </div>
         ))}
       </div>
+      )}
+
+      {(revenue.international?.length ?? 0) > 0 && (
+        <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">International (not in the ₹ totals):</span>{' '}
+          {revenue.international.map((x, i) => (
+            <span key={x.currency} className="tabular-nums">
+              {i > 0 && ' · '}
+              {x.currency === 'USD' ? '$' : '€'}
+              {x.amount.toLocaleString('en-US', { maximumFractionDigits: 2 })} ({x.count}), last 30d{' '}
+              {x.currency === 'USD' ? '$' : '€'}
+              {x.last30.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+            </span>
+          ))}
+        </div>
       )}
 
       {partial && (
