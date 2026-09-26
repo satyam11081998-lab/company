@@ -631,3 +631,11 @@
     transition: none !important;
   }
 }
+
+/* US redesign (2026-09-26). The brand crimson reads at ~3.3:1 as small TEXT on
+   the dark surfaces. Inside the US wrappers only (.us-scope), red text lifts to
+   a lighter crimson that clears 4.5:1; red fills (buttons, bars, rules) keep the
+   brand value. India never carries .us-scope, so nothing changes there. */
+.dark .us-scope .text-primary,
+.dark .us-scope .hover\:text-primary:hover { color: hsl(352 80% 66%); }
+.dark .us-scope .\!text-primary { color: hsl(352 80% 66%) !important; }

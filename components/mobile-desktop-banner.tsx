@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Monitor, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { REGION_COOKIE } from '@/lib/market';
 
 /**
  * Thin mobile-only banner suggesting desktop for the best experience.
@@ -11,13 +13,31 @@ import { Monitor, X } from 'lucide-react';
  */
 export default function MobileDesktopBanner() {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname() || '';
 
   useEffect(() => {
+    // The US / Europe experience (2026-09-26 redesign) is designed for phones
+    // on purpose, so it never asks people to switch device: skip the /us pages
+    // and any browser the middleware placed in the US or Europe.
+    if (pathname === '/us' || pathname.startsWith('/us/')) {
+      setVisible(false);
+      return;
+    }
+    try {
+      const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${REGION_COOKIE}=([^;]*)`));
+      const rg = m ? decodeURIComponent(m[1]) : '';
+      if (rg.startsWith('US') || rg.startsWith('EU')) {
+        setVisible(false);
+        return;
+      }
+    } catch {
+      /* no cookie access: fall through to the India behaviour */
+    }
     // Only show if not previously dismissed this session
     if (!sessionStorage.getItem('desktop-banner-dismissed')) {
       setVisible(true);
     }
-  }, []);
+  }, [pathname]);
 
   if (!visible) return null;
 

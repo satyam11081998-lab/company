@@ -28,16 +28,16 @@ export default function IntlPricingSection() {
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <span>Prices in</span>
-        <div className="inline-flex rounded-md border border-border p-0.5">
+      <div className="mb-4 flex items-center justify-center gap-2 text-[12px] text-muted-foreground">
+        <span id="currency-label">Prices in</span>
+        <div role="group" aria-labelledby="currency-label" className="inline-flex rounded-[6px] border border-border bg-card p-0.5">
           {(['USD', 'EUR'] as const).map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setCurrency(c)}
               aria-pressed={currency === c}
-              className={`rounded px-2.5 py-1 font-semibold transition-colors ${currency === c ? 'bg-foreground text-background' : 'hover:text-foreground'}`}
+              className={`rounded-[4px] px-2.5 py-1 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${currency === c ? 'bg-foreground text-background' : 'hover:text-foreground'}`}
             >
               {c === 'USD' ? 'US$' : '€ EUR'}
             </button>

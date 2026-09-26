@@ -6,6 +6,8 @@ import GuestLeaderboardPreview from '@/components/guest/guest-leaderboard-previe
 import TrackPageAction from '@/components/analytics/track-page-action';
 import { getCachedUserRow } from '@/lib/supabase/auth-cached';
 import { contentMarketOf } from '@/lib/market';
+import { requestRegion } from '@/lib/market-page';
+import UsGuestLeaderboard from '@/components/us/guest-leaderboard';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +19,8 @@ export default async function LeaderboardPage({
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   // Guests can open the leaderboard, but the live rankings require an account.
-  if (!user) return <GuestLeaderboardPreview />;
+  // US / Europe visitors get an honest page with no illustrative standings.
+  if (!user) return contentMarketOf(requestRegion()) === 'US' ? <UsGuestLeaderboard /> : <GuestLeaderboardPreview />;
 
   // All cross-user reads run via the service role (users/submissions are
   // owner-scoped under RLS). Only public display fields (name/avatar/points)

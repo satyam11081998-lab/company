@@ -23,12 +23,17 @@ export default function LoginToContinueOverlay({
   title = 'Log in to continue',
   message = 'Today’s case and guesstimate are free without an account. The full library — every case, every guesstimate — opens when you sign up.',
   next = '/practice',
+  variant = 'default',
 }: {
   children: React.ReactNode;
   title?: string;
   message?: string;
   next?: string;
+  /** 'us' (2026-09-26): US spelling + the US app's radii. India omits it → unchanged. */
+  variant?: 'default' | 'us';
 }) {
+  const us = variant === 'us';
+  const pill = us ? 'rounded-[8px]' : 'rounded-full';
   return (
     <div className="relative">
       {/* The real content, readable but plainly out of reach. `select-none` and
@@ -36,6 +41,8 @@ export default function LoginToContinueOverlay({
           only refuse them one screen later. */}
       <div
         aria-hidden
+        // US: also `inert`, so keyboard focus can't land inside hidden content.
+        {...(us ? ({ inert: '' } as Record<string, string>) : {})}
         className="pointer-events-none select-none blur-[5px] opacity-60 saturate-50"
       >
         {children}
@@ -44,7 +51,7 @@ export default function LoginToContinueOverlay({
       {/* Solid card, centred, following the scroll. */}
       <div className="pointer-events-none absolute inset-0">
         <div className="sticky top-1/3 mx-auto w-full max-w-sm px-4">
-          <div className="pointer-events-auto rounded-2xl border border-primary/25 bg-card p-6 text-center shadow-2xl">
+          <div className={`pointer-events-auto border bg-card p-6 text-center shadow-2xl ${us ? 'rounded-[14px] border-border' : 'rounded-2xl border-primary/25'}`}>
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
               <Lock className="h-5 w-5 text-primary" />
             </div>
@@ -54,13 +61,13 @@ export default function LoginToContinueOverlay({
             <div className="mt-5 flex flex-col gap-2.5">
               <Link
                 href={`/signup?next=${encodeURIComponent(next)}`}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+                className={`inline-flex w-full items-center justify-center gap-1.5 ${pill} bg-primary px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover`}
               >
                 Sign up free <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href={`/login?next=${encodeURIComponent(next)}`}
-                className="inline-flex w-full items-center justify-center rounded-full border border-border px-5 py-2.5 text-[14px] font-medium text-foreground transition-colors hover:bg-muted"
+                className={`inline-flex w-full items-center justify-center ${pill} border border-border px-5 py-2.5 text-[14px] font-medium text-foreground transition-colors hover:bg-muted`}
               >
                 Log in
               </Link>
@@ -70,7 +77,7 @@ export default function LoginToContinueOverlay({
               href="/dashboard"
               className="mt-4 inline-block text-[12px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
-              Or practise today’s free case
+              {us ? 'Or practice today’s free case' : 'Or practise today’s free case'}
             </Link>
           </div>
         </div>

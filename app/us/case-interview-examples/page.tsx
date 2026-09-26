@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import Footer from '@/components/footer';
-import UsSiteHeader from '@/components/intl/us-site-header';
+import UsHeader from '@/components/us/marketing/us-header';
+import UsFooter from '@/components/us/marketing/us-footer';
+import { FaqSection } from '@/components/us/marketing/sections';
+import { Eyebrow } from '@/components/us/ui';
 import { US_CASES, US_CASE_TYPE_LABEL, type UsCase } from '@/lib/us-market';
 import { faqPageJsonLd, genericBreadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 
@@ -64,14 +66,14 @@ export default function CaseInterviewExamplesPage() {
       {jsonLd.map((j, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }} />
       ))}
-      <UsSiteHeader />
-      <main className="mx-auto max-w-4xl px-6 py-14">
+      <UsHeader />
+      <main id="main" className="mx-auto w-full max-w-[880px] px-4 py-14 sm:px-6 lg:py-20">
         <header className="mb-10">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">Case interview examples</p>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          <Eyebrow>Case interview examples</Eyebrow>
+          <h1 className="mt-4 font-display text-[36px] leading-[1.08] tracking-[-0.015em] text-foreground sm:text-[46px]">
             50 case interview examples to practice, set in US markets
           </h1>
-          <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
+          <p className="mt-5 text-[16px] leading-relaxed text-muted-foreground">
             Every case below is a full interview prompt with the data a candidate is given up front: profitability,
             market entry, M&amp;A and private equity, pricing, growth, operations, cost reduction, go-to-market and
             competitive strategy. They are written in the interviewer-led style McKinsey uses and the candidate-led
@@ -80,7 +82,7 @@ export default function CaseInterviewExamplesPage() {
           </p>
           <nav aria-label="Case types" className="mt-6 flex flex-wrap gap-2">
             {byType.map((g) => (
-              <a key={g.type} href={`#type-${g.type.replace(/[^a-z]+/g, '-')}`} className="rounded-full border border-border px-3 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+              <a key={g.type} href={`#type-${g.type.replace(/[^a-z]+/g, '-')}`} className="rounded-[6px] border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground">
                 {US_CASE_TYPE_LABEL[g.type]} ({g.items.length})
               </a>
             ))}
@@ -89,16 +91,16 @@ export default function CaseInterviewExamplesPage() {
 
         {byType.map((g) => (
           <section key={g.type} id={`type-${g.type.replace(/[^a-z]+/g, '-')}`} className="mb-12 scroll-mt-24">
-            <h2 className="mb-5 border-b border-border pb-2 text-2xl font-bold text-foreground">
+            <h2 className="mb-2 font-display text-[28px] leading-tight text-foreground">
               {US_CASE_TYPE_LABEL[g.type]} cases
             </h2>
-            <div className="space-y-6">
+            <div className="divide-y divide-border border-y border-border">
               {g.items.map((c) => (
-                <article key={c.code} id={c.slug} className="ui-card scroll-mt-24 p-6">
+                <article key={c.code} id={c.slug} className="scroll-mt-24 py-8">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {c.industry} · {c.difficulty} · {c.firm}-style, {c.format} · ~{c.minutes} min
                   </p>
-                  <h3 className="mt-2 text-lg font-bold leading-snug text-foreground">{c.title}</h3>
+                  <h3 className="mt-2 text-[19px] font-semibold leading-snug text-foreground">{c.title}</h3>
                   <p className="mt-3 text-[14px] leading-relaxed text-foreground/85">{c.situation}</p>
                   <p className="mt-4 text-[13px] font-semibold text-foreground">What you know</p>
                   <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13.5px] text-muted-foreground">
@@ -110,7 +112,7 @@ export default function CaseInterviewExamplesPage() {
                   </ol>
                   <Link
                     href={`/p/${c.code}`}
-                    className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-primary hover:underline"
+                    className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-primary hover:underline underline-offset-4"
                     prefetch={false}
                   >
                     Practice this case with the AI interviewer <ArrowRight className="h-4 w-4" />
@@ -121,24 +123,14 @@ export default function CaseInterviewExamplesPage() {
           </section>
         ))}
 
-        <section className="mt-14">
-          <h2 className="mb-5 text-2xl font-bold text-foreground">Case interview FAQ</h2>
-          <div className="space-y-3">
-            {FAQS.map((f) => (
-              <details key={f.question} className="ui-card p-5">
-                <summary className="cursor-pointer list-none text-[15px] font-semibold text-foreground">{f.question}</summary>
-                <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">{f.answer}</p>
-              </details>
-            ))}
-          </div>
-          <p className="mt-8 text-sm text-muted-foreground">
-            Looking for estimation questions? See{' '}
-            <Link href="/us/market-sizing-questions" className="font-semibold text-primary hover:underline">50 market sizing questions</Link>.
-            All scenarios are fictional and written for practice; MECE is not affiliated with any consulting firm.
-          </p>
-        </section>
+        <p className="mt-10 text-[14px] text-muted-foreground">
+          Looking for estimation questions? See{' '}
+          <Link href="/us/market-sizing-questions" className="font-semibold text-primary hover:underline underline-offset-4">50 market sizing questions</Link>.
+          All scenarios are fictional and written for practice; MECE is not affiliated with any consulting firm.
+        </p>
       </main>
-      <Footer intl />
+      <FaqSection faqs={FAQS} id="case-faq" eyebrow="Case interviews" title="Case interview questions." compact />
+      <UsFooter />
     </div>
   );
 }

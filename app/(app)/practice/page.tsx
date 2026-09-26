@@ -65,6 +65,36 @@ export default async function PracticePage({
   if (initialTab === 'guesstimate') initialTab = 'guesstimates';
   if (initialTab === 'case') initialTab = 'scored';
 
+  // US / Europe: the same library, introduced in the US app's editorial style.
+  if (content === 'US') {
+    return (
+      <div className="mx-auto w-full max-w-[1120px] px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-10">
+        <header className="mb-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Practice</p>
+          <h1 className="mt-3 font-display text-[32px] leading-tight text-foreground sm:text-[38px]">The US case bank</h1>
+          <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+            {isGuest
+              ? 'Browse every case and market sizing question. Open any one to read it; sign in when you’re ready to solve and get scored.'
+              : 'Cases and market sizing questions set in US markets, plus a new pair every day. Filter by case type, search, or let the randomizer choose.'}
+          </p>
+        </header>
+        {/* key: the sidebar's Cases / Market sizing links only change ?tab=, which
+            keeps this client component mounted — remount so the tab follows. */}
+        {isGuest ? (
+          <LoginToContinueOverlay
+            next="/practice"
+            variant="us"
+            message="Today’s case and market sizing question are free without an account. The full library, every case and every sizing question, opens when you sign up."
+          >
+            <PracticeHub key={initialTab} cases={cases} attemptedCaseIds={attemptedCaseIds} initialTab={initialTab} variant="us" />
+          </LoginToContinueOverlay>
+        ) : (
+          <PracticeHub key={initialTab} cases={cases} attemptedCaseIds={attemptedCaseIds} initialTab={initialTab} variant="us" />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted">
       <main className="container max-w-6xl py-8 sm:py-10">

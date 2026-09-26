@@ -17,6 +17,10 @@ import type { UserRow } from '@/lib/types';
 import { isIntlMarket } from '@/lib/market';
 import { requestRegion } from '@/lib/market-page';
 import UsPreviewBar from '@/components/admin/us-preview-bar';
+import UsAppShell from '@/components/us/shell/us-app-shell';
+import { usAppDisplay } from '@/components/us/shell/display-font';
+import UsHeader from '@/components/us/marketing/us-header';
+import UsFooter from '@/components/us/marketing/us-footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,6 +99,19 @@ export default async function AppLayout({
 
   if (!authUser) {
     const pathname = headers().get('x-pathname') ?? '';
+    // Logged-out US / Europe visitors on the preview routes keep the US
+    // marketing header + footer they arrived with (2026-09-26 redesign).
+    // /learn stays on the India chrome — it is India content.
+    if (isPreviewPath(pathname) && isIntlMarket(requestRegion())) {
+      return (
+        <div className={`${usAppDisplay.variable} us-scope relative z-[1] flex min-h-screen flex-col bg-background`}>
+          <UsHeader />
+          <main className="w-full flex-1 overflow-x-clip">{children}</main>
+          <UsFooter />
+          <FeedbackLauncher />
+        </div>
+      );
+    }
     if (isGuestViewablePath(pathname)) {
       return <GuestChrome showPreviewNav={isPreviewPath(pathname)}>{children}</GuestChrome>;
     }
@@ -155,10 +172,23 @@ export default async function AppLayout({
 
   const user: UserRow = userRow ?? fallbackUser;
 
+  // US / Europe accounts (and an admin previewing the US version) get the US
+  // app shell — sidebar, utility bar, phone tabs (2026-09-26 redesign). The
+  // India shell below is unchanged.
+  if (isIntlMarket(user.market)) {
+    return (
+      <UserProvider initialUser={user}>
+        <UsAppShell fontClassName={usAppDisplay.variable} previewBar={user.admin_preview ? <UsPreviewBar /> : null}>
+          {children}
+        </UsAppShell>
+        <FeedbackLauncher />
+      </UserProvider>
+    );
+  }
+
   return (
     <UserProvider initialUser={user}>
       <AppNav />
-      {user.admin_preview && <UsPreviewBar />}
       <main className="min-h-[calc(100vh-64px)] flex flex-col relative w-full overflow-x-clip max-w-[100vw]">
         <div className="flex-1 pb-24 xl:pb-10 min-h-[calc(100vh-3.5rem)] xl:min-h-0">
           {children}

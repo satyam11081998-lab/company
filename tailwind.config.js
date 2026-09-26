@@ -18,6 +18,9 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-inter)', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['ui-monospace', 'monospace'],
+        // Editorial display serif for the US marketing pages ONLY (app/us/layout.tsx
+        // defines --font-us-display). Anywhere else it falls back to Georgia/serif.
+        display: ['var(--font-us-display)', 'Georgia', 'serif'],
       },
       fontSize: {
         'label': ['13px', { lineHeight: '1.2', fontWeight: '600', letterSpacing: '0.1em' }],

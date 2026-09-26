@@ -11,17 +11,8 @@ export const US_CASES: UsCase[] = [...US_CASES_A, ...US_CASES_B];
 /** The 50 US guesstimates (market sizing), in code order. */
 export const US_GUESSTIMATES: UsGuesstimate[] = [...US_GUESSTIMATES_A, ...US_GUESSTIMATES_B];
 
-export const US_CASE_TYPE_LABEL: Record<UsCase['type'], string> = {
-  profitability: 'Profitability',
-  'market entry': 'Market entry',
-  growth: 'Growth strategy',
-  pricing: 'Pricing',
-  'm&a': 'M&A / private equity',
-  operations: 'Operations',
-  'cost reduction': 'Cost reduction',
-  'go to market': 'Go-to-market',
-  'competitive strategy': 'Competitive strategy',
-};
+// Labels live in ./labels (tiny, safe for client bundles); re-exported here.
+export { US_CASE_TYPE_LABEL } from './labels';
 
 /** The markdown prompt stored in cases.content — what the candidate sees. */
 export function usCaseContent(c: UsCase): string {

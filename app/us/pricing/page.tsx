@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Footer from '@/components/footer';
-import UsSiteHeader from '@/components/intl/us-site-header';
+import UsHeader from '@/components/us/marketing/us-header';
+import UsFooter from '@/components/us/marketing/us-footer';
+import { FaqSection } from '@/components/us/marketing/sections';
+import { Eyebrow } from '@/components/us/ui';
 import IntlPricingSection from '@/components/intl/intl-pricing-section';
 import { INTL_PRICING_FAQ } from '@/lib/intl-plans';
 import { INTL_TIER_PRICING } from '@/lib/pricing-intl';
@@ -45,36 +47,29 @@ export default function UsPricingPage() {
       {[products, faq, crumbs].map((j, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(j) }} />
       ))}
-      <UsSiteHeader />
-      <main className="mx-auto max-w-5xl px-6 py-14">
-        <div className="mb-10 text-center">
-          <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">Pricing</p>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">Case interview practice that fits your recruiting season</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Free forever for the daily case and market sizing question. Lite and Pro are one-time payments for one or
-            three months of access — nothing renews without you.
+      <UsHeader />
+      <main id="main">
+        <div className="mx-auto w-full max-w-[1200px] px-4 pb-20 pt-14 sm:px-6 lg:pt-20">
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <Eyebrow className="justify-center">Pricing</Eyebrow>
+            <h1 className="mt-4 font-display text-[38px] leading-[1.06] tracking-[-0.015em] text-foreground sm:text-[48px]">
+              Case interview practice that fits your recruiting season.
+            </h1>
+            <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">
+              Free forever for the daily case and market sizing question. Lite and Pro are one-time payments for one or
+              three months of access. Nothing renews without you.
+            </p>
+          </div>
+          <IntlPricingSection />
+          <p className="mt-10 text-center text-[13px] text-muted-foreground">
+            Questions about team or university access? Email{' '}
+            <a href="mailto:team@mece.in" className="font-semibold text-primary hover:underline underline-offset-4">team@mece.in</a>.{' '}
+            <Link href="/refund" className="underline underline-offset-4 hover:text-foreground">Refund policy</Link>.
           </p>
         </div>
-        <IntlPricingSection />
-
-        <section className="mx-auto mt-16 max-w-3xl">
-          <h2 className="mb-6 text-2xl font-bold text-foreground">Pricing FAQ</h2>
-          <div className="space-y-3">
-            {INTL_PRICING_FAQ.map((f) => (
-              <details key={f.q} className="ui-card p-5">
-                <summary className="cursor-pointer list-none text-[15px] font-semibold text-foreground">{f.q}</summary>
-                <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">{f.a}</p>
-              </details>
-            ))}
-          </div>
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            Questions about team or university access? Email{' '}
-            <a href="mailto:team@mece.in" className="font-semibold text-primary hover:underline">team@mece.in</a>.{' '}
-            <Link href="/refund" className="hover:underline">Refund policy</Link>.
-          </p>
-        </section>
+        <FaqSection faqs={INTL_PRICING_FAQ.map((f) => ({ question: f.q, answer: f.a }))} id="pricing-faq" eyebrow="Pricing" title="Pricing questions." compact />
       </main>
-      <Footer intl />
+      <UsFooter />
     </div>
   );
 }

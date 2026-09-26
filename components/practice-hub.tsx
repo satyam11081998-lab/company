@@ -19,13 +19,26 @@ interface PracticeHubProps {
   cases: CaseRow[]; // From database (Scored Cases)
   attemptedCaseIds?: string[];
   initialTab?: string;
+  /** 'us' (2026-09-26): US vocabulary + the US app's tighter radii. India omits it → unchanged. */
+  variant?: 'default' | 'us';
 }
 
 type TabType = 'all' | 'scored' | 'guesstimates' | 'attempted';
 
 const ALL_DOMAINS_VALUE = '__all__';
 
-export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab = 'all' }: PracticeHubProps) {
+export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab = 'all', variant = 'default' }: PracticeHubProps) {
+  const L = variant === 'us'
+    ? { scored: 'Cases', sizing: 'Market sizing', sizingTag: 'Market sizing', card: 'rounded-[12px]', foot: 'rounded-b-[12px]', us: true }
+    : { scored: 'Scored Cases', sizing: 'Guesstimates', sizingTag: 'Guesstimate', card: '', foot: 'rounded-b-xl', us: false };
+  // US: quiet editorial labels (and AA contrast) instead of the tinted chips.
+  const typeTagClass = (type: string) =>
+    L.us
+      ? 'text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'
+      : `tag-${getTopicColor(type)} px-2 py-1 rounded text-micro uppercase tracking-wide font-medium`;
+  const diffClass = L.us
+    ? 'text-[12px] capitalize text-muted-foreground'
+    : 'text-micro font-medium text-muted-foreground bg-muted px-2 py-1 rounded';
   const searchParams = useSearchParams();
   const focusDomain = searchParams?.get('focus') || null;
   const focusTab = searchParams?.get('tab') as TabType | null;
@@ -36,7 +49,10 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
   const pickTab = (t: string | null | undefined): TabType | null =>
     t && (VALID_TABS as string[]).includes(t) ? (t as TabType) : null;
   const [activeTab, setActiveTab] = useState<TabType>(pickTab(initialTab) || pickTab(focusTab) || 'all');
-  const [search, setSearch] = useState('');
+  // ?q= (2026-09-26): the US app's top-bar search lands here. Absent → '' as before.
+  const queryParam = searchParams?.get('q') ?? '';
+  const [search, setSearch] = useState(queryParam);
+  useEffect(() => { setSearch(queryParam); }, [queryParam]);
   const [domainFilter, setDomainFilter] = useState<string>(focusDomain || ALL_DOMAINS_VALUE);
   const [page, setPage] = useState(1);
 
@@ -133,8 +149,8 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0">
           <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon={<Activity className="w-4 h-4" />}>All</TabButton>
-          <TabButton active={activeTab === 'scored'} onClick={() => setActiveTab('scored')} icon={<Briefcase className="w-4 h-4" />}>Scored Cases</TabButton>
-          <TabButton active={activeTab === 'guesstimates'} onClick={() => setActiveTab('guesstimates')} icon={<Calculator className="w-4 h-4" />}>Guesstimates</TabButton>
+          <TabButton active={activeTab === 'scored'} onClick={() => setActiveTab('scored')} icon={<Briefcase className="w-4 h-4" />}>{L.scored}</TabButton>
+          <TabButton active={activeTab === 'guesstimates'} onClick={() => setActiveTab('guesstimates')} icon={<Calculator className="w-4 h-4" />}>{L.sizing}</TabButton>
           <TabButton active={activeTab === 'attempted'} onClick={() => setActiveTab('attempted')} icon={<CheckCircle2 className="w-4 h-4" />}>
             Attempted{attemptedCaseIds.length > 0 ? ` (${attemptedCaseIds.length})` : ''}
           </TabButton>
@@ -184,9 +200,9 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
           if (item._itemType === 'scored') {
             const c = item as CaseRow;
             return (
-              <Card key={`scored-${c.id}`} className="ui-card flex flex-col p-5 group hover:border-primary/50 transition-colors">
+              <Card key={`scored-${c.id}`} className={`ui-card flex flex-col p-5 group hover:border-primary/50 transition-colors ${L.card}`}>
                 <div className="flex justify-between items-start mb-3">
-                  <span className={`tag-${getTopicColor(c.type)} px-2 py-1 rounded text-micro uppercase tracking-wide font-medium`}>
+                  <span className={typeTagClass(c.type)}>
                     {c.type}
                   </span>
                   <div className="flex items-center gap-2">
@@ -195,7 +211,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
                         <Check className="h-3 w-3" /> Attempted
                       </span>
                     )}
-                    <span className="text-micro font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                    <span className={diffClass}>
                       {c.difficulty}
                     </span>
                   </div>
@@ -217,10 +233,10 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
             const g = item as CaseRow;
             const attempted = attemptedSet.has(g.id);
             return (
-              <Card key={`guesstimate-${g.id}`} className="ui-card flex flex-col p-5 group hover:border-navy/50 transition-colors">
+              <Card key={`guesstimate-${g.id}`} className={`ui-card flex flex-col p-5 group hover:border-navy/50 transition-colors ${L.card}`}>
                 <div className="flex justify-between items-start mb-3">
-                  <span className="tag-navy px-2 py-1 rounded text-micro uppercase tracking-wide font-medium">
-                    Guesstimate{g.difficulty ? ` · ${g.difficulty}` : ''}
+                  <span className={L.us ? typeTagClass('guesstimate') : 'tag-navy px-2 py-1 rounded text-micro uppercase tracking-wide font-medium'}>
+                    {L.sizingTag}{g.difficulty ? ` · ${g.difficulty}` : ''}
                   </span>
                   {attempted && (
                     <span className="inline-flex items-center gap-1 text-micro font-bold text-success bg-success/15 px-2 py-0.5 rounded uppercase tracking-widest">
@@ -230,7 +246,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
                 </div>
                 <h3 className="text-strong font-semibold text-foreground mb-2 group-hover:text-navy transition-colors">{g.title}</h3>
                 <div className="mb-4 flex-grow" />
-                <div className="mt-auto pt-4 border-t flex justify-end items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t-navy/10">
+                <div className={`mt-auto pt-4 border-t flex justify-end items-center bg-navy/5 -mx-5 -mb-5 px-5 py-3 ${L.foot} border-t-navy/10`}>
                   <Link href={`/cases/${g.id}`} className="text-small font-medium text-navy hover:underline shrink-0">{attempted ? 'Retry' : 'Solve'} &rarr;</Link>
                 </div>
               </Card>

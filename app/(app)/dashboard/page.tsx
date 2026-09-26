@@ -32,6 +32,8 @@ import { getDailyProgress } from '@/lib/dashboard/daily-progress';
 import { contentMarketOf } from '@/lib/market';
 import { requestRegion } from '@/lib/market-page';
 import { runMarketScoped, scopeUsersToMarket } from '@/lib/market-db';
+import UsDashboardPage from '@/components/us/dashboard/us-dashboard-page';
+import UsStartButton from '@/components/us/marketing/start-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +82,31 @@ export default async function DashboardPage() {
     // MARKETS (0070): the cold-start visitor gets the daily of the region the
     // middleware placed them in.
     const guestContent = contentMarketOf(requestRegion());
+    // US / Europe cold start (2026-09-26 redesign): same single action, in the
+    // US vocabulary and style. No DB read needed — Start mints the session.
+    if (guestContent === 'US') {
+      return (
+        <div className="mx-auto flex min-h-[62vh] max-w-lg flex-col items-center justify-center px-4 py-14 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Today&apos;s practice</p>
+          <h1 className="mt-3 font-display text-[32px] leading-tight text-foreground sm:text-[38px]">
+            Practice a real case interview, right now.
+          </h1>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+            Today&apos;s case and market sizing question are open to everyone. No account, no email. Sign up only when
+            you want to keep your score.
+          </p>
+          <div className="mt-7">
+            <UsStartButton visitorLabel="Start practicing" />
+          </div>
+          <p className="mt-5 text-[13px] text-muted-foreground">
+            Have an account?{' '}
+            <Link href="/login?next=%2Fdashboard" className="font-medium text-foreground underline underline-offset-2 hover:text-primary">
+              Log in
+            </Link>
+          </p>
+        </div>
+      );
+    }
     const guestDaily = await getDailyTodayServerSide('static', guestContent);
     // The synthetic dashboard is GONE. It was a picture of someone else's
     // progress — 24 invented submissions, a fake streak, CTAs wired to
@@ -101,7 +128,8 @@ export default async function DashboardPage() {
             dashboard. */}
         <div className="container flex min-h-[60vh] max-w-md flex-col items-center justify-center py-10 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            {guestContent === 'US' ? 'Practice a real case interview, right now' : 'Practise a real case, right now'}
+            {/* US returned above; this branch is India only. */}
+            Practise a real case, right now
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
             Today&apos;s case and guesstimate are open to everyone — no account, no email. You only sign up when you
@@ -137,6 +165,13 @@ export default async function DashboardPage() {
 
   // Fetch daily content first since other queries (proof rail) depend on it
   const dailyToday = await getDailyTodayServerSide('session', content);
+
+  // US / Europe accounts get the US dashboard (2026-09-26 redesign). It runs
+  // its own three owner-scoped reads; nothing below this line runs for them,
+  // and nothing below this line changed for India.
+  if (content === 'US') {
+    return <UsDashboardPage authUser={authUser} userRow={layoutUserRow} daily={dailyToday} />;
+  }
 
   // Parallel fetches for performance. The users query is removed from this
   // Promise.all — replaced by the cached layoutUserRow above. One fewer DB
@@ -368,7 +403,7 @@ export default async function DashboardPage() {
         nodeTargets={nodeTargets}
         todayMeta={todayMeta}
         dailyProgress={dailyProgress}
-        intl={content === 'US'}
+        intl={(content as string) === 'US'}
       />
       {!hasRealScore && (
         <div className="mt-6">
