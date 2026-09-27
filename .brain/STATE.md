@@ -1,17 +1,17 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-27 08:04 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-27 08:46 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-27 08:04 UTC
+**Last sync:** 2026-09-27 08:46 UTC
 
 ## Last 5 commits — frontend
+- 5a25b8b feat(us-learn): animated issue-tree hero visual on /us/learn (SatyamSK, 2026-09-27)
+- 299e721 chore(brain): sync STATE after us-growth-seo (SatyamSK, 2026-09-27)
 - e05f104 feat(us-growth): route intl readers of India /learn pages to US guides + Learn nav (SatyamSK, 2026-09-27)
 - 0d4aa52 feat(us-growth): US Learn library + AEO/GEO plumbing (non-breaking) (SatyamSK, 2026-09-27)
 - 4112489 feat(us): v2 visual pass — cards, icon chips, full MECE lockup (SatyamSK, 2026-09-27)
-- 6c447a0 feat(us): premium US/Europe landing, dashboard and app shell (SatyamSK, 2026-09-27)
-- c71c7f2 feat(us-launch): US & Europe market - USD/EUR pricing, region lock, US case bank, per-market daily (SatyamSK, 2026-09-26)
 
 ## Last 5 commits — backend
 - 60dd77e feat(us-launch): market-aware access guard, US daily scheduler + cron (SatyamSK, 2026-09-26)
