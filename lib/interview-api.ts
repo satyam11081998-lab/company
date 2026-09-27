@@ -233,6 +233,33 @@ export async function postRealtimeTurn(
   return res.json();
 }
 
+/**
+ * MECE Interviewer V11's decision for one FINAL candidate turn of a realtime
+ * voice session. The realtime model is only the voice: it speaks `say` verbatim,
+ * or nothing when `lane` is SILENCE. Turns are still landed via postRealtimeTurn.
+ */
+export interface VoiceDecision {
+  lane: 'SILENCE' | 'PRESENCE' | 'SUBSTANTIVE';
+  mode: string | null;
+  reason: string | null;
+  say: string | null;
+  event: { event_type: string; data: { mode: string; code: string; text: string } } | null;
+}
+
+export async function postVoiceDecision(
+  attemptId: string,
+  token: string,
+  content: string,
+): Promise<VoiceDecision> {
+  const res = await fetch(`${API_URL}/attempts/${attemptId}/voice-decision`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ content, is_partial: false }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "The interviewer couldn't respond to that."));
+  return res.json();
+}
+
 export async function uploadAttemptFile(
   attemptId: string,
   token: string,

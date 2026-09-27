@@ -24,9 +24,10 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import VoiceWave from '@/components/icons/voice-wave';
 import type { AttemptMessage } from '@/lib/interview-api';
-import { postRealtimeTurn } from '@/lib/interview-api';
+import { postRealtimeTurn, postVoiceDecision, type VoiceDecision } from '@/lib/interview-api';
 import { startRealtimeSession, type RealtimeHandle } from '@/lib/voice/realtime-session';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
+import { voiceLine, isEchoOfLine } from '@/lib/voice/v11-voice';
 
 const MAX_SESSION_MS = 10 * 60_000;
 const SESSION_WARN_BEFORE_MS = 60_000;
@@ -81,6 +82,12 @@ export default function VoiceInterviewRealtime({
   // turn can carry them — otherwise spend never reaches the budget guard.
   const pendingUsageRef = useRef<{ input: number; output: number }>({ input: 0, output: 0 });
 
+  // MECE Interviewer V11 decides every turn; the realtime model only voices it.
+  // turnSeq drops a line when the candidate has already spoken again; lastLine
+  // is the interviewer's latest line, so its echo in the mic is not a turn.
+  const turnSeqRef = useRef(0);
+  const lastLineRef = useRef<{ text: string; at: number } | null>(null);
+
   // Props read inside callbacks that are created ONCE. A spoken case outlives a
   // Supabase token, so these must not be captured by value.
   const tokenRef = useRef(token);
@@ -126,6 +133,29 @@ export default function VoiceInterviewRealtime({
     [attemptId],
   );
 
+  // One FINAL candidate turn: V11 decides, the candidate turn is landed as
+  // before, and the voice speaks exactly V11's line -- or nothing for SILENCE
+  // (no response, no audio, no assistant row).
+  const handleUserTurn = useCallback(
+    async (text: string) => {
+      if (!text || isLikelyNoise(text)) return;
+      if (isEchoOfLine(text, lastLineRef.current, performance.now())) return;
+      const seq = ++turnSeqRef.current;
+      let decision: VoiceDecision | null = null;
+      try {
+        decision = await postVoiceDecision(attemptId, tokenRef.current, text);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'The interviewer could not respond');
+      }
+      await persist('user', text);
+      const line = voiceLine(decision);
+      if (!line || seq !== turnSeqRef.current) return;
+      lastLineRef.current = { text: line, at: performance.now() };
+      sessionRef.current?.say(line);
+    },
+    [attemptId, persist],
+  );
+
   // --- boot --------------------------------------------------------------
   useEffect(() => {
     let cancelled = false;
@@ -137,9 +167,13 @@ export default function VoiceInterviewRealtime({
             onReady: () => !cancelled && setPhase('listening'),
             onSpeakingChange: (s) => !cancelled && setPhase(s ? 'speaking' : 'listening'),
             onListeningChange: () => { lastActivityRef.current = performance.now(); },
-            onUserTurn: (t) => void persist('user', t),
+            onUserTurn: (t) => void handleUserTurn(t),
             onAssistantDelta: (p) => !cancelled && setAsstDraft(p),
-            onAssistantTurn: (t) => { setAsstDraft(''); void persist('assistant', t); },
+            onAssistantTurn: (t) => {
+              setAsstDraft('');
+              lastLineRef.current = { text: t, at: performance.now() };
+              void persist('assistant', t);
+            },
             onUsage: (u: any) => {
               // Shape varies by model revision; read defensively rather than
               // silently booking zero.

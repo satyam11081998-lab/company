@@ -17,6 +17,8 @@
  * source of truth for scoring, exactly as in the typed path.
  */
 
+import { openaiSayInstructions } from '@/lib/voice/v11-voice';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const OPENAI_REALTIME_URL = 'https://api.openai.com/v1/realtime/calls';
 
@@ -43,6 +45,12 @@ export interface RealtimeHandle {
   /** Cut the interviewer off explicitly (space bar / button). */
   interrupt: () => void;
   mute: (muted: boolean) => void;
+  /**
+   * Speak ONE line that MECE Interviewer V11 approved. The session is created
+   * with turn_detection.create_response=false, so the model never answers a
+   * candidate turn by itself -- this is the only way it speaks.
+   */
+  say: (line: string) => void;
 }
 
 export async function startRealtimeSession(
@@ -211,6 +219,11 @@ export async function startRealtimeSession(
       stream.getAudioTracks().forEach((t) => {
         t.enabled = !muted;
       });
+    },
+    say(line: string) {
+      const text = (line || '').trim();
+      if (!text || dc.readyState !== 'open') return;
+      dc.send(JSON.stringify({ type: 'response.create', response: { instructions: openaiSayInstructions(text) } }));
     },
   };
 }
