@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-23 18:53 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-27 08:04 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-23 18:53 UTC
+**Last sync:** 2026-09-27 08:04 UTC
 
 ## Last 5 commits — frontend
-- 039bfb4 Rebuild guesstimate cheat sheet as a searchable, sourced India Data Atlas (satyam-ai-cell, 2026-09-24)
-- 16f66c1 chore(brain): sync STATE after middleware matcher perf fix (SatyamSK, 2026-09-24)
-- 87df11b perf(middleware): exclude /api + static/font assets from the matcher to cut Fluid Active CPU (SatyamSK, 2026-09-24)
-- f5d550b chore(brain): sync STATE after prep-copilot-v2 (SatyamSK, 2026-09-23)
-- b2ed4fc docs(brain): handoff for Prep Copilot v2 (isolated backend) (SatyamSK, 2026-09-23)
+- e05f104 feat(us-growth): route intl readers of India /learn pages to US guides + Learn nav (SatyamSK, 2026-09-27)
+- 0d4aa52 feat(us-growth): US Learn library + AEO/GEO plumbing (non-breaking) (SatyamSK, 2026-09-27)
+- 4112489 feat(us): v2 visual pass — cards, icon chips, full MECE lockup (SatyamSK, 2026-09-27)
+- 6c447a0 feat(us): premium US/Europe landing, dashboard and app shell (SatyamSK, 2026-09-27)
+- c71c7f2 feat(us-launch): US & Europe market - USD/EUR pricing, region lock, US case bank, per-market daily (SatyamSK, 2026-09-26)
 
 ## Last 5 commits — backend
+- 60dd77e feat(us-launch): market-aware access guard, US daily scheduler + cron (SatyamSK, 2026-09-26)
+- 432fa93 feat(copilot): owner-preview gating so the owner can dogfood pre-launch (SatyamSK, 2026-09-24)
+- d084951 fix(cors): allow Vercel preview origins so preview builds can call the API (SatyamSK, 2026-09-23)
 - 45d95e6 feat(copilot): isolated role/company-aware Prep Copilot v2 (backend, flag-gated OFF) (SatyamSK, 2026-09-23)
 - 61975a9 feat(ai): run the GD brief surface on the Gemini free tier (SatyamSK, 2026-09-22)
-- 0c35e28 feat(news): feed prober for the GD topic pipeline (SatyamSK, 2026-09-22)
-- 3e33e5b Update session_signals.py (satyam11081998-lab, 2026-09-21)
-- d0e63a0 Update learning_model.py (satyam11081998-lab, 2026-09-21)
 
 ## Open feature branches (not merged into main)
 - (none)
