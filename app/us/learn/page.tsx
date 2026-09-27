@@ -6,6 +6,7 @@ import UsFooter from '@/components/us/marketing/us-footer';
 import StartButton from '@/components/us/marketing/start-button';
 import { FinalCta } from '@/components/us/marketing/sections';
 import { Eyebrow, US_CARD, usButton } from '@/components/us/ui';
+import HubHeroVisual from '@/components/us-learn/hub-hero-visual';
 import { LEARN_CLUSTERS, pagesInCluster, learnPath, readMinutes } from '@/lib/us-learn';
 import { US_ENTITY_LINE, jsonLdString, learnHubJsonLd, learnHubMetadata } from '@/lib/us-learn/seo';
 
@@ -46,33 +47,39 @@ export default function LearnHubPage() {
       <UsHeader />
 
       <main id="main">
-        <section className="mx-auto w-full max-w-[1160px] px-4 pb-6 pt-12 sm:px-6 lg:pt-20">
-          <Eyebrow>MECE Learn</Eyebrow>
-          <h1 className="mt-5 max-w-3xl font-display text-[38px] leading-[1.06] tracking-[-0.015em] text-foreground sm:text-[54px]">
-            Learn to solve business problems<span className="text-primary">.</span>
-          </h1>
-          <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-muted-foreground">
-            Free guides to the thinking behind case interviews and business decisions: MECE structure, the case interview, market sizing
-            and the core frameworks, plus how product, sales, marketing, HR, operations and finance interviews use cases. Every guide ends
-            in a live practice case.
-          </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <StartButton />
-            <Link href={learnPath('what-is-mece')} className={usButton('secondary', 'lg')}>
-              Start with MECE
-            </Link>
+        <section className="mx-auto grid w-full max-w-[1160px] grid-cols-1 items-center gap-8 px-4 pb-6 pt-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:gap-12 lg:pt-16">
+          <div className="min-w-0">
+            <Eyebrow>MECE Learn</Eyebrow>
+            <h1 className="mt-5 max-w-3xl font-display text-[38px] leading-[1.06] tracking-[-0.015em] text-foreground sm:text-[54px]">
+              Learn to solve business problems<span className="text-primary">.</span>
+            </h1>
+            <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-muted-foreground">
+              Free guides to the thinking behind case interviews and business decisions: MECE structure, the case interview, market sizing
+              and the core frameworks, plus how product, sales, marketing, HR, operations and finance interviews use cases. Every guide ends
+              in a live practice case.
+            </p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <StartButton />
+              <Link href={learnPath('what-is-mece')} className={usButton('secondary', 'lg')}>
+                Start with MECE
+              </Link>
+            </div>
+            <nav aria-label="Sections" className="mt-10 flex flex-wrap gap-2">
+              {LEARN_CLUSTERS.map((c) => (
+                <a
+                  key={c.id}
+                  href={`#${c.id}`}
+                  className="rounded-full border border-border bg-card px-3.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+                >
+                  {c.title} ({pagesInCluster(c.id).length})
+                </a>
+              ))}
+            </nav>
           </div>
-          <nav aria-label="Sections" className="mt-10 flex flex-wrap gap-2">
-            {LEARN_CLUSTERS.map((c) => (
-              <a
-                key={c.id}
-                href={`#${c.id}`}
-                className="rounded-full border border-border bg-card px-3.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
-              >
-                {c.title} ({pagesInCluster(c.id).length})
-              </a>
-            ))}
-          </nav>
+          {/* Decorative, CSS-only motion; hidden on phones to keep the first screen short. */}
+          <div className="hidden sm:block">
+            <HubHeroVisual />
+          </div>
         </section>
 
         {LEARN_CLUSTERS.map((c) => (
