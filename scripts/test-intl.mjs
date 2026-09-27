@@ -63,6 +63,39 @@ ok('normalizeMarket(null) → IN', () => assert.equal(m.normalizeMarket(null), '
 ok('EU content market is US bank', () => assert.equal(m.contentMarketOf('EU'), 'US'));
 ok('currencies', () => { assert.equal(m.currencyOf('IN'), 'INR'); assert.equal(m.currencyOf('US'), 'USD'); assert.equal(m.currencyOf('EU'), 'EUR'); assert.equal(m.currencyOf(undefined), 'INR'); });
 ok('India-only paths', () => { assert.ok(m.isIndiaOnlyPath('/learn/casebook/x')); assert.ok(m.isIndiaOnlyPath('/gd-briefs')); assert.ok(!m.isIndiaOnlyPath('/learning')); assert.ok(!m.isIndiaOnlyPath('/practice')); assert.ok(m.isIndiaOnlyPath('/decks/mckinsey-deck')); assert.ok(m.isIndiaOnlyPath('/deck-vault')); assert.ok(!m.isIndiaOnlyPath('/decksx')); assert.ok(!m.isIndiaOnlyPath('/api/decks/x/og')); });
+// US Learn routing (2026-09-27): India learning pages → the US Learn twin or hub.
+const learnSlugs = new Set(
+  ['foundations', 'frameworks', 'roles'].flatMap((f) =>
+    [...readFileSync(join(root, 'lib/us-learn/content', `${f}.ts`), 'utf8').matchAll(/slug: '([a-z0-9-]+)'/g)].map((x) => x[1]),
+  ),
+);
+ok('every INTL_LEARN_TWIN target is a real /us/learn page', () => {
+  assert.ok(learnSlugs.size >= 20);
+  for (const [from, to] of Object.entries(m.INTL_LEARN_TWIN)) {
+    assert.ok(m.isIndiaLearnPath(from), from);
+    assert.match(to, /^\/us\/learn\/[a-z0-9-]+$/);
+    assert.ok(learnSlugs.has(to.slice('/us/learn/'.length)), `${from} → ${to}`);
+  }
+});
+ok('intlDestination: marketing twins unchanged', () => {
+  assert.equal(m.intlDestination('/', false), '/us');
+  assert.equal(m.intlDestination('/pricing', true), '/us/pricing');
+});
+ok('intlDestination: learning pages → US twin, else hub (signed in or not)', () => {
+  assert.equal(m.intlDestination('/learn/mece-framework', false), '/us/learn/what-is-mece');
+  assert.equal(m.intlDestination('/learn/casebook/core-frameworks/profitability', true), '/us/learn/profitability-framework');
+  assert.equal(m.intlDestination('/learn/casebook/cases/profitability/cloud-kitchen-burn', false), '/us/learn');
+  assert.equal(m.intlDestination('/learn/casebook/industry-primers/aviation', true), '/us/learn');
+  assert.equal(m.intlDestination('/learn', false), '/us/learn');
+});
+ok('intlDestination: other India-only surfaces unchanged', () => {
+  assert.equal(m.intlDestination('/decks/mckinsey-deck', false), '/us');
+  assert.equal(m.intlDestination('/decks/mckinsey-deck', true), '/practice');
+  assert.equal(m.intlDestination('/gd-briefs', true), '/practice');
+});
+ok('intlDestination: US and shared pages pass through', () => {
+  for (const p of ['/us', '/us/learn', '/us/learn/what-is-mece', '/practice', '/dashboard', '/learning', '/glossary', '/privacy']) assert.equal(m.intlDestination(p, false), null, p);
+});
 ok('crawlers are recognised', () => { for (const ua of ['Mozilla/5.0 (compatible; Googlebot/2.1)', 'GPTBot/1.1', 'Mozilla/5.0 (compatible; bingbot/2.0)', 'PerplexityBot', 'ClaudeBot/1.0', '']) assert.ok(m.isCrawler(ua), ua); });
 ok('browsers are not crawlers', () => { for (const ua of ['Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 Version/17.5 Safari/605.1.15', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0 Safari/537.36']) assert.ok(!m.isCrawler(ua), ua); });
 ok('US day starts at New York midnight (EDT)', () => assert.equal(m.zonedMidnightIso('2026-09-25', 'America/New_York'), '2026-09-25T04:00:00.000Z'));

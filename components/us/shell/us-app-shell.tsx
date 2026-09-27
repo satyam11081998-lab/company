@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { History, Home, LifeBuoy, LogIn, LogOut, Search, Trophy, TrendingUp, User, WalletCards, X } from 'lucide-react';
+import { BookOpen, History, Home, LifeBuoy, LogIn, LogOut, Search, Trophy, TrendingUp, User, WalletCards, X } from 'lucide-react';
 import UsLogo from '@/components/us/brand';
 import ThemeButton from '@/components/us/theme-button';
 import { GlyphChain, GlyphTree } from '@/components/us/art';
@@ -58,6 +58,8 @@ const NAV: { group: string; items: NavItem[] }[] = [
       { href: '/practice?tab=scored', label: 'Cases', icon: <GlyphTree className={ICON} />, match: { path: '/practice', tab: 'scored' } },
       { href: '/practice?tab=guesstimates', label: 'Market sizing', icon: <GlyphChain className={ICON} />, match: { path: '/practice', tab: 'guesstimates' } },
       { href: '/history', label: 'History', icon: <History className={ICON} strokeWidth={1.5} />, match: { path: '/history', prefix: true } },
+      // US Learn library (2026-09-27): public guides, open to every US account.
+      { href: '/us/learn', label: 'Learn', icon: <BookOpen className={ICON} strokeWidth={1.5} />, match: { path: '/us/learn', prefix: true } },
     ],
   },
   {

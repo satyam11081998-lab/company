@@ -279,8 +279,10 @@ export function isIntlPath(pathname: string): boolean {
 
 /**
  * Routes that are India-only product surfaces (learning, GD, India content).
- * An international account is sent to /practice instead. Kept here so the
- * nav, the middleware and the page guards read one list.
+ * International humans are routed away by intlDestination() below: learning
+ * pages to the US Learn library, everything else to /practice (signed in) or
+ * /us (visitor). Kept here so the nav, the middleware and the page guards
+ * read one list.
  */
 export const INDIA_ONLY_PREFIXES: readonly string[] = [
   '/learn',
@@ -295,6 +297,78 @@ export const INDIA_ONLY_PREFIXES: readonly string[] = [
 
 export function isIndiaOnlyPath(pathname: string): boolean {
   return INDIA_ONLY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * India learning pages → the US Learn library (2026-09-27)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** The US Learn hub: where international visitors land from India learning pages. */
+export const US_LEARN_HUB = '/us/learn';
+
+/** True for the India learning tracks (/learn and everything under it). */
+export function isIndiaLearnPath(pathname: string): boolean {
+  return pathname === '/learn' || pathname.startsWith('/learn/');
+}
+
+/**
+ * India learning URL → the US Learn guide that answers the same question.
+ *
+ * Google and AI answers cite the India guides (crawlers are never geo-routed),
+ * so a US reader who clicks one should land on the US answer, not on the /us
+ * home page. Exact paths only; every other /learn/** page goes to the hub.
+ * Every target must be a real /us/learn page — scripts/test-intl.mjs checks
+ * the slugs against lib/us-learn.
+ */
+export const INTL_LEARN_TWIN: Readonly<Record<string, string>> = {
+  '/learn/mece-framework': '/us/learn/what-is-mece',
+  '/learn/casebook/core-frameworks/mece': '/us/learn/what-is-mece',
+  '/learn/casebook/core-frameworks/structuring-fundamentals': '/us/learn/issue-trees',
+  '/learn/casebook/core-frameworks/profitability': '/us/learn/profitability-framework',
+  '/learn/casebook/core-frameworks/market-entry': '/us/learn/market-entry-framework',
+  '/learn/casebook/core-frameworks/growth': '/us/learn/growth-strategy-framework',
+  '/learn/casebook/core-frameworks/pricing': '/us/learn/pricing-strategy-framework',
+  '/learn/casebook/core-frameworks/m-and-a': '/us/learn/mergers-and-acquisitions-case',
+  '/learn/casebook/core-frameworks/m-and-a/value-and-synergies': '/us/learn/mergers-and-acquisitions-case',
+  '/learn/casebook/core-frameworks/m-and-a/due-diligence': '/us/learn/mergers-and-acquisitions-case',
+  '/learn/casebook/core-frameworks/m-and-a/private-equity': '/us/learn/mergers-and-acquisitions-case',
+  '/learn/casebook/getting-started/what-it-tests': '/us/learn/case-interview',
+  '/learn/casebook/getting-started/six-case-types': '/us/learn/case-interview',
+  '/learn/casebook/getting-started/repeatable-method': '/us/learn/case-interview',
+  '/learn/casebook/getting-started/math-under-pressure': '/us/learn/case-interview-math',
+  '/learn/casebook/getting-started/communication-under-pressure': '/us/learn/pyramid-principle',
+  '/learn/casebook/guesstimates/four-approaches': '/us/learn/market-sizing',
+  '/learn/casebook/guesstimates/ideal-flow': '/us/learn/market-sizing',
+  '/learn/casebook/guesstimates/pressure-testing': '/us/learn/market-sizing',
+  '/learn/casebook/guesstimates/data-cheatsheet': '/us/learn/market-sizing',
+  '/learn/casebook/toolkit/porters-five-forces': '/us/learn/business-frameworks',
+  '/learn/casebook/toolkit/swot': '/us/learn/business-frameworks',
+  '/learn/casebook/toolkit/pestel': '/us/learn/business-frameworks',
+  '/learn/casebook/toolkit/4-ps': '/us/learn/business-frameworks',
+  '/learn/casebook/toolkit/bcg-matrix': '/us/learn/business-frameworks',
+  '/learn/casebook/toolkit/value-chain': '/us/learn/business-frameworks',
+  '/learn/casebook/toolkit/ansoff-matrix': '/us/learn/business-frameworks',
+  '/learn/casebook/toolkit/mckinsey-7s': '/us/learn/business-frameworks',
+  '/learn/growth/growth-strategy': '/us/learn/growth-strategy-framework',
+  '/learn/market/market-entry': '/us/learn/market-entry-framework',
+};
+
+/**
+ * Where an international HUMAN requesting `pathname` is sent, or null to let
+ * the request through. The ONE routing rule the middleware applies to both
+ * logged-out visitors and signed-in international accounts:
+ *   1. India marketing page with a twin ('/' → '/us', '/pricing' → '/us/pricing')
+ *   2. India learning page → its US Learn twin, else the US Learn hub
+ *   3. any other India-only surface → '/practice' when signed in, '/us' when not
+ * Crawlers never reach this (the middleware checks isCrawler first), and the
+ * guest-mode '/' dashboard rewrite for signed-in users is handled by the caller.
+ */
+export function intlDestination(pathname: string, signedIn: boolean): string | null {
+  const twin = INTL_TWIN[pathname];
+  if (twin) return twin;
+  if (isIndiaLearnPath(pathname)) return INTL_LEARN_TWIN[pathname] ?? US_LEARN_HUB;
+  if (isIndiaOnlyPath(pathname)) return signedIn ? '/practice' : '/us';
+  return null;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

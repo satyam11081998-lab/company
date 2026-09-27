@@ -3,11 +3,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { PUBLIC_ROUTES, AUTH_ROUTES, isPreviewPath } from '@/lib/constants';
 import {
   detectRegion,
+  intlDestination,
   isCrawler,
+  isIndiaLearnPath,
   isIntlMarket,
   isIndiaOnlyPath,
   isMarket,
-  INTL_TWIN,
   MARKET_STAMP_COOKIE,
   REGION_COOKIE,
   REGION_HEADER,
@@ -87,7 +88,8 @@ export async function updateSession(request: NextRequest) {
     // Geo-route logged-out HUMANS off the India marketing pages / India-only
     // surfaces. Crawlers see every URL as it is (hreflang joins the twins).
     if (!bot && isIntlMarket(visitor.market)) {
-      const twin = INTL_TWIN[pathname] ?? (isIndiaOnlyPath(pathname) ? '/us' : null);
+      // India learning pages go to their US Learn twin (or the hub); see intlDestination.
+      const twin = intlDestination(pathname, false);
       if (twin) {
         const url = request.nextUrl.clone();
         url.pathname = twin;
@@ -164,16 +166,16 @@ export async function updateSession(request: NextRequest) {
 
   // International accounts (and logged-out international humans that reach
   // here with a stale session cookie) never land on the India marketing pages
-  // or the India-only surfaces. Logged-in → the practice hub; logged-out → /us.
+  // or the India-only surfaces. India learning pages → the US Learn twin (or
+  // hub); other India-only surfaces → the practice hub (signed in) or /us.
   if (!bot && isIntlMarket(effectiveMarket)) {
-    const twin = INTL_TWIN[pathname];
-    const indiaOnly = isIndiaOnlyPath(pathname);
     // "/" for a signed-in user is the dashboard rewrite (guest mode) — leave it.
     const rootWithUser = pathname === '/' && !!user && process.env.NEXT_PUBLIC_GUEST_MODE === 'true';
-    if ((twin && !rootWithUser) || indiaOnly) {
+    const dest = rootWithUser ? null : intlDestination(pathname, !!user);
+    if (dest) {
       const url = request.nextUrl.clone();
-      url.pathname = indiaOnly ? (user ? '/practice' : '/us') : (twin as string);
-      if (indiaOnly) url.search = '';
+      url.pathname = dest;
+      if (isIndiaOnlyPath(pathname) && !isIndiaLearnPath(pathname)) url.search = '';
       return redirectKeepingCookies(url, supabaseResponse);
     }
   }

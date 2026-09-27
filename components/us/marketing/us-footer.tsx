@@ -5,7 +5,8 @@ import { LINKEDIN_COMPANY_URL } from '@/lib/constants';
 /**
  * US footer. Links only to pages written for a US visitor (plus the legal
  * pages, which apply to everyone). The India-oriented About, Methodology and
- * casebook pages are deliberately not linked from here.
+ * casebook pages are deliberately not linked from here; the US Learn library
+ * (/us/learn, 2026-09-27) is their US counterpart.
  */
 const COLUMNS: { title: string; links: { href: string; label: string; external?: boolean }[] }[] = [
   {
@@ -21,6 +22,9 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
     title: 'Method',
     links: [
       { href: '/us#method', label: 'The MECE method' },
+      { href: '/us/learn', label: 'Learn library' },
+      { href: '/us/learn/what-is-mece', label: 'What is MECE?' },
+      { href: '/us/learn/case-interview', label: 'Case interview guide' },
       { href: '/us#how-scoring-works', label: 'How scoring works' },
       { href: '/us#faq', label: 'Questions' },
     ],

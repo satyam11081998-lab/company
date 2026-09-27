@@ -13,12 +13,14 @@ import { useUsEntry } from '@/components/us/use-us-entry';
 /**
  * US marketing navigation (68px, quiet). Links go only to surfaces a US
  * visitor can actually use — the India-only learning tracks are not linked
- * (they are refused for US accounts server-side, see lib/market.ts).
+ * (they are refused for US accounts server-side, see lib/market.ts); "Learn"
+ * is the US Learn library at /us/learn, which is written for US visitors.
  */
 export const US_MARKETING_NAV = [
   { href: '/practice', label: 'Practice' },
   { href: '/us/case-interview-examples', label: 'Case examples' },
   { href: '/us/market-sizing-questions', label: 'Market sizing' },
+  { href: '/us/learn', label: 'Learn' },
   { href: '/us#method', label: 'Method' },
   { href: '/us/pricing', label: 'Pricing' },
 ];

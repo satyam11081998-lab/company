@@ -24,16 +24,20 @@ import { learnLanguages } from '@/lib/us-learn/seo';
  *   canonical tag".
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
 
+  // lastmod is emitted ONLY when a real modification date is known (decks,
+  // insights, the US Learn library). It used to default to the build time for
+  // every URL, which tells Google every page changes on every deploy; Google
+  // then ignores lastmod for the whole sitemap, including the accurate ones.
+  // Omitting an unknown date is the documented alternative (2026-09-27).
   const entry = (
     path: string,
     priority: number,
     changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'weekly',
-    lastModified: Date = now
+    lastModified?: Date
   ) => ({
     url: `${SITE_URL}${path}`,
-    lastModified,
+    ...(lastModified ? { lastModified } : {}),
     changeFrequency,
     priority,
   });
@@ -96,7 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         `/decks/${d.slug}`,
         0.8,
         'monthly',
-        d.pages_rendered_at ? new Date(d.pages_rendered_at) : (d.created_at ? new Date(d.created_at) : now)
+        d.pages_rendered_at ? new Date(d.pages_rendered_at) : (d.created_at ? new Date(d.created_at) : undefined)
       )
     );
   } catch (err) {
@@ -115,7 +119,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             `/insights/${p.slug}`,
             0.7,
             'monthly',
-            p.published_at ? new Date(p.published_at) : (p.updated_at ? new Date(p.updated_at) : now),
+            p.published_at ? new Date(p.published_at) : (p.updated_at ? new Date(p.updated_at) : undefined),
           ),
         ),
       );

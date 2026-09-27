@@ -169,8 +169,11 @@ export function organizationJsonLd() {
     // Hard disambiguation from the McKinsey/Minto MECE *principle*. This single
     // field tells search + AI systems the platform is a distinct named entity,
     // not the consulting concept it shares a name with.
+    // 2026-09-27: widened from India-only wording now that the US + Europe
+    // site and the /us/learn library exist; the India sentence is unchanged in
+    // substance. Keep in step with US_ENTITY_LINE (lib/us-learn/seo.ts).
     disambiguatingDescription:
-      'MECE (mece.in) is an online MBA & PGDM placement-interview preparation platform for MBA & PGDM students. It is distinct from the MECE problem-solving principle (Mutually Exclusive, Collectively Exhaustive) used in management consulting.',
+      'MECE (mece.in) is an AI practice platform for case interviews and business problem solving: MBA & PGDM placement-interview preparation in India, and consulting and business-role interview preparation in the United States and Europe. It is named after, and distinct from, the MECE problem-solving principle (Mutually Exclusive, Collectively Exhaustive) used in management consulting.',
     slogan: 'Placement interview prep, the structured way.',
     foundingDate: '2025',
     // India first; the US + Europe product launched 2026-09 at /us.
@@ -186,10 +189,12 @@ export function organizationJsonLd() {
     knowsAbout: [
       'case interviews',
       'guesstimates',
+      'market sizing',
       'group discussions',
       'MBA placements',
       'consulting interview preparation',
       'business frameworks',
+      'business problem solving',
     ],
     ...(SOCIAL_PROFILES.length ? { sameAs: SOCIAL_PROFILES } : {}),
   };
