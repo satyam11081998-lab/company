@@ -9,13 +9,13 @@ import {
   FaqSection,
   FinalCta,
   Hero,
+  HowItWorks,
   MeasureSection,
   MethodSection,
   PracticeModes,
-  PrincipleBand,
   Showcase,
 } from '@/components/us/marketing/sections';
-import { SectionHeading } from '@/components/us/ui';
+import { Dot, SectionHeading } from '@/components/us/ui';
 import { getDailyTodayServerSide } from '@/lib/daily-server';
 import { US_CASES, US_GUESSTIMATES } from '@/lib/us-market';
 import { usTypeLabel } from '@/lib/us-market/labels';
@@ -143,23 +143,26 @@ export default async function UsHomePage() {
         <CapabilityStrip />
         <AudienceStrip />
         <PracticeModes cases={exampleCases} guesstimates={exampleGuesses} />
+        <HowItWorks />
         <MethodSection />
         <Showcase preview={<DashboardPreview />} />
         <MeasureSection />
-        <PrincipleBand />
-        <section id="pricing" aria-labelledby="pricing-title" className="scroll-mt-20 border-t border-border">
+        <section id="pricing" aria-labelledby="pricing-title" className="scroll-mt-24">
           <div className="mx-auto w-full max-w-[1200px] px-4 py-20 sm:px-6 lg:py-28">
             <SectionHeading
               align="center"
+              id="pricing-title"
               eyebrow="Pricing"
-              title={<span id="pricing-title">Start free. Upgrade for recruiting season.</span>}
+              title={<>Start free. Upgrade for recruiting season<Dot /></>}
               lead="The daily case and market sizing question are free forever. Paid plans are one-time payments that never auto-renew."
               className="mb-12"
             />
             <IntlPricingSection />
           </div>
         </section>
-        <FaqSection faqs={HOME_FAQS} />
+        <div className="bg-secondary/50">
+          <FaqSection faqs={HOME_FAQS} />
+        </div>
         <FinalCta />
       </main>
       <UsFooter />

@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { History, Home, LifeBuoy, LogIn, LogOut, Search, Trophy, TrendingUp, User, WalletCards, X } from 'lucide-react';
-import Logo from '@/components/logo';
+import UsLogo from '@/components/us/brand';
 import ThemeButton from '@/components/us/theme-button';
 import { GlyphChain, GlyphTree } from '@/components/us/art';
 import { usButton } from '@/components/us/ui';
@@ -116,7 +116,7 @@ export default function UsAppShell({
       {previewBar}
       <div className="flex">
         {!workspace && (
-          <Suspense fallback={<aside className="hidden w-[232px] shrink-0 lg:block" />}>
+          <Suspense fallback={<aside className="hidden w-[248px] shrink-0 lg:block" />}>
             <Sidebar />
           </Suspense>
         )}
@@ -144,11 +144,12 @@ function TopBar() {
   useEffect(() => setSearchOpen(false), [pathname]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-card/90 backdrop-blur-md supports-[backdrop-filter]:bg-card/80">
       <div className="flex h-16 items-center gap-3 px-3 sm:px-4 lg:gap-6 lg:px-0">
-        <div className="flex shrink-0 items-center lg:w-[232px] lg:px-3">
-          <Link href="/dashboard" aria-label="MECE dashboard" className="-ml-3 flex items-center rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-            <Logo isLanding full={false} className="!h-[56px]" />
+        <div className="flex shrink-0 items-center lg:w-[248px] lg:px-5 xl:w-auto xl:min-w-[248px] xl:pr-2">
+          <Link href="/dashboard" aria-label="MECE, Method for Evaluating Corporate Excellence: dashboard" className="flex items-center rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+            <UsLogo size="sm" tagline={false} className="xl:hidden" />
+            <UsLogo size="sm" className="hidden xl:inline-flex" />
           </Link>
         </div>
 
@@ -168,8 +169,8 @@ function TopBar() {
           {!isGuest && (
             <Link
               href="/upgrade"
-              className={`hidden items-center gap-1.5 rounded-[6px] border px-2.5 py-1 text-[12px] font-semibold transition-colors sm:inline-flex ${
-                tier === 'free' ? 'border-primary/40 text-primary hover:bg-primary/5' : 'border-border text-foreground hover:bg-muted'
+              className={`hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold ring-1 ring-inset transition-colors sm:inline-flex ${
+                tier === 'free' ? 'bg-primary/[0.07] text-primary ring-primary/15 hover:bg-primary/10' : 'bg-muted text-foreground ring-border hover:bg-muted/70'
               }`}
             >
               {tier === 'free' ? 'Free · Upgrade' : tier === 'pro' ? 'Pro plan' : 'Lite plan'}
@@ -219,7 +220,7 @@ function SearchForm({ className = '', autoFocus = false }: { className?: string;
         onChange={(e) => setQ(e.target.value)}
         autoFocus={autoFocus}
         placeholder="Search cases and market sizing questions"
-        className="h-10 w-full rounded-[8px] border border-border bg-card pl-9 pr-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-foreground/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        className="h-10 w-full rounded-full border border-border/80 bg-background pl-9 pr-4 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-foreground/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
       />
     </form>
   );
@@ -302,16 +303,16 @@ function Sidebar() {
   const { user, tier } = useUser();
   const isGuest = !!user?.is_guest;
   return (
-    <aside aria-label="Sections" className="sticky top-16 hidden h-[calc(100vh-4rem)] w-[232px] shrink-0 flex-col border-r border-border bg-background lg:flex">
-      <nav className="flex-1 overflow-y-auto px-3 py-6">
+    <aside aria-label="Sections" className="sticky top-16 hidden h-[calc(100vh-4rem)] w-[248px] shrink-0 flex-col border-r border-border/70 bg-card lg:flex">
+      <nav className="flex-1 overflow-y-auto px-4 py-6">
         {NAV.map((g) => (
           <div key={g.group} className="mb-6 last:mb-0">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{g.group}</p>
             <ul className="mt-2 space-y-0.5">
               {g.items.map((it) => {
                 const active = isActive(it.match);
-                const cls = `relative flex items-center gap-3 rounded-[8px] px-3 py-2 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                  active ? 'bg-primary/[0.07] font-semibold text-primary' : 'text-foreground/75 hover:bg-muted hover:text-foreground'
+                const cls = `flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  active ? 'bg-primary/[0.08] font-semibold text-primary' : 'text-foreground/75 hover:bg-muted hover:text-foreground'
                 }`;
                 return (
                   <li key={it.label}>
@@ -319,7 +320,6 @@ function Sidebar() {
                       <a href={it.href} className={cls}>{it.icon}{it.label}</a>
                     ) : (
                       <Link href={it.href} aria-current={active ? 'page' : undefined} className={cls}>
-                        {active && <span aria-hidden className="absolute -left-3 top-1.5 h-[calc(100%-12px)] w-[2px] rounded-full bg-primary" />}
                         {it.icon}
                         {it.label}
                       </Link>
@@ -331,7 +331,7 @@ function Sidebar() {
           </div>
         ))}
       </nav>
-      <div className="border-t border-border p-4">
+      <div className="m-4 rounded-[14px] bg-gradient-to-br from-rose-50 to-card p-4 ring-1 ring-inset ring-rose-100 dark:from-primary/10 dark:ring-primary/20">
         {isGuest ? (
           <>
             <p className="text-[12px] font-semibold text-foreground">Practicing as a guest</p>
@@ -344,7 +344,7 @@ function Sidebar() {
           <>
             <p className="text-[12px] font-semibold text-foreground">Free plan</p>
             <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">Open the full US case bank with Lite or Pro.</p>
-            <Link href="/upgrade" className="mt-2 inline-flex text-[12px] font-semibold text-primary hover:underline underline-offset-4">See plans</Link>
+            <Link href="/upgrade" className={usButton('primary', 'sm', 'mt-3 w-full')}>See plans</Link>
           </>
         ) : (
           <p className="text-[12px] text-muted-foreground">
@@ -361,7 +361,7 @@ function Sidebar() {
 function BottomTabs() {
   const isActive = useIsActive();
   return (
-    <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+    <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
       <ul className="grid grid-cols-4">
         {TABS.map((t) => {
           const active = isActive(t.match);

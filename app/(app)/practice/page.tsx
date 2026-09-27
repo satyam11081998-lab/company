@@ -8,6 +8,7 @@ import { marketScoped } from '@/lib/market-db';
 
 import PracticeHub from '@/components/practice-hub';
 import LoginToContinueOverlay from '@/components/guest/login-to-continue-overlay';
+import { Eyebrow } from '@/components/us/ui';
 import type { CaseRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -70,8 +71,8 @@ export default async function PracticePage({
     return (
       <div className="mx-auto w-full max-w-[1120px] px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-10">
         <header className="mb-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Practice</p>
-          <h1 className="mt-3 font-display text-[32px] leading-tight text-foreground sm:text-[38px]">The US case bank</h1>
+          <Eyebrow>Practice</Eyebrow>
+          <h1 className="mt-4 font-display text-[32px] leading-tight text-foreground sm:text-[38px]">The US case bank<span className="text-primary">.</span></h1>
           <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
             {isGuest
               ? 'Browse every case and market sizing question. Open any one to read it; sign in when you’re ready to solve and get scored.'

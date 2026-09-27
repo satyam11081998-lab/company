@@ -34,6 +34,7 @@ import { requestRegion } from '@/lib/market-page';
 import { runMarketScoped, scopeUsersToMarket } from '@/lib/market-db';
 import UsDashboardPage from '@/components/us/dashboard/us-dashboard-page';
 import UsStartButton from '@/components/us/marketing/start-button';
+import { Eyebrow } from '@/components/us/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,8 +88,8 @@ export default async function DashboardPage() {
     if (guestContent === 'US') {
       return (
         <div className="mx-auto flex min-h-[62vh] max-w-lg flex-col items-center justify-center px-4 py-14 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Today&apos;s practice</p>
-          <h1 className="mt-3 font-display text-[32px] leading-tight text-foreground sm:text-[38px]">
+          <Eyebrow>Today&apos;s practice</Eyebrow>
+          <h1 className="mt-4 font-display text-[32px] leading-tight text-foreground sm:text-[38px]">
             Practice a real case interview, right now.
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">

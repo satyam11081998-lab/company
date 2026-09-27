@@ -1,5 +1,5 @@
 import { GlyphChain, GlyphRubric, GlyphTrajectory, GlyphTree } from '@/components/us/art';
-import { NextBestAction, ProgressSection, Streak, TodayPractice, TodaySizing } from '@/components/us/dashboard/modules';
+import { ProgressChart, StatCards, Streak, TodayPractice, TypePerformance } from '@/components/us/dashboard/modules';
 import { buildToday, buildUsDashboard, type UsSubmissionRow } from '@/lib/us-market/dashboard';
 
 /**
@@ -45,10 +45,6 @@ export default function DashboardPreview() {
     { id: 'preview', title: "A Midwest grocery chain's margins have nearly halved", type: 'profitability', difficulty: 'medium', interview_meta: { est_minutes: 20, points_reward: 85, industry: 'Grocery retail' } },
     [],
   );
-  const todaySizing = buildToday(
-    { id: 'preview-g', title: 'How many gas stations are there in the United States?', type: 'guesstimate', difficulty: 'easy', interview_meta: { est_minutes: 10, points_reward: 70 } },
-    [],
-  );
 
   const nav = [
     { Glyph: GlyphTrajectory, label: 'Dashboard', on: true },
@@ -59,44 +55,32 @@ export default function DashboardPreview() {
 
   return (
     <div {...({ inert: '' } as Record<string, string>)} aria-hidden className="pointer-events-none select-none">
-      <div className="relative flex max-h-[760px] overflow-hidden bg-background lg:max-h-[900px]">
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-background to-transparent" />
-        <aside className="hidden w-[190px] shrink-0 border-r border-border bg-card px-3 py-5 md:block">
+      <div className="relative flex max-h-[720px] overflow-hidden bg-background lg:max-h-[820px]">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-28 bg-gradient-to-t from-background to-transparent" />
+        <aside className="hidden w-[190px] shrink-0 border-r border-border/70 bg-card px-3 py-5 md:block">
           <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Daily</p>
           <ul className="mt-2 space-y-0.5">
             {nav.map(({ Glyph, label, on }) => (
-              <li key={label} className={`flex items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-[12px] ${on ? 'bg-primary/[0.07] font-semibold text-primary' : 'text-muted-foreground'}`}>
+              <li key={label} className={`flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[12px] ${on ? 'bg-primary/[0.08] font-semibold text-primary' : 'text-muted-foreground'}`}>
                 <Glyph className="h-4 w-4" /> {label}
               </li>
             ))}
           </ul>
         </aside>
         <div className="min-w-0 flex-1 px-5 py-6 sm:px-7">
-          <p className="font-display text-[24px] leading-tight text-foreground">Good morning, Jordan.</p>
+          <p className="font-display text-[26px] leading-tight text-foreground">Good morning, Jordan<span className="text-primary">.</span></p>
           <p className="mt-1 text-[13px] text-muted-foreground">Let&apos;s make progress toward your goals today.</p>
-          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <Pinned n={1}><TodayPractice item={todayCase} /></Pinned>
-            <div className="grid content-start gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              <TodaySizing item={todaySizing} />
-              <Pinned n={3}><Streak count={3} timestamps={model.recentTimestamps} tz="America/New_York" /></Pinned>
-            </div>
+          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_250px]">
+            <TodayPractice item={todayCase} />
+            <Streak count={3} timestamps={model.recentTimestamps} tz="America/New_York" />
           </div>
-          <Pinned n={2} className="mt-4"><NextBestAction model={model} /></Pinned>
-          <Pinned n={4} className="mt-4"><ProgressSection model={model} focusType={model.nextAction?.focusType ?? null} /></Pinned>
+          <StatCards model={model} className="mt-4" />
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+            <ProgressChart model={model} gradientId="preview-progress-fill" />
+            <TypePerformance stats={[...model.byType, model.sizing]} focusType={model.nextAction?.focusType ?? null} />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** A numbered annotation pin matching the callouts listed under the frame. */
-function Pinned({ n, children, className = '' }: { n: number; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`relative ${className}`}>
-      <span className="absolute -left-2 -top-2 z-10 flex h-5 w-5 items-center justify-center rounded-[4px] bg-primary text-[10px] font-bold text-white shadow-sm">
-        {n}
-      </span>
-      {children}
     </div>
   );
 }

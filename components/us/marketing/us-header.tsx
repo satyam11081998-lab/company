@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
-import Logo from '@/components/logo';
+import UsLogo from '@/components/us/brand';
 import ThemeButton from '@/components/us/theme-button';
 import { usButton } from '@/components/us/ui';
 import { useUsEntry } from '@/components/us/use-us-entry';
@@ -47,14 +47,16 @@ export default function UsHeader() {
   const signedIn = state === 'member' || state === 'guest';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
       {overlays}
-      <div className="mx-auto flex h-[68px] max-w-[1200px] items-center justify-between gap-6 px-4 sm:px-6">
-        <Link href="/us" aria-label="MECE home" className="-ml-5 flex shrink-0 items-center rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <Logo isLanding full={false} className="!h-[60px]" />
+      <div className="mx-auto flex h-[72px] max-w-[1200px] items-center justify-between gap-6 px-4 sm:px-6">
+        <Link href="/us" aria-label="MECE, Method for Evaluating Corporate Excellence: home" className="flex shrink-0 items-center rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+          <UsLogo size="sm" taglineOnPhones className="max-[374px]:hidden sm:hidden" />
+          <UsLogo size="sm" tagline={false} className="min-[375px]:hidden" />
+          <UsLogo className="hidden sm:inline-flex" />
         </Link>
 
-        <nav aria-label="Main" className="hidden flex-1 items-center gap-1 lg:flex">
+        <nav aria-label="Main" className="hidden flex-1 items-center justify-center gap-1 lg:flex">
           {US_MARKETING_NAV.map((l) => {
             const active = isActive(l.href);
             return (
@@ -62,12 +64,12 @@ export default function UsHeader() {
                 key={l.href}
                 href={l.href}
                 aria-current={active ? 'page' : undefined}
-                className={`relative rounded-[6px] px-3 py-2 text-[14px] font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                className={`relative rounded-[6px] px-3 py-2 text-[14.5px] font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   active ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
                 {l.label}
-                {active && <span aria-hidden className="absolute inset-x-3 -bottom-[15px] h-[2px] bg-primary" />}
+                {active && <span aria-hidden className="absolute inset-x-3 -bottom-[17px] h-[2px] rounded-full bg-primary" />}
               </Link>
             );
           })}
@@ -81,7 +83,7 @@ export default function UsHeader() {
             </button>
           ) : (
             <>
-              <Link href={`/login${next}`} className={usButton('ghost', 'sm', 'hidden sm:inline-flex')}>
+              <Link href={`/login${next}`} className={usButton('secondary', 'sm', 'hidden sm:inline-flex')}>
                 Log in
               </Link>
               <Link href={`/signup${next}`} className={usButton('primary', 'sm', 'hidden sm:inline-flex')}>
@@ -108,8 +110,8 @@ export default function UsHeader() {
           <div id="us-mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-[60] lg:hidden">
             <div className="absolute inset-0 bg-navy/40" onClick={() => setOpen(false)} />
             <div className="absolute inset-x-0 top-0 border-b border-border bg-background shadow-xl">
-              <div className="flex h-[68px] items-center justify-between px-4">
-                <Logo isLanding full={false} className="-ml-4 !h-[60px]" />
+              <div className="flex h-[72px] items-center justify-between px-4">
+                <UsLogo taglineOnPhones />
                 <button
                   type="button"
                   aria-label="Close menu"

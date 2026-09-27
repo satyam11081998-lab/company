@@ -29,7 +29,7 @@ const ALL_DOMAINS_VALUE = '__all__';
 
 export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab = 'all', variant = 'default' }: PracticeHubProps) {
   const L = variant === 'us'
-    ? { scored: 'Cases', sizing: 'Market sizing', sizingTag: 'Market sizing', card: 'rounded-[12px]', foot: 'rounded-b-[12px]', us: true }
+    ? { scored: 'Cases', sizing: 'Market sizing', sizingTag: 'Market sizing', card: 'rounded-[16px] border-border/80 shadow-[0_1px_2px_rgba(15,28,51,0.04),0_12px_32px_-20px_rgba(15,28,51,0.22)] dark:shadow-none', foot: 'rounded-b-[16px]', us: true }
     : { scored: 'Scored Cases', sizing: 'Guesstimates', sizingTag: 'Guesstimate', card: '', foot: 'rounded-b-xl', us: false };
   // US: quiet editorial labels (and AA contrast) instead of the tinted chips.
   const typeTagClass = (type: string) =>
@@ -146,7 +146,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
   return (
     <div className="space-y-6">
       {/* Search & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className={L.us ? 'flex flex-col gap-4' : 'flex flex-col sm:flex-row sm:items-center justify-between gap-4'}>
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0">
           <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} icon={<Activity className="w-4 h-4" />}>All</TabButton>
           <TabButton active={activeTab === 'scored'} onClick={() => setActiveTab('scored')} icon={<Briefcase className="w-4 h-4" />}>{L.scored}</TabButton>

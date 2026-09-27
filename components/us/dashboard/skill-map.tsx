@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
-import { usButton } from '@/components/us/ui';
+import { US_CARD, usButton } from '@/components/us/ui';
 import { lowerLabel, type UsTypeStat } from '@/lib/us-market/dashboard';
 
 /**
@@ -87,9 +87,9 @@ export default function SkillMap({
   const sel = selected ? byType[selected] : null;
 
   return (
-    <section aria-labelledby="skillmap-title" className={`rounded-[12px] border border-border bg-card p-6 ${className}`}>
+    <section aria-labelledby="skillmap-title" className={`${US_CARD} p-6 ${className}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <p id="skillmap-title" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Your skill map</p>
+        <h2 id="skillmap-title" className="text-[16px] font-semibold text-foreground">Your skill map</h2>
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground" aria-label="Legend">
           <li className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full bg-navy dark:bg-viz-1" /> Mastered</li>
           <li className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full border-[1.5px] border-navy dark:border-viz-1" /> In progress</li>

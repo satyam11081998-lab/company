@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Check, Minus } from 'lucide-react';
-import { usButton } from '@/components/us/ui';
+import { US_CARD, usButton } from '@/components/us/ui';
 // Deliberately NOT '@/lib/tier': that module also carries the rupee price
 // table, and anything imported here ships to international visitors' browsers.
 import { BILLING_PERIODS, BILLING_PERIOD_LABELS, BILLING_PERIOD_SUFFIX, type BillingPeriod } from '@/lib/billing';
@@ -46,7 +46,7 @@ export default function IntlPlanCards({
   return (
     <>
       <div className="mb-10 flex justify-center">
-        <div role="group" aria-label="Billing period" className="inline-flex w-full max-w-md items-center gap-1 rounded-[8px] border border-border bg-card p-1 sm:w-auto sm:max-w-none">
+        <div role="group" aria-label="Billing period" className="inline-flex w-full max-w-md items-center gap-1 rounded-full border border-border/80 bg-card p-1 shadow-[0_1px_2px_rgba(15,28,51,0.05)] sm:w-auto sm:max-w-none">
           {BILLING_PERIODS.map((p) => {
             const save = periodSavingPct('pro', p, currency);
             return (
@@ -55,7 +55,7 @@ export default function IntlPlanCards({
                 type="button"
                 onClick={() => onPeriod(p)}
                 aria-pressed={period === p}
-                className={`flex min-h-[44px] flex-1 flex-col items-center justify-center rounded-[6px] px-3 py-1.5 text-sm font-medium leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:block sm:h-9 sm:min-h-0 sm:flex-none sm:px-4 sm:py-0 ${
+                className={`flex min-h-[44px] flex-1 flex-col items-center justify-center rounded-full px-3 py-1.5 text-sm font-medium leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:block sm:h-9 sm:min-h-0 sm:flex-none sm:px-4 sm:py-0 ${
                   period === p ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -71,8 +71,8 @@ export default function IntlPlanCards({
 
       <div className="grid items-stretch gap-5 md:grid-cols-3">
         {/* Free */}
-        <div className="flex h-full flex-col rounded-[12px] border border-border bg-card">
-          <div className="flex flex-col border-b border-border p-6">
+        <div className={`flex h-full flex-col ${US_CARD}`}>
+          <div className="flex flex-col border-b border-border/70 p-7">
             <div className="mb-2 flex items-center gap-2">
               <h3 className="text-[18px] font-semibold tracking-tight text-foreground">Free</h3>
               {mode === 'checkout' && isCurrent('free') && <CurrentTag />}
@@ -85,7 +85,7 @@ export default function IntlPlanCards({
               <span className="text-xs text-muted-foreground">/mo</span>
             </div>
           </div>
-          <div className="flex flex-1 flex-col justify-between gap-8 p-6">
+          <div className="flex flex-1 flex-col justify-between gap-8 p-7">
             <Lines lines={INTL_PLAN_COPY.free.lines} />
             {mode === 'public' ? (
               <Link href="/signup" className={usButton('secondary', 'md', 'mt-auto w-full')}>
@@ -100,8 +100,8 @@ export default function IntlPlanCards({
         </div>
 
         {/* Lite */}
-        <div className="flex h-full flex-col rounded-[12px] border border-border bg-card">
-          <div className="flex flex-col border-b border-border p-6">
+        <div className={`flex h-full flex-col ${US_CARD}`}>
+          <div className="flex flex-col border-b border-border/70 p-7">
             <div className="mb-2 flex items-center gap-2">
               <h3 className="text-[18px] font-semibold tracking-tight text-foreground">Lite</h3>
               {mode === 'checkout' && isCurrent('lite') && <CurrentTag />}
@@ -109,7 +109,7 @@ export default function IntlPlanCards({
             <p className="text-xs text-muted-foreground">{INTL_PLAN_COPY.lite.tagline}</p>
             <PriceBlock tier="lite" period={period} currency={currency} />
           </div>
-          <div className="flex flex-1 flex-col justify-between gap-8 p-6">
+          <div className="flex flex-1 flex-col justify-between gap-8 p-7">
             <div>
               <Everything label="Everything in Free" />
               <Lines lines={INTL_PLAN_COPY.lite.lines} />
@@ -132,18 +132,17 @@ export default function IntlPlanCards({
         </div>
 
         {/* Pro */}
-        <div className="relative flex h-full flex-col overflow-hidden rounded-[12px] border border-primary/50 bg-card">
-          <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-primary" />
-          <div className="flex flex-col border-b border-border p-6">
+        <div className="relative flex h-full flex-col rounded-[16px] bg-card shadow-[0_24px_48px_-24px_rgba(200,16,46,0.35)] ring-2 ring-primary/70 dark:shadow-none">
+          <div className="flex flex-col border-b border-border/70 p-7">
             <div className="mb-2 flex items-center gap-2">
               <h3 className="text-[18px] font-semibold tracking-tight text-foreground">Pro</h3>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">Recommended</span>
+              <span className="rounded-full bg-primary/[0.08] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary ring-1 ring-inset ring-primary/15">Recommended</span>
               {mode === 'checkout' && isCurrent('pro') && <CurrentTag />}
             </div>
             <p className="text-xs text-muted-foreground">{INTL_PLAN_COPY.pro.tagline}</p>
             <PriceBlock tier="pro" period={period} currency={currency} />
           </div>
-          <div className="flex flex-1 flex-col justify-between gap-8 p-6">
+          <div className="flex flex-1 flex-col justify-between gap-8 p-7">
             <div>
               <Everything label="Everything in Lite" accent />
               <Lines lines={INTL_PLAN_COPY.pro.lines} />
@@ -210,7 +209,7 @@ function Lines({ lines }: { lines: PlanLine[] }) {
           {l.cross ? (
             <Minus aria-hidden className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/40" />
           ) : (
-            <Check aria-hidden className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground/50" />
+            <Check aria-hidden className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
           )}
           <span className="text-sm leading-tight text-muted-foreground">{l.text}</span>
         </li>

@@ -1,16 +1,22 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowRight, Check } from 'lucide-react';
-import { Eyebrow, SectionHeading, UsImage, usButton } from '@/components/us/ui';
 import {
-  GlyphChain,
-  GlyphDialog,
-  GlyphRubric,
-  GlyphTrajectory,
-  GlyphTree,
-  IssueTreeArt,
-  PeaksOutline,
-  SizingChainArt,
-} from '@/components/us/art';
+  ArrowRight,
+  Calculator,
+  ChevronRight,
+  CircleCheck,
+  CirclePlay,
+  Flag,
+  Gauge,
+  Lightbulb,
+  MessagesSquare,
+  Network,
+  ScanSearch,
+  Sigma,
+  Target,
+  TrendingUp,
+} from 'lucide-react';
+import { Dot, Eyebrow, IconChip, SectionHeading, US_CARD, UsImage, usButton, type ChipTone } from '@/components/us/ui';
+import { IssueTreeArt } from '@/components/us/art';
 import StartButton from '@/components/us/marketing/start-button';
 import StartCaseButton from '@/components/us/marketing/start-case-button';
 import { US_PHOTOS } from '@/lib/us-market/assets';
@@ -20,65 +26,105 @@ import type { UsCase, UsGuesstimate } from '@/lib/us-market/types';
 const WRAP = 'mx-auto w-full max-w-[1200px] px-4 sm:px-6';
 
 /* ════════════════════════════════════════════════════════════════════════
-   1 · HERO — positioning, one photograph, one real product element
+   1 · HERO — headline left, full-bleed photograph right, today's real case
    ════════════════════════════════════════════════════════════════════════ */
 
-export function Hero({
-  today,
-}: {
-  /** Today's real US daily case (or a bank fallback when the schedule is empty). */
-  today: { id: string | null; title: string; typeLabel: string; difficulty: string; minutes: number | null; isDaily: boolean };
-}) {
+type HeroToday = { id: string | null; title: string; typeLabel: string; difficulty: string; minutes: number | null; isDaily: boolean };
+
+export function Hero({ today }: { today: HeroToday }) {
   return (
     <section className="relative overflow-hidden">
-      <PeaksOutline className="pointer-events-none absolute -left-48 bottom-0 hidden w-[520px] xl:block" />
-      <div className={`${WRAP} relative grid items-center gap-12 pb-14 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-10 lg:pb-20 lg:pt-20`}>
-        <div className="lg:col-span-6">
+      {/* Soft warm glow behind the headline */}
+      <div aria-hidden className="pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-rose-100/50 blur-3xl dark:bg-primary/10" />
+
+      {/* Desktop: the photograph bleeds to the right edge and fades into the page. */}
+      <div aria-hidden className="absolute inset-y-0 right-0 hidden w-[48%] lg:block">
+        <UsImage
+          photo={US_PHOTOS.hero}
+          priority
+          widths={[720, 1080, 1440, 1920]}
+          sizes="48vw"
+          className="h-full w-full"
+          decorative
+        />
+        <div className="absolute inset-y-0 left-0 w-[45%] bg-gradient-to-r from-background via-background/70 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/60 to-transparent" />
+      </div>
+
+      <div className={`${WRAP} relative grid grid-cols-1 items-center gap-10 pb-14 pt-12 sm:pt-16 lg:min-h-[620px] lg:grid-cols-12 lg:pb-16 lg:pt-8`}>
+        <div className="lg:col-span-7 lg:pr-10">
           <Eyebrow>Built for ambitious minds</Eyebrow>
-          <h1 className="mt-6 font-display text-[46px] leading-[1.02] tracking-[-0.02em] text-foreground sm:text-[60px] lg:text-[64px]">
-            Master business thinking<span className="text-primary">.</span>
+          <h1 className="mt-6 font-display text-[42px] leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[54px] lg:text-[44px] xl:text-[52px]">
+            Master business thinking<Dot />
+            <span className="block">Prepare like a consultant<Dot /></span>
           </h1>
-          <p className="mt-3 font-display text-[26px] italic leading-snug text-foreground/70 sm:text-[30px]">Prepare like a consultant.</p>
-          <p className="mt-6 max-w-[34rem] text-[17px] leading-relaxed text-muted-foreground">
-            Structured case practice, market sizing and an interviewer that asks follow-up questions, then scores
-            your structure, math and judgment. For candidates recruiting into consulting, strategy, product and
-            finance roles.
+          <p className="mt-6 max-w-[34rem] text-[17px] leading-relaxed text-muted-foreground sm:text-[18px]">
+            Daily case practice, market sizing and an AI interviewer that asks follow-ups, then scores your
+            structure, math and judgment. For consulting, strategy, product and finance interviews.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <StartButton />
-            <a href="#method" className={usButton('secondary', 'lg')}>
+            <a href="#how-it-works" className={usButton('secondary', 'lg')}>
+              <CirclePlay aria-hidden className="h-[18px] w-[18px] text-primary" />
               See how it works
-              <ArrowDown aria-hidden className="h-4 w-4" />
             </a>
           </div>
-          <p className="mt-5 text-[13px] text-muted-foreground">
-            Free every day: one case and one market sizing question. No credit card, no account to start.
-          </p>
+          <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-[13.5px] text-muted-foreground">
+            {['Free daily case', 'No credit card', 'Scored in about a minute'].map((t) => (
+              <li key={t} className="inline-flex items-center gap-1.5">
+                <CircleCheck aria-hidden className="h-4 w-4 text-primary" /> {t}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="relative lg:col-span-6">
-          <div className="relative overflow-hidden rounded-[14px] border border-border">
-            <UsImage
-              photo={US_PHOTOS.hero}
-              priority
-              ratio={5 / 4}
-              widths={[480, 720, 960, 1280]}
-              sizes="(min-width: 1200px) 580px, (min-width: 1024px) 48vw, 100vw"
-              className="aspect-[5/4] w-full"
-            />
+        <div className="relative lg:col-span-5 lg:min-h-[500px]">
+          {/* Phone / tablet: the photograph as a rounded block. */}
+          <div className="relative overflow-hidden rounded-[20px] lg:hidden">
+            <UsImage photo={US_PHOTOS.hero} priority ratio={4 / 3} widths={[480, 720, 960]} sizes="100vw" className="aspect-[4/3] w-full" />
           </div>
-          {/* The ONE product element over the photo: today's actual case. */}
-          <div className="relative -mt-16 ml-4 mr-4 rounded-[12px] border border-border bg-card p-5 shadow-[0_18px_40px_-24px_rgba(15,28,51,0.45)] sm:ml-10 sm:mr-auto sm:max-w-[400px] lg:absolute lg:-bottom-8 lg:-left-10 lg:mt-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-              {today.isDaily ? "Today's case · free" : 'From the case bank'}
+
+          {/* Example score card, floating top-right on desktop. */}
+          <div className={`${US_CARD} absolute right-0 top-6 hidden w-[240px] p-4 lg:block`}>
+            <div className="flex items-center justify-between">
+              <p className="text-[12px] font-semibold text-foreground">Case score</p>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground/75">Example</span>
+            </div>
+            <p className="mt-2 text-[30px] font-semibold leading-none tracking-tight text-foreground tnum">
+              84<span className="text-[14px] font-medium text-muted-foreground">/100</span>
             </p>
-            <p className="mt-2 font-display text-[21px] leading-snug text-foreground">{today.title}</p>
+            <ul className="mt-3 space-y-2">
+              {[
+                ['Structure', 22, 25],
+                ['Quantitative', 17, 20],
+                ['Synthesis', 16, 20],
+              ].map(([k, v, max]) => (
+                <li key={k as string}>
+                  <div className="flex justify-between text-[11px] text-muted-foreground">
+                    <span>{k}</span>
+                    <span className="tnum">{v}/{max}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted">
+                    <div className="h-1.5 rounded-full bg-primary" style={{ width: `${((v as number) / (max as number)) * 100}%` }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Today's real case. */}
+          <div className={`${US_CARD} relative -mt-14 mx-3 p-5 sm:mx-8 lg:absolute lg:bottom-4 lg:-left-6 lg:mx-0 lg:mt-0 lg:w-[360px]`}>
+            <div className="flex items-center gap-3">
+              <IconChip tone="red" size="sm"><Network /></IconChip>
+              <p className="text-[12px] font-semibold text-primary">{today.isDaily ? "Today's case · free" : 'From the case bank'}</p>
+            </div>
+            <p className="mt-3 font-display text-[21px] leading-snug text-foreground">{today.title}</p>
             <p className="mt-2 text-[13px] text-muted-foreground">
               {today.typeLabel} · <span className="capitalize">{today.difficulty}</span>
               {today.minutes ? <> · about {today.minutes} min</> : null}
             </p>
             {today.id && (
-              <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4">
+              <div className="mt-4 flex items-center justify-between gap-3">
                 <span className="text-[12px] text-muted-foreground">No sign-up needed</span>
                 <StartCaseButton caseId={today.id} label="Start this case" size="sm" />
               </div>
@@ -91,26 +137,26 @@ export function Hero({
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   2 · WHAT YOU GET — a quiet strip, not five cards
+   2 · FEATURE STRIP — five tinted icons, no dividers
    ════════════════════════════════════════════════════════════════════════ */
 
-const CAPABILITIES = [
-  { Glyph: GlyphTree, title: 'Case interviews', text: '50 cases set in US markets' },
-  { Glyph: GlyphChain, title: 'Market sizing', text: '50 estimation questions' },
-  { Glyph: GlyphDialog, title: 'A live interviewer', text: 'Follow-ups and pushback' },
-  { Glyph: GlyphRubric, title: 'Scored feedback', text: 'Six dimensions, about a minute' },
-  { Glyph: GlyphTrajectory, title: 'Progress', text: 'Trend, weak spots, next step' },
+const FEATURES = [
+  { Icon: Network, title: 'Case practice', text: '50 cases set in US markets' },
+  { Icon: Calculator, title: 'Market sizing', text: '50 estimation questions' },
+  { Icon: MessagesSquare, title: 'AI interviewer', text: 'Follow-ups and pushback' },
+  { Icon: Gauge, title: 'Scored feedback', text: 'Six dimensions in a minute' },
+  { Icon: TrendingUp, title: 'Progress tracking', text: 'Trend, weak spots, next step' },
 ];
 
 export function CapabilityStrip() {
   return (
-    <section aria-label="What MECE includes" className="border-y border-border bg-card/60">
-      <ul className={`${WRAP} grid grid-cols-2 gap-x-6 gap-y-7 py-8 sm:grid-cols-3 lg:grid-cols-5 lg:divide-x lg:divide-border lg:gap-0`}>
-        {CAPABILITIES.map(({ Glyph, title, text }) => (
-          <li key={title} className="flex items-start gap-3 lg:px-6 lg:first:pl-0">
-            <Glyph className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+    <section aria-label="What MECE includes" className="relative border-y border-border/70 bg-card">
+      <ul className={`${WRAP} grid grid-cols-2 gap-x-6 gap-y-8 py-10 sm:grid-cols-3 lg:grid-cols-5`}>
+        {FEATURES.map(({ Icon, title, text }) => (
+          <li key={title} className="flex items-center gap-3.5">
+            <IconChip tone="red"><Icon strokeWidth={1.75} /></IconChip>
             <div>
-              <p className="text-[14px] font-semibold text-foreground">{title}</p>
+              <p className="text-[15px] font-semibold text-foreground">{title}</p>
               <p className="mt-0.5 text-[13px] text-muted-foreground">{text}</p>
             </div>
           </li>
@@ -121,408 +167,476 @@ export function CapabilityStrip() {
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   3 · WHO IT IS FOR — honest; no logos, no counts we cannot prove
+   3 · INTERVIEW STYLES — names as quiet wordmarks; no logos, no counts
    ════════════════════════════════════════════════════════════════════════ */
 
 const STYLES = ['McKinsey', 'BCG', 'Bain', 'Deloitte', 'Oliver Wyman', 'L.E.K.', 'Kearney', 'EY-Parthenon'];
 
 export function AudienceStrip() {
   return (
-    <section aria-label="Who MECE is for" className={`${WRAP} py-12 text-center`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Built for candidates preparing for consulting, strategy, product &amp; finance interviews
-      </p>
-      <p className="mx-auto mt-5 max-w-3xl text-[15px] leading-relaxed text-foreground/80">
-        Cases written in the interview styles of{' '}
-        {STYLES.map((s, i) => (
-          <span key={s}>
-            <span className="whitespace-nowrap font-semibold text-foreground">{s}</span>
-            {i < STYLES.length - 2 ? ', ' : i === STYLES.length - 2 ? ' and ' : ''}
-          </span>
+    <section aria-label="Interview styles" className={`${WRAP} py-12 text-center`}>
+      <p className="text-[14px] text-muted-foreground">Cases written in the interview styles of</p>
+      <ul className="mx-auto mt-5 flex max-w-4xl flex-wrap items-center justify-center gap-x-9 gap-y-3">
+        {STYLES.map((s) => (
+          <li key={s} className="whitespace-nowrap text-[19px] font-semibold tracking-[-0.01em] text-foreground/60">
+            {s}
+          </li>
         ))}
-        .
-      </p>
-      <p className="mt-2 text-[12px] text-muted-foreground">Interview styles only. MECE is independent and not affiliated with any firm.</p>
+      </ul>
+      <p className="mt-5 text-[12px] text-muted-foreground">Interview styles only. MECE is independent and not affiliated with any firm.</p>
     </section>
   );
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   4 · THREE WAYS TO PRACTICE
+   4 · EVERYTHING IN ONE PLACE — heading left, four product cards right
    ════════════════════════════════════════════════════════════════════════ */
 
 export function PracticeModes({ cases, guesstimates }: { cases: UsCase[]; guesstimates: UsGuesstimate[] }) {
+  const c = cases[0];
+  const g = guesstimates[0];
+  const cards: { Icon: typeof Network; tone: ChipTone; title: string; text: string; href: string; cta: string }[] = [
+    {
+      Icon: Network,
+      tone: 'violet',
+      title: 'Case interview practice',
+      text: c ? `Realistic US business problems, like “${c.title}” (${US_CASE_TYPE_LABEL[c.type].toLowerCase()}).` : 'Realistic US business problems with a worked solution.',
+      href: '/us/case-interview-examples',
+      cta: 'See the cases',
+    },
+    {
+      Icon: Calculator,
+      tone: 'amber',
+      title: 'Market sizing',
+      text: g ? `Estimation questions anchored in US numbers, like “${g.title}”` : 'Estimation questions anchored in US numbers.',
+      href: '/us/market-sizing-questions',
+      cta: 'See the questions',
+    },
+    {
+      Icon: MessagesSquare,
+      tone: 'sky',
+      title: 'An AI interviewer',
+      text: 'Ask for data, get pushback, defend your structure. It answers like a case interviewer, not a quiz.',
+      href: '#how-it-works',
+      cta: 'How it works',
+    },
+    {
+      Icon: Gauge,
+      tone: 'red',
+      title: 'Scored feedback',
+      text: 'A score out of 100 on six dimensions, a worked solution and the one thing to fix next.',
+      href: '#how-scoring-works',
+      cta: 'How scoring works',
+    },
+  ];
   return (
-    <section id="practice-modes" className="border-t border-border">
-      <div className={`${WRAP} py-20 lg:py-28`}>
-        <SectionHeading
-          eyebrow="Practice"
-          title="Three ways to practice."
-          lead="Every session is a conversation, not a quiz: you ask, structure, calculate and recommend, and the interviewer responds to what you actually said."
-        />
-
-        <div className="mt-14 divide-y divide-border border-y border-border">
-          <ModeRow
-            index="01"
-            name="Case practice"
-            line="Think through the problem."
-            text="Realistic business situations, from a Midwest grocer's shrinking margins to a private equity roll-up in the Sun Belt. Ask for data, lay out a structure, do the math out loud and land a recommendation."
-            examplesLabel="From the case bank"
-            examples={cases.map((c) => ({ href: `/us/case-interview-examples#${c.slug}`, title: c.title, meta: `${US_CASE_TYPE_LABEL[c.type]} · ${c.minutes} min` }))}
-            more={{ href: '/us/case-interview-examples', label: 'All 50 cases' }}
-            art={<IssueTreeArt className="h-auto w-full max-w-[420px]" />}
-            caption="Structure first. The red branch is the hypothesis you test first."
+    <section id="practice-modes" className="scroll-mt-24 bg-secondary/50">
+      <div className={`${WRAP} grid grid-cols-1 gap-12 py-20 lg:grid-cols-12 lg:items-center lg:py-28`}>
+        <div className="lg:col-span-5">
+          <SectionHeading
+            eyebrow="One place to prepare"
+            title={<>Everything you need for interview day<Dot /></>}
+            lead="From today's free case to a full bank of cases and market sizing questions, MECE gives you the reps, the feedback and the plan."
           />
-          <ModeRow
-            index="02"
-            name="Market sizing"
-            line="Structure the unknown."
-            text="Estimation questions that train scoping, segmentation, assumptions, arithmetic and a sanity check, anchored in US numbers: about 335 million people and 131 million households."
-            examplesLabel="Questions candidates get"
-            examples={guesstimates.map((g) => ({ href: `/us/market-sizing-questions#${g.slug}`, title: g.title, meta: `${g.minutes} min` }))}
-            more={{ href: '/us/market-sizing-questions', label: 'All 50 questions' }}
-            art={<SizingChainArt className="h-auto w-full max-w-[420px]" />}
-            caption="Each assumption narrows the population until the answer falls out."
-            flip
-          />
-          <ModeRow
-            index="03"
-            name="The interviewer"
-            line="Defend your thinking."
-            text="The interviewer owns the case facts, answers what you ask and pushes back when your logic is loose, the way a case interviewer does. When you submit, you get a score out of 100 with the evidence for each mark."
-            art={<InterviewFigure />}
-          />
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/practice" className={usButton('primary', 'lg')}>
+              Explore the case bank <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
+        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:col-span-7">
+          {cards.map(({ Icon, tone, title, text, href, cta }) => (
+            <li key={title} className={`${US_CARD} group flex flex-col p-6 transition-transform duration-200 hover:-translate-y-0.5`}>
+              <IconChip tone={tone} square><Icon strokeWidth={1.75} /></IconChip>
+              <h3 className="mt-5 text-[17px] font-semibold text-foreground">{title}</h3>
+              <p className="mt-2 flex-1 text-[14px] leading-relaxed text-muted-foreground">{text}</p>
+              <Link href={href} className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-primary">
+                {cta} <ArrowRight aria-hidden className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
 }
 
-function ModeRow({
-  index,
-  name,
-  line,
-  text,
-  examples,
-  examplesLabel,
-  more,
-  art,
-  caption,
-  flip = false,
-}: {
-  index: string;
-  name: string;
-  line: string;
-  text: string;
-  examples?: { href: string; title: string; meta: string }[];
-  examplesLabel?: string;
-  more?: { href: string; label: string };
-  art: React.ReactNode;
-  caption?: string;
-  flip?: boolean;
-}) {
+/* ════════════════════════════════════════════════════════════════════════
+   5 · HOW IT WORKS — three steps and an example exchange
+   ════════════════════════════════════════════════════════════════════════ */
+
+const STEPS = [
+  { title: 'Pick a case', text: "Start with today's free case or market sizing question, or choose from 100 in the bank." },
+  { title: 'Run the interview', text: 'Ask clarifying questions, lay out your structure and do the math out loud. The interviewer pushes back.' },
+  { title: 'Get scored', text: 'A score out of 100 across six dimensions in about a minute, with a worked solution to compare.' },
+];
+
+export function HowItWorks() {
   return (
-    <article className="grid gap-10 py-12 lg:grid-cols-12 lg:gap-12 lg:py-16">
-      <div className={`lg:col-span-6 ${flip ? 'lg:order-2' : ''}`}>
-        <p className="text-[12px] font-semibold tracking-[0.08em] text-primary tnum">{index}</p>
-        <h3 className="mt-3 text-[13px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{name}</h3>
-        <p className="mt-2 font-display text-[30px] leading-tight text-foreground sm:text-[34px]">{line}</p>
-        <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-muted-foreground">{text}</p>
-        {examples && examples.length > 0 && (
-          <div className="mt-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{examplesLabel}</p>
-            <ul className="mt-3 divide-y divide-border border-y border-border">
-              {examples.map((e) => (
-                <li key={e.href}>
-                  <Link href={e.href} className="group flex flex-col gap-0.5 py-3 text-[15px] text-foreground transition-colors hover:text-primary sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-                    <span className="min-w-0">{e.title}</span>
-                    <span className="shrink-0 text-[12px] text-muted-foreground">{e.meta}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {more && (
-              <Link href={more.href} className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-primary hover:underline underline-offset-4">
-                {more.label} <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
-            )}
-          </div>
-        )}
+    <section id="how-it-works" aria-labelledby="how-title" className="scroll-mt-24">
+      <div className={`${WRAP} grid grid-cols-1 gap-12 py-20 lg:grid-cols-12 lg:items-center lg:py-28`}>
+        <div className="lg:col-span-5">
+          <SectionHeading id="how-title" eyebrow="How it works" title={<>A real interview, not a quiz<Dot /></>} />
+          <ol className="mt-10 space-y-7">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="flex gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-[15px] font-semibold text-primary ring-1 ring-inset ring-rose-100 dark:bg-primary/15 dark:text-rose-300 dark:ring-primary/20 tnum">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="text-[17px] font-semibold text-foreground">{s.title}</h3>
+                  <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">{s.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="lg:col-span-7">
+          <InterviewFigure />
+        </div>
       </div>
-      <figure className={`flex flex-col justify-center lg:col-span-6 ${flip ? 'lg:order-1' : ''}`}>
-        <div className="rounded-[12px] border border-border bg-card p-6 sm:p-8">{art}</div>
-        {caption && <figcaption className="mt-3 text-[13px] text-muted-foreground">{caption}</figcaption>}
-      </figure>
-    </article>
+    </section>
   );
 }
 
 /** A short, illustrative exchange — clearly labelled as an example. */
 function InterviewFigure() {
-  const turns: { who: 'Interviewer' | 'You'; text: string; push?: boolean }[] = [
-    { who: 'Interviewer', text: 'Our client’s profit fell 20% while members grew 8%. Where would you start?' },
+  const turns: { who: 'Interviewer' | 'You'; text: string }[] = [
+    { who: 'Interviewer', text: 'Our client, a national gym chain, grew members 8% but operating profit fell 20%. Where would you start?' },
     { who: 'You', text: 'I’d split profit into revenue and cost. With members up, I want to see revenue per member first.' },
-    { who: 'Interviewer', text: 'Revenue per member is down 12%. Before you go on: is that a price problem or a mix problem?', push: true },
+    { who: 'Interviewer', text: 'Revenue per member is down 12%. Before you go on: is that a price problem or a mix problem?' },
   ];
   return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Example exchange</p>
-      <ol className="mt-4 space-y-4">
+    <figure className={`${US_CARD} overflow-hidden`}>
+      <div className="flex items-center justify-between gap-3 border-b border-border/70 px-6 py-4">
+        <div className="flex items-center gap-3">
+          <IconChip tone="sky" size="sm"><MessagesSquare /></IconChip>
+          <div>
+            <p className="text-[14px] font-semibold text-foreground">Case interview · Profitability</p>
+            <p className="text-[12px] text-muted-foreground">Example exchange</p>
+          </div>
+        </div>
+        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-100 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20">
+          Live
+        </span>
+      </div>
+      <ol className="space-y-4 bg-background/60 px-6 py-6">
         {turns.map((t, i) => (
-          <li key={i} className={`${t.who === 'You' ? 'ml-8' : 'mr-8'}`}>
-            <p className="text-[11px] font-semibold text-muted-foreground">{t.who}</p>
-            <p
-              className={`mt-1 rounded-[8px] border px-3.5 py-2.5 text-[14px] leading-relaxed ${
-                t.who === 'You' ? 'border-navy/15 bg-navy/[0.04] text-foreground' : t.push ? 'border-primary/30 bg-card text-foreground' : 'border-border bg-card text-foreground'
-              }`}
-            >
-              {t.push && <span className="mr-1.5 inline-block h-2 w-2 -translate-y-px rotate-45 bg-primary" aria-hidden />}
-              {t.text}
-            </p>
+          <li key={i} className={`flex ${t.who === 'You' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] ${t.who === 'You' ? 'text-right' : ''}`}>
+              <p className="mb-1 text-[11px] font-semibold text-muted-foreground">{t.who}</p>
+              <p
+                className={`inline-block rounded-[14px] px-4 py-3 text-left text-[14.5px] leading-relaxed ${
+                  t.who === 'You'
+                    ? 'rounded-br-[4px] bg-navy text-white dark:bg-white/10'
+                    : 'rounded-bl-[4px] border border-border/80 bg-card text-foreground shadow-[0_1px_2px_rgba(15,28,51,0.05)]'
+                }`}
+              >
+                {t.text}
+              </p>
+            </div>
           </li>
         ))}
       </ol>
-      <div className="mt-6 flex items-center gap-3 border-t border-border pt-4 text-[12px] text-muted-foreground">
-        <GlyphRubric className="h-4 w-4 text-primary" />
+      <figcaption className="flex items-center gap-2.5 border-t border-border/70 px-6 py-4 text-[13px] text-muted-foreground">
+        <Gauge aria-hidden className="h-4 w-4 text-primary" />
         Scored on structure, math, synthesis, judgment, creativity and presence.
-      </div>
-    </div>
+      </figcaption>
+    </figure>
   );
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   5 · THE MECE METHOD — the signature section
+   6 · THE MECE METHOD — what MECE stands for, and the five moves
    ════════════════════════════════════════════════════════════════════════ */
 
-const METHOD = [
-  {
-    step: 'Problem',
-    what: 'Restate the question and the goal in one line before touching a framework.',
-    example: 'A national gym chain added 8% more members, yet operating profit fell 20%. Why?',
-  },
-  {
-    step: 'Structure',
-    what: 'Break it into pieces that don’t overlap and leave nothing out.',
-    example: 'Profit = revenue − cost. Revenue = members × revenue per member. Cost = fixed + variable.',
-  },
-  {
-    step: 'Analyze',
-    what: 'Ask for the data your structure needs, then do the math out loud.',
-    example: 'Revenue per member is down 12%: 1.08 × 0.88 ≈ 0.95, so revenue fell ~5% against flat costs.',
-  },
-  {
-    step: 'Synthesize',
-    what: 'Say what the numbers mean: the “so what,” not the arithmetic.',
-    example: 'It’s a price problem, not a volume one. A $10 promotion is buying members who don’t cover their cost.',
-  },
-  {
-    step: 'Recommend',
-    what: 'Answer first, then the reasons, then the risks and next steps.',
-    example: 'End the $10 rate for new joins, step promo members to full price at month three, track revenue per member weekly.',
-  },
+const MOVES: { Icon: typeof Target; title: string; text: string; example: string }[] = [
+  { Icon: ScanSearch, title: 'Problem', text: 'Restate the question and the goal in one line.', example: 'Members +8%, profit −20%. Why?' },
+  { Icon: Network, title: 'Structure', text: 'Split it into parts that don’t overlap and leave nothing out.', example: 'Profit = revenue − cost' },
+  { Icon: Sigma, title: 'Analyze', text: 'Ask for the data your structure needs; do the math aloud.', example: '1.08 × 0.88 ≈ 0.95' },
+  { Icon: Lightbulb, title: 'Synthesize', text: 'Say what the numbers mean, not the arithmetic.', example: 'A price problem, not volume' },
+  { Icon: Flag, title: 'Recommend', text: 'Answer first, then reasons, risks and next steps.', example: 'End the $10 intro rate' },
 ];
 
 export function MethodSection() {
   return (
-    <section id="method" aria-labelledby="method-title" className="scroll-mt-20 bg-secondary/60">
+    <section id="method" aria-labelledby="method-title" className="scroll-mt-24 bg-secondary/50">
       <div className={`${WRAP} py-20 lg:py-28`}>
-        <div className="grid gap-8 lg:grid-cols-12">
-          <div className="lg:col-span-7">
-            <Eyebrow>The MECE method</Eyebrow>
-            <h2 id="method-title" className="mt-4 font-display text-[36px] leading-[1.06] tracking-[-0.015em] text-foreground sm:text-[46px]">
-              Don&apos;t memorize frameworks.
-              <br />
-              Learn to think with them.
-            </h2>
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center">
+          <div className="lg:col-span-6">
+            <SectionHeading
+              id="method-title"
+              eyebrow="The MECE method"
+              title={<>Mutually exclusive. Collectively exhaustive<Dot /></>}
+              lead={
+                <>
+                  <strong className="font-semibold text-foreground">MECE</strong> (Method for Evaluating Corporate
+                  Excellence) is built on the rule every case interviewer holds you to: break a problem into parts
+                  that <strong className="font-semibold text-foreground">don’t overlap</strong> and{' '}
+                  <strong className="font-semibold text-foreground">leave nothing out</strong>. Every case you
+                  practice here is scored against it.
+                </>
+              }
+            />
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className={`${US_CARD} p-5`}>
+                <MeDiagram />
+                <p className="mt-4 text-[15px] font-semibold text-foreground">Mutually exclusive</p>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-muted-foreground">No overlaps. Each fact belongs to exactly one branch.</p>
+              </div>
+              <div className={`${US_CARD} p-5`}>
+                <CeDiagram />
+                <p className="mt-4 text-[15px] font-semibold text-foreground">Collectively exhaustive</p>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-muted-foreground">No gaps. Together the branches cover the whole problem.</p>
+              </div>
+            </div>
           </div>
-          <p className="self-end text-[16px] leading-relaxed text-muted-foreground lg:col-span-5">
-            Every case on MECE is scored against the same five moves a strong candidate makes. Here they are,
-            applied to one worked example.
-          </p>
+          <figure className={`${US_CARD} p-6 sm:p-8 lg:col-span-6`}>
+            <figcaption className="flex items-center justify-between gap-3">
+              <span className="text-[14px] font-semibold text-foreground">A MECE issue tree</span>
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-foreground/75">Worked example</span>
+            </figcaption>
+            <IssueTreeArt className="mt-6 h-auto w-full" />
+            <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground">
+              A gym chain grew members 8% while profit fell 20%. The red branch is the hypothesis to test first.
+            </p>
+          </figure>
         </div>
 
-        <ol className="relative mt-14 grid gap-0 lg:grid-cols-5">
-          {/* rail: vertical on mobile, horizontal on desktop */}
-          <span aria-hidden className="absolute bottom-6 left-[11px] top-3 w-px bg-border-strong lg:hidden" />
-          <span aria-hidden className="absolute left-3 right-3 top-[11px] hidden h-px bg-border-strong lg:block" />
-          {METHOD.map((m, i) => (
-            <li key={m.step} className="relative pb-10 pl-10 lg:pb-0 lg:pl-0 lg:pr-6">
-              <span
-                aria-hidden
-                className={`absolute left-0 top-0 flex h-[23px] w-[23px] items-center justify-center lg:relative ${i === METHOD.length - 1 ? 'text-primary' : 'text-navy dark:text-navy-foreground'}`}
-              >
-                <svg viewBox="0 0 23 23" className="h-[23px] w-[23px]">
-                  <rect x="0.5" y="0.5" width="22" height="22" rx="5" className={i === METHOD.length - 1 ? 'fill-primary stroke-primary' : 'fill-background stroke-border-strong'} />
-                  <text x="11.5" y="15.5" textAnchor="middle" className={i === METHOD.length - 1 ? 'fill-white' : 'fill-foreground'} style={{ fontSize: 11, fontWeight: 700 }}>
-                    {i + 1}
-                  </text>
-                </svg>
-              </span>
-              <h3 className="mt-0 text-[18px] font-semibold text-foreground lg:mt-5">{m.step}</h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">{m.what}</p>
-              <p className="mt-4 border-l-2 border-primary/60 pl-3 text-[14px] leading-relaxed text-foreground/90">
-                <span className="sr-only">Worked example: </span>
-                {m.example}
+        <h3 className="mt-20 text-center text-[13px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">The five moves every answer is scored on</h3>
+        <ol className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {MOVES.map(({ Icon, title, text, example }, i) => (
+            <li key={title} className={`${US_CARD} relative flex flex-col p-5`}>
+              {i < MOVES.length - 1 && (
+                <ChevronRight aria-hidden className="absolute -right-[18px] top-1/2 z-10 hidden h-5 w-5 -translate-y-1/2 text-border-strong lg:block" />
+              )}
+              <div className="flex items-center justify-between">
+                <IconChip tone={i === MOVES.length - 1 ? 'red' : 'navy'} size="sm"><Icon /></IconChip>
+                <span className="text-[12px] font-semibold text-muted-foreground tnum">0{i + 1}</span>
+              </div>
+              <p className="mt-4 text-[16px] font-semibold text-foreground">{title}</p>
+              <p className="mt-1.5 flex-1 text-[13.5px] leading-relaxed text-muted-foreground">{text}</p>
+              <p className="mt-4 rounded-[8px] bg-muted/70 px-3 py-2 text-[12.5px] text-foreground/80">
+                <span className="sr-only">Example: </span>
+                {example}
               </p>
             </li>
           ))}
         </ol>
-        <p className="mt-10 text-[13px] text-muted-foreground">
-          Worked example written for this page. The 50 cases in the bank keep their solutions behind the attempt.
-        </p>
       </div>
     </section>
   );
 }
 
+/** Two separate circles: no overlap. */
+function MeDiagram() {
+  return (
+    <svg viewBox="0 0 120 56" aria-hidden className="h-14 w-auto">
+      <circle cx="32" cy="28" r="22" className="fill-rose-100 stroke-primary dark:fill-primary/20" strokeWidth="1.5" />
+      <circle cx="88" cy="28" r="22" className="fill-slate-100 stroke-navy dark:fill-white/10 dark:stroke-white/60" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/** A whole split into parts that fill it: no gaps. */
+function CeDiagram() {
+  return (
+    <svg viewBox="0 0 120 56" aria-hidden className="h-14 w-auto">
+      <rect x="4" y="6" width="112" height="44" rx="8" className="fill-slate-100 stroke-navy dark:fill-white/10 dark:stroke-white/60" strokeWidth="1.5" />
+      <rect x="4" y="6" width="44" height="44" rx="8" className="fill-rose-100 stroke-primary dark:fill-primary/20" strokeWidth="1.5" />
+      <line x1="82" y1="6" x2="82" y2="50" className="stroke-navy dark:stroke-white/60" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 /* ════════════════════════════════════════════════════════════════════════
-   6 · PRODUCT SHOWCASE — one real-looking screen, four quiet callouts
+   7 · PRODUCT SHOWCASE — the real dashboard, framed
    ════════════════════════════════════════════════════════════════════════ */
 
 export const SHOWCASE_CALLOUTS = [
-  { k: 'Daily practice', v: 'A fresh US case and market sizing question every day, free.' },
-  { k: 'What to do next', v: 'One recommendation, drawn from your own scores.' },
-  { k: 'Consistency', v: 'Your streak and the last seven days at a glance.' },
-  { k: 'Progress', v: 'Sessions by week and your average by case type.' },
+  { Icon: Target, k: 'Today, planned', v: 'A fresh US case and market sizing question every day, free.' },
+  { Icon: Lightbulb, k: 'What to do next', v: 'One recommendation drawn from your own scores.' },
+  { Icon: TrendingUp, k: 'Your trend', v: 'Sessions by week and your average by case type.' },
 ];
 
 export function Showcase({ preview }: { preview: React.ReactNode }) {
   return (
-    <section aria-labelledby="showcase-title" className="border-t border-border">
-      <div className={`${WRAP} py-20 lg:py-28`}>
+    <section aria-labelledby="showcase-title" className="relative overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-40 mx-auto h-[420px] max-w-[1000px] rounded-full bg-rose-100/40 blur-3xl dark:bg-primary/10" />
+      <div className={`${WRAP} relative py-20 lg:py-28`}>
         <SectionHeading
-          eyebrow="The product"
-          title={<span id="showcase-title">Your interview preparation system, in one place.</span>}
-          lead="Open MECE and the day is already planned: today's case, what to fix next, and how far you've come."
+          align="center"
+          id="showcase-title"
+          eyebrow="Your dashboard"
+          title={<>Your preparation, planned for you<Dot /></>}
+          lead="Open MECE and the day is ready: today's case, what to fix next, and how far you've come."
         />
-        <div className="mt-12">
-          <div className="overflow-hidden rounded-[14px] border border-border-strong/70 bg-card shadow-[0_30px_60px_-40px_rgba(15,28,51,0.5)]">
-            <div className="flex items-center gap-3 border-b border-border bg-muted/60 px-4 py-2.5">
+        <div className="mx-auto mt-12 max-w-[1080px]">
+          <div className="overflow-hidden rounded-[20px] border border-border/80 bg-card shadow-[0_40px_80px_-40px_rgba(15,28,51,0.45)]">
+            <div className="flex items-center gap-3 border-b border-border/70 bg-muted/50 px-4 py-3">
               <span aria-hidden className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-border-strong" />
-                <span className="h-2.5 w-2.5 rounded-full bg-border-strong" />
-                <span className="h-2.5 w-2.5 rounded-full bg-border-strong" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#28C840]" />
               </span>
-              <span className="rounded-[6px] border border-border bg-background px-3 py-1 text-[11px] text-muted-foreground">mece.in/dashboard</span>
+              <span className="mx-auto rounded-full bg-background px-4 py-1 text-[11px] text-muted-foreground">mece.in/dashboard</span>
+              <span className="w-10" aria-hidden />
             </div>
             {preview}
           </div>
-          <p className="mt-3 text-[12px] text-muted-foreground">Illustrative account. Your dashboard shows your own practice.</p>
+          <p className="mt-3 text-center text-[12px] text-muted-foreground">Illustrative account. Your dashboard shows your own practice.</p>
         </div>
-        <ol className="mt-10 grid gap-x-8 gap-y-6 border-t border-border pt-8 sm:grid-cols-2 lg:grid-cols-4">
-          {SHOWCASE_CALLOUTS.map((c, i) => (
-            <li key={c.k}>
-              <p className="flex items-center gap-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-foreground">
-                <span aria-hidden className="flex h-5 w-5 items-center justify-center rounded-[4px] bg-primary text-[10px] font-bold tracking-normal text-white">{i + 1}</span>
-                {c.k}
-              </p>
-              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">{c.v}</p>
+        <ul className="mx-auto mt-12 grid grid-cols-1 max-w-[1080px] gap-5 sm:grid-cols-3">
+          {SHOWCASE_CALLOUTS.map(({ Icon, k, v }) => (
+            <li key={k} className="flex gap-4">
+              <IconChip tone="red"><Icon strokeWidth={1.75} /></IconChip>
+              <div>
+                <p className="text-[15px] font-semibold text-foreground">{k}</p>
+                <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">{v}</p>
+              </div>
             </li>
           ))}
-        </ol>
+        </ul>
       </div>
     </section>
   );
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   7 · HOW YOU'RE MEASURED — the real rubric, not invented stats
+   8 · TRACK YOUR IMPROVEMENT — the real rubric, an example account
    ════════════════════════════════════════════════════════════════════════ */
 
-const CASE_RUBRIC: [string, number, string][] = [
-  ['Structure', 25, 'A MECE, hypothesis-driven framework built for this case, not a memorized template.'],
-  ['Quantitative skills', 20, 'Correct math with units, turned into an insight.'],
-  ['Synthesis & communication', 20, 'Answer first, with the “so what” stated plainly.'],
-  ['Business judgment', 15, 'Risks, second-order effects and practical next steps.'],
-  ['Creativity', 10, 'Ideas beyond the obvious framework buckets.'],
-  ['Presence', 10, 'Concise, professional delivery, the way you’d speak to a partner.'],
+const CASE_RUBRIC: [string, number, number][] = [
+  ['Structure', 21, 25],
+  ['Quantitative skills', 16, 20],
+  ['Synthesis & communication', 15, 20],
+  ['Business judgment', 11, 15],
+  ['Creativity', 7, 10],
+  ['Presence', 8, 10],
 ];
-const SIZING_RUBRIC = ['Scoping', 'Structure', 'Segmentation & assumptions', 'Arithmetic & units', 'Sanity check'];
+const TREND = [58, 61, 60, 66, 64, 70, 72, 76];
 
 export function MeasureSection() {
   return (
-    <section id="how-scoring-works" aria-labelledby="measure-title" className="scroll-mt-20 border-t border-border">
-      <div className={`${WRAP} grid gap-14 py-20 lg:grid-cols-12 lg:gap-12 lg:py-28`}>
+    <section id="how-scoring-works" aria-labelledby="measure-title" className="scroll-mt-24 bg-secondary/50">
+      <div className={`${WRAP} grid grid-cols-1 gap-14 py-20 lg:grid-cols-12 lg:items-center lg:gap-12 lg:py-28`}>
         <div className="lg:col-span-5">
-          <Eyebrow>How you&apos;re measured</Eyebrow>
-          <h2 id="measure-title" className="mt-4 font-display text-[36px] leading-[1.06] tracking-[-0.015em] text-foreground sm:text-[46px]">
-            See yourself get better.
-          </h2>
-          <p className="mt-5 text-[16px] leading-relaxed text-muted-foreground">
-            Every case is scored out of 100 on the six things interviewers weigh, with written evidence for each
-            mark, a worked solution and three ways a strong candidate would approach it. Market sizing answers
-            also get an arithmetic check, so a math slip can&apos;t hide behind a confident delivery.
-          </p>
-          <ul className="mt-8 space-y-3">
+          <SectionHeading
+            id="measure-title"
+            eyebrow="How you're scored"
+            title={<>Track your improvement<Dot /></>}
+            lead="Every case is scored out of 100 on the six things interviewers weigh, with written evidence for each mark and a worked solution. Market sizing answers also get an arithmetic check."
+          />
+          <ul className="mt-8 space-y-3.5">
             {[
               'Your score trend across every scored case',
-              'Your average by case type, with the weakest one flagged',
-              'One recommended next practice, based on your own results',
+              'Your average by case type, weakest one flagged',
+              'One recommended next practice from your own results',
             ].map((t) => (
               <li key={t} className="flex items-start gap-3 text-[15px] text-foreground">
-                <Check aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {t}
+                <CircleCheck aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" /> {t}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="lg:col-span-7">
-          <figure className="rounded-[12px] border border-border bg-card p-6 sm:p-8">
-            <figcaption className="flex items-baseline justify-between gap-4">
-              <span className="text-[13px] font-semibold text-foreground">The case rubric</span>
-              <span className="text-[12px] text-muted-foreground">Points out of 100</span>
-            </figcaption>
-            <ul className="mt-6 space-y-5">
-              {CASE_RUBRIC.map(([name, pts, what]) => (
+        <figure className={`${US_CARD} p-6 sm:p-7 lg:col-span-7`}>
+          <figcaption className="flex items-center justify-between gap-3">
+            <span className="text-[15px] font-semibold text-foreground">Overall progress</span>
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-foreground/75">Example account</span>
+          </figcaption>
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center">
+            <ScoreRing value={76} label="Latest case score" />
+            <TrendChart values={TREND} />
+          </div>
+          <div className="mt-7 border-t border-border/70 pt-6">
+            <p className="text-[13px] font-semibold text-foreground">Scored on six dimensions</p>
+            <ul className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+              {CASE_RUBRIC.map(([name, v, max]) => (
                 <li key={name}>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-[14px] font-semibold text-foreground">{name}</span>
-                    <span className="text-[14px] font-semibold text-foreground tnum">{pts}</span>
+                  <div className="flex items-baseline justify-between gap-3 text-[13px]">
+                    <span className="text-foreground">{name}</span>
+                    <span className="font-semibold text-foreground tnum">
+                      {v}<span className="font-normal text-muted-foreground">/{max}</span>
+                    </span>
                   </div>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-muted" aria-hidden>
-                    <div className="h-1.5 rounded-full bg-navy dark:bg-viz-1" style={{ width: `${(pts / 25) * 100}%` }} />
+                  <div className="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden>
+                    <div className="h-1.5 rounded-full bg-primary" style={{ width: `${(v / max) * 100}%` }} />
                   </div>
-                  <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{what}</p>
                 </li>
               ))}
             </ul>
-            <div className="mt-8 border-t border-border pt-5">
-              <p className="text-[13px] font-semibold text-foreground">Market sizing is scored on five dimensions</p>
-              <p className="mt-1 text-[13px] text-muted-foreground">{SIZING_RUBRIC.join(' · ')}</p>
-            </div>
-          </figure>
-        </div>
+          </div>
+        </figure>
       </div>
     </section>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════
-   8 · PRINCIPLE BAND — the one editorial statement (no fake testimonial)
-   ════════════════════════════════════════════════════════════════════════ */
-
-export function PrincipleBand() {
+function ScoreRing({ value, label }: { value: number; label: string }) {
+  const r = 52;
+  const c = 2 * Math.PI * r;
   return (
-    <section aria-label="The MECE principle" className="relative isolate overflow-hidden bg-navy">
-      <UsImage photo={US_PHOTOS.band} decorative sizes="100vw" widths={[640, 1080, 1600, 2200]} className="absolute inset-0 -z-10 h-full w-full opacity-40" />
-      <div aria-hidden className="absolute inset-0 -z-10 bg-navy/60" />
-      <div className={`${WRAP} py-20 lg:py-28`}>
-        <p className="max-w-3xl font-display text-[34px] leading-[1.12] text-white sm:text-[48px]">
-          Mutually exclusive.
-          <br />
-          Collectively exhaustive.
-        </p>
-        <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-white/75">
-          The principle behind every strong case answer, and behind our name. Break a problem into pieces that
-          don&apos;t overlap and leave nothing out, and the answer usually shows itself.
-        </p>
-      </div>
-    </section>
+    <div className="flex flex-col items-center">
+      <svg viewBox="0 0 128 128" className="h-[140px] w-[140px]" role="img" aria-label={`${label}: ${value} out of 100`}>
+        <circle cx="64" cy="64" r={r} fill="none" className="stroke-muted" strokeWidth="10" />
+        <circle
+          cx="64"
+          cy="64"
+          r={r}
+          fill="none"
+          className="stroke-primary"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={`${(value / 100) * c} ${c}`}
+          transform="rotate(-90 64 64)"
+        />
+        <text x="64" y="62" textAnchor="middle" className="fill-foreground" style={{ fontSize: 30, fontWeight: 600 }}>{value}</text>
+        <text x="64" y="82" textAnchor="middle" className="fill-muted-foreground" style={{ fontSize: 11 }}>out of 100</text>
+      </svg>
+      <p className="mt-1 text-[12px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function TrendChart({ values }: { values: number[] }) {
+  const W = 360;
+  const H = 150;
+  const min = 50;
+  const max = 80;
+  const step = W / (values.length - 1);
+  const pts = values.map((v, i) => [i * step, H - ((v - min) / (max - min)) * (H - 16) - 8] as const);
+  const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const area = `${line} L${W},${H} L0,${H} Z`;
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H + 22}`} className="h-auto w-full" role="img" aria-label={`Example case scores over eight weeks, from ${values[0]} to ${values[values.length - 1]}`}>
+        <defs>
+          <linearGradient id="us-trend-fill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#C8102E" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#C8102E" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0, 1, 2].map((i) => (
+          <line key={i} x1="0" x2={W} y1={8 + i * ((H - 16) / 2)} y2={8 + i * ((H - 16) / 2)} className="stroke-border" strokeDasharray="3 4" />
+        ))}
+        <path d={area} fill="url(#us-trend-fill)" />
+        <path d={line} fill="none" className="stroke-primary" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {pts.map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r={i === pts.length - 1 ? 4.5 : 3} className={i === pts.length - 1 ? 'fill-primary' : 'fill-card stroke-primary'} strokeWidth="2" />
+        ))}
+        {['8 wk', '6 wk', '4 wk', '2 wk', 'Now'].map((t, i) => (
+          <text key={t} x={i === 4 ? W : (i * W) / 4} y={H + 18} textAnchor={i === 0 ? 'start' : i === 4 ? 'end' : 'middle'} className="fill-muted-foreground" style={{ fontSize: 11 }}>
+            {t}
+          </text>
+        ))}
+      </svg>
+    </div>
   );
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   9 · FAQ — editorial accordion
+   9 · FAQ
    ════════════════════════════════════════════════════════════════════════ */
 
 export function FaqSection({
@@ -539,23 +653,25 @@ export function FaqSection({
   compact?: boolean;
 }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 border-t border-border">
-      <div className={`${WRAP} grid gap-10 lg:grid-cols-12 ${compact ? 'py-16' : 'py-20 lg:py-28'}`}>
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24">
+      <div className={`${WRAP} grid grid-cols-1 gap-10 lg:grid-cols-12 ${compact ? 'py-16' : 'py-20 lg:py-28'}`}>
         <div className="lg:col-span-4">
           <Eyebrow>{eyebrow}</Eyebrow>
-          <h2 id={`${id}-title`} className="mt-4 font-display text-[34px] leading-tight text-foreground sm:text-[40px]">
+          <h2 id={`${id}-title`} className="mt-5 font-display text-[34px] leading-tight text-foreground sm:text-[40px]">
             {title}
           </h2>
           <p className="mt-4 text-[15px] text-muted-foreground">
             Something else? <a href="mailto:team@mece.in" className="font-semibold text-primary hover:underline underline-offset-4">team@mece.in</a>
           </p>
         </div>
-        <div className="divide-y divide-border border-y border-border lg:col-span-8">
+        <div className={`${US_CARD} divide-y divide-border/70 px-6 lg:col-span-8`}>
           {faqs.map((f) => (
             <details key={f.question} className="group py-5 [&_summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-6 rounded-[6px] text-[16px] font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 rounded-[6px] text-[16px] font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 {f.question}
-                <span aria-hidden className="mt-1 h-3 w-3 shrink-0 rotate-45 border-b-[1.5px] border-r-[1.5px] border-muted-foreground transition-transform group-open:-rotate-[135deg] motion-reduce:transition-none" />
+                <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-transform group-open:rotate-45 motion-reduce:transition-none">
+                  <svg viewBox="0 0 12 12" className="h-3 w-3"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+                </span>
               </summary>
               <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">{f.answer}</p>
             </details>
@@ -567,24 +683,30 @@ export function FaqSection({
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   10 · FINAL CTA
+   10 · FINAL CTA — navy band with the city
    ════════════════════════════════════════════════════════════════════════ */
 
 export function FinalCta() {
   return (
-    <section aria-labelledby="final-cta-title" className="bg-navy">
-      <div className={`${WRAP} flex flex-col items-start gap-8 py-20 lg:flex-row lg:items-end lg:justify-between lg:py-24`}>
-        <div>
-          <h2 id="final-cta-title" className="font-display text-[38px] leading-[1.05] text-white sm:text-[52px]">
-            Your next case starts here.
+    <section aria-labelledby="final-cta-title" className={`${WRAP} py-20 lg:py-24`}>
+      <div className="relative isolate grid grid-cols-1 overflow-hidden rounded-[24px] bg-navy lg:grid-cols-2">
+        <div className="relative z-10 px-7 py-14 sm:px-12 lg:py-20">
+          <Eyebrow tone="inverse">Start today</Eyebrow>
+          <h2 id="final-cta-title" className="mt-5 font-display text-[38px] leading-[1.05] text-white sm:text-[50px]">
+            Your next case starts here<span className="text-primary">.</span>
           </h2>
-          <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-white/70">
-            One structured problem at a time. Build stronger business thinking every week.
+          <p className="mt-4 max-w-md text-[16px] leading-relaxed text-white/70">
+            One structured problem at a time. Build sharper business thinking every week.
           </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <StartButton variant="inverse" />
+            <Link href="/us/pricing" className={usButton('inverse-outline', 'lg')}>See pricing</Link>
+          </div>
+          <p className="mt-4 text-[12px] text-white/55">Free daily case. No credit card.</p>
         </div>
-        <div className="flex flex-col items-start gap-3">
-          <StartButton variant="inverse" />
-          <p className="text-[12px] text-white/55">Free daily case. No credit card.</p>
+        <div className="relative min-h-[220px] lg:min-h-0">
+          <UsImage photo={US_PHOTOS.band} decorative sizes="(min-width: 1024px) 600px, 100vw" widths={[640, 960, 1280]} className="absolute inset-0 h-full w-full" />
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-navy via-navy/40 to-transparent lg:bg-gradient-to-r lg:from-navy lg:via-navy/30 lg:to-transparent" />
         </div>
       </div>
     </section>

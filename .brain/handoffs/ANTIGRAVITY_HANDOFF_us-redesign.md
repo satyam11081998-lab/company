@@ -124,3 +124,45 @@ Hero (P6NY5x3ivYg), NYC band (LY1eyQMFeyo), skyline default (kZokA2VTKn4), retai
 ## 9. Proposed CHANGELOG line
 
 `2026-09-26 · us-redesign · frontend · non-breaking — premium US/EU landing, dashboard and app shell; India output unchanged (pixel-verified). affects: Landing/SEO(/us), Dashboard(US), Practice(US), Guest mode(US).`
+
+---
+
+## 10. v2 visual pass (2026-09-27, owner feedback) — commit `feat(us): v2 visual pass`
+
+Owner feedback on v1 (live on main as 6c447a0): "not up to the mark, like a web designer would
+design; remove the bold lines from any side of any tile; there is no full form of MECE anywhere."
+Direction taken from the owner's reference boards (warm cream, soft white cards, tinted icon chips,
+pill labels, red accents, photo hero).
+
+```
+touches:  frontend  NEW  components/us/brand.tsx (UsLogo: mark + MECE + "Method for Evaluating
+                         Corporate Excellence" as real text)
+                    MOD  components/us/ui.tsx (Eyebrow → pill, IconChip, US_CARD, Dot, softer buttons),
+                         components/us/marketing/{sections,us-header,us-footer,dashboard-preview}.tsx,
+                         components/us/dashboard/{modules,us-dashboard,skill-map}.tsx,
+                         components/us/shell/us-app-shell.tsx, app/us/page.tsx,
+                         components/intl/{intl-plan-cards,intl-pricing-section}.tsx (US-only),
+                         SHARED, India-inert: components/practice-hub.tsx (variant 'us' classes only),
+                         app/(app)/{dashboard,practice}/page.tsx (US branches only)
+breaking: no. No CONTRACTS.md surface.
+```
+
+- **No coloured side/top rules on any tile**: removed the red left rule on "What to do next", the red
+  left rules on the method steps, the red top bar on the Pro plan card (now a full ring), and the
+  sidebar's active-item left bar (now a tinted pill).
+- **Full form of MECE**: header, phone menu, footer and the app top bar (xl) show
+  "Method for Evaluating Corporate Excellence" beside the wordmark; the method section explains the
+  name and the consulting rule (mutually exclusive, collectively exhaustive).
+- **Landing**: photo hero bleeding right with a floating example score card and today's case;
+  five-icon feature strip; interview-styles wordmark row; "Everything you need" with four product
+  cards; new "How it works" (3 steps + chat mock); MECE method with two definition cards, the issue
+  tree and five move cards; framed dashboard; "Track your improvement" with ring, red trend line and
+  six-dimension bars (labelled "Example account"); pricing; FAQ in a card; navy CTA band with the city.
+- **Dashboard**: today's case card with pink wash and inset photo; plan + streak (red dots); four stat
+  cards with tinted icons; next action with an icon chip; red progress line chart; red by-type bars;
+  continue cards; activity with icon chips.
+
+Gates run in the sandbox: `tsc --noEmit` clean · `next build` clean · axe WCAG 2.1 AA 0 violations on
+/us, /us/pricing, /us/case-interview-examples, dashboard, practice (light + dark) · no horizontal
+overflow at 320/390/1024/1280/1440 · India pixel-identical to the current main (28 page/width/theme
+pairs, 0 differing pixels).

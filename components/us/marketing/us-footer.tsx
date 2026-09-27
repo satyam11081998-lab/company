@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Logo from '@/components/logo';
+import UsLogo from '@/components/us/brand';
 import { LINKEDIN_COMPANY_URL } from '@/lib/constants';
 
 /**
@@ -39,14 +39,14 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
 
 export default function UsFooter() {
   return (
-    <footer className="border-t border-border bg-background">
+    <footer className="border-t border-border/70 bg-card">
       <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-6">
-        <div className="grid gap-10 md:grid-cols-12">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
           <div className="md:col-span-5">
-            <Link href="/us" aria-label="MECE home" className="-ml-4 inline-flex rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <Logo isLanding full className="!h-[64px]" />
+            <Link href="/us" aria-label="MECE, Method for Evaluating Corporate Excellence: home" className="inline-flex rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+              <UsLogo taglineOnPhones />
             </Link>
-            <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
+            <p className="mt-5 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
               Case interview and market sizing practice with an interviewer that asks follow-ups and scores your thinking.
             </p>
           </div>
