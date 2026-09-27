@@ -45,6 +45,8 @@ export interface UsTodayInput {
   type: string;
   difficulty: string;
   interview_meta?: { est_minutes?: number; points_reward?: number; industry?: string } | null;
+  /** One or two sentences on what the item asks (the bank's situation / scope). */
+  blurb?: string | null;
 }
 
 /* ── Outputs ────────────────────────────────────────────────────────────── */
@@ -58,6 +60,7 @@ export interface UsTodayItem {
   minutes: number | null;
   points: number | null;
   industry: string | null;
+  blurb: string | null;
   done: { score: number | null; submissionId: string | null } | null;
 }
 
@@ -86,16 +89,43 @@ export interface UsWeek {
   sizing: number;
 }
 
+export interface UsInProgress {
+  attemptId: string;
+  caseId: string;
+  title: string;
+  /** cases.type ('guesstimate' for market sizing). */
+  type: string | null;
+  typeLabel: string;
+  kind: 'case' | 'sizing';
+  startedAt: string;
+  /** Messages exchanged so far (null when the count could not be read). */
+  messages: number | null;
+  /**
+   * Rough share of a typical session already done, 5..95 — an ESTIMATE from
+   * the messages exchanged against a typical session's length (see
+   * TYPICAL_MESSAGES). Null when the message count is unknown. The UI labels
+   * it as approximate.
+   */
+  progressPct: number | null;
+}
+
 export interface UsDashboardModel {
   metrics: {
     casesPracticed: number;
     sizingPracticed: number;
     scoredCases: number;
+    scoredSizing: number;
     avgCaseScore: number | null;
     avgSizingScore: number | null;
     /** avg of the last 5 scored cases minus the 5 before; null under 10 scored cases. */
     recentDelta: number | null;
+    /** Same, for market sizing; null under 10 scored sizing questions. */
+    sizingDelta: number | null;
+    /** Case / sizing sessions submitted since Monday (UTC week, as the chart). */
+    casesThisWeek: number;
+    sizingThisWeek: number;
   };
+  /** The last 12 weeks, oldest first (the chart shows 4, 8 or 12 of them). */
   weeks: UsWeek[];
   byType: UsTypeStat[];
   sizing: UsTypeStat;
@@ -103,7 +133,7 @@ export interface UsDashboardModel {
   nextAction: UsNextAction | null;
   /** How many more scored sessions before a recommendation is made (0 once there is one). */
   sessionsUntilAdvice: number;
-  inProgress: { attemptId: string; caseId: string; title: string; typeLabel: string; startedAt: string }[];
+  inProgress: UsInProgress[];
   activity: { id: string; kind: 'case' | 'sizing'; title: string; typeLabel: string; score: number | null; at: string }[];
   /** Submission timestamps (last 14 days) — the client buckets them into ITS local days. */
   recentTimestamps: string[];
@@ -124,6 +154,10 @@ const CASE_DIM: Record<string, { label: string; max: number }> = {
 const CORE_TYPES: UsCase['type'][] = ['profitability', 'market entry', 'm&a', 'pricing', 'growth'];
 
 export const ADVICE_MIN_SESSIONS = 3;
+/** Weeks of history the model carries for the progress chart. */
+export const CHART_WEEKS = 12;
+/** A typical complete session's message count (both sides), for the progress estimate. */
+const TYPICAL_MESSAGES = { case: 24, sizing: 14 } as const;
 const MIN_TYPE_SAMPLE = 2;
 const WEAK_GAP = 5;
 
@@ -153,6 +187,20 @@ const fmtDay = (d: Date) => `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
 
 /* ── Today ──────────────────────────────────────────────────────────────── */
 
+/** What each kind of item asks of you — used when the bank has no situation text. */
+export const TYPE_BLURB: Record<string, string> = {
+  profitability: 'Find what is driving the profit decline, size each driver and recommend what to fix first.',
+  'market entry': 'Size the opportunity, weigh the risks of entering and make a clear go or no-go call.',
+  growth: 'Find where the next wave of growth can come from and recommend where to place the bets.',
+  pricing: 'Work out what customers will pay, what it does to volume and which price to recommend.',
+  'm&a': 'Value the deal, test the strategic fit and decide whether the client should go ahead.',
+  operations: 'Find the bottleneck, put a number on what it costs and recommend the changes that fix it.',
+  'cost reduction': 'Map the cost base, find the biggest levers and build a savings plan the client can trust.',
+  'go to market': 'Choose the customers to win first, the channel to reach them and the offer that lands.',
+  'competitive strategy': 'Assess the new threat and the client’s position, then recommend how to respond.',
+  guesstimate: 'Clarify the scope, build a clean structure and land on a number you can defend.',
+};
+
 export function buildToday(item: UsTodayInput | null, subs: UsSubmissionRow[]): UsTodayItem | null {
   if (!item) return null;
   const mine = subs.filter((s) => s.case_id === item.id);
@@ -168,6 +216,7 @@ export function buildToday(item: UsTodayInput | null, subs: UsSubmissionRow[]): 
     minutes: typeof meta?.est_minutes === 'number' ? meta.est_minutes : null,
     points: typeof meta?.points_reward === 'number' ? meta.points_reward : null,
     industry: typeof meta?.industry === 'string' ? meta.industry : null,
+    blurb: item.blurb?.trim() || TYPE_BLURB[item.type] || null,
     done: mine.length
       ? { score: best ? round(best.score as number) : null, submissionId: (best ?? mine[0]).id }
       : null,
@@ -192,17 +241,19 @@ export function buildUsDashboard(
 
   const avgCase = mean(scoredCases.map((s) => s.score as number));
   const avgSizing = mean(scoredSizing.map((s) => s.score as number));
-  let recentDelta: number | null = null;
-  if (scoredCases.length >= 10) {
-    const last5 = mean(scoredCases.slice(0, 5).map((s) => s.score as number)) as number;
-    const prev5 = mean(scoredCases.slice(5, 10).map((s) => s.score as number)) as number;
-    recentDelta = round(last5 - prev5);
-  }
+  const deltaOf = (xs: UsSubmissionRow[]): number | null => {
+    if (xs.length < 10) return null;
+    const last5 = mean(xs.slice(0, 5).map((s) => s.score as number)) as number;
+    const prev5 = mean(xs.slice(5, 10).map((s) => s.score as number)) as number;
+    return round(last5 - prev5);
+  };
+  const recentDelta = deltaOf(scoredCases);
+  const sizingDelta = deltaOf(scoredSizing);
 
-  // Weekly practice, last 8 weeks (Monday-start, UTC).
+  // Weekly practice, last CHART_WEEKS weeks (Monday-start, UTC).
   const thisMonday = mondayUtc(now);
   const weeks: UsWeek[] = [];
-  for (let i = 7; i >= 0; i--) {
+  for (let i = CHART_WEEKS - 1; i >= 0; i--) {
     const start = new Date(thisMonday);
     start.setUTCDate(start.getUTCDate() - i * 7);
     weeks.push({ start: start.toISOString().slice(0, 10), label: fmtDay(start), cases: 0, sizing: 0 });
@@ -211,7 +262,7 @@ export function buildUsDashboard(
   for (const s of subs) {
     const t = new Date(s.created_at).getTime();
     if (Number.isNaN(t) || t < firstStart) continue;
-    const idx = Math.min(7, Math.floor((t - firstStart) / (7 * 86400000)));
+    const idx = Math.min(CHART_WEEKS - 1, Math.floor((t - firstStart) / (7 * 86400000)));
     if (idx < 0) continue;
     if (isSizing(s)) weeks[idx].sizing++;
     else weeks[idx].cases++;
@@ -333,7 +384,22 @@ export function buildUsDashboard(
       return !subs.some((s) => s.case_id === a.case_id && new Date(s.created_at).getTime() >= opened);
     })
     .slice(0, 3)
-    .map((a) => ({ attemptId: a.id, caseId: a.case_id, title: a.title ?? 'Untitled case', typeLabel: usTypeLabel(a.type), startedAt: a.created_at }));
+    .map((a): UsInProgress => {
+      const kind = a.type === 'guesstimate' ? 'sizing' : 'case';
+      const progressPct =
+        a.messages == null ? null : Math.max(5, Math.min(95, Math.round((a.messages / TYPICAL_MESSAGES[kind]) * 100)));
+      return {
+        attemptId: a.id,
+        caseId: a.case_id,
+        title: a.title ?? 'Untitled case',
+        type: a.type,
+        typeLabel: usTypeLabel(a.type),
+        kind,
+        startedAt: a.created_at,
+        messages: a.messages,
+        progressPct,
+      };
+    });
 
   const activity = subs.slice(0, 6).map((s) => ({
     id: s.id,
@@ -352,9 +418,13 @@ export function buildUsDashboard(
       casesPracticed: distinct(caseSubs),
       sizingPracticed: distinct(sizingSubs),
       scoredCases: scoredCases.length,
+      scoredSizing: scoredSizing.length,
       avgCaseScore: avgCase == null ? null : round(avgCase),
       avgSizingScore: avgSizing == null ? null : round(avgSizing),
       recentDelta,
+      sizingDelta,
+      casesThisWeek: weeks[weeks.length - 1].cases,
+      sizingThisWeek: weeks[weeks.length - 1].sizing,
     },
     weeks,
     byType,

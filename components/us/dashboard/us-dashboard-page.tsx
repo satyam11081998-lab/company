@@ -12,9 +12,19 @@ import {
   type UsSubmissionRow,
   type UsTodayInput,
 } from '@/lib/us-market/dashboard';
+import { US_CASES, US_GUESSTIMATES } from '@/lib/us-market';
 import UsDashboard from '@/components/us/dashboard/us-dashboard';
 import { safeTz } from '@/components/us/dashboard/format';
 import FeedbackPrompt from '@/components/feedback-prompt';
+
+/** The bank's own framing for today's item (a case's situation, a sizing question's scope). */
+const BLURBS = new Map<string, string>([
+  ...US_CASES.map((c) => [c.title.trim().toLowerCase(), c.situation] as [string, string]),
+  ...US_GUESSTIMATES.map((g) => [g.title.trim().toLowerCase(), g.scope] as [string, string]),
+]);
+function bankBlurb(title: string | null | undefined): string | null {
+  return title ? BLURBS.get(title.trim().toLowerCase()) ?? null : null;
+}
 
 /**
  * Data loader for the US dashboard (market 'US' — US and Europe accounts).
@@ -100,7 +110,9 @@ export default async function UsDashboardPage({
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const toInput = (c: DailyContentResponse['case']): UsTodayInput | null =>
-    c ? { id: c.id, title: c.title, type: c.type, difficulty: c.difficulty, interview_meta: metaById.get(c.id) ?? null } : null;
+    c
+      ? { id: c.id, title: c.title, type: c.type, difficulty: c.difficulty, interview_meta: metaById.get(c.id) ?? null, blurb: bankBlurb(c.title) }
+      : null;
 
   const model = buildUsDashboard(subs, active);
   const tz = safeTz(cookies().get(TZ_COOKIE)?.value ? decodeURIComponent(cookies().get(TZ_COOKIE)!.value) : null);

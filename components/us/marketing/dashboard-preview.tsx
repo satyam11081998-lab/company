@@ -68,15 +68,15 @@ export default function DashboardPreview() {
           </ul>
         </aside>
         <div className="min-w-0 flex-1 px-5 py-6 sm:px-7">
-          <p className="font-display text-[26px] leading-tight text-foreground">Good morning, Jordan<span className="text-primary">.</span></p>
+          <p className="font-display text-[26px] font-semibold leading-tight text-foreground">Good morning, Jordan<span className="text-primary">.</span></p>
           <p className="mt-1 text-[13px] text-muted-foreground">Let&apos;s make progress toward your goals today.</p>
-          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_250px]">
-            <TodayPractice item={todayCase} />
+          <TodayPractice item={todayCase} className="mt-5" />
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+            <StatCards model={model} cols={2} />
             <Streak count={3} timestamps={model.recentTimestamps} tz="America/New_York" />
           </div>
-          <StatCards model={model} className="mt-4" />
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            <ProgressChart model={model} gradientId="preview-progress-fill" />
+            <ProgressChart model={model} selectable={false} />
             <TypePerformance stats={[...model.byType, model.sizing]} focusType={model.nextAction?.focusType ?? null} />
           </div>
         </div>

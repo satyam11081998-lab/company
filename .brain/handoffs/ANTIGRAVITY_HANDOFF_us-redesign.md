@@ -166,3 +166,65 @@ Gates run in the sandbox: `tsc --noEmit` clean · `next build` clean · axe WCAG
 /us, /us/pricing, /us/case-interview-examples, dashboard, practice (light + dark) · no horizontal
 overflow at 320/390/1024/1280/1440 · India pixel-identical to the current main (28 page/width/theme
 pairs, 0 differing pixels).
+
+---
+
+## 11. v3 dashboard (2026-09-27, owner reference mock) — commit `feat(us): v3 dashboard`
+
+Owner feedback on v2: clone the reference dashboard "or even better"; a quotation top-right that
+changes every day; today's case and market sizing change daily (already true) with photos that match
+what each item is about (a solar case shows solar panels); everything in the mock present.
+
+```
+touches:  frontend  NEW  lib/us-market/quotes.ts (60 original one-line maxims, one per day),
+                         lib/us-market/photo-url.ts (UsPhoto + URL helpers split out of assets.ts so
+                           client bundles don't carry the photo library),
+                         components/us/dashboard/weekly-chart.tsx (client: 4/8/12-week selector,
+                           hover callout, value axis),
+                         app/us/_fonts/lora-semibold.woff2 (Lora 600, Latin, OFL, ~21 KB)
+                    MOD  lib/us-market/assets.ts (103 topic photos + keyword rules, 6 daily skylines,
+                           photoForCase(seed), photoForAdvice, skylineForDay, stableHash, dayNumber),
+                         lib/us-market/dashboard.ts (12 weeks of history; casesThisWeek, sizingThisWeek,
+                           sizingDelta, scoredSizing; in-progress kind/type/messages/progressPct;
+                           TYPE_BLURB; UsTodayInput/Item.blurb),
+                         components/us/dashboard/{modules,us-dashboard,us-dashboard-page,skill-map}.tsx,
+                         components/us/marketing/dashboard-preview.tsx, components/us/ui.tsx (import path),
+                         components/us/shell/{us-app-shell,display-font}.ts(x), app/us/layout.tsx (+600 face)
+breaking: no. No CONTRACTS.md surface, no schema, no route, no env var, no dependency.
+affects:  Dashboard (US branch only), Landing (/us product preview). India: nothing.
+```
+
+What the page now does (top to bottom): date eyebrow + serif greeting; **a US skyline behind the
+greeting that changes every day** (New York, Chicago, San Francisco, Lower Manhattan, Boston,
+Seattle — rotation by the viewer's calendar day) with **the line of the day** top-right (60 original
+lines, no attributions, rotating without repeats); **Today's practice** with the bank's own situation
+text, minutes, difficulty, type, points and **a photo of the case's subject**; plan card; 7-day
+streak; four stat cards with this week's movement (↑ N this week, ↑/↓ last 5 vs previous 5);
+**What to do next** with a faded photo; **Today's market sizing** with its subject photo; continue
+cards with thumbnails and an estimated progress bar (messages exchanged ÷ a typical session, capped
+5–95%, labelled as an estimate for screen readers); sessions-per-week line chart with axis and a
+4/8/12-week selector; performance by case type; skill map with a side panel; recent activity as a
+timeline; footer with the full MECE lockup. Sidebar gains "Today's practice" (→ #today) and
+"Analytics" (→ #analytics); the plan sits in a card at the sidebar's foot.
+
+Photos: free Unsplash images hot-linked from images.unsplash.com (never Unsplash+), each checked to
+load and checked by eye against its topic; images with a legible brand mark were rejected. Every one
+of the 50 US cases and 50 market sizing questions maps to a topic photo (verified by script); other
+titles fall back by keyword, then industry, then case type. Same item → same photo (FNV hash seed).
+
+Company/university logos on /us: NOT added. The page names firms only as interview styles and says
+it is not affiliated; showing their logos (or colleges') would imply endorsement or users we can't
+substantiate, and the marks are trademarks. Text wordmarks stay. If the owner obtains written
+permission, drop the files in `public/logos/` and wire them in `AudienceStrip`.
+
+Gates run in the sandbox: `tsc --noEmit` clean · `next build` clean (/dashboard first load 228 kB,
++1 kB vs v2; /us 184 kB, +2 kB) · axe WCAG 2.1 AA 0 violations on the dashboard (full, guest, empty,
+free; light + dark) and /us · no horizontal overflow at 320/390/768/1024/1280/1440 · India
+pixel-identical to a v2 build in the same environment (/, /about, /dashboard, /leaderboard, /learn,
+/login, /practice, /pricing, /signup, /terms at 1280 and 390: 20 pairs, 0 differing pixels).
+The QA fixture route used for screenshots (app/us/qa-dashboard) was never committed.
+
+Rebased onto main at aaa04a2 (us-growth-seo + us-learn hero, landed the same day): the only overlap
+was `components/us/shell/us-app-shell.tsx`, where the sidebar keeps us-growth's **Learn** item
+(Practice group) alongside v3's Today's practice and Analytics. tsc, next build and test-intl
+(51 checks) re-run clean on the rebased tree.

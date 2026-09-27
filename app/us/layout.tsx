@@ -13,6 +13,7 @@ const display = localFont({
   src: [
     { path: './_fonts/lora-regular.woff2', weight: '400', style: 'normal' },
     { path: './_fonts/lora-italic.woff2', weight: '400', style: 'italic' },
+    { path: './_fonts/lora-semibold.woff2', weight: '600', style: 'normal' },
   ],
   variable: '--font-us-display',
   display: 'swap',

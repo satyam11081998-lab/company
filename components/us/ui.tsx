@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { photoSrcSet, photoUrl, type UsPhoto } from '@/lib/us-market/assets';
+import { photoSrcSet, photoUrl, type UsPhoto } from '@/lib/us-market/photo-url';
 
 /**
  * US design primitives (v2, 2026-09-27). One button system, one pill label,

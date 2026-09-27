@@ -11,6 +11,7 @@ export const usAppDisplay = localFont({
   src: [
     { path: '../../../app/us/_fonts/lora-regular.woff2', weight: '400', style: 'normal' },
     { path: '../../../app/us/_fonts/lora-italic.woff2', weight: '400', style: 'italic' },
+    { path: '../../../app/us/_fonts/lora-semibold.woff2', weight: '600', style: 'normal' },
   ],
   variable: '--font-us-display',
   display: 'swap',

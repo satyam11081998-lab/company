@@ -25,16 +25,16 @@ import { lowerLabel, type UsTypeStat } from '@/lib/us-market/dashboard';
 type State = 'mastered' | 'progress' | 'next' | 'new';
 
 const LAYOUT: Record<string, { x: number; y: number }> = {
-  profitability: { x: 92, y: 70 },
-  'cost reduction': { x: 66, y: 205 },
-  operations: { x: 182, y: 280 },
-  pricing: { x: 217, y: 150 },
-  growth: { x: 337, y: 70 },
-  'go to market': { x: 337, y: 245 },
-  'market entry': { x: 458, y: 160 },
-  'm&a': { x: 565, y: 70 },
-  'competitive strategy': { x: 565, y: 245 },
-  guesstimate: { x: 458, y: 300 },
+  profitability: { x: 62, y: 60 },
+  growth: { x: 230, y: 52 },
+  'm&a': { x: 388, y: 60 },
+  pricing: { x: 138, y: 150 },
+  'market entry': { x: 305, y: 146 },
+  'cost reduction': { x: 50, y: 218 },
+  'go to market': { x: 192, y: 236 },
+  'competitive strategy': { x: 388, y: 218 },
+  operations: { x: 98, y: 292 },
+  guesstimate: { x: 292, y: 282 },
 };
 
 const EDGES: [string, string][] = [
@@ -52,8 +52,8 @@ const EDGES: [string, string][] = [
   ['m&a', 'competitive strategy'],
 ];
 
-const W = 650;
-const H = 340;
+const W = 460;
+const H = 336;
 
 function stateOf(s: UsTypeStat, focusType: string | null): State {
   if (s.type === focusType) return 'next';
@@ -87,10 +87,10 @@ export default function SkillMap({
   const sel = selected ? byType[selected] : null;
 
   return (
-    <section aria-labelledby="skillmap-title" className={`${US_CARD} p-6 ${className}`}>
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="skillmap-title" className="text-[16px] font-semibold text-foreground">Your skill map</h2>
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground" aria-label="Legend">
+    <section id="skill-map" aria-labelledby="skillmap-title" className={`${US_CARD} flex scroll-mt-28 flex-col p-6 ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <h2 id="skillmap-title" className="font-display text-[19px] font-semibold leading-tight text-foreground">Your skill map</h2>
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-muted-foreground" aria-label="Legend">
           <li className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full bg-navy dark:bg-viz-1" /> Mastered</li>
           <li className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full border-[1.5px] border-navy dark:border-viz-1" /> In progress</li>
           <li className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full border-[1.5px] border-primary" /> Next</li>
@@ -98,8 +98,9 @@ export default function SkillMap({
         </ul>
       </div>
 
+      <div className="hidden sm:mt-4 sm:grid sm:flex-1 sm:grid-cols-1 sm:content-center sm:gap-5 min-[1360px]:grid-cols-[minmax(0,1fr)_188px] min-[1360px]:items-center min-[1360px]:gap-6">
       {/* Map (tablet and up) */}
-      <div className="relative mt-4 hidden sm:block" style={{ aspectRatio: `${W} / ${H}` }}>
+      <div className="relative mx-auto w-full max-w-[460px]" style={{ aspectRatio: `${W} / ${H}` }}>
         <svg viewBox={`0 0 ${W} ${H}`} aria-hidden className="absolute inset-0 h-full w-full">
           {EDGES.map(([a, b]) => {
             const A = byType[a];
@@ -143,21 +144,21 @@ export default function SkillMap({
                   <path d={`M${n.x - 6} ${n.y} l4 4 l8 -8`} fill="none" stroke="white" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
                 )}
                 {(n.state === 'progress' || n.state === 'next') && n.avg != null && (
-                  <text x={n.x} y={n.y + 4.5} textAnchor="middle" className={n.state === 'next' ? 'fill-primary' : 'fill-foreground'} style={{ fontSize: 12, fontWeight: 700 }}>
+                  <text x={n.x} y={n.y + 4.5} textAnchor="middle" className={n.state === 'next' ? 'fill-primary' : 'fill-foreground'} style={{ fontSize: 13.5, fontWeight: 700 }}>
                     {n.avg}
                   </text>
                 )}
                 {n.state === 'next' && (
-                  <text x={n.x} y={n.y - r - 8} textAnchor="middle" className="fill-primary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em' }}>
+                  <text x={n.x} y={n.y - r - 8} textAnchor="middle" className="fill-primary" style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.12em' }}>
                     NEXT
                   </text>
                 )}
                 <text
                   x={n.x}
-                  y={n.y + r + 18}
+                  y={n.y + r + 19}
                   textAnchor="middle"
                   className={`${isSel ? 'fill-foreground' : 'fill-foreground/80'} stroke-card`}
-                  style={{ fontSize: 13, fontWeight: isSel ? 700 : 500, paintOrder: 'stroke', strokeWidth: 5, strokeLinejoin: 'round' }}
+                  style={{ fontSize: 14.5, fontWeight: isSel ? 700 : 500, paintOrder: 'stroke', strokeWidth: 5, strokeLinejoin: 'round' }}
                 >
                   {n.label}
                 </text>
@@ -180,30 +181,33 @@ export default function SkillMap({
 
       {/* Details for the selected skill */}
       {sel && (
-        <div className="mt-5 hidden flex-col gap-4 border-t border-border pt-5 sm:flex sm:flex-row sm:items-center sm:justify-between" aria-live="polite">
+        <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between min-[1360px]:flex-col min-[1360px]:items-start min-[1360px]:justify-center min-[1360px]:self-stretch min-[1360px]:border-l min-[1360px]:border-t-0 min-[1360px]:pl-6 min-[1360px]:pt-0" aria-live="polite">
           <div>
-            <p className="text-[15px] font-semibold text-foreground">
-              {sel.label}{' '}
-              <span className={`ml-1 text-[11px] font-semibold uppercase tracking-wide ${sel.state === 'next' ? 'text-primary' : 'text-muted-foreground'}`}>
+            <p className="font-display text-[18px] font-semibold leading-tight text-foreground">
+              {sel.label}
+              <span className={`ml-2 inline-block whitespace-nowrap align-middle text-[10.5px] font-semibold uppercase tracking-[0.1em] ${sel.state === 'next' ? 'text-primary' : 'text-muted-foreground'}`}>
                 {STATE_LABEL[sel.state]}
               </span>
             </p>
-            <p className="mt-1 text-[13px] text-muted-foreground">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               {sel.count > 0 ? (
                 <>
                   Average <span className="font-semibold text-foreground tnum">{sel.avg ?? '—'}</span> · {sel.count} {sel.count === 1 ? 'session' : 'sessions'}
-                  {lastPracticed[sel.type] && <> · last practiced {lastPracticed[sel.type]}</>}
                 </>
               ) : (
                 'Not practiced yet.'
               )}
             </p>
+            {sel.count > 0 && lastPracticed[sel.type] && (
+              <p className="mt-1 text-[13px] text-muted-foreground">Last practiced {lastPracticed[sel.type]}</p>
+            )}
           </div>
           <Link href={practiceHref(sel.type)} className={usButton(sel.state === 'next' ? 'primary' : 'secondary', 'sm', 'shrink-0')}>
             Practice {lowerLabel(sel.label)} <ArrowRight aria-hidden className="h-4 w-4" />
           </Link>
         </div>
       )}
+      </div>
 
       {/* Phones: the same information as a list */}
       <ul className="mt-4 divide-y divide-border sm:hidden">

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { BookOpen, History, Home, LifeBuoy, LogIn, LogOut, Search, Trophy, TrendingUp, User, WalletCards, X } from 'lucide-react';
+import { BarChart3, BookOpen, CalendarCheck, ChevronDown, ChevronRight, Crown, History, Home, LifeBuoy, LogOut, Search, Trophy, TrendingUp, User, UserPlus, WalletCards, X } from 'lucide-react';
 import UsLogo from '@/components/us/brand';
 import ThemeButton from '@/components/us/theme-button';
 import { GlyphChain, GlyphTree } from '@/components/us/art';
@@ -23,7 +23,8 @@ import {
  * international accounts ONLY; India keeps AppNav + MobileBottomNav.
  *
  *   desktop  64px utility bar (logo · search · plan · theme · account) and a
- *            232px sidebar grouped Daily / Practice / Progress / Account
+ *            248px sidebar grouped Daily / Practice / Progress / Account,
+ *            with the plan as a card at its foot
  *   mobile   compact top bar and a 4-tab bottom bar (Home · Practice ·
  *            Progress · Ranks)
  *
@@ -50,7 +51,11 @@ const ICON = 'h-[18px] w-[18px] shrink-0';
 const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Daily',
-    items: [{ href: '/dashboard', label: 'Dashboard', icon: <Home className={ICON} strokeWidth={1.5} />, match: { path: '/dashboard' } }],
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: <Home className={ICON} strokeWidth={1.5} />, match: { path: '/dashboard' } },
+      // Today's case and market sizing live on the dashboard; this jumps to them.
+      { href: '/dashboard#today', label: 'Today’s practice', icon: <CalendarCheck className={ICON} strokeWidth={1.5} />, match: { path: '__none__' } },
+    ],
   },
   {
     group: 'Practice',
@@ -66,6 +71,8 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Progress',
     items: [
       { href: '/leaderboard', label: 'Leaderboard', icon: <Trophy className={ICON} strokeWidth={1.5} />, match: { path: '/leaderboard' } },
+      // The dashboard's analytics block (progress, scores by type, skill map).
+      { href: '/dashboard#analytics', label: 'Analytics', icon: <BarChart3 className={ICON} strokeWidth={1.5} />, match: { path: '__none__' } },
       { href: '/profile', label: 'Profile', icon: <User className={ICON} strokeWidth={1.5} />, match: { path: '/profile' } },
     ],
   },
@@ -264,10 +271,11 @@ function AccountMenu() {
             {initials || '?'}
           </span>
         )}
-        <span className="hidden text-left leading-tight xl:block">
+        <span className="hidden text-left leading-tight lg:block">
           <span className="block max-w-[140px] truncate text-[13px] font-semibold text-foreground">{user?.name?.split(' ')[0] || 'Account'}</span>
           <span className="block text-[11px] text-muted-foreground">{tier === 'pro' ? 'Pro plan' : tier === 'lite' ? 'Lite plan' : 'Free plan'}</span>
         </span>
+        <ChevronDown aria-hidden className="hidden h-4 w-4 text-muted-foreground lg:block" />
       </DropdownMenuTrigger>
       {/* @ts-ignore - JSX inferred types lack children */}
       <DropdownMenuContent align="end" className="w-60">
@@ -333,27 +341,23 @@ function Sidebar() {
           </div>
         ))}
       </nav>
-      <div className="m-4 rounded-[14px] bg-gradient-to-br from-rose-50 to-card p-4 ring-1 ring-inset ring-rose-100 dark:from-primary/10 dark:ring-primary/20">
-        {isGuest ? (
-          <>
-            <p className="text-[12px] font-semibold text-foreground">Practicing as a guest</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">Sign up to keep your scores and history.</p>
-            <Link href="/signup?next=/dashboard" className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline underline-offset-4">
-              <LogIn aria-hidden className="h-3.5 w-3.5" /> Create free account
-            </Link>
-          </>
-        ) : tier === 'free' ? (
-          <>
-            <p className="text-[12px] font-semibold text-foreground">Free plan</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">Open the full US case bank with Lite or Pro.</p>
-            <Link href="/upgrade" className={usButton('primary', 'sm', 'mt-3 w-full')}>See plans</Link>
-          </>
-        ) : (
-          <p className="text-[12px] text-muted-foreground">
-            <span className="font-semibold text-foreground">{tier === 'pro' ? 'Pro' : 'Lite'} plan</span> · full access
-          </p>
-        )}
-      </div>
+      <Link
+        href={isGuest ? '/signup?next=/dashboard' : '/upgrade'}
+        className="group m-4 flex items-center gap-3 rounded-[14px] border border-amber-200/70 bg-gradient-to-br from-amber-50 via-card to-card p-3.5 transition-colors hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-amber-400/20 dark:from-amber-400/10"
+      >
+        <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-400/15 dark:text-amber-300">
+          {isGuest ? <UserPlus className="h-[18px] w-[18px]" strokeWidth={1.75} /> : <Crown className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+        </span>
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block text-[13px] font-semibold text-foreground">
+            {isGuest ? 'Practicing as a guest' : tier === 'pro' ? 'Pro plan' : tier === 'lite' ? 'Lite plan' : 'Free plan'}
+          </span>
+          <span className="mt-0.5 block text-[12px] text-muted-foreground">
+            {isGuest ? 'Create a free account' : tier === 'free' ? 'Upgrade for the full bank' : 'Full access'}
+          </span>
+        </span>
+        <ChevronRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
     </aside>
   );
 }
@@ -391,15 +395,20 @@ function BottomTabs() {
 
 function AppFooter() {
   return (
-    <footer className="border-t border-border px-4 py-6 text-[12px] text-muted-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-[1120px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p>&copy; {new Date().getFullYear()} MECE Prep. Not affiliated with any consulting firm.</p>
-        <nav aria-label="Legal" className="flex gap-4">
-          <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
-          <Link href="/terms" className="hover:text-foreground">Terms</Link>
-          <Link href="/refund" className="hover:text-foreground">Refunds</Link>
-          <a href="mailto:team@mece.in" className="hover:text-foreground">Contact</a>
-        </nav>
+    <footer className="border-t border-border/70 bg-card/60 px-4 py-7 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1180px] flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <Link href="/dashboard" aria-label="MECE, Method for Evaluating Corporate Excellence: dashboard" className="w-fit rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4">
+          <UsLogo size="sm" taglineOnPhones />
+        </Link>
+        <div className="flex flex-col gap-2 text-[12.5px] text-muted-foreground sm:items-end">
+          <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-1">
+            <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+            <Link href="/terms" className="hover:text-foreground">Terms</Link>
+            <Link href="/refund" className="hover:text-foreground">Refunds</Link>
+            <a href="mailto:team@mece.in" className="hover:text-foreground">Contact</a>
+          </nav>
+          <p>&copy; {new Date().getFullYear()} MECE Prep. Not affiliated with any consulting firm.</p>
+        </div>
       </div>
     </footer>
   );
