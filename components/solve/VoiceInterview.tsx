@@ -445,7 +445,7 @@ export default function VoiceInterview({
         },
         // Endpoint a touch snappier than the 1200ms default. NOTE: VAD timing
         // must be confirmed by ear in a browser — too low clips thinking pauses.
-        { silenceMs: 1000 },
+        { silenceMs: 750 },  // was 1000: shorter endpoint = snappier voice turns (still > minUtteranceMs, tolerant of brief thinking pauses)
       );
       vadRef.current = vad;
       vad.start();
