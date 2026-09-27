@@ -24,14 +24,16 @@ export function voiceLine(decision: VoiceDecision | null | undefined): string | 
   return line || null;
 }
 
-/** Gemini Live: the text turn that asks the voice to speak a V11 line. */
+/**
+ * Gemini Live: the message that asks the voice to speak a V11 line.
+ *
+ * Sent as realtimeInput.text, NOT clientContent: text during a live audio
+ * conversation belongs on the realtime stream (Google's Live API guidance), and
+ * a clientContent turn mid-stream can be taken as context without being
+ * answered -- which left the interviewer silent.
+ */
 export function geminiSayTurn(line: string) {
-  return {
-    clientContent: {
-      turns: [{ role: 'user', parts: [{ text: `SAY: ${line}` }] }],
-      turnComplete: true,
-    },
-  };
+  return { realtimeInput: { text: `SAY: ${line}` } };
 }
 
 /** OpenAI Realtime: per-response instructions that carry the V11 line. */
@@ -81,7 +83,9 @@ export type GateAction =
   | { type: 'candidateDraft'; text: string }    // live transcript of the candidate
   | { type: 'interviewerDraft'; text: string }  // live transcript of the V11 line
   | { type: 'candidateTurn'; text: string }     // FINAL candidate turn -> V11
-  | { type: 'interviewerTurn'; text: string };  // a V11 line was spoken -> persist
+  | { type: 'interviewerTurn'; text: string }   // a V11 line was spoken -> persist
+  | { type: 'sendSay'; line: string }           // a held V11 line may now be sent
+  | { type: 'dropSay'; line: string };          // a held line was superseded
 
 /**
  * Gemini Live turn gate.
@@ -89,19 +93,26 @@ export type GateAction =
  * Gemini answers every candidate turn by itself and offers no switch to stop
  * that. Its own answer is never what the candidate hears: while no "SAY:" turn
  * is outstanding, model audio and transcript are discarded (not played, not
- * saved). The end of that unprompted model turn is simply our signal that the
- * candidate's turn is final. Only the reply to a SAY we sent is played and
- * reported as the interviewer's turn.
+ * saved). Only the reply to a SAY we sent is played and reported.
+ *
+ * Ending a candidate turn: Gemini closing its own (discarded) turn marks the end
+ * of the candidate's speech; the component then waits a short settle window so
+ * late input-transcription chunks land in the SAME turn, and calls
+ * flushCandidate(). If Gemini never closes a turn, a longer idle window does it.
  */
 export class GeminiTurnGate {
   private userDraft = '';
   private asstDraft = '';
-  private sayLine: string | null = null;   // outstanding SAY, if any
-  private unpromptedActive = false;        // Gemini is producing an answer of its own
+  private sayLine: string | null = null;     // outstanding SAY, if any
+  private sayAudio = false;                  // has the outstanding SAY started playing
+  private pendingLine: string | null = null; // V11 line waiting for Gemini to finish its own turn
+  private unpromptedActive = false;          // Gemini is producing an answer of its own
+  private turnEnded = false;                 // Gemini closed the turn after the candidate spoke
 
   /** Call right after sending geminiSayTurn(line). */
   markSaySent(line: string) {
     this.sayLine = line;
+    this.sayAudio = false;
     this.asstDraft = '';
   }
 
@@ -110,13 +121,41 @@ export class GeminiTurnGate {
     return this.sayLine !== null;
   }
 
+  /** Gemini has closed the turn that followed the candidate's speech. */
+  get candidateTurnEnded(): boolean {
+    return this.turnEnded;
+  }
+
   /**
-   * Safe to send a SAY now? Not while Gemini is mid-way through an answer of its
-   * own (a SAY would be mistaken for it) and not while the candidate is already
-   * talking again (they have moved on; V11 will decide on the next turn).
+   * Ask to speak a V11 line. Returns the line when it can be sent now. While
+   * Gemini is still producing an answer of its own, the line is held and
+   * released (sendSay) when that answer ends -- sending it mid-answer would get
+   * the two mixed up.
    */
-  get canSay(): boolean {
-    return this.sayLine === null && !this.unpromptedActive && this.userDraft.trim() === '';
+  requestSay(line: string): string | null {
+    if (this.sayLine === null && !this.unpromptedActive) return line;
+    this.pendingLine = line;
+    return null;
+  }
+
+  /**
+   * Release a SAY that produced no audio at all (the voice never answered), so
+   * the gate can never be stuck waiting. Returns true if one was released.
+   */
+  cancelSayIfSilent(): boolean {
+    if (this.sayLine === null || this.sayAudio) return false;
+    this.sayLine = null;
+    this.asstDraft = '';
+    return true;
+  }
+
+  private releasePending(out: GateAction[]) {
+    if (this.pendingLine === null) return;
+    const line = this.pendingLine;
+    this.pendingLine = null;
+    // If the candidate has already said more, V11 decides on that instead.
+    if (this.sayLine === null && this.userDraft.trim() === '') out.push({ type: 'sendSay', line });
+    else out.push({ type: 'dropSay', line });
   }
 
   handle(sc: any): GateAction[] {
@@ -132,15 +171,22 @@ export class GeminiTurnGate {
         this.sayLine = null;
       }
       this.asstDraft = '';
-      this.unpromptedActive = false;
+      if (this.unpromptedActive) {
+        this.unpromptedActive = false;
+        this.releasePending(out);
+      }
     }
 
     const parts: any[] = sc.modelTurn?.parts || [];
     for (const p of parts) {
       const inline = p?.inlineData;
       if (!inline?.data || !String(inline.mimeType || '').includes('audio')) continue;
-      if (this.sayLine !== null) out.push({ type: 'play', data: inline.data });
-      else this.unpromptedActive = true;               // discarded: not V11's line
+      if (this.sayLine !== null) {
+        this.sayAudio = true;
+        out.push({ type: 'play', data: inline.data });
+      } else {
+        this.unpromptedActive = true;                  // discarded: not V11's line
+      }
     }
 
     if (sc.outputTranscription?.text) {
@@ -166,22 +212,23 @@ export class GeminiTurnGate {
       } else {
         this.unpromptedActive = false;
         this.asstDraft = '';
-        const u = this.userDraft.trim();
-        this.userDraft = '';
-        if (u) out.push({ type: 'candidateTurn', text: u });
+        this.turnEnded = true;
+        this.releasePending(out);
       }
     }
     return out;
   }
 
   /**
-   * Safety net for a Gemini turn that never sends turnComplete: finalise the
-   * candidate's words if nothing is in flight. Returns the turn, or null.
+   * Finalise the candidate's words as ONE turn (after the settle / idle window).
+   * Returns the turn, or null if there is nothing to finalise or a line is
+   * outstanding.
    */
   flushCandidate(): GateAction | null {
     if (this.sayLine !== null || this.unpromptedActive) return null;
     const u = this.userDraft.trim();
     this.userDraft = '';
+    this.turnEnded = false;
     return u ? { type: 'candidateTurn', text: u } : null;
   }
 }

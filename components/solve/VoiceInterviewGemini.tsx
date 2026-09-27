@@ -24,9 +24,15 @@ import { Mic, MicOff, X, Loader2, Keyboard } from 'lucide-react';
 import { postRealtimeTurn, postVoiceDecision, type VoiceDecision } from '@/lib/interview-api';
 import { GeminiTurnGate, geminiSayTurn, isEchoOfLine, voiceLine, type GateAction } from '@/lib/voice/v11-voice';
 
-// Safety net only: if Gemini never closes a turn, finalise the candidate's words
-// after this much transcript silence. The normal signal is Gemini's turnComplete.
-const CANDIDATE_FLUSH_MS = 3500;
+// Ending a candidate turn. Gemini closing its own (discarded) turn marks the end
+// of the candidate's speech; wait SETTLE_MS more so late transcript chunks land
+// in the same turn. If Gemini never closes a turn, IDLE_FLUSH_MS of transcript
+// silence ends it instead.
+const SETTLE_MS = 600;
+const IDLE_FLUSH_MS = 2500;
+// A SAY that produces no audio at all within this window is released, so the
+// gate can never stay stuck waiting for a voice that did not answer.
+const SAY_WATCHDOG_MS = 8000;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -89,6 +95,7 @@ export default function VoiceInterviewGemini({
   const turnSeqRef = useRef(0);
   const lastLineRef = useRef<{ text: string; at: number } | null>(null);
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sayWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tailRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [transcript.length, drafts]);
@@ -153,33 +160,62 @@ export default function VoiceInterviewGemini({
   // One FINAL candidate turn: V11 decides, the candidate turn is landed as
   // before, and Gemini speaks exactly V11's line -- or nothing for SILENCE (no
   // SAY, no audio, no assistant row).
+  // Hand ONE V11 line to Gemini to speak. Released by the watchdog if Gemini
+  // never starts speaking it.
+  const sendSay = useCallback((line: string) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN || closedRef.current) {
+      console.warn('[gemini][v11] SAY not sent: voice connection is not open');
+      return;
+    }
+    ws.send(JSON.stringify(geminiSayTurn(line)));
+    gateRef.current.markSaySent(line);
+    console.log('[gemini][v11] SAY sent:', line);
+    if (sayWatchdogRef.current) clearTimeout(sayWatchdogRef.current);
+    sayWatchdogRef.current = setTimeout(() => {
+      if (gateRef.current.cancelSayIfSilent()) {
+        console.warn(`[gemini][v11] voice did not speak the line within ${SAY_WATCHDOG_MS}ms; released`);
+      }
+    }, SAY_WATCHDOG_MS);
+  }, []);
+
   const handleCandidateTurn = useCallback(async (u: string) => {
-    if (isEchoOfLine(u, lastLineRef.current, Date.now())) return;
+    if (isEchoOfLine(u, lastLineRef.current, Date.now())) {
+      console.log('[gemini][v11] ignored echo of the interviewer line:', u);
+      return;
+    }
     setTranscript((t) => [...t.slice(-12), { who: 'you' as const, text: u }]);
     const seq = ++turnSeqRef.current;
     let decision: VoiceDecision | null = null;
     if (attemptId) {
       try {
         decision = await postVoiceDecision(attemptId, token, u);
+        console.log(`[gemini][v11] "${u}" -> ${decision.lane} ${decision.mode} (${decision.reason})`);
       } catch (e: any) {
-        console.log('[gemini] voice-decision failed', e?.message || e);
+        console.warn('[gemini][v11] voice-decision failed:', e?.message || e);
       }
     }
     await persistTurn('user', u);
     const line = voiceLine(decision);
-    const ws = wsRef.current;
-    if (!line || !ws || ws.readyState !== WebSocket.OPEN || closedRef.current) return;
-    // The candidate has already started (or finished) another turn: V11 will
-    // decide on that one instead of talking over them.
-    if (seq !== turnSeqRef.current || !gateRef.current.canSay) return;
-    ws.send(JSON.stringify(geminiSayTurn(line)));
-    gateRef.current.markSaySent(line);
-  }, [attemptId, token, persistTurn]);
+    if (!line) return;  // V11 SILENCE: nothing is said
+    // The candidate has already finished another turn: V11 decides on that one.
+    if (seq !== turnSeqRef.current) {
+      console.log('[gemini][v11] line superseded by a newer candidate turn');
+      return;
+    }
+    const now = gateRef.current.requestSay(line);
+    if (now) sendSay(now);
+    else console.log('[gemini][v11] line held until Gemini finishes its own turn');
+  }, [attemptId, token, persistTurn, sendSay]);
 
   const applyGate = useCallback((actions: GateAction[]) => {
     for (const a of actions) {
-      if (a.type === 'play') enqueueAudio(base64ToInt16(a.data));
-      else if (a.type === 'stopPlayback') stopPlayback();
+      if (a.type === 'play') {
+        if (sayWatchdogRef.current) { clearTimeout(sayWatchdogRef.current); sayWatchdogRef.current = null; }
+        enqueueAudio(base64ToInt16(a.data));
+      } else if (a.type === 'stopPlayback') stopPlayback();
+      else if (a.type === 'sendSay') sendSay(a.line);
+      else if (a.type === 'dropSay') console.log('[gemini][v11] held line dropped: the candidate kept talking');
       else if (a.type === 'candidateDraft') setDrafts((d) => ({ ...d, you: a.text }));
       else if (a.type === 'interviewerDraft') setDrafts((d) => ({ ...d, interviewer: a.text }));
       else if (a.type === 'interviewerTurn') {
@@ -192,12 +228,13 @@ export default function VoiceInterviewGemini({
         void handleCandidateTurn(a.text);
       }
     }
-  }, [enqueueAudio, stopPlayback, persistTurn, handleCandidateTurn]);
+  }, [enqueueAudio, stopPlayback, persistTurn, handleCandidateTurn, sendSay]);
 
   const cleanup = useCallback(() => {
     if (closedRef.current) return;
     closedRef.current = true;
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+    if (sayWatchdogRef.current) clearTimeout(sayWatchdogRef.current);
     reportUsage(true);
     try { procRef.current?.disconnect(); } catch { /* noop */ }
     try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch { /* noop */ }
@@ -280,16 +317,15 @@ export default function VoiceInterviewGemini({
           // Everything Gemini sends goes through the V11 gate: only the reply to
           // our SAY is played; its own answers are discarded.
           applyGate(gateRef.current.handle(sc));
-          if (sc.inputTranscription?.text) {
+          if (sc.inputTranscription?.text || sc.turnComplete || sc.interrupted) {
+            // (Re)arm the end-of-turn timer: short once Gemini has closed its
+            // own turn, long while the candidate may still be mid-thought.
             if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
             flushTimerRef.current = setTimeout(() => {
+              flushTimerRef.current = null;
               const t = gateRef.current.flushCandidate();
               if (t) applyGate([t]);
-            }, CANDIDATE_FLUSH_MS);
-          }
-          if (sc.turnComplete && flushTimerRef.current) {
-            clearTimeout(flushTimerRef.current);
-            flushTimerRef.current = null;
+            }, gateRef.current.candidateTurnEnded ? SETTLE_MS : IDLE_FLUSH_MS);
           }
         };
 

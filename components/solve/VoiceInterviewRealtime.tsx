@@ -144,12 +144,17 @@ export default function VoiceInterviewRealtime({
       let decision: VoiceDecision | null = null;
       try {
         decision = await postVoiceDecision(attemptId, tokenRef.current, text);
+        console.log(`[realtime][v11] "${text}" -> ${decision.lane} ${decision.mode} (${decision.reason})`);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'The interviewer could not respond');
       }
       await persist('user', text);
       const line = voiceLine(decision);
-      if (!line || seq !== turnSeqRef.current) return;
+      if (!line) return;  // V11 SILENCE: nothing is said
+      if (seq !== turnSeqRef.current) {
+        console.log('[realtime][v11] line superseded by a newer candidate turn');
+        return;
+      }
       lastLineRef.current = { text: line, at: performance.now() };
       sessionRef.current?.say(line);
     },
