@@ -3,6 +3,7 @@ import type { NavNode } from '@/lib/casebook/types';
 import { getPage } from '@/lib/casebook/content';
 import { SITE_URL, SITE_DESC, extractPageDescription, cleanNavTitle } from '@/lib/seo';
 import { usLlmsSection } from '@/lib/us-market/llms';
+import { learnLlmsSection } from '@/lib/us-learn/markdown';
 
 export const dynamic = 'force-static';
 
@@ -22,12 +23,14 @@ export async function GET() {
     '## Core pages',
     '',
     `- [Home](${SITE_URL}/): what MECE is and how scoring works`,
-    `- [The MECE framework](${SITE_URL}/mece-framework): the definitive reference on the MECE principle (Mutually Exclusive, Collectively Exhaustive) — meaning, pronunciation, Barbara Minto's authorship, 12 worked examples, the 6 ways to build a MECE split, the GRIPS test, common mistakes, documented criticisms, and cited primary sources`,
+    `- [The MECE framework](${SITE_URL}/learn/mece-framework): the definitive reference on the MECE principle (Mutually Exclusive, Collectively Exhaustive) — meaning, pronunciation, Barbara Minto's authorship, 12 worked examples, the 6 ways to build a MECE split, the GRIPS test, common mistakes, documented criticisms, and cited primary sources`,
     `- [Scoring methodology](${SITE_URL}/methodology): the 6-dimension rubric behind every score`,
     `- [About](${SITE_URL}/about): the team behind MECE`,
     `- [Sign up](${SITE_URL}/signup): free account`,
     '',
     ...usLlmsSection(SITE_URL, false),
+    // US Learn library (2026-09-27): one line per /us/learn guide.
+    ...learnLlmsSection(SITE_URL),
   ];
 
   const walk = (nodes: NavNode[], sectionTitle: string | null) => {

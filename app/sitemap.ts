@@ -5,6 +5,8 @@ import { GLOSSARY_TERMS } from '@/lib/glossary/terms';
 import { SITE_URL, isCanonicalisedAway, HREFLANG_HOME, HREFLANG_PRICING } from '@/lib/seo';
 import { getIndexableDecks } from '@/lib/decks';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
+import { LEARN_BASE, LEARN_HUB, LEARN_PAGES, learnPath } from '@/lib/us-learn';
+import { learnLanguages } from '@/lib/us-learn/seo';
 
 /**
  * Public, indexable routes only.
@@ -42,11 +44,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ? { alternates: { languages: Object.fromEntries(Object.entries(languages).map(([k, v]) => [k, `${SITE_URL}${v === '/' ? '' : v}`])) } }
       : {}),
   });
+  const mecePage = LEARN_PAGES.find((p) => p.indiaTwin === '/learn/mece-framework');
+  const meceLanguages = mecePage ? learnLanguages(mecePage) : undefined;
+
   const core = [
     withAlt('', 1, HREFLANG_HOME),
     // The definitive MECE reference. Highest-priority non-home URL: it is the
     // page that has to rank for our own brand term and for the concept.
-    entry('/learn/mece-framework', 0.9, 'monthly'),
+    // hreflang-paired with its US edition (/us/learn/what-is-mece) — both
+    // sides of the pair are declared here, as sitemap hreflang requires.
+    { ...withAlt('/learn/mece-framework', 0.9, meceLanguages), changeFrequency: 'monthly' as const },
     entry('/methodology', 0.8, 'monthly'),
     entry('/about', 0.6, 'monthly'),
     { ...withAlt('/pricing', 0.7, HREFLANG_PRICING), changeFrequency: 'monthly' as const },
@@ -127,6 +134,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     withAlt('/us/market-sizing-questions', 0.8),
   ];
 
-  return [...core, ...intlEntries, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks, ...deckEntries, ...insightEntries];
+  /* US Learn library — 2026-09-27. Real publish/modified dates (not the build
+     time), so lastmod stays a signal crawlers can trust. The one page with an
+     India twin (what-is-mece ⇄ /learn/mece-framework) carries hreflang. */
+  const learnEntries: MetadataRoute.Sitemap = [
+    entry(LEARN_BASE, 0.8, 'weekly', new Date(`${LEARN_HUB.modified}T00:00:00Z`)),
+    ...LEARN_PAGES.map((p) => {
+      const languages = learnLanguages(p);
+      return {
+        ...entry(learnPath(p.slug), 0.7, 'monthly', new Date(`${p.modified}T00:00:00Z`)),
+        ...(languages
+          ? { alternates: { languages: Object.fromEntries(Object.entries(languages).map(([k, v]) => [k, `${SITE_URL}${v}`])) } }
+          : {}),
+      };
+    }),
+  ];
+
+  return [...core, ...intlEntries, ...learnEntries, ...glossaryEntries, ...casebookRoutes, ...liveFrameworks, ...deckEntries, ...insightEntries];
 }
 

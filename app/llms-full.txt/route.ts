@@ -9,6 +9,7 @@ import {
 } from '@/lib/seo';
 import { meceFrameworkMarkdown } from '@/lib/mece-framework';
 import { usLlmsSection } from '@/lib/us-market/llms';
+import { learnLlmsFullSection } from '@/lib/us-learn/markdown';
 
 export const dynamic = 'force-static';
 
@@ -37,6 +38,8 @@ export async function GET() {
     ...usLlmsSection(SITE_URL, true),
     '---',
     '',
+    // US Learn library (2026-09-27): every /us/learn guide in full.
+    ...learnLlmsFullSection(SITE_URL),
   ];
 
   for (const slug of ALL_PAGE_SLUGS) {
