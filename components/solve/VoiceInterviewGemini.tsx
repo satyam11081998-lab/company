@@ -22,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, X, Loader2, Keyboard } from 'lucide-react';
 import { postRealtimeTurn, postVoiceDecision, postVoiceFold, type VoiceDecision } from '@/lib/interview-api';
+import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 import {
   CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, type GateAction,
 } from '@/lib/voice/v11-voice';
@@ -447,6 +448,8 @@ export default function VoiceInterviewGemini({
           <X className="h-5 w-5" />
         </button>
       </div>
+
+      <VoiceBetaNotice onSwitchToChat={onClose} />
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
         <div className="relative flex h-44 w-44 items-center justify-center">

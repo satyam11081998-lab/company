@@ -28,6 +28,7 @@ import { postRealtimeTurn, postVoiceDecision, type VoiceDecision } from '@/lib/i
 import { startRealtimeSession, type RealtimeHandle } from '@/lib/voice/realtime-session';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
 import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue } from '@/lib/voice/v11-voice';
+import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 
 // Before V11 decides a turn, earlier turns should be in the saved history. Saves
 // run in the background and take ~0.3 s, so this wait is normally zero; it is
@@ -313,6 +314,8 @@ export default function VoiceInterviewRealtime({
           <X className="h-5 w-5" />
         </button>
       </div>
+
+      <VoiceBetaNotice onSwitchToChat={closeSession} />
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
         <div className="relative flex h-44 w-44 items-center justify-center">
