@@ -27,7 +27,12 @@ import type { AttemptMessage } from '@/lib/interview-api';
 import { postRealtimeTurn, postVoiceDecision, type VoiceDecision } from '@/lib/interview-api';
 import { startRealtimeSession, type RealtimeHandle } from '@/lib/voice/realtime-session';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
-import { voiceLine, isEchoOfLine } from '@/lib/voice/v11-voice';
+import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue } from '@/lib/voice/v11-voice';
+
+// Before V11 decides a turn, earlier turns should be in the saved history. Saves
+// run in the background and take ~0.3 s, so this wait is normally zero; it is
+// capped so a slow save can never hold up the interviewer.
+const SAVE_WAIT_MS = 1500;
 
 const MAX_SESSION_MS = 10 * 60_000;
 const SESSION_WARN_BEFORE_MS = 60_000;
@@ -85,8 +90,12 @@ export default function VoiceInterviewRealtime({
   // MECE Interviewer V11 decides every turn; the realtime model only voices it.
   // turnSeq drops a line when the candidate has already spoken again; lastLine
   // is the interviewer's latest line, so its echo in the mic is not a turn.
-  const turnSeqRef = useRef(0);
   const lastLineRef = useRef<{ text: string; at: number } | null>(null);
+  // Speak first, save after: transcript saves run in the background, strictly
+  // in SPEAKING order (the ledger holds a later turn back until every earlier
+  // one is decided), and never sit between V11's decision and the voice.
+  const ledgerRef = useRef(new CandidateTurnLedger());
+  const savesRef = useRef(new SaveQueue());
 
   // Props read inside callbacks that are created ONCE. A spoken case outlives a
   // Supabase token, so these must not be captured by value.
@@ -133,32 +142,46 @@ export default function VoiceInterviewRealtime({
     [attemptId],
   );
 
-  // One FINAL candidate turn: V11 decides, the candidate turn is landed as
-  // before, and the voice speaks exactly V11's line -- or nothing for SILENCE
-  // (no response, no audio, no assistant row).
+  const queueSave = useCallback(
+    (role: 'user' | 'assistant', text: string) => {
+      savesRef.current.push(() => persist(role, text));
+    },
+    [persist],
+  );
+
+  // One FINAL candidate turn: V11 decides, the voice speaks exactly V11's line
+  // -- or nothing for SILENCE (no response, no audio, no assistant row) -- and
+  // the candidate turn is saved in the background, never in front of the reply.
   const handleUserTurn = useCallback(
     async (text: string) => {
       if (!text || isLikelyNoise(text)) return;
       if (isEchoOfLine(text, lastLineRef.current, performance.now())) return;
-      const seq = ++turnSeqRef.current;
+      const { seq } = ledgerRef.current.open(text);
+      // V11 reads the saved history: let earlier saves land first. They take
+      // ~0.3 s and started seconds ago, so this is normally instant (and capped).
+      await savesRef.current.settled(SAVE_WAIT_MS);
+      const t0 = performance.now();
       let decision: VoiceDecision | null = null;
       try {
         decision = await postVoiceDecision(attemptId, tokenRef.current, text);
-        console.log(`[realtime][v11] "${text}" -> ${decision.lane} ${decision.mode} (${decision.reason})`);
+        console.log(`[realtime][v11] "${text}" -> ${decision.lane} ${decision.mode} (${decision.reason}) in ${Math.round(performance.now() - t0)}ms`);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'The interviewer could not respond');
       }
-      await persist('user', text);
+      // Saved AFTER V11 has read the history (so V11 never sees it twice), in
+      // speaking order, but not awaited: the voice speaks now.
+      ledgerRef.current.decided(seq);
+      for (const t of ledgerRef.current.drain()) queueSave('user', t.text);
       const line = voiceLine(decision);
       if (!line) return;  // V11 SILENCE: nothing is said
-      if (seq !== turnSeqRef.current) {
+      if (seq !== ledgerRef.current.latest) {
         console.log('[realtime][v11] line superseded by a newer candidate turn');
         return;
       }
       lastLineRef.current = { text: line, at: performance.now() };
       sessionRef.current?.say(line);
     },
-    [attemptId, persist],
+    [attemptId, queueSave],
   );
 
   // --- boot --------------------------------------------------------------
@@ -177,7 +200,7 @@ export default function VoiceInterviewRealtime({
             onAssistantTurn: (t) => {
               setAsstDraft('');
               lastLineRef.current = { text: t, at: performance.now() };
-              void persist('assistant', t);
+              queueSave('assistant', t);
             },
             onUsage: (u: any) => {
               // Shape varies by model revision; read defensively rather than

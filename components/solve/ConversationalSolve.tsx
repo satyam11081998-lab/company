@@ -132,6 +132,9 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [talkMode, setTalkMode] = useState(false);
   const tokenSinkRef = useRef<((chunk: string) => void) | null>(null);
   const doneSinkRef = useRef<(() => void) | null>(null);
+  // Bumped per send: a background refresh from an older send must not overwrite
+  // the thread once a newer send has started.
+  const sendSeqRef = useRef(0);
   // VoiceInterview boots once and holds its callbacks for the whole session, so
   // anything it captures directly is frozen at mount. A spoken case runs 20-40
   // minutes — longer than a Supabase access token lives — so a captured `send`
@@ -380,6 +383,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     composerVoiceRef.current = false; // draft is spent — next draft starts fresh
     setSending(true);
     setDraftAssistant({ id: 'draft', role: 'assistant', text: '' });
+    const mySeq = ++sendSeqRef.current;
+    let done: { message_id: string | null } | null = null;
 
     try {
       const result = await postMessageStream(
@@ -395,15 +400,38 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             // Talk mode listens here. No-op when the overlay is closed.
             tokenSinkRef.current?.(chunk);
           },
-          onDone: () => {
+          onDone: (info) => {
+            done = info;
             doneSinkRef.current?.();
           },
           onError: (err) => toast.error(err),
         },
       );
-      const detail = await getAttempt(attempt.attempt_id, authTok);
-      setMessages(detail.messages);
-      setAttempt(detail.attempt);
+      // The reply is final: show it now and free the composer. The server copy
+      // (real ids, quota counters) is fetched in the background instead of in
+      // front of the next turn -- it used to cost a full round trip per message.
+      const replyText = result.assistantText.trim();
+      const saved = done as { message_id: string | null } | null;
+      if (saved && saved.message_id && replyText) {
+        const reply: AttemptMessage = {
+          id: saved.message_id,
+          role: 'assistant',
+          kind: 'text',
+          content: replyText,
+          is_clarification: false,
+          created_at: new Date().toISOString(),
+        };
+        setMessages((m) => [...m, reply]);
+      }
+      const attemptId = attempt.attempt_id;
+      void (async () => {
+        try {
+          const detail = await getAttempt(attemptId, authTok);
+          if (sendSeqRef.current !== mySeq) return;  // a newer send owns the thread
+          setMessages(detail.messages);
+          setAttempt(detail.attempt);
+        } catch { /* the local copy stands until the next refresh */ }
+      })();
       // Fire ONLY when the backend actually declined this turn's clarification.
       // The old condition (`quotaRemaining === 0 && assistantText === ''`) also
       // fired when a free user asked their FIRST question (quota was 0 by

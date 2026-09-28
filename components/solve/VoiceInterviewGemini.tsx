@@ -21,15 +21,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, X, Loader2, Keyboard } from 'lucide-react';
-import { postRealtimeTurn, postVoiceDecision, type VoiceDecision } from '@/lib/interview-api';
-import { GeminiTurnGate, geminiSayTurn, isEchoOfLine, voiceLine, type GateAction } from '@/lib/voice/v11-voice';
+import { postRealtimeTurn, postVoiceDecision, postVoiceFold, type VoiceDecision } from '@/lib/interview-api';
+import {
+  CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, type GateAction,
+} from '@/lib/voice/v11-voice';
 
-// Ending a candidate turn. Gemini closing its own (discarded) turn marks the end
-// of the candidate's speech; wait SETTLE_MS more so late transcript chunks land
-// in the same turn. If Gemini never closes a turn, IDLE_FLUSH_MS of transcript
-// silence ends it instead.
+// Ending a candidate turn (unchanged): SETTLE_MS after Gemini closes its own
+// (discarded) turn, so late transcript chunks land in the same turn; if Gemini
+// never closes one, IDLE_FLUSH_MS of transcript silence ends it.
+// SPEED: EARLY_SETTLE_MS after Gemini STARTS that answer, the words so far go to
+// V11 as an early turn, so V11 thinks while Gemini is still talking to itself.
+// The early decision is used only if the words are unchanged when the turn ends
+// as above; otherwise V11 decides the full turn (see GeminiTurnGate).
+// RESUME_CHECK_MS: after something cuts Gemini's answer off, how long to wait for
+// the candidate's words before treating it as noise and keeping the early turn.
+const EARLY_SETTLE_MS = 300;
 const SETTLE_MS = 600;
+const RESUME_CHECK_MS = 1000;
 const IDLE_FLUSH_MS = 2500;
+// Before V11 decides a turn, earlier turns should be in the saved history. Saves
+// run in the background and take ~0.3 s, so this wait is normally zero; it is
+// capped so a slow save can never hold up the interviewer.
+const SAVE_WAIT_MS = 1500;
 // A SAY that produces no audio at all within this window is released, so the
 // gate can never stay stuck waiting for a voice that did not answer.
 const SAY_WATCHDOG_MS = 8000;
@@ -92,7 +105,10 @@ export default function VoiceInterviewGemini({
   const closedRef = useRef(false);
   const mutedRef = useRef(false);
   const gateRef = useRef(new GeminiTurnGate());
-  const turnSeqRef = useRef(0);
+  // Speak first, save after: candidate turns are saved in speaking order once V11
+  // has decided them; every save runs in the background, one after another.
+  const ledgerRef = useRef(new CandidateTurnLedger());
+  const savesRef = useRef(new SaveQueue());
   const lastLineRef = useRef<{ text: string; at: number } | null>(null);
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sayWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -157,9 +173,37 @@ export default function VoiceInterviewGemini({
     } catch { /* a missed save must not break a live interview */ }
   }, [attemptId, token, onTurnPersisted]);
 
-  // One FINAL candidate turn: V11 decides, the candidate turn is landed as
-  // before, and Gemini speaks exactly V11's line -- or nothing for SILENCE (no
-  // SAY, no audio, no assistant row).
+  const queueSave = useCallback((role: 'user' | 'assistant', content: string) => {
+    savesRef.current.push(() => persistTurn(role, content));
+  }, [persistTurn]);
+
+  // Early decisions voided since the last decision request: their folds are
+  // dropped server-side (also sent in the background, see voidEarlyTurn).
+  const voidedTurnIdsRef = useRef<string[]>([]);
+  // Words of the open early turn, shown in the transcript once it is confirmed.
+  const earlyTextRef = useRef('');
+
+  const drainCandidateSaves = useCallback(() => {
+    for (const t of ledgerRef.current.drain()) {
+      if (t.commitTurnId && attemptId) {
+        const id = t.commitTurnId;
+        savesRef.current.push(() => postVoiceFold(attemptId, token, id, true).catch(() => {}));
+      }
+      queueSave('user', t.text);
+    }
+  }, [queueSave, attemptId, token]);
+
+  const voidEarlyTurn = useCallback(() => {
+    const id = ledgerRef.current.void();
+    if (!id) return;
+    voidedTurnIdsRef.current.push(id);
+    if (attemptId) savesRef.current.push(() => postVoiceFold(attemptId, token, id, false).catch(() => {}));
+    drainCandidateSaves();
+  }, [attemptId, token, drainCandidateSaves]);
+
+  // One FINAL candidate turn: V11 decides, Gemini speaks exactly V11's line --
+  // or nothing for SILENCE (no SAY, no audio, no assistant row) -- and the
+  // candidate turn is saved in the background, never in front of the reply.
   // Hand ONE V11 line to Gemini to speak. Released by the watchdog if Gemini
   // never starts speaking it.
   const sendSay = useCallback((line: string) => {
@@ -179,34 +223,41 @@ export default function VoiceInterviewGemini({
     }, SAY_WATCHDOG_MS);
   }, []);
 
-  const handleCandidateTurn = useCallback(async (u: string) => {
+  const handleCandidateTurn = useCallback(async (u: string, sealed: boolean) => {
     if (isEchoOfLine(u, lastLineRef.current, Date.now())) {
       console.log('[gemini][v11] ignored echo of the interviewer line:', u);
       return;
     }
-    setTranscript((t) => [...t.slice(-12), { who: 'you' as const, text: u }]);
-    const seq = ++turnSeqRef.current;
+    if (sealed) setTranscript((t) => [...t.slice(-12), { who: 'you' as const, text: u }]);
+    const { seq, turnId } = ledgerRef.current.open(u, !sealed);
+    const t0 = performance.now();
     let decision: VoiceDecision | null = null;
     if (attemptId) {
+      await savesRef.current.settled(SAVE_WAIT_MS);
+      const discardTurnIds = voidedTurnIdsRef.current.splice(0);
       try {
-        decision = await postVoiceDecision(attemptId, token, u);
-        console.log(`[gemini][v11] "${u}" -> ${decision.lane} ${decision.mode} (${decision.reason})`);
+        decision = await postVoiceDecision(attemptId, token, u, { turnId, deferFold: !sealed, discardTurnIds });
+        console.log(`[gemini][v11] ${sealed ? '' : '(early) '}"${u}" -> ${decision.lane} ${decision.mode} (${decision.reason}) in ${Math.round(performance.now() - t0)}ms`);
       } catch (e: any) {
         console.warn('[gemini][v11] voice-decision failed:', e?.message || e);
       }
     }
-    await persistTurn('user', u);
+    // Saved in the background once its text is final -- after V11 has read the
+    // history, so V11 never sees this turn twice.
+    ledgerRef.current.decided(seq);
+    drainCandidateSaves();
     const line = voiceLine(decision);
     if (!line) return;  // V11 SILENCE: nothing is said
-    // The candidate has already finished another turn: V11 decides on that one.
-    if (seq !== turnSeqRef.current) {
+    // The candidate has already finished another turn, or this early turn was
+    // voided (their words changed): V11 decides on that instead.
+    if (seq !== ledgerRef.current.latest || !ledgerRef.current.isLive(seq)) {
       console.log('[gemini][v11] line superseded by a newer candidate turn');
       return;
     }
     const now = gateRef.current.requestSay(line);
     if (now) sendSay(now);
     else console.log('[gemini][v11] line held until Gemini finishes its own turn');
-  }, [attemptId, token, persistTurn, sendSay]);
+  }, [attemptId, token, drainCandidateSaves, sendSay]);
 
   const applyGate = useCallback((actions: GateAction[]) => {
     for (const a of actions) {
@@ -222,13 +273,27 @@ export default function VoiceInterviewGemini({
         lastLineRef.current = { text: a.text, at: Date.now() };
         setTranscript((t) => [...t.slice(-12), { who: 'interviewer' as const, text: a.text }]);
         setDrafts((d) => ({ ...d, interviewer: '' }));
-        void persistTurn('assistant', a.text);
+        queueSave('assistant', a.text);
       } else if (a.type === 'candidateTurn') {
+        if (a.sealed) setDrafts((d) => ({ ...d, you: '' }));
+        else earlyTextRef.current = a.text;
+        void handleCandidateTurn(a.text, a.sealed);
+      } else if (a.type === 'candidateConfirmed') {
+        // The early turn was the whole turn: show it, save it, commit its fold.
+        const text = earlyTextRef.current.trim();
+        earlyTextRef.current = '';
         setDrafts((d) => ({ ...d, you: '' }));
-        void handleCandidateTurn(a.text);
+        if (text && !isEchoOfLine(text, lastLineRef.current, Date.now())) {
+          setTranscript((t) => [...t.slice(-12), { who: 'you' as const, text }]);
+        }
+        ledgerRef.current.confirm();
+        drainCandidateSaves();
+      } else if (a.type === 'candidateRedo') {
+        earlyTextRef.current = '';
+        voidEarlyTurn();                   // V11 decides the full turn instead
       }
     }
-  }, [enqueueAudio, stopPlayback, persistTurn, handleCandidateTurn, sendSay]);
+  }, [enqueueAudio, stopPlayback, queueSave, handleCandidateTurn, drainCandidateSaves, voidEarlyTurn, sendSay]);
 
   const cleanup = useCallback(() => {
     if (closedRef.current) return;
@@ -302,6 +367,19 @@ export default function VoiceInterviewGemini({
           ws.send(JSON.stringify({ setup: data.setup || { model: data.model } }));
         };
 
+        // The end-of-turn timer. While the gate is still waiting on Gemini (an
+        // early turn, a held line, Gemini's own answer) it keeps ticking, so a
+        // lost server event can never leave the interview stuck.
+        const armEndOfTurn = (ms: number) => {
+          if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+          flushTimerRef.current = setTimeout(() => {
+            flushTimerRef.current = null;
+            if (closedRef.current) return;
+            applyGate(gateRef.current.settle());
+            if (!flushTimerRef.current && gateRef.current.waiting) armEndOfTurn(SETTLE_MS);
+          }, ms);
+        };
+
         ws.onmessage = async (ev) => {
           let text: string;
           if (typeof ev.data === 'string') text = ev.data;
@@ -316,16 +394,17 @@ export default function VoiceInterviewGemini({
 
           // Everything Gemini sends goes through the V11 gate: only the reply to
           // our SAY is played; its own answers are discarded.
-          applyGate(gateRef.current.handle(sc));
-          if (sc.inputTranscription?.text || sc.turnComplete || sc.interrupted) {
-            // (Re)arm the end-of-turn timer: short once Gemini has closed its
-            // own turn, long while the candidate may still be mid-thought.
-            if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
-            flushTimerRef.current = setTimeout(() => {
-              flushTimerRef.current = null;
-              const t = gateRef.current.flushCandidate();
-              if (t) applyGate([t]);
-            }, gateRef.current.candidateTurnEnded ? SETTLE_MS : IDLE_FLUSH_MS);
+          const actions = gateRef.current.handle(sc);
+          applyGate(actions);
+          if (sc.inputTranscription?.text || sc.turnComplete || sc.interrupted
+              || actions.some((a) => a.type === 'speechEnded')) {
+            // (Re)arm the end-of-turn timer: short once Gemini has decided the
+            // candidate stopped, long while the candidate may still be mid-thought.
+            const g = gateRef.current;
+            armEndOfTurn(g.candidateTurnEnded ? SETTLE_MS
+              : g.resumeChecking ? RESUME_CHECK_MS
+              : g.candidateSpeechEnded ? EARLY_SETTLE_MS
+              : IDLE_FLUSH_MS);
           }
         };
 

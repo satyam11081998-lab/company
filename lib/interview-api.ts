@@ -250,14 +250,46 @@ export async function postVoiceDecision(
   attemptId: string,
   token: string,
   content: string,
+  opts: {
+    /** Client id of this turn (needed for an early decision). */
+    turnId?: string;
+    /** Early decision: its learner-state fold waits for postVoiceFold. */
+    deferFold?: boolean;
+    /** Early decisions the client has voided: drop their folds first. */
+    discardTurnIds?: string[];
+  } = {},
 ): Promise<VoiceDecision> {
   const res = await fetch(`${API_URL}/attempts/${attemptId}/voice-decision`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ content, is_partial: false }),
+    body: JSON.stringify({
+      content,
+      is_partial: false,
+      ...(opts.turnId ? { turn_id: opts.turnId } : {}),
+      ...(opts.deferFold ? { defer_fold: true } : {}),
+      ...(opts.discardTurnIds && opts.discardTurnIds.length ? { discard_turn_ids: opts.discardTurnIds.slice(0, 8) } : {}),
+    }),
   });
   if (!res.ok) throw new Error(await errorMessage(res, "The interviewer couldn't respond to that."));
   return res.json();
+}
+
+/**
+ * Confirm (commit=true: the candidate's words did not change) or void an EARLY
+ * voice decision's learner-state fold. Sent in the background.
+ */
+export async function postVoiceFold(
+  attemptId: string,
+  token: string,
+  turnId: string,
+  commit: boolean,
+): Promise<void> {
+  const res = await fetch(`${API_URL}/attempts/${attemptId}/voice-fold`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ turn_id: turnId, commit }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't update the interviewer state."));
 }
 
 export async function uploadAttemptFile(
