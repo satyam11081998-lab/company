@@ -68,6 +68,13 @@ export interface SubmitResponse {
   rubric: string;
 }
 
+/** A stable id for one candidate turn: the same turn posted twice is decided once. */
+export function newTurnId(): string {
+  const c: any = (globalThis as any).crypto;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  return `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function authHeaders(token?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
@@ -125,7 +132,14 @@ export async function getAttempt(attemptId: string, token: string): Promise<Atte
 export async function postMessageStream(
   attemptId: string,
   token: string,
-  payload: { content: string; kind: MessageKind },
+  payload: {
+    content: string;
+    kind: MessageKind;
+    /** 'text' (typed / dictated chat) or 'stt' (spoken talk mode). Rendering only. */
+    channel?: 'text' | 'stt';
+    /** Stable id of this candidate turn (see newTurnId). */
+    turn_id?: string;
+  },
   callbacks: {
     onMeta?: (meta: {
       clarification_remaining: number;
@@ -134,10 +148,12 @@ export async function postMessageStream(
       clarifications_spent?: boolean;
     }) => void;
     onToken?: (text: string) => void;
-    onDone?: (info: { message_id: string | null }) => void;
+    /** The interviewer deliberately said nothing this turn (NOT an error, NOT an empty reply). */
+    onSilence?: () => void;
+    onDone?: (info: { message_id: string | null; silent?: boolean }) => void;
     onError?: (err: string) => void;
   } = {},
-): Promise<{ assistantText: string; quotaRemaining: number | null; clarificationsSpent: boolean }> {
+): Promise<{ assistantText: string; quotaRemaining: number | null; clarificationsSpent: boolean; silent: boolean }> {
   const res = await fetch(`${API_URL}/attempts/${attemptId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
@@ -156,6 +172,7 @@ export async function postMessageStream(
       assistantText: '',
       quotaRemaining: json.clarification_remaining ?? 0,
       clarificationsSpent: Boolean(json.quota_exhausted),
+      silent: false,
     };
   }
 
@@ -167,6 +184,7 @@ export async function postMessageStream(
   let assistantText = '';
   let quotaRemaining: number | null = null;
   let clarificationsSpent = false;
+  let silent = false;
 
   while (true) {
     const { value, done } = await reader.read();
@@ -187,6 +205,9 @@ export async function postMessageStream(
         } catch {
           /* ignore */
         }
+      } else if (event === 'silence') {
+        silent = true;
+        callbacks.onSilence?.();
       } else if (event === 'token') {
         const tok = data.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
         assistantText += tok;
@@ -202,7 +223,7 @@ export async function postMessageStream(
       }
     }
   }
-  return { assistantText, quotaRemaining, clarificationsSpent };
+  return { assistantText, quotaRemaining, clarificationsSpent, silent };
 }
 
 /**
@@ -222,8 +243,10 @@ export async function postRealtimeTurn(
     content: string;
     audio_input_tokens?: number;
     audio_output_tokens?: number;
+    /** Idempotency key: 'u:<item_id>' / 'a:<response_id>'. The same turn is saved (and metered) once. */
+    client_turn_id?: string;
   },
-): Promise<{ message_id: string | null }> {
+): Promise<{ message_id: string | null; duplicate?: boolean }> {
   const res = await fetch(`${API_URL}/attempts/${attemptId}/realtime-turn`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
@@ -244,6 +267,9 @@ export interface VoiceDecision {
   reason: string | null;
   say: string | null;
   event: { event_type: string; data: { mode: string; code: string; text: string } } | null;
+  /** Echo of the turn id the decision belongs to (unified brain). */
+  turn_id?: string | null;
+  duplicate?: boolean | null;
 }
 
 export async function postVoiceDecision(
@@ -257,6 +283,8 @@ export async function postVoiceDecision(
     deferFold?: boolean;
     /** Early decisions the client has voided: drop their folds first. */
     discardTurnIds?: string[];
+    /** Realtime session id (telemetry only). */
+    sessionId?: string | null;
   } = {},
 ): Promise<VoiceDecision> {
   const res = await fetch(`${API_URL}/attempts/${attemptId}/voice-decision`, {
@@ -268,10 +296,28 @@ export async function postVoiceDecision(
       ...(opts.turnId ? { turn_id: opts.turnId } : {}),
       ...(opts.deferFold ? { defer_fold: true } : {}),
       ...(opts.discardTurnIds && opts.discardTurnIds.length ? { discard_turn_ids: opts.discardTurnIds.slice(0, 8) } : {}),
+      ...(opts.sessionId ? { session_id: opts.sessionId.slice(0, 80) } : {}),
     }),
   });
   if (!res.ok) throw new Error(await errorMessage(res, "The interviewer couldn't respond to that."));
   return res.json();
+}
+
+/**
+ * Client-measured voice timings for one turn (T0 speech end ... T4 first audible audio,
+ * interruption latency). Fire-and-forget: telemetry must never affect the interview.
+ */
+export function postVoiceTelemetry(attemptId: string, token: string, report: Record<string, unknown>): void {
+  try {
+    void fetch(`${API_URL}/attempts/${attemptId}/voice-telemetry`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(report),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* never throws into the interview */
+  }
 }
 
 /**

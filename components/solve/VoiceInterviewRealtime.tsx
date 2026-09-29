@@ -24,15 +24,16 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import VoiceWave from '@/components/icons/voice-wave';
 import type { AttemptMessage } from '@/lib/interview-api';
-import { postRealtimeTurn, postVoiceDecision, type VoiceDecision } from '@/lib/interview-api';
-import { startRealtimeSession, type RealtimeHandle } from '@/lib/voice/realtime-session';
+import { postRealtimeTurn, postVoiceDecision, postVoiceTelemetry, type VoiceDecision } from '@/lib/interview-api';
+import { startRealtimeSession, type AssistantLineDone, type RealtimeHandle } from '@/lib/voice/realtime-session';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
-import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue } from '@/lib/voice/v11-voice';
+import { voiceLine, isEchoOfLine, SaveQueue } from '@/lib/voice/v11-voice';
+import { RealtimeTurnController, timingReport, type TurnAction, type TurnTiming } from '@/lib/voice/realtime-turns';
 import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 
-// Before V11 decides a turn, earlier turns should be in the saved history. Saves
-// run in the background and take ~0.3 s, so this wait is normally zero; it is
-// capped so a slow save can never hold up the interviewer.
+// Before the brain decides a turn, earlier turns should be in the saved history. Saves
+// run in the background and take ~0.3 s, so this wait is normally zero; it is capped
+// so a slow save can never hold up the interviewer.
 const SAVE_WAIT_MS = 1500;
 
 const MAX_SESSION_MS = 10 * 60_000;
@@ -72,7 +73,7 @@ export default function VoiceInterviewRealtime({
   const [muted, setMuted] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [live, setLive] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
-  const [asstDraft, setAsstDraft] = useState('');  // interviewer reply as it streams
+  const [asstDraft, setAsstDraft] = useState('');  // interviewer line as it is spoken
 
   const sessionRef = useRef<RealtimeHandle | null>(null);
   const closingRef = useRef(false);
@@ -83,20 +84,19 @@ export default function VoiceInterviewRealtime({
   const idleWarnedRef = useRef(false);
   const tailRef = useRef<HTMLDivElement>(null);
 
-  // Usage from `response.done` arrives on its own event, not attached to the
-  // transcript. Hold the most recent counts so the next persisted assistant
-  // turn can carry them — otherwise spend never reaches the budget guard.
+  // Usage from `response.done` arrives on its own event. Held so the next persisted
+  // assistant turn carries it — otherwise spend never reaches the budget guard.
   const pendingUsageRef = useRef<{ input: number; output: number }>({ input: 0, output: 0 });
 
-  // MECE Interviewer V11 decides every turn; the realtime model only voices it.
-  // turnSeq drops a line when the candidate has already spoken again; lastLine
-  // is the interviewer's latest line, so its echo in the mic is not a turn.
-  const lastLineRef = useRef<{ text: string; at: number } | null>(null);
-  // Speak first, save after: transcript saves run in the background, strictly
-  // in SPEAKING order (the ledger holds a later turn back until every earlier
-  // one is decided), and never sit between V11's decision and the voice.
-  const ledgerRef = useRef(new CandidateTurnLedger());
+  // The interviewer brain decides every turn; the realtime model only voices it.
+  // The controller applies decisions to the right moment: one decision per item_id,
+  // no line spoken over a candidate who has started talking again, stale lines dropped,
+  // barge-in when the candidate talks over the interviewer.
+  const controllerRef = useRef(new RealtimeTurnController({ isNoise: isLikelyNoise, isEcho: isEchoOfLine }));
   const savesRef = useRef(new SaveQueue());
+  const linesRef = useRef(new Map<string, string>());      // turnId -> approved line
+  const timingsRef = useRef(new Map<string, TurnTiming>());
+  const lastSpeechStopRef = useRef(0);
 
   // Props read inside callbacks that are created ONCE. A spoken case outlives a
   // Supabase token, so these must not be captured by value.
@@ -115,11 +115,23 @@ export default function VoiceInterviewRealtime({
     onCloseRef.current();
   }, []);
 
+  const report = useCallback(
+    (t: TurnTiming, extra: Record<string, unknown> = {}) => {
+      postVoiceTelemetry(attemptId, tokenRef.current, {
+        ...timingReport(t),
+        channel: 'voice',
+        transport: 'webrtc',
+        session_id: sessionRef.current?.sessionId ?? undefined,
+        stt_model: sessionRef.current?.transcribeModel ?? undefined,
+        ...extra,
+      });
+    },
+    [attemptId],
+  );
+
   const persist = useCallback(
-    async (role: 'user' | 'assistant', text: string) => {
-      // Whisper still hallucinates on silence at the far end, and a realtime
-      // session has an open mic for its whole life. Same guard as the pipeline.
-      if (!text || isLikelyNoise(text)) return;
+    async (role: 'user' | 'assistant', text: string, clientTurnId: string) => {
+      if (!text || (role === 'user' && isLikelyNoise(text))) return;
       lastActivityRef.current = performance.now();
       idleWarnedRef.current = false;
       setLive((l) => [...l.slice(-12), { role, text }]);
@@ -128,6 +140,7 @@ export default function VoiceInterviewRealtime({
         await postRealtimeTurn(attemptId, tokenRef.current, {
           role,
           content: text,
+          client_turn_id: clientTurnId,
           ...(role === 'assistant' && (usage.input || usage.output)
             ? { audio_input_tokens: usage.input, audio_output_tokens: usage.output }
             : {}),
@@ -144,68 +157,107 @@ export default function VoiceInterviewRealtime({
   );
 
   const queueSave = useCallback(
-    (role: 'user' | 'assistant', text: string) => {
-      savesRef.current.push(() => persist(role, text));
+    (role: 'user' | 'assistant', text: string, clientTurnId: string) => {
+      savesRef.current.push(() => persist(role, text, clientTurnId));
     },
     [persist],
   );
 
-  // One FINAL candidate turn: V11 decides, the voice speaks exactly V11's line
-  // -- or nothing for SILENCE (no response, no audio, no assistant row) -- and
-  // the candidate turn is saved in the background, never in front of the reply.
-  const handleUserTurn = useCallback(
-    async (text: string) => {
-      if (!text || isLikelyNoise(text)) return;
-      if (isEchoOfLine(text, lastLineRef.current, performance.now())) return;
-      const { seq } = ledgerRef.current.open(text);
-      // V11 reads the saved history: let earlier saves land first. They take
-      // ~0.3 s and started seconds ago, so this is normally instant (and capped).
+  const apply = useCallback(
+    (actions: TurnAction[]) => {
+      for (const a of actions) {
+        if (a.type === 'decide') void decide(a.turnId, a.text);
+        else if (a.type === 'speak') {
+          linesRef.current.set(a.turnId, a.line);
+          const t = timingsRef.current.get(a.turnId);
+          if (t) t.t3 = Date.now();
+          sessionRef.current?.say(a.line, a.turnId);
+        } else if (a.type === 'bargeIn') {
+          sessionRef.current?.interrupt();
+        } else if (a.type === 'drop' && a.reason !== 'silence' && a.reason !== 'duplicate') {
+          console.log(`[realtime] turn ${a.turnId} dropped: ${a.reason}`);
+        }
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // One FINAL candidate item: the brain decides; the voice speaks exactly the approved
+  // line (or nothing for NO_OUTPUT); the candidate turn is saved in the background.
+  const decide = useCallback(
+    async (turnId: string, text: string) => {
+      const timing: TurnTiming = { turnId, t0: lastSpeechStopRef.current || undefined, t1: Date.now() };
+      timingsRef.current.set(turnId, timing);
+      // The brain reads the saved history: let earlier saves land first (normally instant).
       await savesRef.current.settled(SAVE_WAIT_MS);
-      const t0 = performance.now();
       let decision: VoiceDecision | null = null;
       try {
-        decision = await postVoiceDecision(attemptId, tokenRef.current, text);
-        console.log(`[realtime][v11] "${text}" -> ${decision.lane} ${decision.mode} (${decision.reason}) in ${Math.round(performance.now() - t0)}ms`);
+        decision = await postVoiceDecision(attemptId, tokenRef.current, text, {
+          turnId,
+          sessionId: sessionRef.current?.sessionId ?? null,
+        });
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'The interviewer could not respond');
       }
-      // Saved AFTER V11 has read the history (so V11 never sees it twice), in
-      // speaking order, but not awaited: the voice speaks now.
-      ledgerRef.current.decided(seq);
-      for (const t of ledgerRef.current.drain()) queueSave('user', t.text);
+      timing.t2 = Date.now();
+      timing.lane = decision?.lane ?? 'ERROR';
+      // Saved AFTER the brain has read the history (so it never sees the turn twice).
+      queueSave('user', text, `u:${turnId}`);
       const line = voiceLine(decision);
-      if (!line) return;  // V11 SILENCE: nothing is said
-      if (seq !== ledgerRef.current.latest) {
-        console.log('[realtime][v11] line superseded by a newer candidate turn');
-        return;
-      }
-      lastLineRef.current = { text: line, at: performance.now() };
-      sessionRef.current?.say(line);
+      if (!line) report(timing);                   // NO_OUTPUT or error: nothing more to time
+      apply(controllerRef.current.onDecision(turnId, line));
     },
-    [attemptId, queueSave],
+    [attemptId, queueSave, apply, report],
   );
 
   // --- boot --------------------------------------------------------------
   useEffect(() => {
     let cancelled = false;
+    const tick = window.setInterval(() => apply(controllerRef.current.tick()), 250);
     (async () => {
       try {
         const handle = await startRealtimeSession(
           { caseId, attemptId, token: tokenRef.current },
           {
             onReady: () => !cancelled && setPhase('listening'),
-            onSpeakingChange: (s) => !cancelled && setPhase(s ? 'speaking' : 'listening'),
-            onListeningChange: () => { lastActivityRef.current = performance.now(); },
-            onUserTurn: (t) => void handleUserTurn(t),
-            onAssistantDelta: (p) => !cancelled && setAsstDraft(p),
-            onAssistantTurn: (t) => {
-              setAsstDraft('');
-              lastLineRef.current = { text: t, at: performance.now() };
-              queueSave('assistant', t);
+            onInterviewerAudio: (active) => {
+              controllerRef.current.onInterviewerAudio(active);
+              if (!cancelled) setPhase(active ? 'speaking' : 'listening');
             },
+            onSpeechStarted: () => {
+              lastActivityRef.current = performance.now();
+              apply(controllerRef.current.onSpeechStarted());
+            },
+            onSpeechStopped: (at) => {
+              lastSpeechStopRef.current = at;
+              apply(controllerRef.current.onSpeechStopped());
+            },
+            onUserTurn: (text, meta) => apply(controllerRef.current.onTranscriptCompleted(meta.itemId, text)),
+            onTranscriptionFailed: () => toast.message("Didn't catch that — could you say it again?"),
+            onAssistantDelta: (p) => !cancelled && setAsstDraft(p),
+            onFirstAudible: (turnId, at) => {
+              if (!turnId) return;
+              const t = timingsRef.current.get(turnId);
+              if (t && !t.t4) {
+                t.t4 = at;
+                report(t);
+              }
+            },
+            onAssistantLineDone: (done: AssistantLineDone) => {
+              setAsstDraft('');
+              const turnId = done.turnId || done.responseId || '';
+              const line = (turnId && linesRef.current.get(turnId)) || done.transcript;
+              linesRef.current.delete(turnId);
+              // Persist what the candidate actually heard: the approved line, if any audio played.
+              if (line && done.audioStarted) queueSave('assistant', line, `a:${turnId || done.responseId}`);
+            },
+            onInterrupted: (ms) => postVoiceTelemetry(attemptId, tokenRef.current, {
+              channel: 'voice', transport: 'webrtc', interruption_ms: ms,
+              session_id: sessionRef.current?.sessionId ?? undefined,
+            }),
             onUsage: (u: any) => {
-              // Shape varies by model revision; read defensively rather than
-              // silently booking zero.
+              // Shape varies by model revision; read defensively rather than silently booking zero.
               const inTok = u?.input_token_details?.audio_tokens ?? u?.input_tokens ?? 0;
               const outTok = u?.output_token_details?.audio_tokens ?? u?.output_tokens ?? 0;
               pendingUsageRef.current = { input: inTok, output: outTok };
@@ -222,6 +274,7 @@ export default function VoiceInterviewRealtime({
     })();
     return () => {
       cancelled = true;
+      window.clearInterval(tick);
       sessionRef.current?.stop();
       sessionRef.current = null;
     };

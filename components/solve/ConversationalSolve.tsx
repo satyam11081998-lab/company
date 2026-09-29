@@ -75,6 +75,7 @@ import {
   startAttempt,
   getAttempt,
   postMessageStream,
+  newTurnId,
   uploadAttemptFile,
   submitAttempt,
   type AttemptDetail,
@@ -140,7 +141,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // minutes — longer than a Supabase access token lives — so a captured `send`
   // would keep posting with a JWT that expired mid-interview. Routing through a
   // ref means the overlay always calls the CURRENT send, with the current token.
-  const sendRef = useRef<(kind: 'text' | 'voice', content?: string) => Promise<boolean>>();
+  const sendRef = useRef<(kind: 'text' | 'voice', content?: string, channel?: 'text' | 'stt') => Promise<boolean>>();
+  // The interviewer can deliberately say nothing (it is listening, the candidate owns the
+  // floor). That is shown as a quiet status line - never as an empty or filler bubble.
+  const [listening, setListening] = useState(false);
   const [quota, setQuota] = useState<AiQuota | null>(null);
   // Voice mode is admin-controlled at runtime (Admin -> AI providers). Read it
   // once on mount; keep the env default until it resolves. Never throws.
@@ -361,9 +365,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
    * would otherwise be retried forever, paying for a Whisper transcription on
    * every pass. Typed callers ignore the value and are unaffected.
    */
-  async function send(kind: 'text' | 'voice' = 'text', content?: string): Promise<boolean> {
+  async function send(kind: 'text' | 'voice' = 'text', content?: string, channel: 'text' | 'stt' = 'text'): Promise<boolean> {
     const text = (content ?? composer).trim();
     if (!text || !attempt || sending) return false;
+    setListening(false);
     // Always post with a live token — a long interview outlives the one we
     // captured at mount (see freshToken).
     const authTok = await freshToken();
@@ -390,7 +395,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       const result = await postMessageStream(
         attempt.attempt_id,
         authTok,
-        { content: text, kind },
+        { content: text, kind, channel, turn_id: newTurnId() },
         {
           onMeta: (meta) => {
             setAttempt((a) => a ? { ...a, clarification_remaining: meta.clarification_remaining, clarification_used: a.clarification_quota - meta.clarification_remaining } : a);
@@ -400,6 +405,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             // Talk mode listens here. No-op when the overlay is closed.
             tokenSinkRef.current?.(chunk);
           },
+          onSilence: () => setListening(true),
           onDone: (info) => {
             done = info;
             doneSinkRef.current?.();
@@ -1155,6 +1161,12 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                     </div>
                   </div>
                 )}
+                {listening && !sending && (
+                  <div className="flex items-center gap-2 pl-1 text-micro text-muted-foreground" aria-live="polite" data-testid="interviewer-listening">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Interviewer is listening. Carry on when you&apos;re ready.
+                  </div>
+                )}
                 {sending && !draftAssistant?.text && (
                   <div className="flex justify-start">
                     <div className="max-w-[85%]">
@@ -1407,7 +1419,9 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       {talkMode && token && voiceMode === 'pipeline' && (
         <VoiceInterview
           token={token}
-          onSend={(text) => sendRef.current!('voice', text)}
+          onSend={(text) => sendRef.current!('voice', text, 'stt')}
+          attemptId={attempt?.attempt_id}
+          caseId={caseId}
           registerTokenSink={(sink) => { tokenSinkRef.current = sink; }}
           registerDoneSink={(sink) => { doneSinkRef.current = sink; }}
           messages={messages}

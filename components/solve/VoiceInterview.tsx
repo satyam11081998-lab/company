@@ -16,11 +16,20 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { transcribeAudio, type AiQuota } from '@/lib/api';
-import type { AttemptMessage } from '@/lib/interview-api';
+import { postVoiceTelemetry, type AttemptMessage } from '@/lib/interview-api';
 import { Vad } from '@/lib/voice/vad';
 import { TtsQueue } from '@/lib/voice/tts-queue';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
+import { startLiveTranscription, type LiveTranscriptionHandle } from '@/lib/voice/live-transcribe';
 import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
+
+/**
+ * STT transport. 'whisper' (default): record each utterance and POST it to /transcribe.
+ * 'live': stream to an OpenAI realtime transcription session (gpt-live-transcribe) and
+ * commit each utterance when the VAD hears the candidate stop. If the live session cannot
+ * start, talk mode falls back to 'whisper' for that session.
+ */
+const LIVE_STT = process.env.NEXT_PUBLIC_STT_TRANSPORT === 'live';
 
 /** The state machine. Every visible affordance is derived from this. */
 type Phase = 'idle' | 'listening' | 'capturing' | 'transcribing' | 'thinking' | 'speaking';
@@ -102,6 +111,9 @@ export interface VoiceInterviewProps {
   onQuotaUpdate?: (q: AiQuota) => void;
   /** Remaining Whisper minutes; talk mode cannot start without them. */
   voiceOut: boolean;
+  /** For live transcription session gating and voice timing telemetry (optional). */
+  attemptId?: string;
+  caseId?: string;
 }
 
 export default function VoiceInterview({
@@ -114,11 +126,17 @@ export default function VoiceInterview({
   onSubmitSession,
   onQuotaUpdate,
   voiceOut,
+  attemptId,
+  caseId,
 }: VoiceInterviewProps) {
   const [phase, setPhase] = useState<Phase>('idle');
   const [level, setLevel] = useState(0);
   const [muted, setMuted] = useState(false);
   const [liveReply, setLiveReply] = useState('');  // interviewer's text as it streams
+  const [candidateDraft, setCandidateDraft] = useState('');  // live transcript (UI only, never a turn)
+  const liveRef = useRef<LiveTranscriptionHandle | null>(null);
+  // Per-turn timing for telemetry (performance.now based): t0 speech end, t1 transcript, t4 first audio.
+  const sttTimingRef = useRef<{ t0: number; t1: number; key: string } | null>(null);
   const [degraded, setDegraded] = useState(false);
 
   const streamRef = useRef<MediaStream | null>(null);
@@ -170,6 +188,8 @@ export default function VoiceInterview({
     }
     vadRef.current?.stop();
     vadRef.current = null;
+    liveRef.current?.stop();
+    liveRef.current = null;
     ttsRef.current?.destroy();
     ttsRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -188,6 +208,30 @@ export default function VoiceInterview({
 
   // --- one spoken turn ---------------------------------------------------
   const finishTurn = useCallback(async () => {
+    if (liveRef.current) {
+      // LIVE transport: the VAD said the candidate stopped -> commit the turn and wait for its
+      // FINAL transcript (partials only ever drove the on-screen draft).
+      utteringRef.current = false;
+      setPhaseSafe('transcribing');
+      let liveText = '';
+      try {
+        liveText = (await liveRef.current.commit()).trim();
+        failureStreakRef.current = 0;
+      } catch (e) {
+        failureStreakRef.current += 1;
+        toast.error(e instanceof Error ? e.message : 'Could not hear that');
+        if (failureStreakRef.current >= MAX_FAILURE_STREAK) {
+          toast.message('Switching back to chat', {
+            description: 'Voice input keeps failing. Your session is saved — carry on typing.',
+          });
+          closeSession();
+          return;
+        }
+      }
+      setCandidateDraft('');
+      await afterTranscript(liveText);
+      return;
+    }
     const rec = recorderRef.current;
     if (!rec || rec.state !== 'recording') return;
 
@@ -236,6 +280,12 @@ export default function VoiceInterview({
       return;
     }
 
+    await afterTranscript(text ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, onSend, onQuotaUpdate, setPhaseSafe]);
+
+  /** Everything after the transcript is known - identical for both STT transports. */
+  const afterTranscript = useCallback(async (text: string) => {
     // Whisper does not return silence for silence — it returns "Thank you." and
     // friends. Posting that would make the interviewer reply to a turn the
     // candidate never took, and the scorer reads the result.
@@ -253,6 +303,9 @@ export default function VoiceInterview({
     // Stage timing for voice latency — logged per turn so p50/p95 can be read
     // off the console during QA. Server logs STT/TTS latency to ai_usage_log.
     const tTranscript = performance.now();
+    if (turnStartRef.current) {
+      sttTimingRef.current = { t0: turnStartRef.current, t1: tTranscript, key: `stt-${Date.now().toString(36)}` };
+    }
 
     setPhaseSafe('thinking');
     ttsRef.current?.reset();
@@ -291,6 +344,9 @@ export default function VoiceInterview({
       failureStreakRef.current = 0;
     }
 
+    // No interviewer audio will follow (NO_OUTPUT, or a failed turn): report the timing now.
+    if (!ttsRef.current?.hasWork) reportSttTiming(null);
+
     // Reopen the mic ONLY if the queue has nothing playing AND nothing on its
     // way. `isSpeaking` alone is a trap here: when the reply finishes streaming
     // the clips are usually still being fetched, so it reads false for a few
@@ -305,9 +361,28 @@ export default function VoiceInterview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, onSend, onQuotaUpdate, setPhaseSafe]);
 
+  const reportSttTiming = useCallback((firstAudioAt: number | null) => {
+    const t = sttTimingRef.current;
+    if (!t || !attemptId) return;
+    sttTimingRef.current = null;
+    postVoiceTelemetry(attemptId, tokenRef.current, {
+      turn_id: t.key,
+      channel: 'stt',
+      transport: liveRef.current ? 'live-transcribe' : 'whisper',
+      stt_model: liveRef.current?.model,
+      t1_ms: Math.round(t.t1 - t.t0),
+      ...(firstTokenRef.current ? { t2_ms: Math.round(firstTokenRef.current - t.t0) } : {}),
+      ...(firstAudioAt ? { t4_ms: Math.round(firstAudioAt - t.t0) } : { lane: 'SILENCE' }),
+    });
+  }, [attemptId]);
+
   const startCapture = useCallback(() => {
     const stream = streamRef.current;
     if (!stream || busyRef.current) return;
+    if (liveRef.current) {
+      liveRef.current.pause(false);   // streaming continuously; the VAD ends each turn
+      return;
+    }
     if (recorderRef.current?.state === 'recording') return;
     try {
       const mr = new MediaRecorder(stream);
@@ -327,6 +402,14 @@ export default function VoiceInterview({
   const recycleIfIdle = useCallback(() => {
     if (busyRef.current || utteringRef.current) return;
     if (phaseRef.current !== 'listening') return;
+    if (liveRef.current) {
+      // Nothing said for a while: drop the buffered silence so it is never committed.
+      if (performance.now() - recStartedAtRef.current >= IDLE_RECYCLE_MS) {
+        liveRef.current.clear();
+        recStartedAtRef.current = performance.now();
+      }
+      return;
+    }
     const rec = recorderRef.current;
     if (!rec || rec.state !== 'recording') return;
     if (performance.now() - recStartedAtRef.current < IDLE_RECYCLE_MS) return;
@@ -382,9 +465,13 @@ export default function VoiceInterview({
       const tts = new TtsQueue(() => tokenRef.current, {
         onSpeakingChange: (speaking) => {
           if (speaking) {
+            // The interviewer's own voice must never reach the transcriber.
+            liveRef.current?.pause(true);
+            if (sttTimingRef.current) reportSttTiming(performance.now());
             setPhaseSafe('speaking');
             return;
           }
+          liveRef.current?.clear();
           busyRef.current = false;
           // Respect a mute toggled DURING the interviewer's reply. Without this
           // the mic reopens the moment playback ends, and the candidate who
@@ -449,6 +536,20 @@ export default function VoiceInterview({
         { silenceMs: 750 },  // was 1000: shorter endpoint = snappier voice turns (still > minUtteranceMs, tolerant of brief thinking pauses)
       );
       vadRef.current = vad;
+
+      if (LIVE_STT) {
+        try {
+          liveRef.current = await startLiveTranscription(
+            { token: tokenRef.current, caseId, attemptId, stream },
+            { onDelta: (t) => setCandidateDraft(t), onError: (m) => console.warn('[stt-live]', m) },
+          );
+          recStartedAtRef.current = performance.now();
+        } catch (e) {
+          liveRef.current = null;
+          console.warn('[stt-live] falling back to standard transcription:', e);
+        }
+      }
+      if (cancelled) { liveRef.current?.stop(); liveRef.current = null; return; }
       vad.start();
 
       setPhaseSafe('listening');
@@ -674,6 +775,12 @@ export default function VoiceInterview({
                 <p className="mt-0.5 text-small leading-relaxed text-foreground">{m.content}</p>
               </div>
             ))}
+            {candidateDraft && (
+              <div className="text-right opacity-70" aria-live="polite">
+                <span className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">You (live)</span>
+                <p className="mt-0.5 text-small leading-relaxed text-foreground">{candidateDraft}</p>
+              </div>
+            )}
             {liveReply && (
               <div className="text-left">
                 <span className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</span>

@@ -1,0 +1,5 @@
+# build artifacts of the E2E harness (rebuilt on every run)
+harness.js
+stt.js
+last-run.json
+last-run-stt.json
