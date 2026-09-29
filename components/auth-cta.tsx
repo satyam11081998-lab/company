@@ -13,7 +13,24 @@ type Variant = 'hero' | 'nav' | 'cta';
 
 interface AuthCTAProps {
   variant?: Variant;
+  /**
+   * 'editorial' (2026-09-30): the India landing redesign — squared 8px
+   * buttons, no pulse, copy as in the approved mockup. 'default' is the
+   * unchanged look every other page uses.
+   */
+  look?: 'default' | 'editorial';
+  /** Where the hero's secondary "How it works" button goes. */
+  howHref?: string;
 }
+
+// Editorial look: one shape (8px) for every control on the new landing.
+const ED_PRIMARY =
+  'inline-flex items-center justify-center gap-2 rounded-[8px] bg-primary font-semibold text-primary-foreground ' +
+  'shadow-[0_1px_2px_rgba(200,16,46,0.25),0_10px_24px_-12px_rgba(200,16,46,0.6)] transition-[background-color,transform] duration-150 ' +
+  'hover:bg-primary-hover active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60';
+const ED_SECONDARY =
+  'inline-flex items-center justify-center gap-2 rounded-[8px] border border-border-strong/70 bg-card font-semibold text-foreground ' +
+  'shadow-[0_1px_2px_rgba(15,28,51,0.06)] transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
 
 /**
  * Client-side auth CTA — checks Supabase auth state on mount and renders the
@@ -37,7 +54,8 @@ const EXPLORE_HREF = '/dashboard';
 const BIG_PRIMARY =
   'btn-primary pulse-soft shadow-lg shadow-primary/20 !px-7 !py-3.5 !text-[15px] hover:scale-[1.02] transition-transform';
 
-export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
+export default function AuthCTA({ variant = 'nav', look = 'default', howHref = '/methodology' }: AuthCTAProps) {
+  const ed = look === 'editorial';
   const [state, setState] = useState<'loading' | 'authed' | 'guest'>('loading');
   const [busy, setBusy] = useState(false);
   // Portals need document; guard the server render.
@@ -114,6 +132,34 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
 
   /* ── Loading skeleton ────────────────────────────────────────────── */
   if (state === 'loading') {
+    if (ed) {
+      // Same footprint as the loaded controls, so nothing shifts when auth resolves.
+      if (variant === 'hero') {
+        return (
+          <div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="h-[52px] w-full rounded-[8px] bg-muted animate-pulse sm:w-[238px]" />
+              <div className="h-[52px] w-full rounded-[8px] bg-muted animate-pulse sm:w-[150px]" />
+            </div>
+            <div className="mt-3.5 h-[20px]" />
+          </div>
+        );
+      }
+      if (variant === 'cta') {
+        return (
+          <div className="flex flex-col items-center gap-3 lg:items-end">
+            <div className="h-[52px] w-[238px] rounded-[8px] bg-white/10 animate-pulse" />
+            <div className="h-[20px]" />
+          </div>
+        );
+      }
+      return (
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="hidden h-10 w-16 rounded-[8px] bg-muted animate-pulse sm:block" />
+          <div className="h-10 w-[92px] rounded-[8px] bg-muted animate-pulse" />
+        </div>
+      );
+    }
     if (variant === 'hero') {
       return (
         <div className="flex items-center gap-3">
@@ -159,6 +205,82 @@ export default function AuthCTA({ variant = 'nav' }: AuthCTAProps) {
           document.body,
         )
       : null;
+
+  /* ── Editorial look (India landing, 2026-09-30) ─────────────────── */
+  if (ed) {
+    const go = () => (state === 'authed' ? navigate('/dashboard') : exploreAsGuest());
+    const primaryLabel = state === 'authed' ? 'Open MECE' : 'Start your practice here';
+    if (variant === 'hero') {
+      return (
+        <div>
+          {overlay}
+          {busyOverlay}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button type="button" onClick={go} className={`${ED_PRIMARY} h-[52px] whitespace-nowrap px-7 text-[15px] lg:px-6 xl:px-7`}>
+              {primaryLabel} <ArrowRight aria-hidden className="h-4 w-4" />
+            </button>
+            <Link href={howHref} className={`${ED_SECONDARY} h-[52px] whitespace-nowrap px-7 text-[15px] lg:px-6 xl:px-7`}>
+              How it works
+            </Link>
+          </div>
+          <p className="mt-3.5 min-h-[20px] text-[13.5px] text-muted-foreground">
+            {state === 'guest' ? (
+              <>
+                See real cases, guesstimates &amp; the dashboard — no account needed.{' '}
+                <Link href={signupHref} className="font-semibold text-primary underline-offset-4 hover:underline">
+                  Sign up
+                </Link>
+              </>
+            ) : (
+              'Welcome back. Pick up where you left off.'
+            )}
+          </p>
+        </div>
+      );
+    }
+    if (variant === 'cta') {
+      return (
+        <div className="flex flex-col items-start gap-3 lg:items-center">
+          {overlay}
+          {busyOverlay}
+          <button
+            type="button"
+            onClick={go}
+            className={`${ED_PRIMARY} h-[54px] px-8 text-[15.5px] focus-visible:ring-offset-navy`}
+          >
+            {primaryLabel} <ArrowRight aria-hidden className="h-4 w-4" />
+          </button>
+          <p className="text-[13.5px] text-white/75">
+            {state === 'authed' ? 'Your dashboard is ready.' : 'Free to start. No account needed.'}
+          </p>
+        </div>
+      );
+    }
+    /* nav */
+    if (state === 'authed') {
+      return (
+        <>
+          {overlay}
+          <button type="button" onClick={() => navigate('/dashboard')} className={`${ED_PRIMARY} h-10 whitespace-nowrap px-5 text-[14px]`}>
+            Open MECE
+          </button>
+        </>
+      );
+    }
+    return (
+      <>
+        <Link
+          href={loginHref}
+          className="hidden h-10 items-center rounded-[8px] px-3 text-[14.5px] font-medium text-foreground/80 transition-colors hover:text-foreground sm:inline-flex"
+        >
+          Log in
+        </Link>
+        <Link href={signupHref} className={`${ED_PRIMARY} h-10 whitespace-nowrap px-5 text-[14px]`}>
+          Sign up
+        </Link>
+      </>
+    );
+  }
 
   /* ── Hero variant ───────────────────────────────────────────────── */
   if (variant === 'hero') {

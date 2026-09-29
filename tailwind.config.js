@@ -21,6 +21,10 @@ module.exports = {
         // Editorial display serif for the US marketing pages ONLY (app/us/layout.tsx
         // defines --font-us-display). Anywhere else it falls back to Georgia/serif.
         display: ['var(--font-us-display)', 'Georgia', 'serif'],
+        // India landing ("/") only — components/home/fonts.ts defines both
+        // variables on the page root. Elsewhere they fall back gracefully.
+        editorial: ['var(--font-home-serif)', 'Georgia', 'serif'],
+        hand: ['var(--font-home-hand)', 'cursive'],
       },
       fontSize: {
         'label': ['13px', { lineHeight: '1.2', fontWeight: '600', letterSpacing: '0.1em' }],

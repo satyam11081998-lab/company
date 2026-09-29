@@ -1,0 +1,128 @@
+/*
+ * India landing ("/") — the few styles Tailwind utilities cannot express
+ * cleanly: the eyebrow rule, the draughtsman's grid, the ink of the margin
+ * notes, the tile's layered shadow, and the slow photo motion.
+ * Everything is namespaced `home-` and only the landing imports this file.
+ */
+
+/* Eyebrow: a short red rule, then small spaced capitals. */
+.home-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+}
+@media (min-width: 640px) {
+  .home-eyebrow { gap: 14px; font-size: 12px; letter-spacing: 0.16em; }
+}
+.home-eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  flex: none;
+}
+.home-eyebrow--inverse { color: rgba(255, 255, 255, 0.82); }
+.home-eyebrow--inverse::before { display: none; }
+
+/* A faint drafting grid, fading out from the upper left. */
+.home-grid {
+  background-image:
+    linear-gradient(to right, hsl(var(--foreground) / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--foreground) / 0.045) 1px, transparent 1px);
+  background-size: 88px 88px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 75% at 22% 38%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 70% 75% at 22% 38%, #000 25%, transparent 78%);
+}
+.dark .home-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Pen ink for the margin-note arrows. */
+.hand-ink {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* The practice tile: a screen lifted off the desk. Warm, long shadow so it
+   reads as sitting in the photograph's light, not pasted on it. */
+.home-tile {
+  box-shadow:
+    0 1px 2px rgba(15, 28, 51, 0.06),
+    0 10px 24px -12px rgba(15, 28, 51, 0.22),
+    0 44px 80px -28px rgba(58, 32, 10, 0.42);
+}
+.dark .home-tile {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+}
+
+/* Photo motion — slow enough to feel like light changing, not an effect.
+   The hero breathes around the hiker (transform-origin on him), the sky
+   warms and cools, the summit drifts. All off under reduced motion. */
+@keyframes home-drift {
+  from { transform: scale(1); }
+  to   { transform: scale(1.045); }
+}
+@keyframes home-glow {
+  from { opacity: 0.35; }
+  to   { opacity: 0.8; }
+}
+@keyframes home-pan {
+  from { transform: scale(1.06) translate3d(0, 0, 0); }
+  to   { transform: scale(1.06) translate3d(-2.2%, 0.6%, 0); }
+}
+.home-drift {
+  transform-origin: 34% 52%;
+  animation: home-drift 38s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.home-glow {
+  background: radial-gradient(ellipse 46% 36% at 52% 36%, rgba(255, 219, 170, 0.55), rgba(255, 219, 170, 0) 70%);
+  mix-blend-mode: screen;
+  animation: home-glow 14s ease-in-out infinite alternate;
+}
+.home-pan {
+  animation: home-pan 48s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Issue tree + step connectors draw in once the section is on screen.
+   Progressive: nothing is hidden until JS marks the figure `will-draw`, so
+   no-JS visitors and crawlers see the finished drawing. */
+.home-tree [data-draw] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 900ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.home-tree [data-box] { transition: opacity 500ms ease, transform 500ms ease; }
+.home-tree.will-draw:not(.is-drawn) [data-draw] { stroke-dashoffset: 1; }
+.home-tree.will-draw:not(.is-drawn) [data-box] { opacity: 0; transform: translateY(4px); }
+.home-steps [data-line] {
+  transform-origin: left center;
+  transition: transform 700ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.home-steps.will-draw:not(.is-drawn) [data-line] { transform: scaleX(0); }
+
+/* Stories rail: native horizontal scroll with snap, scrollbar hidden. */
+.home-rail {
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+.home-rail::-webkit-scrollbar { display: none; }
+.home-rail > * { scroll-snap-align: start; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-drift, .home-glow, .home-pan { animation: none; }
+  .home-tree [data-draw], .home-tree [data-box], .home-steps [data-line] { transition: none; }
+}

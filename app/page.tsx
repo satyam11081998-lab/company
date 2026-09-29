@@ -1,20 +1,18 @@
-import Link from 'next/link';
-import ThemeToggle from '@/components/theme-toggle';
-import EndorsementWall from '@/components/endorsement-wall';
 import { createStaticClient } from '@/lib/supabase/static';
 import { getPublishedTestimonials } from '@/lib/testimonials';
-import { getPublishedEndorsements } from '@/lib/endorsements';
-import Logo from '@/components/logo';
-import Footer from '@/components/footer';
-import AuthCTA from '@/components/auth-cta';
-import LandingMobileNav from '@/components/landing-mobile-nav';
-import { ArrowRight, CheckCircle2, Shield, TrendingUp, Users, BookOpen, Trophy, ChevronRight, HelpCircle, Award } from 'lucide-react';
-import ScrollAnimations from '@/components/scroll-animations';
-import InterviewSim from '@/components/landing/interview-sim';
-import { GdBriefVignette, LeaderboardVignette, DeckVaultVignette, CountUp } from '@/components/landing-vignettes';
 import { faqPageJsonLd, HREFLANG_HOME } from '@/lib/seo';
-import GuestPracticeActions from '@/components/guest/guest-practice-actions';
 import { getDailyTodayServerSide } from '@/lib/daily-server';
+import { orderStories } from '@/lib/home/stories';
+import { homeHand, homeSerif } from '@/components/home/fonts';
+import HomeHeader from '@/components/home/home-header';
+import Hero from '@/components/home/hero';
+import StartCards from '@/components/home/start-cards';
+import MeceWay from '@/components/home/mece-way';
+import HomeFaq from '@/components/home/home-faq';
+import SuccessStories from '@/components/home/success-stories';
+import FinalCta from '@/components/home/final-cta';
+import HomeFooter from '@/components/home/home-footer';
+import '@/components/home/home.css';
 
 export const metadata = {
   // hreflang (2026-09-25): India here, the international site at /us.
@@ -52,11 +50,20 @@ const HOMEPAGE_FAQS = [
 
 const faqJsonLd = faqPageJsonLd(HOMEPAGE_FAQS);
 
+/** Target firms, set as plain type — names only, never logos (no implied endorsement). */
+const TARGET_FIRMS = ['McKinsey', 'BCG', 'Bain', 'Goldman Sachs', 'JPMorgan', 'HUL', 'P&G', 'Amazon', 'Flipkart'];
+
 /**
  * ISR, not force-dynamic: the landing page is the highest-traffic SEO surface
- * and everything on it is public. Testimonials/endorsements come from a
- * cookie-less anon client (RLS = logged-out visitor); auth-dependent CTAs
- * resolve client-side in <AuthCTA/>. Fresh social proof within 5 minutes.
+ * and everything on it is public. Testimonials come from a cookie-less anon
+ * client (RLS = logged-out visitor); auth-dependent CTAs resolve client-side
+ * in <AuthCTA/>. Fresh social proof within 5 minutes.
+ *
+ * REDESIGN (2026-09-30, branch feat/india-landing-redesign): the page follows
+ * the approved editorial mockup — Newsreader headlines, margin notes in a pen
+ * hand, real photography (lib/home/photos.ts), the live MCQ warm-up lifted in
+ * front of the hero photo, and success stories (testimonials) near the close
+ * in place of the endorsement wall. Components live in components/home/.
  */
 export const revalidate = 300;
 
@@ -66,574 +73,64 @@ export default async function LandingPage() {
   // homepage advertises the same pair the pre-login dashboard opens. It reads
   // no session — the anonymous sign-in is client-side and click-driven — so "/"
   // stays static with revalidate = 300 and every crawler gets identical HTML.
-  const [testimonials, endorsements, daily] = await Promise.all([
+  const [testimonials, daily] = await Promise.all([
     getPublishedTestimonials(supabase),
-    getPublishedEndorsements(supabase),
     // 'static' is REQUIRED here, not a preference: the default client reads
     // cookies(), and a single cookies() read anywhere in this tree drops "/"
     // out of static rendering into per-request rendering.
     getDailyTodayServerSide('static'),
   ]);
+  const caseId = daily.case?.id ?? null;
+  const guesstimateId = daily.guesstimate?.id ?? null;
+
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div
+      className={`${homeSerif.variable} ${homeHand.variable} relative z-[1] min-h-screen overflow-x-clip bg-background font-sans text-foreground`}
+    >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <ScrollAnimations />
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow"
+      >
+        Skip to content
+      </a>
 
-      {/* ── FOMO Banner ──────────────────────────────────────────────── */}
-      <div className="bg-destructive px-4 py-2.5 text-center text-destructive-foreground text-[13px] font-medium flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-        Thousands of aspirants are already studying our free casebook. Don't be the only one unprepared.
-        <Link href="/learn/casebook/getting-started/what-it-tests" className="underline font-bold hover:text-white/80 transition-colors flex items-center gap-1 ml-1">
-          Read it now <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
+      <HomeHeader />
 
-      {/* ── Nav ──────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border w-full overflow-hidden max-w-[100vw]">
-        <div className="container flex h-14 md:h-16 items-center justify-between">
-          <div className="flex items-center gap-4 md:gap-12 shrink-0">
-            <Link href="/" className="flex items-center -ml-4 md:-ml-6 shrink-0 -mt-1.5">
-              <Logo isLanding={true} className="" />
-            </Link>
-            <div className="hidden md:flex items-center gap-8">
-              {/* "Try a case" points straight at the pre-login dashboard —
-                  that IS the explore experience. /explore-mece 308s here too
-                  (next.config) for anything that already picked up the URL. */}
-              {[['/learn/mece-framework', 'MECE framework'], ['/learn/casebook/getting-started/what-it-tests', 'Free Casebook'], ['/dashboard', 'Start practising'], ['#scoring', 'Scoring'], ['/methodology', 'Methodology']].map(([href, label]) => (
-                <Link key={href} href={href} className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors touch-target">
-                  {label}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <ThemeToggle />
-            <AuthCTA variant="nav" />
-            <LandingMobileNav />
-          </div>
-        </div>
-      </nav>
+      <main id="main">
+        <Hero caseId={caseId} guesstimateId={guesstimateId} />
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Left */}
-          <div className="animate-fade-in">
-            <div className="badge-pill mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
-              AI case interview · scored in ~60s
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.08] tracking-tight">
-              Sit one real case.<br />
-              See if you'd <span className="text-primary">actually get the offer.</span>
-              
-            </h1>
-            <p className="mt-5 text-[15px] text-muted-foreground leading-relaxed max-w-md">
-              <strong className="font-semibold text-foreground/80">Peers go easy on you. This won't.</strong>{' '}
-              Take today's case the way an interviewer runs it — clarify, structure, solve, recommend — and get scored on the six things they actually weigh. Built for MBA &amp; PGDM placement season.
-            </p>
-            <div className="mt-7">
-              <AuthCTA variant="hero" />
-            </div>
-            {/* GUEST MODE (0045): the entry point into guest practice, showing
-                the SAME case as the pre-login dashboard. Each button routes
-                straight to /cases/[id] rather than via /dashboard — a visitor
-                who clicked "start the case" should land in the case, not on
-                another page asking them to click again.
-                Renders null when NEXT_PUBLIC_GUEST_MODE is off, so AuthCTA
-                above stays the sole CTA on rollback. The anonymous session is
-                minted on CLICK, never on mount, so "/" stays statically
-                renderable and crawlers never trigger it. */}
-            <div className="mt-5">
-              <GuestPracticeActions
-                targets={{
-                  caseId: daily.case?.id ?? null,
-                  caseTitle: daily.case?.title ?? null,
-                  guesstimateId: daily.guesstimate?.id ?? null,
-                  guesstimateTitle: daily.guesstimate?.title ?? daily.guesstimate_title ?? null,
-                  briefId: daily.brief?.id ?? null,
-                  briefHeadline: daily.brief?.title ?? null,
-                }}
-                heading="Try it right now — no sign-up"
-                subheading="Today's set is open to everyone. You only make an account when you want your score."
-              />
-            </div>
-            <div className="mt-8 flex items-center gap-6">
-              <div>
-                <p className="text-xl font-bold text-foreground"><CountUp to={6} duration={900} /></p>
-                <p className="text-[12px] text-muted-foreground mt-0.5">Scoring dimensions</p>
-              </div>
-              <div>
-                <p className="text-xl font-bold text-foreground"><CountUp to={60} suffix="s" duration={1200} /></p>
-                <p className="text-[12px] text-muted-foreground mt-0.5">Feedback time</p>
-              </div>
-              <div>
-                <p className="text-xl font-bold text-foreground">Instant</p>
-                <p className="text-[12px] text-muted-foreground mt-0.5">Access</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right — floating UI mockup */}
-          <div className="animate-slide-up mt-10 md:mt-0">
-            <div className="relative">
-              {/* Geometric outline shapes behind card */}
-              <GeoShapes />
-              {/* Main floating card — the product, performing live */}
-              <InterviewSim caseId={daily.case?.id ?? null} guesstimateId={daily.guesstimate?.id ?? null} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trust strip ──────────────────────────────────────────────── */}
-      <section className="border-y border-border bg-card/60 py-5">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-6 text-center">
-            Used by aspirants targeting roles at
-          </p>
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 opacity-50 grayscale">
-            {['McKinsey', 'BCG', 'Bain', 'Goldman Sachs', 'JPMorgan', 'HUL', 'P&G', 'Amazon', 'Flipkart'].map(firm => (
-              <span key={firm} className="text-[13px] font-semibold text-muted-foreground/60">{firm}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Social proof: living endorsement wall (top of page for focus) ── */}
-      <div data-reveal>
-        <EndorsementWall endorsements={endorsements} testimonials={testimonials} />
-        <div className="-mt-8 mb-8 text-center">
-          <Link href="/testimonials" className="text-small font-semibold text-primary hover:underline">
-            Read all stories &rarr;
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Feature 1: Scoring (left text + right card) ───────────────── */}
-      <section id="scoring" className="max-w-6xl mx-auto px-6 py-12 md:py-20" data-reveal>
-        <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
-          <div>
-            <div className="badge-pill mb-4">
-              <Shield className="h-3.5 w-3.5" />
-              Scoring System
-            </div>
-            <h2 className="text-4xl font-bold text-foreground leading-tight">
-              Precise scoring for<br />every answer
-            </h2>
-            <p className="mt-4 text-[15px] text-muted-foreground leading-relaxed">
-              Highlight the <span className="text-primary font-medium">exact gaps</span> in your consulting thinking with a 100-point rubric across{' '}
-              <span className="text-primary font-medium">6 dimensions</span> — in under 60 seconds.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {[
-                'Graded across 6 consulting dimensions simultaneously.',
-                'Frameworks drawn from consulting, IB, and brand management traditions.',
-                'Instant written feedback, not just a number.',
-                'Track score improvement across every submission.',
-              ].map(item => (
-                <li key={item} className="flex items-start gap-2.5 text-[14px] text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="btn-primary mt-6 inline-flex">
-              Start practising
-            </Link>
-          </div>
-          {/* Scoring card mockup */}
-          <div className="ui-card-floating overflow-hidden">
-            <div className="bg-muted/50 px-5 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Score Breakdown</span>
-              <span className="tag tag-red">78 / 100</span>
-            </div>
-            <div className="p-5">
-              <div className="overflow-x-auto table-scroll-mobile">
-                <table className="data-table min-w-[500px]">
-                  <thead>
-                    <tr>
-                      <th>Dimension</th>
-                      <th>Score</th>
-                      <th>Max</th>
-                      <th>Rating</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ['Structure', 21, 25, 'Strong', 'tag-green'],
-                      ['Quantitative', 13, 20, 'Develop', 'tag-amber'],
-                      ['Synthesis', 17, 20, 'Good', 'tag-green'],
-                      ['Business Judgment', 12, 15, 'Good', 'tag-green'],
-                      ['Creativity', 8, 10, 'Strong', 'tag-green'],
-                      ['Professional Tone', 7, 10, 'Strong', 'tag-green'],
-                    ].map(([dim, score, max, rating, tagClass]) => (
-                      <tr key={dim as string}>
-                        <td className="text-[13px] font-medium text-foreground">{dim as string}</td>
-                        <td className="font-mono font-semibold text-[13px]">{score as number}</td>
-                        <td className="text-[12px] text-muted-foreground">{max as number}</td>
-                        <td><span className={`tag ${tagClass as string}`}>{rating as string}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Feature 2: Cases (centered + 2 cards) ────────────────────── */}
-      <section id="features" className="bg-card border-y border-border py-20 relative overflow-hidden" data-reveal>
-        {/* Geometric watermark */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
-          {[
-            { w: 700, h: 500, rotate: 12, left: '-15%', top: '-20%', opacity: 0.04 },
-            { w: 600, h: 420, rotate: 12, left: '-8%',  top: '-10%', opacity: 0.03 },
-            { w: 500, h: 340, rotate: 12, right: '-10%', bottom: '-15%', opacity: 0.04 },
-            { w: 400, h: 280, rotate: 12, right: '-5%',  bottom: '-8%', opacity: 0.03 },
-          ].map((s, i) => (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                width: s.w, height: s.h,
-                border: `1px solid hsl(var(--foreground) / ${s.opacity})`,
-                borderRadius: 24,
-                transform: `rotate(${s.rotate}deg)`,
-                left: s.left, top: s.top, right: (s as any).right, bottom: (s as any).bottom,
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-12">
-            <div className="badge-pill mb-4 mx-auto w-fit">
-              <BookOpen className="h-3.5 w-3.5" />
-              Daily Practice
-            </div>
-            <h2 className="text-4xl font-bold text-foreground">Real cases across functions, daily</h2>
-            <p className="mt-3 text-[15px] text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Practice <span className="text-primary font-medium">guesstimate</span>,{' '}
-              <span className="text-primary font-medium">profitability</span>,{' '}
-              <span className="text-primary font-medium">market sizing</span>, and brand strategy cases that mirror
-              actual MBA placement interview formats.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-5">
-            {/* Card 1: Case list */}
-            <div className="ui-card overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-muted/40 flex items-center justify-between">
-                <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Available Cases</span>
-                <span className="tag tag-navy">3 new today</span>
-              </div>
-              <div className="overflow-x-auto table-scroll-mobile">
-                <table className="data-table min-w-[500px]">
-                  <thead>
-                  <tr>
-                    <th>Case</th>
-                    <th>Type</th>
-                    <th>Difficulty</th>
-                    <th>Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ['Online MBA prep market size', 'Market Sizing', 'Medium', '78'],
-                    ['EdTech profitability decline', 'Profitability', 'Hard', '—'],
-                    ['College canteen daily revenue', 'Guesstimate', 'Easy', '92'],
-                    ['B-school fee increase impact', 'Framework', 'Medium', '65'],
-                  ].map(([title, type, diff, score]) => (
-                    <tr key={title} className="hover:bg-muted/30 transition-colors cursor-pointer">
-                      <td className="font-medium text-[13px] text-foreground max-w-[180px]">
-                        <span className="line-clamp-1">{title}</span>
-                      </td>
-                      <td><span className="tag tag-navy text-[11px]">{type}</span></td>
-                      <td>
-                        <span className={`tag text-[11px] ${diff === 'Easy' ? 'tag-green' : diff === 'Hard' ? 'tag-red' : 'tag-amber'}`}>
-                          {diff}
-                        </span>
-                      </td>
-                      <td className="font-mono font-semibold text-[13px] text-foreground">{score}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-            {/* Card 2: Submit form */}
-            <div className="ui-card overflow-hidden">
-              <div className="px-5 py-3 border-b border-border bg-muted/40 flex items-center justify-between">
-                <span className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">Submit Answer</span>
-                <span className="tag tag-red">Medium · 20 pts</span>
-              </div>
-              <div className="p-5">
-                <p className="text-[13px] font-semibold text-foreground mb-1">
-                  Estimate the market size for online MBA prep in India.
-                </p>
-                <p className="text-[12px] text-muted-foreground mb-4">
-                  State assumptions clearly. Walk through total college-going population to paying online learners.
-                </p>
-                <div className="bg-muted rounded-lg p-3 mb-4 text-[13px] text-muted-foreground border border-border">
-                  Write your structured answer here...
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-muted-foreground">Scored in ~60 seconds</span>
-                  <button className="btn-primary text-[13px] py-2 px-4">
-                    Submit <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-      {/* ── Feature 3: GD Briefs (right text + left card) ─────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-12 md:py-20">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
-          {/* Left: GD brief card — assembles itself on scroll */}
-          <GdBriefVignette />
-
-          {/* Right */}
-          <div>
-            <div className="badge-pill mb-4">
-              <TrendingUp className="h-3.5 w-3.5" />
-              GD Preparation
-            </div>
-            <h2 className="text-4xl font-bold text-foreground leading-tight">
-              Walk into any GD<br />fully prepared
-            </h2>
-            <p className="mt-4 text-[15px] text-muted-foreground leading-relaxed">
-              Curated news briefs with <span className="text-primary font-medium">smart angles</span>,
-              counter-arguments, and opening lines. Built fresh from live news every day.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {[
-                'Daily briefs on policy, economy, markets, and business affairs.',
-                'Structured for GD format — not just news summaries.',
-                'Argument starters and smart angles to differentiate yourself.',
-                'Covers topics likely to appear in top tier B-school GDs.',
-              ].map(item => (
-                <li key={item} className="flex items-start gap-2.5 text-[14px] text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="btn-primary mt-6 inline-flex">
-              Browse GD Briefs
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Feature 4: Leaderboard (left text + right card) ───────────── */}
-      <section className="bg-card border-y border-border py-12 md:py-20" data-reveal>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
-            <div>
-              <div className="badge-pill mb-4">
-                <Trophy className="h-3.5 w-3.5" />
-                Leaderboard
-              </div>
-              <h2 className="text-4xl font-bold text-foreground leading-tight">
-                See exactly where<br />you stand
-              </h2>
-              <p className="mt-4 text-[15px] text-muted-foreground leading-relaxed">
-                A <span className="text-primary font-medium">live leaderboard</span> of every MBA aspirant
-                preparing right now. Earn points per submission. Track your{' '}
-                <span className="text-primary font-medium">percentile rank</span> in real time.
+        {/* ── Target firms + three ways in ─────────────────────────────── */}
+        <section aria-label="Where MECE aspirants are headed" className="relative">
+          <div className="mx-auto w-full max-w-[1240px] px-4 sm:px-6">
+            <div className="border-b border-border/80 pb-9 pt-4 lg:pt-2">
+              <p className="text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-[11.5px] sm:tracking-[0.2em]">
+                Used by aspirants targeting roles at
               </p>
-              <ul className="mt-6 space-y-3">
-                {[
-                  'Real competition with real aspirants, not curated examples.',
-                  'Points earned on every case submission and GD brief read.',
-                  'See rank, percentile, and gap to the next milestone.',
-                  'Milestone ladder from Day 0 Dreamer to Summer Legend.',
-                ].map(item => (
-                  <li key={item} className="flex items-start gap-2.5 text-[14px] text-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    {item}
+              <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-9 gap-y-3 sm:gap-x-12 lg:justify-between lg:gap-x-6">
+                {TARGET_FIRMS.map((f) => (
+                  <li key={f} className="whitespace-nowrap font-editorial text-[19px] font-medium tracking-[-0.005em] text-navy/85 dark:text-white/75 sm:text-[21px]">
+                    {f}
                   </li>
                 ))}
               </ul>
             </div>
-
-            {/* Leaderboard card — rows slide in, points count up */}
-            <LeaderboardVignette />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Feature 5: Deck Vault (left card + right text) ────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-12 md:py-20" data-reveal>
-        <div className="grid md:grid-cols-2 gap-8 md:gap-14 items-center">
-          {/* Left: winning deck skeleton — slides build in on scroll */}
-          <DeckVaultVignette />
-
-          {/* Right */}
-          <div className="order-first md:order-none">
-            <div className="badge-pill mb-4">
-              <Award className="h-3.5 w-3.5" />
-              Deck Vault
+            <div className="py-10 lg:py-12">
+              <StartCards caseId={caseId} guesstimateId={guesstimateId} />
             </div>
-            <h2 className="text-4xl font-bold text-foreground leading-tight">
-              Study decks that<br />actually won
-            </h2>
-            <p className="mt-4 text-[15px] text-muted-foreground leading-relaxed">
-              Real case-competition decks — <span className="text-primary font-medium">national winners and finalists</span>{' '}
-              from corporate flagships and B-school competitions. See the storyline, then build your own.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {[
-                'Winning decks and problem statements, not textbook samples.',
-                'Slide-by-slide skeletons: framing, insight, recommendation, roadmap.',
-                'Tagged by case type and round so you can study what you face next.',
-                'Steal the structure, never the slides.',
-              ].map(item => (
-                <li key={item} className="flex items-start gap-2.5 text-[14px] text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="btn-primary mt-6 inline-flex">
-              Open the vault
-            </Link>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Methodology strip ─────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-16" data-reveal>
-        <div className="text-center mb-10">
-          <div className="badge-pill mx-auto w-fit mb-4">
-            <Users className="h-3.5 w-3.5" />
-            100-point rubric
-          </div>
-          <h2 className="text-3xl font-bold text-foreground">How every answer is graded</h2>
-          <p className="mt-2 text-[15px] text-muted-foreground max-w-md mx-auto">
-            Six dimensions, evidence-based scoring — with a model answer and honest red-flag checks.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {[
-            ['Structure', '25 pts', 'MECE framework, logical flow, segmentation'],
-            ['Quantitative', '20 pts', 'Math accuracy, assumptions, calculations'],
-            ['Synthesis', '20 pts', 'Insights, so-what, conclusion quality'],
-            ['Business Judgment', '15 pts', 'Commercial sense, real-world viability'],
-            ['Creativity', '10 pts', 'Fresh angles, non-obvious ideas'],
-            ['Professional Tone', '10 pts', 'Clarity, conciseness, communication'],
-          ].map(([dim, pts, desc]) => (
-            <div key={dim} className="ui-card p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[13px] font-semibold text-foreground">{dim}</span>
-                <span className="tag tag-red">{pts}</span>
-              </div>
-              <p className="text-[12px] text-muted-foreground leading-relaxed">{desc}</p>
-            </div>
-          ))}
-        </div>
-        <div className="text-center mt-6">
-          <Link href="/methodology" className="btn-ghost">
-            Read full methodology <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
+        <MeceWay />
 
+        <HomeFaq faqs={HOMEPAGE_FAQS} />
 
-      {/* ── FAQ / entity disambiguation ──────────────────────────────── */}
-      <section id="faq" className="max-w-3xl mx-auto px-6 py-16" data-reveal>
-        <div className="text-center mb-10">
-          <div className="badge-pill mx-auto w-fit mb-4">
-            <HelpCircle className="h-3.5 w-3.5" />
-            FAQ
-          </div>
-          <h2 className="text-3xl font-bold text-foreground">Questions about MECE</h2>
-          <p className="mt-3 text-[15px] text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            MECE (mece.in) is a placement-interview prep platform for MBA &amp; PGDM students — not to be confused with the MECE problem-solving principle it is named after.
-          </p>
-        </div>
-        <div className="space-y-3">
-          {HOMEPAGE_FAQS.map((faq) => (
-            <details key={faq.question} className="ui-card p-5 group">
-              <summary className="flex items-center justify-between gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-[15px] font-semibold text-foreground">
-                {faq.question}
-                <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
-              </summary>
-              <p className="animate-slide-up mt-3 text-[14px] text-muted-foreground leading-relaxed">{faq.answer}</p>
-            </details>
-          ))}
-        </div>
-      </section>
+        <SuccessStories stories={orderStories(testimonials)} />
 
-      {/* ── CTA ───────────────────────────────────────────────────────── */}
-      <section className="bg-navy relative overflow-hidden py-16">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          {[
-            { w: 600, h: 400, rotate: 15, left: '-8%', top: '-20%', op: 0.06 },
-            { w: 500, h: 320, rotate: 15, right: '-5%', bottom: '-15%', op: 0.06 },
-          ].map((s, i) => (
-            <div key={i} style={{
-              position: 'absolute', width: s.w, height: s.h,
-              border: `1px solid rgba(255,255,255,${s.op})`,
-              borderRadius: 24, transform: `rotate(${s.rotate}deg)`,
-              left: s.left, top: s.top, right: (s as any).right, bottom: (s as any).bottom,
-            }} />
-          ))}
-        </div>
-        <div className="max-w-2xl mx-auto px-6 text-center relative z-10">
-          <div className="badge-pill mb-5 mx-auto w-fit" style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.05)' }}>
-            Begin practicing
-          </div>
-          <h2 className="text-4xl font-bold text-white leading-tight">
-            Your placement season<br />starts now.
-          </h2>
-          <p className="mt-4 text-[15px] text-white/50 leading-relaxed">
-            No credit card. No commitment. Start practising today and see where you rank.
-          </p>
-          <figure className="mt-8 mx-auto max-w-xl">
-            <blockquote className="text-[15px] italic leading-relaxed text-white/80">
-              &ldquo;The 6-dimension scoring is brutally honest — better than mock interviews where peers go easy on you.&rdquo;
-            </blockquote>
-            <figcaption className="mt-3 text-[13px] text-white/50">
-              Mohit Kumar Raj · TISS HRM &amp; LR &rsquo;27
-            </figcaption>
-          </figure>
-          <div className="mt-7">
-            <AuthCTA variant="cta" />
-          </div>
-        </div>
-      </section>
+        <FinalCta />
+      </main>
 
-      {/* ── Footer ────────────────────────────────────────────────────── */}
-      <Footer />
-    </div>
-  );
-}
-
-/** Geometric outline shapes for hero section background */
-function GeoShapes() {
-  return (
-    <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden>
-      {[
-        { w: 480, h: 340, rotate: 15, left: '-40px', top: '-30px', op: 0.05 },
-        { w: 400, h: 280, rotate: 15, left: '0px',   top: '10px',  op: 0.04 },
-        { w: 320, h: 220, rotate: 15, left: '30px',  top: '50px',  op: 0.03 },
-      ].map((s, i) => (
-        <div key={i} style={{
-          position: 'absolute',
-          width: s.w, height: s.h,
-          border: `1px solid hsl(var(--foreground) / ${s.op})`,
-          borderRadius: 16,
-          transform: `rotate(${s.rotate}deg)`,
-          left: s.left, top: s.top,
-        }} />
-      ))}
+      <HomeFooter />
     </div>
   );
 }

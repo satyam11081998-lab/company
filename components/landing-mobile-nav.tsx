@@ -23,7 +23,13 @@ const LINKS = [
  * `links` (2026-09-25): the US site passes its own list; the India landing
  * passes nothing and gets the unchanged LINKS above.
  */
-export default function LandingMobileNav({ links = LINKS }: { links?: { href: string; label: string }[] } = {}) {
+export default function LandingMobileNav({
+  links = LINKS,
+  hideFrom = 'md',
+}: { links?: { href: string; label: string }[]; hideFrom?: 'md' | 'lg' } = {}) {
+  // `hideFrom` (2026-09-30): the redesigned India landing shows its desktop
+  // links only from lg, so its menu must stay available through md.
+  const hideCls = hideFrom === 'lg' ? 'lg:hidden' : 'md:hidden';
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -43,7 +49,7 @@ export default function LandingMobileNav({ links = LINKS }: { links?: { href: st
   }, [open]);
 
   return (
-    <div className="md:hidden flex items-center">
+    <div className={`${hideCls} flex items-center`}>
       <button
         type="button"
         aria-label="Open menu"
@@ -57,7 +63,7 @@ export default function LandingMobileNav({ links = LINKS }: { links?: { href: st
       {mounted &&
         open &&
         createPortal(
-          <div className="fixed inset-0 z-[60] md:hidden">
+          <div className={`fixed inset-0 z-[60] ${hideCls}`}>
             <div
               className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
               onClick={() => setOpen(false)}

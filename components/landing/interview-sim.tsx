@@ -22,7 +22,7 @@
 import { useEffect, useMemo, useReducer, useState, useTransition, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowRight, PenLine, RotateCcw } from 'lucide-react';
 import { ensureGuestSession, isGuestModeEnabled } from '@/lib/guest';
 import { toast } from 'sonner';
 
@@ -310,6 +310,12 @@ function reducer(state: State, action: Action): State {
 
 /* ─────────────────────────── view ─────────────────────────── */
 
+// Squared controls for the 'tile' variant (India landing, 8px shape language).
+const SQ_PRIMARY =
+  'inline-flex h-10 items-center justify-center gap-2 rounded-[8px] bg-primary px-5 text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60';
+const SQ_GHOST =
+  'inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-border bg-card px-5 text-[14px] font-medium text-foreground transition-colors hover:bg-muted';
+
 function barColor(v: number, max: number) {
   const r = v / max;
   return r >= 0.8 ? 'bg-emerald-600' : r >= 0.55 ? 'bg-primary' : 'bg-amber-500';
@@ -323,9 +329,18 @@ interface Props {
   guesstimateId?: string | null;
   signupHref?: string;
   loginHref?: string;
+  /**
+   * 'tile' (2026-09-30): the India landing hero, where the sim sits inside an
+   * app-window frame drawn by the page (components/home/hero-tile.tsx). No
+   * card chrome of its own, tighter rhythm, squared buttons, and no member
+   * footer (the page nav already carries Log in / Sign up). The body scrolls
+   * inside the frame when the result view is taller than the window.
+   */
+  variant?: 'card' | 'tile';
 }
 
-export default function InterviewSim({ today, caseId = null, guesstimateId = null, signupHref = '/signup', loginHref = '/login' }: Props) {
+export default function InterviewSim({ today, caseId = null, guesstimateId = null, signupHref = '/signup', loginHref = '/login', variant = 'card' }: Props) {
+  const tile = variant === 'tile';
   const [s, dispatch] = useReducer(reducer, freshPlay('case'));
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -386,9 +401,9 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
   const isLast = s.stepIdx === steps.length - 1;
 
   return (
-    <div className="ui-card overflow-hidden">
+    <div className={tile ? 'flex h-full min-h-0 flex-col bg-card' : 'ui-card overflow-hidden'}>
       {/* top bar: toggle + meta */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/50 px-3.5 py-3">
+      <div className={`flex items-center justify-between gap-3 border-b border-border ${tile ? 'px-5 py-2.5' : 'bg-muted/50 px-3.5 py-3'}`}>
         <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
           {(['case', 'guess'] as Mode[]).map((m) => (
             <button
@@ -396,7 +411,7 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
               type="button"
               onClick={() => dispatch({ type: 'setMode', mode: m })}
               aria-pressed={s.mode === m}
-              className={`min-h-9 rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`${tile ? 'min-h-8 px-3 py-1' : 'min-h-9 px-3 py-1.5'} rounded-md text-[13px] font-semibold transition-colors ${
                 s.mode === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -404,13 +419,13 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
             </button>
           ))}
         </div>
-        <span className="text-right font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">
+        <span className={`text-right font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground ${tile ? 'truncate whitespace-nowrap' : ''}`}>
           {data.meta}
         </span>
       </div>
 
       {/* progress */}
-      <div className="flex gap-1.5 px-4 pt-3">
+      <div className={`flex gap-1.5 ${tile ? 'px-5 pt-3' : 'px-4 pt-3'}`}>
         {steps.map((_, i) => (
           <span key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
             <span
@@ -421,11 +436,11 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
         ))}
       </div>
 
-      <div className="p-4">
+      <div className={tile ? `min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 ${s.phase === 'play' ? '' : 'pb-4'}` : 'p-4'}>
         {s.phase === 'play' && (
           <>
             <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-primary">{step.no}</div>
-            <p className="mt-2 text-[15px] font-semibold leading-snug">{step.prompt}</p>
+            <p className={`mt-2 font-semibold ${tile ? 'text-[15px] leading-[1.4] text-foreground' : 'text-[15px] leading-snug'}`}>{step.prompt}</p>
 
             {s.replyAt === s.stepIdx && s.replyText && (
               <p className="mt-2.5 rounded-lg border border-border bg-muted/60 px-3 py-2.5 text-[13px] leading-relaxed text-muted-foreground">
@@ -434,11 +449,13 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
               </p>
             )}
 
-            <div className="mt-3 font-mono text-[11px] font-bold uppercase tracking-wide text-muted-foreground/80">
-              {step.qhint}
-            </div>
+            {!tile && (
+              <div className="mt-3 font-mono text-[11px] font-bold uppercase tracking-wide text-muted-foreground/80">
+                {step.qhint}
+              </div>
+            )}
 
-            <div className="mt-2 grid gap-2">
+            <div className={`grid ${tile ? 'mt-3 gap-[7px]' : 'mt-2 gap-2'}`}>
               {step.opts.map((o, i) => {
                 const sel = s.picks.includes(i);
                 return (
@@ -446,7 +463,8 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
                     key={i}
                     type="button"
                     onClick={() => dispatch({ type: 'togglePick', i, multi: step.kind === 'multi' })}
-                    className={`flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-[13.5px] leading-snug transition-colors ${
+                    aria-pressed={sel}
+                    className={`flex w-full items-start gap-2.5 border text-left leading-snug transition-colors ${tile ? 'rounded-[8px] px-3 py-[7px] text-[13.5px]' : 'rounded-xl px-3 py-2.5 text-[13.5px]'} ${
                       sel ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border bg-card hover:border-primary hover:bg-primary/5'
                     }`}
                   >
@@ -464,13 +482,14 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
             </div>
 
             {/* write-your-own / ask-your-own */}
-            <div className="mt-2.5">
+            <div className={tile ? 'mt-2' : 'mt-2.5'}>
               <button
                 type="button"
                 onClick={() => dispatch({ type: 'setOwnOpen', open: !s.ownOpen })}
                 className="py-1 text-[12.5px] font-semibold text-primary hover:underline"
               >
-                ✎ {step.kind === 'multi' ? 'Ask your own question' : 'Write my own answer'}
+                {tile ? <PenLine aria-hidden className="mr-1.5 inline h-3.5 w-3.5 -translate-y-px" /> : '✎ '}
+                {step.kind === 'multi' ? 'Ask your own question' : 'Write my own answer'}
               </button>
               {s.ownOpen && (
                 <textarea
@@ -482,7 +501,15 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
               )}
             </div>
 
-            <div className="mt-3.5 flex items-center justify-between gap-3">
+            {/* In the tile the action row stays pinned to the window's bottom edge,
+                so Ask / Next is always in reach when a step runs long. */}
+            <div
+              className={`flex items-center justify-between gap-3 ${
+                tile
+                  ? 'sticky bottom-0 z-[1] -mx-5 mt-2 bg-card px-5 pb-4 pt-2.5 before:pointer-events-none before:absolute before:inset-x-0 before:-top-5 before:h-5 before:bg-gradient-to-t before:from-card before:to-transparent'
+                  : 'mt-3.5'
+              }`}
+            >
               <span className="text-[11.5px] text-muted-foreground">
                 {step.kind === 'multi' ? 'Good candidates ask before they solve.' : 'Pick one, or write your own.'}
               </span>
@@ -490,7 +517,7 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
                 type="button"
                 disabled={!canAdvance}
                 onClick={() => dispatch({ type: 'advance', steps })}
-                className="btn-primary min-w-[130px] disabled:opacity-45"
+                className={tile ? 'inline-flex h-10 min-w-[120px] items-center justify-center gap-2 rounded-[8px] bg-primary px-5 text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-45' : 'btn-primary min-w-[130px] disabled:opacity-45'}
               >
                 {isLast ? 'Score me' : step.kind === 'multi' ? 'Ask' : 'Next'}
                 <ArrowRight className="h-4 w-4" />
@@ -501,6 +528,7 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
 
         {s.phase === 'result' && (
           <Result
+            tile={tile}
             vals={vals}
             total={total}
             craft={s.craft}
@@ -515,6 +543,7 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
 
         {s.phase === 'round2' && (
           <Round2
+            tile={tile}
             guided={s.guided}
             text={s.r2Text}
             score={s.r2Score}
@@ -527,6 +556,7 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
       </div>
 
       {/* footer auth affordance — always one tap to log in / sign up */}
+      {!tile && (
       <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/40 px-4 py-2.5 text-[12.5px]">
         <span className="text-muted-foreground">Already a member?</span>
         <span className="flex items-center gap-3">
@@ -534,6 +564,7 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
           <Link href={signupHref} className="font-semibold text-primary hover:underline">Sign up free</Link>
         </span>
       </div>
+      )}
     </div>
   );
 }
@@ -541,8 +572,9 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
 /* ─────────────────────────── result view ─────────────────────────── */
 
 function Result({
-  vals, total, craft, mode, signupHref, starting, onStartReal, onRetry, onRound2,
+  tile = false, vals, total, craft, mode, signupHref, starting, onStartReal, onRetry, onRound2,
 }: {
+  tile?: boolean;
   vals: number[]; total: number; craft: number; mode: Mode;
   signupHref: string; starting: boolean; onStartReal: () => void; onRetry: () => void; onRound2: () => void;
 }) {
@@ -612,11 +644,11 @@ function Result({
       </div>
 
       <div className="mt-4 grid gap-2">
-        <button type="button" onClick={onStartReal} disabled={starting} className="btn-primary justify-center disabled:opacity-60">
+        <button type="button" onClick={onStartReal} disabled={starting} className={tile ? SQ_PRIMARY : 'btn-primary justify-center disabled:opacity-60'}>
           {starting ? 'Starting…' : 'Take today’s case for real'}
           {!starting && <ArrowRight className="h-4 w-4" />}
         </button>
-        <button type="button" onClick={onRound2} className="btn-ghost justify-center">
+        <button type="button" onClick={onRound2} className={tile ? SQ_GHOST : 'btn-ghost justify-center'}>
           Round 2 · solve it free-form first
         </button>
         <button type="button" onClick={onRetry} className="inline-flex items-center justify-center gap-1.5 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
@@ -634,8 +666,9 @@ function Result({
 /* ─────────────────────────── round 2 view ─────────────────────────── */
 
 function Round2({
-  guided, text, score, starting, onStartReal, onText, onScore,
+  tile = false, guided, text, score, starting, onStartReal, onText, onScore,
 }: {
+  tile?: boolean;
   guided: number; text: string; score: number | null;
   starting: boolean; onStartReal: () => void; onText: (t: string) => void; onScore: () => void;
 }) {
@@ -654,7 +687,7 @@ function Round2({
       />
       <div className="mt-3.5 flex items-center justify-between gap-3">
         <span className="text-[11.5px] text-muted-foreground">This is what the real room feels like.</span>
-        <button type="button" disabled={text.trim().length < 20 || score !== null} onClick={onScore} className="btn-primary min-w-[130px] disabled:opacity-45">
+        <button type="button" disabled={text.trim().length < 20 || score !== null} onClick={onScore} className={tile ? `${SQ_PRIMARY} min-w-[130px] disabled:opacity-45` : 'btn-primary min-w-[130px] disabled:opacity-45'}>
           Score round 2
         </button>
       </div>
@@ -671,7 +704,7 @@ function Round2({
                 : `You dropped ${-delta} without the options. That gap is your prep list — exactly what members train away.`}
             </span>
           </div>
-          <button type="button" onClick={onStartReal} disabled={starting} className="btn-primary mt-1 justify-center disabled:opacity-60">
+          <button type="button" onClick={onStartReal} disabled={starting} className={tile ? `${SQ_PRIMARY} mt-1` : 'btn-primary mt-1 justify-center disabled:opacity-60'}>
             {starting ? 'Starting…' : 'Take today’s case for real'}
             {!starting && <ArrowRight className="h-4 w-4" />}
           </button>
