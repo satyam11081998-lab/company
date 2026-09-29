@@ -1,16 +1,24 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { BarChart3, Briefcase, Calculator, History, LayoutDashboard, Target, Trophy } from 'lucide-react';
+import { Briefcase, Calculator, History, LayoutDashboard, Target, Trophy } from 'lucide-react';
 import InterviewSim from '@/components/landing/interview-sim';
+import HomeImage from '@/components/home/photo';
+import { HOME_PHOTOS } from '@/lib/home/photos';
 
 /**
- * The hero's practice tile: today's warm-up case, framed as the MECE app
- * window it will open into — sidebar on the left, the live multiple-choice
- * interview on the right. It floats in front of the sunrise photograph like a
- * screen lifted off a desk.
+ * The hero's practice tile: today's warm-up, framed as the MECE app window it
+ * will open into — sidebar on the left, the live multiple-choice interview on
+ * the right. It floats in front of the sunrise photograph like a screen lifted
+ * off a desk.
  *
  * Everything in it works: the sim is the real interactive warm-up
  * (components/landing/interview-sim.tsx, 'tile' variant) and every sidebar
- * entry is a real link. Nothing here fetches on mount, so "/" stays static.
+ * entry is a real link. The sidebar's topic card shows a photograph of what
+ * the current question is about — a restaurant counter for the case, a glass
+ * of chai for the guesstimate — the way the US dashboard pictures today's
+ * case. Nothing here fetches on mount, so "/" stays static.
  */
 
 const NAV: { href: string; label: string; Icon: typeof Target; active?: boolean }[] = [
@@ -22,6 +30,11 @@ const NAV: { href: string; label: string; Icon: typeof Target; active?: boolean 
   { href: '/leaderboard', label: 'Leaderboard', Icon: Trophy },
 ];
 
+const TOPIC = {
+  case: { photo: HOME_PHOTOS.qsr, kicker: 'The case', title: 'A quick-service chain’s profit fell 18%' },
+  guess: { photo: HOME_PHOTOS.chai, kicker: 'The guesstimate', title: 'Cups of tea sold in a city of 10M' },
+} as const;
+
 export default function HeroTile({
   caseId,
   guesstimateId,
@@ -31,6 +44,8 @@ export default function HeroTile({
   guesstimateId: string | null;
   className?: string;
 }) {
+  const [mode, setMode] = useState<'case' | 'guess'>('case');
+  const topic = TOPIC[mode];
   return (
     <div
       className={`home-tile relative flex overflow-hidden rounded-[14px] border border-black/[0.07] bg-card dark:border-white/10 ${className}`}
@@ -63,16 +78,31 @@ export default function HeroTile({
             </li>
           ))}
         </ul>
-        <div className="mt-auto rounded-[9px] border border-border/80 bg-card px-2.5 py-2.5 dark:bg-white/[0.03]">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
-            <BarChart3 aria-hidden className="h-3.5 w-3.5 text-primary" /> Warm-up
-          </p>
-          <p className="mt-1 text-[10.5px] leading-snug text-muted-foreground">A sample case in the real format. No sign-up.</p>
+
+        {/* Topic card: what today's warm-up is about, pictured. */}
+        <div className="mt-auto overflow-hidden rounded-[10px] border border-border/80 bg-card dark:bg-white/[0.03]">
+          <div className="relative aspect-[4/3] overflow-hidden">
+            {(['case', 'guess'] as const).map((m) => (
+              <HomeImage
+                key={m}
+                photo={TOPIC[m].photo}
+                decorative
+                sizes="148px"
+                widths={[160, 320]}
+                ratio={4 / 3}
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${m === mode ? 'opacity-100' : 'opacity-0'}`}
+              />
+            ))}
+          </div>
+          <div className="px-2.5 pb-2.5 pt-2">
+            <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-primary">{topic.kicker}</p>
+            <p className="mt-0.5 text-[11.5px] font-semibold leading-snug text-foreground">{topic.title}</p>
+          </div>
         </div>
       </nav>
 
       <div className="min-w-0 flex-1">
-        <InterviewSim variant="tile" caseId={caseId} guesstimateId={guesstimateId} />
+        <InterviewSim variant="tile" caseId={caseId} guesstimateId={guesstimateId} onModeChange={setMode} />
       </div>
     </div>
   );

@@ -2,11 +2,14 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import DrawOnView from '@/components/home/draw-on-view';
 import HandNote from '@/components/home/hand-note';
+import HomeImage from '@/components/home/photo';
+import { HOME_PHOTOS } from '@/lib/home/photos';
 
 /**
  * THE MECE WAY — how an interview actually runs (clarify, structure, solve,
- * recommend), a worked issue tree that draws itself in, and the six scoring
- * dimensions (the target of the nav's "Scoring" link).
+ * recommend), structured thinking on a real whiteboard with a worked split
+ * floated on it, and the six scoring dimensions (the target of the nav's
+ * "Scoring" link).
  */
 
 const STEPS = [
@@ -72,26 +75,46 @@ export default function MeceWay() {
             ))}
           </DrawOnView>
 
-          {/* A worked issue tree: a problem split into parts that don't
-              overlap and leave nothing out — with a margin note beside it. */}
+          {/* Structure, photographed rather than drawn: a real whiteboard,
+              with the worked split floated on it the way the hero floats the
+              practice tile on its photo. */}
           <div className="relative mt-12 flex items-start gap-2">
-            <DrawOnView
-              as="figure"
-              className="home-tree relative -mx-4 w-[calc(100%+2rem)] max-w-none flex-1 overflow-x-auto px-4 pb-2 sm:mx-0 sm:w-full sm:max-w-[580px] sm:overflow-visible sm:px-0"
-              threshold={0.3}
-            >
-              <IssueTree />
+            <figure className="relative w-full max-w-[600px] flex-1">
+              <div className="relative overflow-hidden rounded-[14px] border border-black/[0.06] shadow-[0_1px_2px_rgba(15,28,51,0.06),0_30px_60px_-30px_rgba(15,28,51,0.45)] dark:border-white/10">
+                <HomeImage
+                  photo={HOME_PHOTOS.whiteboard}
+                  sizes="(min-width: 1280px) 600px, (min-width: 1024px) 55vw, 100vw"
+                  widths={[480, 720, 960, 1200]}
+                  ratio={16 / 10}
+                  className="aspect-[16/10] w-full object-cover"
+                />
+              </div>
+              {/* The worked example, as a card on the photo. */}
+              <div className="relative -mt-16 ml-auto mr-4 w-[min(88%,330px)] rounded-[12px] border border-border/90 bg-card/95 p-4 shadow-[0_18px_40px_-18px_rgba(15,28,51,0.45)] backdrop-blur-sm sm:absolute sm:bottom-5 sm:right-5 sm:mr-0 sm:mt-0">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-primary">Worked example</p>
+                <p className="mt-1.5 font-editorial text-[16.5px] font-semibold leading-snug text-navy dark:text-white">
+                  Profit fell 18% while revenue grew. Split it before you solve it.
+                </p>
+                <ul className="mt-3 grid grid-cols-3 gap-1.5 text-center text-[12px] font-medium text-foreground">
+                  {['Revenue', 'Costs', 'Market'].map((b) => (
+                    <li key={b} className="rounded-[6px] border border-border bg-background px-1.5 py-1.5">
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-[11.5px] text-muted-foreground">No overlaps, no gaps — that is MECE.</p>
+              </div>
               <figcaption className="sr-only">
-                An issue tree: a business problem split into revenue (price, volume, mix), costs (fixed, variable,
-                one-off) and market (demand, rivals, policy).
+                A hand drawing a branching structure on a whiteboard, with a worked example: a profit problem split
+                into revenue, costs and market.
               </figcaption>
-            </DrawOnView>
+            </figure>
             <HandNote
               lines={['Structured thinking', 'for unstructured', 'problems.']}
               arrow="left"
               arrowSide="left"
               rotate={-8}
-              className="-ml-3 mt-[54px] hidden shrink-0 xl:flex"
+              className="-ml-3 mt-[92px] hidden shrink-0 xl:flex"
               textClassName="w-[150px] text-center text-[20px]"
               arrowClassName="mt-6 shrink-0 text-[#2b2a27] dark:text-white/80"
               delay={500}
@@ -127,68 +150,5 @@ export default function MeceWay() {
         </div>
       </div>
     </section>
-  );
-}
-
-/* ── The issue tree, drawn in SVG so it stays crisp at any size ─────────── */
-
-const BRANCHES = [
-  { x: 106, label: 'Revenue', leaves: ['Price', 'Volume', 'Mix'] },
-  { x: 320, label: 'Costs', leaves: ['Fixed', 'Variable', 'One-off'] },
-  { x: 534, label: 'Market', leaves: ['Demand', 'Rivals', 'Policy'] },
-];
-const LEAF_DX = 72;
-
-function IssueTree() {
-  return (
-    <svg viewBox="0 0 640 196" className="h-auto w-full min-w-[520px] font-sans sm:min-w-0" aria-hidden>
-      <g className="stroke-[#9A968B] dark:stroke-white/40" fill="none" strokeWidth={1}>
-        {/* spine through the root, root to bar, bar to branches */}
-        <path data-draw pathLength={1} d="M150 17 H490" style={{ transitionDelay: '0ms' }} />
-        <path data-draw pathLength={1} d="M320 32 V52" style={{ transitionDelay: '150ms' }} />
-        <path data-draw pathLength={1} d="M106 52 H534" style={{ transitionDelay: '250ms' }} />
-        {BRANCHES.map((b, i) => (
-          <g key={b.label}>
-            <path data-draw pathLength={1} d={`M${b.x} 52 V74`} style={{ transitionDelay: `${350 + i * 80}ms` }} />
-            <path data-draw pathLength={1} d={`M${b.x} 104 V124`} style={{ transitionDelay: `${700 + i * 80}ms` }} />
-            <path data-draw pathLength={1} d={`M${b.x - LEAF_DX} 124 H${b.x + LEAF_DX}`} style={{ transitionDelay: `${800 + i * 80}ms` }} />
-            {[-1, 0, 1].map((d) => (
-              <path key={d} data-draw pathLength={1} d={`M${b.x + d * LEAF_DX} 124 V146`} style={{ transitionDelay: `${950 + i * 80}ms` }} />
-            ))}
-          </g>
-        ))}
-      </g>
-
-      {/* root */}
-      <g data-box style={{ transitionDelay: '0ms' }}>
-        <rect x="248" y="2" width="144" height="30" rx="4" fill="#C8102E" />
-        <text x="320" y="21.5" textAnchor="middle" fill="#fff" style={{ fontSize: 12.5, fontWeight: 600 }}>
-          Business problem
-        </text>
-      </g>
-
-      {BRANCHES.map((b, i) => (
-        <g key={b.label}>
-          <g data-box style={{ transitionDelay: `${500 + i * 90}ms` }}>
-            <rect x={b.x - 52} y="74" width="104" height="30" rx="4" className="fill-card stroke-[#8E8A7E] dark:stroke-white/45" strokeWidth={1} />
-            <text x={b.x} y="93.5" textAnchor="middle" className="fill-navy dark:fill-white" style={{ fontSize: 12.5, fontWeight: 600 }}>
-              {b.label}
-            </text>
-          </g>
-          {b.leaves.map((leaf, j) => {
-            const x = b.x + (j - 1) * LEAF_DX;
-            return (
-              <g key={leaf} data-box style={{ transitionDelay: `${1100 + i * 90 + j * 40}ms` }}>
-                <circle cx={x} cy={146} r={2} fill="#C8102E" />
-                <rect x={x - 31} y="150" width="62" height="26" rx="3.5" className="fill-card stroke-[#B3AEA2] dark:stroke-white/30" strokeWidth={1} />
-                <text x={x} y="167" textAnchor="middle" className="fill-[#55534C] dark:fill-white/70" style={{ fontSize: 11 }}>
-                  {leaf}
-                </text>
-              </g>
-            );
-          })}
-        </g>
-      ))}
-    </svg>
   );
 }

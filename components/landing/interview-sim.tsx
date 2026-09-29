@@ -337,11 +337,16 @@ interface Props {
    * inside the frame when the result view is taller than the window.
    */
   variant?: 'card' | 'tile';
+  /** Told whenever the visitor switches Case / Guesstimate (the tile uses it to swap its topic photo). */
+  onModeChange?: (mode: 'case' | 'guess') => void;
 }
 
-export default function InterviewSim({ today, caseId = null, guesstimateId = null, signupHref = '/signup', loginHref = '/login', variant = 'card' }: Props) {
+export default function InterviewSim({ today, caseId = null, guesstimateId = null, signupHref = '/signup', loginHref = '/login', variant = 'card', onModeChange }: Props) {
   const tile = variant === 'tile';
   const [s, dispatch] = useReducer(reducer, freshPlay('case'));
+  useEffect(() => {
+    onModeChange?.(s.mode);
+  }, [s.mode, onModeChange]);
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [starting, setStarting] = useState(false);

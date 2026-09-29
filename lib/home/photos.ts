@@ -19,6 +19,12 @@
  *   news      — "Be ready for discussions": a business section, folded.
  *   summit    — the closing band: Kangchenjunga at alpenglow, the navy of the
  *               foreground running straight into the brand navy.
+ *   whiteboard — "The MECE way": a hand drawing a branching structure in red
+ *               marker — structured thinking, photographed rather than drawn.
+ *   qsr, chai — topic photos for the hero's warm-up tile, the way the US
+ *               dashboard shows a photo of what today's case is about: the
+ *               case is a quick-service restaurant chain, the guesstimate is
+ *               cups of tea sold in a city.
  *
  * No photo shows a legible brand, logo or real person's face.
  */
@@ -26,7 +32,7 @@
 import type { UsPhoto } from '@/lib/us-market/photo-url';
 
 export type HomePhoto = UsPhoto;
-export type HomePhotoId = 'hero' | 'boardroom' | 'estimate' | 'news' | 'summit';
+export type HomePhotoId = 'hero' | 'boardroom' | 'estimate' | 'news' | 'summit' | 'whiteboard' | 'qsr' | 'chai';
 
 const U = (username: string) => `https://unsplash.com/@${username}`;
 
@@ -86,5 +92,38 @@ export const HOME_PHOTOS: Record<HomePhotoId, HomePhoto> = {
     focal: '55% 50%',
     color: '#1d3346',
     credit: { name: 'Deep', url: U('deep_erudite') },
+  },
+  whiteboard: {
+    id: 'whiteboard',
+    category: 'brand',
+    path: 'photo-1573166364266-356ef04ae798',
+    width: 6016,
+    height: 4016,
+    alt: 'A hand drawing a branching diagram in red marker on a whiteboard',
+    focal: '46% 42%',
+    color: '#ecebe9',
+    credit: { name: 'Christina @ wocintechchat.com', url: U('wocintechchat') },
+  },
+  qsr: {
+    id: 'qsr',
+    category: 'topic',
+    path: 'photo-1789095904536-87813a6f9531',
+    width: 5936,
+    height: 3959,
+    alt: 'A tray of burgers and chips set down on a restaurant counter',
+    focal: '52% 52%',
+    color: '#40260c',
+    credit: { name: 'Ahmet Yüksek', url: U('ahmetyuksek') },
+  },
+  chai: {
+    id: 'chai',
+    category: 'topic',
+    path: 'photo-1579622306443-7c6a19997a9a',
+    width: 5333,
+    height: 2999,
+    alt: 'A glass of chai on a green window ledge',
+    focal: '40% 60%',
+    color: '#3a1d12',
+    credit: { name: 'Ayrus Hill', url: U('ayrus_hill') },
   },
 };
