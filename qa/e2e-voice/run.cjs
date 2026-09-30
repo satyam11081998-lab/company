@@ -226,11 +226,53 @@ function check(name, ok, detail = '') {
   check('telemetry: no transcript text in any telemetry record',
     !JSON.stringify(tel).match(/give me a hint|population should I use|let me think/i));
 
+  // 8b. repeated barge-in (N = BARGE_N, default 30) for percentiles. Loopback + mock SCTP:
+  //     the client reaction is meaningful, the round trip is a property of this harness.
+  const BARGE_N = Number(process.env.BARGE_N || 30);
+  const clientMsAll = [];
+  const roundTripAll = [];
+  await http('POST', `${MOCK}/control/config`, { audioMs: 4000 });
+  const askTexts = ['Can you give me a hint?', 'What time period?', 'Are we talking new cars only?', 'I am stuck.'];
+  for (let i = 0; i < BARGE_N; i++) {
+    const n0 = (await creates()).length;
+    await http('POST', `${MOCK}/control/say`, { text: askTexts[i % askTexts.length], itemId: `item_b${i}` });
+    const spoke = await waitFor(async () => (await creates()).length > n0, 6000);
+    if (!spoke) continue;
+    await sleep(250);
+    const tb = Date.now();
+    await http('POST', `${MOCK}/control/speech_start`);
+    const ev = await waitFor(async () => {
+      const e = (await http('GET', `${MOCK}/control/state`)).events.filter((x) => x.at >= tb);
+      return e.some((x) => x.type === 'response.cancel') ? e : null;
+    }, 3000, 10);
+    if (ev) {
+      const st = await http('GET', `${MOCK}/control/state`);
+      const emitted = st.sent.filter((x) => x.type === 'input_audio_buffer.speech_started' && x.at >= tb)[0];
+      const cancel = ev.find((x) => x.type === 'response.cancel');
+      if (emitted) roundTripAll.push(cancel.at - emitted.at);
+      const dc = await page.evaluate(() => window.__dc);
+      const inAt = [...dc].reverse().find((x) => x.dir === 'in' && x.type === 'input_audio_buffer.speech_started');
+      const outAt = inAt && dc.find((x) => x.dir === 'out' && x.type === 'response.cancel' && x.t >= inAt.t);
+      if (inAt && outAt) clientMsAll.push(outAt.t - inAt.t);
+    }
+    await http('POST', `${MOCK}/control/speech_stop`);
+    await sleep(900);
+  }
+  const pct = (xs, p) => { const s = [...xs].sort((a, b) => a - b); return s.length ? Math.round(s[Math.min(s.length - 1, Math.max(0, Math.round(p / 100 * (s.length - 1))))] * 10) / 10 : null; };
+  const bargeStats = {
+    n: clientMsAll.length,
+    client_reaction_ms: { p50: pct(clientMsAll, 50), p90: pct(clientMsAll, 90), p95: pct(clientMsAll, 95) },
+    loopback_round_trip_ms: { p50: pct(roundTripAll, 50), p90: pct(roundTripAll, 90), p95: pct(roundTripAll, 95) },
+  };
+  check(`barge-in x${BARGE_N}: every line cancelled; client reaction P95 ${bargeStats.client_reaction_ms.p95} ms`,
+    clientMsAll.length === BARGE_N && bargeStats.client_reaction_ms.p95 < 50, JSON.stringify(bargeStats));
+  await http('POST', `${MOCK}/control/config`, { audioMs: 900 });
+
   // 9. no page errors
   const errs = (await page.evaluate(() => (window).__errors || [])).concat(pageErrors);
   check('browser: no uncaught page errors', errs.length === 0, JSON.stringify(errs));
 
-  const out = { when: new Date().toISOString(), chrome: await browser.version(), results,
+  const out = { when: new Date().toISOString(), chrome: await browser.version(), results, bargeStats,
                 decisions: decisions().length, responseCreates: (await creates()).length };
   fs.writeFileSync(path.join(HERE, 'last-run.json'), JSON.stringify(out, null, 1));
   await browser.close();
