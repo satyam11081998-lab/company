@@ -29,6 +29,8 @@ import { getDemoUserIdsCached, notInList } from '@/lib/dashboard/demo-users';
 import { getNodeOpenTargets } from '@/lib/dashboard/node-to-case';
 import { getTodayMeta } from '@/lib/dashboard/today-meta';
 import { getDailyProgress } from '@/lib/dashboard/daily-progress';
+import { dashPhotoForBrief, dashPhotoForItem } from '@/lib/dashboard/photos';
+import { dailyLineIN } from '@/lib/dashboard/daily-lines';
 import { contentMarketOf } from '@/lib/market';
 import { requestRegion } from '@/lib/market-page';
 import { runMarketScoped, scopeUsersToMarket } from '@/lib/market-db';
@@ -348,6 +350,22 @@ export default async function DashboardPage() {
   // than in a sticky bar so it is part of the content, not chrome to dismiss.
   const isGuestSession = authUser.is_anonymous === true;
 
+  // Top of the dashboard (2026-09-30): a photo of what today's case, brief and
+  // guesstimate are each about, and the line of the day (IST). Pure, no I/O.
+  // `avoid` keeps two cards from showing the same picture on a shared-topic day.
+  const heroPhoto = dashPhotoForItem({
+    title: todayMeta.casePick?.title ?? dailyToday.case?.title,
+    cluster: todayMeta.casePick?.cluster,
+    type: dailyToday.case?.type,
+    seed: dailyToday.case?.id,
+  });
+  const guessPhoto = dashPhotoForItem(
+    { title: dailyToday.guesstimate?.title, type: 'guesstimate', seed: dailyToday.guesstimate?.id },
+    [heroPhoto.id],
+  );
+  const briefPhoto = dashPhotoForBrief(dailyToday.brief, [heroPhoto.id, guessPhoto.id]);
+  const top = { heroPhoto, briefPhoto, guessPhoto, line: dailyLineIN(dailyToday.date, dailyToday.case?.type, todayMeta.casePick?.cluster) };
+
   return (
     <div className="container max-w-7xl py-10">
       {isGuestSession && (
@@ -405,6 +423,7 @@ export default async function DashboardPage() {
         todayMeta={todayMeta}
         dailyProgress={dailyProgress}
         intl={(content as string) === 'US'}
+        top={top}
       />
       {!hasRealScore && (
         <div className="mt-6">

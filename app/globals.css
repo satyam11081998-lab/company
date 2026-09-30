@@ -553,6 +553,41 @@
   .flame, .pulse-soft { animation: none !important; }
 }
 
+/* ─── India dashboard photos (2026-09-30) ───
+   Every photo melts into its card from one side — never a hard-cornered
+   picture box. Masks, not colour overlays, so the fade shows the card's own
+   surface in light and dark mode alike, with no seam. The eased stops (an
+   S-curve rather than one straight ramp) are what keep the edge invisible.
+   hero : fades out downward on phones, leftward (into the copy) from md.
+   brief: fades out downward on phones, rightward (into the copy) from md.
+   guess: fades out leftward and downward (two nested layers). */
+.dash-fade-l, .dash-fade-r, .dash-fade-b,
+.dash-photo-hero, .dash-photo-brief { -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; }
+.dash-fade-l {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+          mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+}
+.dash-fade-r {
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+          mask-image: linear-gradient(to left, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+}
+.dash-fade-b, .dash-photo-hero, .dash-photo-brief {
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, rgba(0,0,0,.1) 12%, rgba(0,0,0,.36) 26%, rgba(0,0,0,.7) 40%, #000 56%);
+          mask-image: linear-gradient(to top, transparent 0%, rgba(0,0,0,.1) 12%, rgba(0,0,0,.36) 26%, rgba(0,0,0,.7) 40%, #000 56%);
+}
+@media (min-width: 768px) {
+  .dash-photo-hero {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+            mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+  }
+  .dash-photo-brief {
+    -webkit-mask-image: linear-gradient(to left, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+            mask-image: linear-gradient(to left, transparent 0%, rgba(0,0,0,.08) 10%, rgba(0,0,0,.3) 22%, rgba(0,0,0,.62) 34%, rgba(0,0,0,.88) 46%, #000 58%);
+  }
+}
+/* Photos sit a touch quieter on the dark surface so white copy stays first. */
+.dark .dash-photo-img { opacity: .78; }
+
 /* ─── Focus+ Dashboard: density + utility classes ─── */
 .density-spacious { --pad-card: 22px 24px; --gap-section: 24px; --gap-grid: 18px; --hero-pad: 36px 40px; --hero-scale: 1; }
 .density-balanced  { --pad-card: 18px 20px; --gap-section: 20px; --gap-grid: 16px; --hero-pad: 28px 32px; --hero-scale: 0.92; }

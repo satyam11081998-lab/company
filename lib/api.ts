@@ -22,6 +22,10 @@ export interface DailyContentResponse {
     title: string;
     source_name: string;
     thumbnail_url: string | null;
+    /** Optional (2026-09-30): filled by the server-side reader, for the dashboard's photo and "3 hr ago". */
+    published_at?: string | null;
+    category?: string | null;
+    keywords?: string[] | null;
   } | null;
 }
 

@@ -102,7 +102,9 @@ export async function getDailyTodayServerSide(
       // star headline of the day = today's brief (mirrors backend: is_star, newest first)
       supabase
         .from('news_headlines')
-        .select('id, title, source_name, thumbnail_url')
+        // published_at / category / keywords (2026-09-30) feed the dashboard's
+        // brief photo and publish time. All three are baseline columns (0001).
+        .select('id, title, source_name, thumbnail_url, published_at, category, keywords')
         .eq('is_star', true)
         .order('published_at', { ascending: false })
         .limit(1),
@@ -131,6 +133,9 @@ export async function getDailyTodayServerSide(
             title: starRow.title,
             source_name: starRow.source_name,
             thumbnail_url: starRow.thumbnail_url ?? null,
+            published_at: starRow.published_at ?? null,
+            category: starRow.category ?? null,
+            keywords: Array.isArray(starRow.keywords) ? starRow.keywords : null,
           }
         : null,
     };
