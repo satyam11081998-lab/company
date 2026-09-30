@@ -19,7 +19,8 @@ import { Dot, Eyebrow, IconChip, SectionHeading, US_CARD, UsImage, usButton, typ
 import { IssueTreeArt } from '@/components/us/art';
 import StartButton from '@/components/us/marketing/start-button';
 import StartCaseButton from '@/components/us/marketing/start-case-button';
-import { US_PHOTOS } from '@/lib/us-market/assets';
+import { US_PHOTOS, US_TOPIC_PHOTOS } from '@/lib/us-market/assets';
+import PracticeTile from '@/components/landing/practice-tile';
 import { US_CASE_TYPE_LABEL } from '@/lib/us-market';
 import type { UsCase, UsGuesstimate } from '@/lib/us-market/types';
 
@@ -29,7 +30,23 @@ const WRAP = 'mx-auto w-full max-w-[1200px] px-4 sm:px-6';
    1 · HERO — headline left, full-bleed photograph right, today's real case
    ════════════════════════════════════════════════════════════════════════ */
 
-type HeroToday = { id: string | null; title: string; typeLabel: string; difficulty: string; minutes: number | null; isDaily: boolean };
+type HeroToday = {
+  id: string | null;
+  /** Today's US market sizing question — the warm-up tile's "for real" button can open it. */
+  guesstimateId?: string | null;
+  title: string;
+  typeLabel: string;
+  difficulty: string;
+  minutes: number | null;
+  isDaily: boolean;
+};
+
+/** Topic photos for the warm-up tile's sidebar card (the case is a quick-service
+    chain, the market sizing question is coffee in a US city). */
+const TILE_TOPICS = {
+  case: { photo: US_TOPIC_PHOTOS['restaurant-counter'], kicker: 'The case', title: 'A quick-service chain’s profit fell 18%' },
+  guess: { photo: US_TOPIC_PHOTOS['coffee-cup'], kicker: 'Market sizing', title: 'Cups of coffee bought in a city of 3M' },
+};
 
 export function Hero({ today }: { today: HeroToday }) {
   return (
@@ -37,13 +54,14 @@ export function Hero({ today }: { today: HeroToday }) {
       {/* Soft warm glow behind the headline */}
       <div aria-hidden className="pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-rose-100/50 blur-3xl dark:bg-primary/10" />
 
-      {/* Desktop: the photograph bleeds to the right edge and fades into the page. */}
-      <div aria-hidden className="absolute inset-y-0 right-0 hidden w-[48%] lg:block">
+      {/* Desktop: the photograph bleeds to the right edge and fades into the page;
+          the practice tile sits in front of it. */}
+      <div aria-hidden className="absolute inset-y-0 right-0 hidden w-[56%] lg:block">
         <UsImage
           photo={US_PHOTOS.hero}
           priority
           widths={[720, 1080, 1440, 1920]}
-          sizes="48vw"
+          sizes="56vw"
           className="h-full w-full"
           decorative
         />
@@ -51,10 +69,10 @@ export function Hero({ today }: { today: HeroToday }) {
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/60 to-transparent" />
       </div>
 
-      <div className={`${WRAP} relative grid grid-cols-1 items-center gap-10 pb-14 pt-12 sm:pt-16 lg:min-h-[620px] lg:grid-cols-12 lg:pb-16 lg:pt-8`}>
-        <div className="lg:col-span-7 lg:pr-10">
+      <div className={`${WRAP} relative grid grid-cols-1 items-center gap-10 pb-14 pt-12 sm:pt-16 lg:min-h-[680px] lg:grid-cols-12 lg:gap-8 lg:pb-16 lg:pt-10`}>
+        <div className="lg:col-span-6 lg:pr-2">
           <Eyebrow>Built for ambitious minds</Eyebrow>
-          <h1 className="mt-6 font-display text-[42px] leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[54px] lg:text-[44px] xl:text-[52px]">
+          <h1 className="mt-6 font-display text-[42px] leading-[1.06] tracking-[-0.02em] text-foreground sm:text-[54px] lg:text-[36px] xl:text-[43px]">
             Master business thinking<Dot />
             <span className="block">Prepare like a consultant<Dot /></span>
           </h1>
@@ -78,58 +96,39 @@ export function Hero({ today }: { today: HeroToday }) {
           </ul>
         </div>
 
-        <div className="relative lg:col-span-5 lg:min-h-[500px]">
-          {/* Phone / tablet: the photograph as a rounded block. */}
+        <div className="relative lg:col-span-6 lg:flex lg:justify-end">
+          {/* Phone / tablet: the photograph as a rounded block behind the tile. */}
           <div className="relative overflow-hidden rounded-[20px] lg:hidden">
             <UsImage photo={US_PHOTOS.hero} priority ratio={4 / 3} widths={[480, 720, 960]} sizes="100vw" className="aspect-[4/3] w-full" />
           </div>
 
-          {/* Example score card, floating top-right on desktop. */}
-          <div className={`${US_CARD} absolute right-0 top-6 hidden w-[240px] p-4 lg:block`}>
-            <div className="flex items-center justify-between">
-              <p className="text-[12px] font-semibold text-foreground">Case score</p>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground/75">Example</span>
-            </div>
-            <p className="mt-2 text-[30px] font-semibold leading-none tracking-tight text-foreground tnum">
-              84<span className="text-[14px] font-medium text-muted-foreground">/100</span>
-            </p>
-            <ul className="mt-3 space-y-2">
-              {[
-                ['Structure', 22, 25],
-                ['Quantitative', 17, 20],
-                ['Synthesis', 16, 20],
-              ].map(([k, v, max]) => (
-                <li key={k as string}>
-                  <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>{k}</span>
-                    <span className="tnum">{v}/{max}</span>
+          {/* The warm-up: a real four-step case to tap through, right here —
+              something to DO in the first screen. Today's live case sits in
+              the window's status bar. */}
+          <PracticeTile
+            market="US"
+            caseId={today.id}
+            guesstimateId={today.guesstimateId ?? null}
+            topics={TILE_TOPICS}
+            className="relative -mt-16 mx-2 rounded-[16px] sm:mx-6 lg:mx-0 lg:mt-0 lg:h-[574px] lg:w-full min-[1400px]:-mr-14 min-[1400px]:w-[calc(100%+56px)] min-[1400px]:max-w-[640px]"
+            footer={
+              <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <IconChip tone="red" size="sm"><Network /></IconChip>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-primary">
+                      {today.isDaily ? "Today's case · free" : 'From the case bank'}
+                      <span className="hidden font-normal text-muted-foreground sm:inline">
+                        {' '}· {today.typeLabel} · <span className="capitalize">{today.difficulty}</span>
+                      </span>
+                    </p>
+                    <p className="truncate text-[13.5px] font-semibold text-foreground">{today.title}</p>
                   </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-muted">
-                    <div className="h-1.5 rounded-full bg-primary" style={{ width: `${((v as number) / (max as number)) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Today's real case. */}
-          <div className={`${US_CARD} relative -mt-14 mx-3 p-5 sm:mx-8 lg:absolute lg:bottom-4 lg:-left-6 lg:mx-0 lg:mt-0 lg:w-[360px]`}>
-            <div className="flex items-center gap-3">
-              <IconChip tone="red" size="sm"><Network /></IconChip>
-              <p className="text-[12px] font-semibold text-primary">{today.isDaily ? "Today's case · free" : 'From the case bank'}</p>
-            </div>
-            <p className="mt-3 font-display text-[21px] leading-snug text-foreground">{today.title}</p>
-            <p className="mt-2 text-[13px] text-muted-foreground">
-              {today.typeLabel} · <span className="capitalize">{today.difficulty}</span>
-              {today.minutes ? <> · about {today.minutes} min</> : null}
-            </p>
-            {today.id && (
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="text-[12px] text-muted-foreground">No sign-up needed</span>
-                <StartCaseButton caseId={today.id} label="Start this case" size="sm" />
+                </div>
+                {today.id && <StartCaseButton caseId={today.id} label="Start" size="sm" className="shrink-0" />}
               </div>
-            )}
-          </div>
+            }
+          />
         </div>
       </div>
     </section>

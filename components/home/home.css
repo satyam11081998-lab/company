@@ -55,18 +55,6 @@
   fill: none;
 }
 
-/* The practice tile: a screen lifted off the desk. Warm, long shadow so it
-   reads as sitting in the photograph's light, not pasted on it. */
-.home-tile {
-  box-shadow:
-    0 1px 2px rgba(15, 28, 51, 0.06),
-    0 10px 24px -12px rgba(15, 28, 51, 0.22),
-    0 44px 80px -28px rgba(58, 32, 10, 0.42);
-}
-.dark .home-tile {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 80px -30px rgba(0, 0, 0, 0.8);
-}
-
 /* Photo motion — slow enough to feel like light changing, not an effect.
    The hero breathes around the hiker (transform-origin on him), the sky
    warms and cools, the summit drifts. All off under reduced motion. */
