@@ -1,17 +1,17 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-30 03:40 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-30 19:17 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-30 03:40 UTC
+**Last sync:** 2026-09-30 19:17 UTC
 
 ## Last 5 commits — frontend
+- 39b670f feat(dashboard): India top section — topic photos, practice streak, line of the day (SatyamSK, 2026-09-30)
+- ae717bf feat(us): interactive MCQ warm-up tile in the /us hero (SatyamSK, 2026-09-30)
+- a73be90 chore(brain): sync STATE after india-landing-redesign merge (SatyamSK, 2026-09-30)
 - ed5890e feat(landing): stock photography over SVG drawings (owner feedback) (SatyamSK, 2026-09-29)
 - e554abd feat(landing): editorial India landing from the approved mockup (SatyamSK, 2026-09-29)
-- f9841b6 feat(voice): "Voice interview · Beta" note in every voice overlay (SatyamSK, 2026-09-28)
-- 5c7155a perf(voice,chat): speak first, save after; Gemini asks V11 early (SatyamSK, 2026-09-28)
-- ba41ac6 fix(voice): Gemini Live now speaks V11's line (realtimeInput.text) and can't get stuck (SatyamSK, 2026-09-27)
 
 ## Last 5 commits — backend
 - 12308ec fix(db): shared Supabase client uses pooled HTTP/1.1, not one HTTP/2 connection (SatyamSK, 2026-09-28)
@@ -21,7 +21,7 @@
 - 8183724 Update interview_engine.py (satyam11081998-lab, 2026-09-28)
 
 ## Open feature branches (not merged into main)
-- (none)
+- origin/feat/unified-interviewer-brain
 
 ## Per-feature status (mirror of LEDGER.md)
 | Feature | Owner brain | Branch | Status |
