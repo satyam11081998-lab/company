@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-27 08:46 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-09-30 03:40 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
-**Last sync:** 2026-09-27 08:46 UTC
+**Last sync:** 2026-09-30 03:40 UTC
 
 ## Last 5 commits — frontend
-- 5a25b8b feat(us-learn): animated issue-tree hero visual on /us/learn (SatyamSK, 2026-09-27)
-- 299e721 chore(brain): sync STATE after us-growth-seo (SatyamSK, 2026-09-27)
-- e05f104 feat(us-growth): route intl readers of India /learn pages to US guides + Learn nav (SatyamSK, 2026-09-27)
-- 0d4aa52 feat(us-growth): US Learn library + AEO/GEO plumbing (non-breaking) (SatyamSK, 2026-09-27)
-- 4112489 feat(us): v2 visual pass — cards, icon chips, full MECE lockup (SatyamSK, 2026-09-27)
+- ed5890e feat(landing): stock photography over SVG drawings (owner feedback) (SatyamSK, 2026-09-29)
+- e554abd feat(landing): editorial India landing from the approved mockup (SatyamSK, 2026-09-29)
+- f9841b6 feat(voice): "Voice interview · Beta" note in every voice overlay (SatyamSK, 2026-09-28)
+- 5c7155a perf(voice,chat): speak first, save after; Gemini asks V11 early (SatyamSK, 2026-09-28)
+- ba41ac6 fix(voice): Gemini Live now speaks V11's line (realtimeInput.text) and can't get stuck (SatyamSK, 2026-09-27)
 
 ## Last 5 commits — backend
-- 60dd77e feat(us-launch): market-aware access guard, US daily scheduler + cron (SatyamSK, 2026-09-26)
-- 432fa93 feat(copilot): owner-preview gating so the owner can dogfood pre-launch (SatyamSK, 2026-09-24)
-- d084951 fix(cors): allow Vercel preview origins so preview builds can call the API (SatyamSK, 2026-09-23)
-- 45d95e6 feat(copilot): isolated role/company-aware Prep Copilot v2 (backend, flag-gated OFF) (SatyamSK, 2026-09-23)
-- 61975a9 feat(ai): run the GD brief surface on the Gemini free tier (SatyamSK, 2026-09-22)
+- 12308ec fix(db): shared Supabase client uses pooled HTTP/1.1, not one HTTP/2 connection (SatyamSK, 2026-09-28)
+- e0e3609 perf: make every interviewer turn fast without touching the V10 engine (SatyamSK, 2026-09-28)
+- b5ec67a Update interviewer_mode.py (satyam11081998-lab, 2026-09-28)
+- d267f6a Update interviewer_decision.py (satyam11081998-lab, 2026-09-28)
+- 8183724 Update interview_engine.py (satyam11081998-lab, 2026-09-28)
 
 ## Open feature branches (not merged into main)
 - (none)
