@@ -24,10 +24,11 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import VoiceWave from '@/components/icons/voice-wave';
 import type { AttemptMessage } from '@/lib/interview-api';
-import { postRealtimeTurn, postVoiceDecision, type VoiceDecision } from '@/lib/interview-api';
-import { startRealtimeSession, type RealtimeHandle } from '@/lib/voice/realtime-session';
+import { postRealtimeTurn, postVoiceDecision, postVoiceCoach, postVoiceTool, type VoiceDecision } from '@/lib/interview-api';
+import { startRealtimeSession, type RealtimeHandle, type RealtimeInterviewer } from '@/lib/voice/realtime-session';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
 import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue } from '@/lib/voice/v11-voice';
+import { answerLeakTripwire, ANSWER_LEAK_STEER, TOOL_UNAVAILABLE_OUTPUT, type ToolCall } from '@/lib/voice/model-led';
 import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 
 // Before V11 decides a turn, earlier turns should be in the saved history. Saves
@@ -97,6 +98,14 @@ export default function VoiceInterviewRealtime({
   // one is decided), and never sit between V11's decision and the voice.
   const ledgerRef = useRef(new CandidateTurnLedger());
   const savesRef = useRef(new SaveQueue());
+
+  // Model-led interviewer (backend VOICE_INTERVIEWER): the realtime model talks
+  // to the candidate by itself; the server coaches alongside (/voice-coach) and
+  // hands out hints and, once they insist, the answer (/voice-tool). Set from the
+  // minted session, before any audio flows.
+  const interviewerRef = useRef<RealtimeInterviewer>('renderer');
+  const answerAllowedRef = useRef(false);
+  const trippedRef = useRef(false);  // guardrail fired for the reply in progress
 
   // Props read inside callbacks that are created ONCE. A spoken case outlives a
   // Supabase token, so these must not be captured by value.
@@ -185,6 +194,45 @@ export default function VoiceInterviewRealtime({
     [attemptId, queueSave],
   );
 
+  // Model-led: the model has ALREADY answered this turn by itself. Save it, then
+  // let the server's coach read the saved history and refresh the instructions
+  // for the next turns (only when its notes changed).
+  const handleModelLedTurn = useCallback(
+    async (text: string) => {
+      if (!text || isLikelyNoise(text)) return;
+      if (isEchoOfLine(text, lastLineRef.current, performance.now())) return;
+      queueSave('user', text);
+      await savesRef.current.settled(SAVE_WAIT_MS);
+      try {
+        const coach = await postVoiceCoach(attemptId, tokenRef.current);
+        if (coach.changed && coach.instructions) {
+          sessionRef.current?.updateInstructions(coach.instructions);
+          console.log('[realtime][coach]', coach.notes);
+        }
+      } catch (e) {
+        // Coaching is a nicety: the conversation carries on without it.
+        console.warn('[realtime][coach] skipped:', e instanceof Error ? e.message : e);
+      }
+    },
+    [attemptId, queueSave],
+  );
+
+  const handleToolCall = useCallback(
+    async (call: ToolCall) => {
+      let output = TOOL_UNAVAILABLE_OUTPUT;
+      try {
+        const res = await postVoiceTool(attemptId, tokenRef.current, call.name, call.arguments);
+        output = res.output || output;
+        if (res.answer_allowed) answerAllowedRef.current = true;
+        console.log(`[realtime][tool] ${call.name} -> answer_given=${res.answer_given}`);
+      } catch (e) {
+        console.warn('[realtime][tool] failed:', e instanceof Error ? e.message : e);
+      }
+      sessionRef.current?.sendToolResult(call.callId, output);
+    },
+    [attemptId],
+  );
+
   // --- boot --------------------------------------------------------------
   useEffect(() => {
     let cancelled = false;
@@ -194,11 +242,28 @@ export default function VoiceInterviewRealtime({
           { caseId, attemptId, token: tokenRef.current },
           {
             onReady: () => !cancelled && setPhase('listening'),
-            onSpeakingChange: (s) => !cancelled && setPhase(s ? 'speaking' : 'listening'),
+            onSpeakingChange: (s) => {
+              if (s) trippedRef.current = false;  // a new reply gets a fresh guardrail
+              if (!cancelled) setPhase(s ? 'speaking' : 'listening');
+            },
             onListeningChange: () => { lastActivityRef.current = performance.now(); },
-            onUserTurn: (t) => void handleUserTurn(t),
-            onAssistantDelta: (p) => !cancelled && setAsstDraft(p),
+            onInterviewer: (who) => { interviewerRef.current = who; },
+            onUserTurn: (t) => void (interviewerRef.current === 'model_led' ? handleModelLedTurn(t) : handleUserTurn(t)),
+            onToolCall: (call) => void handleToolCall(call),
+            onAssistantDelta: (p) => {
+              if (!cancelled) setAsstDraft(p);
+              // Live guardrail (model-led): the answer only ever comes through
+              // answer_request. If the model starts stating it anyway, cut the
+              // reply and steer it back to a framework.
+              if (interviewerRef.current === 'model_led' && !trippedRef.current
+                  && answerLeakTripwire(p, answerAllowedRef.current)) {
+                trippedRef.current = true;
+                console.warn('[realtime][guardrail] answer leak - reply cut');
+                sessionRef.current?.cancelAndSteer(ANSWER_LEAK_STEER);
+              }
+            },
             onAssistantTurn: (t) => {
+              trippedRef.current = false;
               setAsstDraft('');
               lastLineRef.current = { text: t, at: performance.now() };
               queueSave('assistant', t);

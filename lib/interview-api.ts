@@ -292,6 +292,48 @@ export async function postVoiceFold(
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn't update the interviewer state."));
 }
 
+/**
+ * Model-led realtime voice (backend VOICE_INTERVIEWER): after each saved
+ * candidate turn, ask the server's coach for refreshed instructions. `changed`
+ * is false (and `instructions` null) when nothing needs to change.
+ */
+export interface VoiceCoachResponse {
+  changed: boolean;
+  notes: string[];
+  instructions: string | null;
+}
+
+export async function postVoiceCoach(attemptId: string, token: string): Promise<VoiceCoachResponse> {
+  const res = await fetch(`${API_URL}/attempts/${attemptId}/voice-coach`, {
+    method: 'POST',
+    headers: { ...authHeaders(token) },
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "Couldn't refresh the interviewer."));
+  return res.json();
+}
+
+/** Model-led realtime voice: run a tool the speech model called (get_hint, answer_request). */
+export interface VoiceToolResponse {
+  output: string;
+  answer_given: boolean;
+  answer_allowed: boolean;
+}
+
+export async function postVoiceTool(
+  attemptId: string,
+  token: string,
+  name: string,
+  args: string,
+): Promise<VoiceToolResponse> {
+  const res = await fetch(`${API_URL}/attempts/${attemptId}/voice-tool`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ name, arguments: args }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, "The interviewer's hint service didn't respond."));
+  return res.json();
+}
+
 export async function uploadAttemptFile(
   attemptId: string,
   token: string,

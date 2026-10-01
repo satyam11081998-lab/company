@@ -18,6 +18,10 @@
  */
 
 import { openaiSayInstructions } from '@/lib/voice/v11-voice';
+import { toolCallFromEvent, type ToolCall } from '@/lib/voice/model-led';
+
+/** Who decides the interviewer's turns, as the backend minted the session. */
+export type RealtimeInterviewer = 'renderer' | 'model_led';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const OPENAI_REALTIME_URL = 'https://api.openai.com/v1/realtime/calls';
@@ -38,6 +42,10 @@ export interface RealtimeCallbacks {
   onError?: (message: string) => void;
   /** Connected and ready — stop showing the connecting state. */
   onReady?: () => void;
+  /** Which interviewer the backend minted (called before connecting). */
+  onInterviewer?: (interviewer: RealtimeInterviewer) => void;
+  /** Model-led only: the model called a tool; answer with sendToolResult. */
+  onToolCall?: (call: ToolCall) => void;
 }
 
 export interface RealtimeHandle {
@@ -51,6 +59,14 @@ export interface RealtimeHandle {
    * candidate turn by itself -- this is the only way it speaks.
    */
   say: (line: string) => void;
+  /** 'renderer' (V11 decides each turn) or 'model_led' (the model converses). */
+  interviewer: RealtimeInterviewer;
+  /** Model-led: replace the session instructions (server-built playbook + coach notes). */
+  updateInstructions: (instructions: string) => void;
+  /** Model-led: hand a tool result back to the model and let it continue speaking. */
+  sendToolResult: (callId: string, output: string) => void;
+  /** Model-led guardrail: stop the reply in progress and steer the next one. */
+  cancelAndSteer: (note: string) => void;
 }
 
 export async function startRealtimeSession(
@@ -73,8 +89,10 @@ export async function startRealtimeSession(
     }
     throw new Error(detail);
   }
-  const { client_secret: clientSecret, model } = await sessionRes.json();
+  const { client_secret: clientSecret, model, interviewer: minted } = await sessionRes.json();
   if (!clientSecret) throw new Error('Voice session did not return a token.');
+  const interviewer: RealtimeInterviewer = minted === 'model_led' ? 'model_led' : 'renderer';
+  cbs.onInterviewer?.(interviewer);
 
   // 2. Peer connection. Echo cancellation is not optional here: the
   //    interviewer's audio comes out of the same speakers the mic is listening
@@ -164,6 +182,7 @@ export async function startRealtimeSession(
         cbs.onListeningChange?.(false);
         break;
       case 'response.created':
+        asstDraft = '';  // a new reply: never carry text over from a cut one
         setSpeaking(true);
         break;
       case 'response.done':
@@ -172,11 +191,21 @@ export async function startRealtimeSession(
         // to spend_today_usd() and therefore to the daily-budget kill switch.
         if (evt.response?.usage) cbs.onUsage?.(evt.response.usage);
         break;
+      // Model-led: the model finished a function call (get_hint / answer_request).
+      case 'response.output_item.done': {
+        const call = toolCallFromEvent(evt);
+        if (call) cbs.onToolCall?.(call);
+        break;
+      }
       case 'error':
         cbs.onError?.(evt.error?.message || 'Voice session error');
         break;
     }
   });
+
+  const send = (event: unknown) => {
+    if (dc.readyState === 'open') dc.send(JSON.stringify(event));
+  };
 
   // 5. SDP offer/answer.
   const offer = await pc.createOffer();
@@ -224,6 +253,25 @@ export async function startRealtimeSession(
       const text = (line || '').trim();
       if (!text || dc.readyState !== 'open') return;
       dc.send(JSON.stringify({ type: 'response.create', response: { instructions: openaiSayInstructions(text) } }));
+    },
+    interviewer,
+    updateInstructions(instructions: string) {
+      if (!instructions) return;
+      send({ type: 'session.update', session: { type: 'realtime', instructions } });
+    },
+    sendToolResult(callId: string, output: string) {
+      send({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: callId, output } });
+      send({ type: 'response.create' });
+    },
+    cancelAndSteer(note: string) {
+      send({ type: 'response.cancel' });
+      send({ type: 'output_audio_buffer.clear' });  // WebRTC: drop audio already queued
+      send({
+        type: 'conversation.item.create',
+        item: { type: 'message', role: 'system', content: [{ type: 'input_text', text: note }] },
+      });
+      send({ type: 'response.create' });
+      setSpeaking(false);
     },
   };
 }
