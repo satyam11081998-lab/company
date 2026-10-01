@@ -101,9 +101,11 @@ function check(name, ok, detail = '') {
   check('speech to speech (AUDIO responses)', JSON.stringify(cfg.response_modalities) === '["AUDIO"]');
 
   // 2. the interviewer opens the call, its own audio plays
-  check('interviewer opens the call (opening turn sent, greeting played and saved)',
+  check('fresh call: prompt says the case is on screen (no recap), level = case difficulty',
+    ins.includes("already on the candidate's screen") && ins.includes('DIFFICULTY: MEDIUM') && !ins.includes('RESUMING'));
+  check('interviewer opens the call by pointing to the case on screen (played and saved)',
     (await waitFor(async () => (await st()).received.some((r) => r.type === 'text' && /joined the call/.test(r.text)), 5000))
-    && (await waitFor(async () => (await msgs()).some(([r, c]) => r === 'assistant' && c.startsWith('Hi, let us size')), 6000))
+    && (await waitFor(async () => (await msgs()).some(([r, c]) => r === 'assistant' && c.startsWith('Hi, the case is on your screen')), 6000))
     && (await played()) > 0);
 
   // 3. a live exchange
@@ -135,6 +137,26 @@ function check(name, ok, detail = '') {
   const full = await waitFor(async () => (await msgs()).some(([r, c]) => r === 'assistant' && c === 'So the final answer is about 48,000 electric scooters in Chennai.'), 9000);
   check('after asking: the answer is spoken in full (no cut)', full
     && (await st()).received.filter((r) => /giving away the answer/.test(r.text || '')).length === steersBefore);
+  // 6. a reply whose turnComplete never arrives is still closed and saved
+  await sleep(400);
+  await http('POST', `${MOCK}/control/config`, { noTurnComplete: true });
+  await http('POST', `${MOCK}/control/say`, { text: 'ok next I take households in Chennai again' });
+  check('a reply Gemini never closes is still shown and saved (no stalled transcript)',
+    await waitFor(async () => (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Yes, your 27 lakh households')).length >= 2, 8000));
+  await http('POST', `${MOCK}/control/config`, { noTurnComplete: false });
+
+  // 7. difficulty: switching to Hard reconnects with the hard style and RESUMES
+  const conns = (await st()).connections;
+  await page.getByRole('radio', { name: 'Hard' }).click();
+  check('switching to Hard reconnects', await waitFor(async () => (await st()).connections > conns, 8000));
+  const cfg2 = await http('GET', `${API}/__e2e/gemini`);
+  const ins2 = cfg2.system_instruction || '';
+  check('Hard: the new session prompt carries the hard style and the conversation so far (resume)',
+    ins2.includes('DIFFICULTY: HARD') && ins2.includes('You are RESUMING this interview') && ins2.includes('CANDIDATE: I would start from households'));
+  check('reconnect resumes (resume turn sent, no fresh greeting)',
+    await waitFor(async () => (await msgs()).some(([r, c]) => r === 'assistant' && c.startsWith('Welcome back')), 6000)
+    && (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Hi, the case is on your screen')).length === 1);
+  check('the level is remembered for next time', (await page.evaluate(() => localStorage.getItem('mece.voiceLevel'))) === 'hard');
   check('no page errors', pageErrors.length === 0, pageErrors.join(' | '));
 
   await browser.close();

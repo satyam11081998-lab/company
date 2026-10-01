@@ -32,6 +32,8 @@ import {
   answerLeakTripwire, answerAllowedAfterAsks, isAnswerRequest, ANSWER_LEAK_STEER, TOOL_UNAVAILABLE_OUTPUT, type ToolCall,
 } from '@/lib/voice/model-led';
 import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
+import VoiceLevelPicker from '@/components/solve/VoiceLevelPicker';
+import { getStoredLevel, setStoredLevel, withTimeout, isVoiceLevel, type VoiceLevel } from '@/lib/voice/level';
 
 // Before V11 decides a turn, earlier turns should be in the saved history. Saves
 // run in the background and take ~0.3 s, so this wait is normally zero; it is
@@ -77,6 +79,11 @@ export default function VoiceInterviewRealtime({
   const [live, setLive] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
   const [asstDraft, setAsstDraft] = useState('');  // interviewer reply as it streams
   const [userDraft, setUserDraft] = useState('');  // candidate's words as they are transcribed
+  const [level, setLevel] = useState<VoiceLevel | null>(() => (typeof window === 'undefined' ? null : getStoredLevel()));
+  const [sessionLevel, setSessionLevel] = useState<VoiceLevel | null>(null);
+  const [sessionKey, setSessionKey] = useState(0);  // bump = reconnect (level change)
+  const levelRef = useRef(level);
+  levelRef.current = level;
 
   const sessionRef = useRef<RealtimeHandle | null>(null);
   const closingRef = useRef(false);
@@ -138,13 +145,13 @@ export default function VoiceInterviewRealtime({
       setLive((l) => [...l.slice(-12), { role, text }]);
       try {
         const usage = pendingUsageRef.current;
-        await postRealtimeTurn(attemptId, tokenRef.current, {
+        await withTimeout(postRealtimeTurn(attemptId, tokenRef.current, {
           role,
           content: text,
           ...(role === 'assistant' && (usage.input || usage.output)
             ? { audio_input_tokens: usage.input, audio_output_tokens: usage.output }
             : {}),
-        });
+        }));
         if (role === 'assistant') pendingUsageRef.current = { input: 0, output: 0 };
         onTurnPersistedRef.current();
       } catch (e) {
@@ -249,10 +256,12 @@ export default function VoiceInterviewRealtime({
   // --- boot --------------------------------------------------------------
   useEffect(() => {
     let cancelled = false;
+    setPhase('connecting');
+    trippedRef.current = false;
     (async () => {
       try {
         const handle = await startRealtimeSession(
-          { caseId, attemptId, token: tokenRef.current },
+          { caseId, attemptId, token: tokenRef.current, level: levelRef.current },
           {
             onReady: () => !cancelled && setPhase('listening'),
             onSpeakingChange: (s) => {
@@ -295,6 +304,7 @@ export default function VoiceInterviewRealtime({
         );
         if (cancelled) { handle.stop(); return; }
         sessionRef.current = handle;
+        if (isVoiceLevel(handle.level)) setSessionLevel(handle.level);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'Could not start voice mode');
         closeSession();
@@ -306,7 +316,13 @@ export default function VoiceInterviewRealtime({
       sessionRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sessionKey]);
+
+  function changeLevel(next: VoiceLevel) {
+    setStoredLevel(next);
+    setLevel(next);
+    setSessionKey((k) => k + 1);  // reconnect with the new style; the conversation carries over
+  }
 
   // --- session cap + idle guards ----------------------------------------
   useEffect(() => {
@@ -390,6 +406,9 @@ export default function VoiceInterviewRealtime({
             </span>
           )}
         </div>
+        {interviewerRef.current === 'model_led' && (
+          <VoiceLevelPicker value={sessionLevel ?? level} onChange={changeLevel} disabled={phase === 'connecting'} />
+        )}
         <button type="button" onClick={closeSession} className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Leave voice mode">
           <X className="h-5 w-5" />
         </button>

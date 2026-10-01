@@ -31,7 +31,9 @@ import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 import {
   CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, stripSayLabel, type GateAction,
 } from '@/lib/voice/v11-voice';
-import { GeminiLiveTurns, GEMINI_OPEN_TURN, geminiSteerTurn, type LiveAction } from '@/lib/voice/gemini-live';
+import { GeminiLiveTurns, GEMINI_OPEN_TURN, GEMINI_RESUME_TURN, geminiSteerTurn, type LiveAction } from '@/lib/voice/gemini-live';
+import { getStoredLevel, setStoredLevel, withTimeout, isVoiceLevel, type VoiceLevel } from '@/lib/voice/level';
+import VoiceLevelPicker from '@/components/solve/VoiceLevelPicker';
 import { answerLeakTripwire, isAnswerRequest, ANSWER_LEAK_STEER } from '@/lib/voice/model-led';
 
 // Ending a candidate turn (unchanged): SETTLE_MS after Gemini closes its own
@@ -100,6 +102,10 @@ export default function VoiceInterviewGemini({
   const [creditsLeft, setCreditsLeft] = useState<number | null>(null);
   const [transcript, setTranscript] = useState<{ who: 'you' | 'interviewer'; text: string }[]>([]);
   const [drafts, setDrafts] = useState<{ you: string; interviewer: string }>({ you: '', interviewer: '' });
+  // Difficulty: what the candidate picked (remembered), and what the session runs at.
+  const [level, setLevel] = useState<VoiceLevel | null>(() => (typeof window === 'undefined' ? null : getStoredLevel()));
+  const [sessionLevel, setSessionLevel] = useState<VoiceLevel | null>(null);
+  const [sessionKey, setSessionKey] = useState(0);  // bump = reconnect (level change)
 
   const wsRef = useRef<WebSocket | null>(null);
   const micCtxRef = useRef<AudioContext | null>(null);
@@ -181,8 +187,9 @@ export default function VoiceInterviewGemini({
     if (!attemptId || !content.trim()) return;
     try {
       // No audio tokens -> saves the text without double-charging credit
-      // (credit is metered by seconds via /realtime-gemini/usage).
-      await postRealtimeTurn(attemptId, token, { role, content: content.trim() });
+      // (credit is metered by seconds via /realtime-gemini/usage). A hung save
+      // never holds up the ones queued behind it.
+      await withTimeout(postRealtimeTurn(attemptId, token, { role, content: content.trim() }));
       onTurnPersisted?.();
     } catch { /* a missed save must not break a live interview */ }
   }, [attemptId, token, onTurnPersisted]);
@@ -370,12 +377,19 @@ export default function VoiceInterviewGemini({
 
   useEffect(() => {
     let cancelled = false;
+    // A (re)connect starts clean; the conversation so far comes back from the server.
+    closedRef.current = false;
+    liveTurnsRef.current = new GeminiLiveTurns();
+    trippedRef.current = false;
+    procRef.current = null;
+    setPhase('connecting');
+    setDrafts({ you: '', interviewer: '' });
     (async () => {
       try {
         const res = await fetch(`${API_URL}/realtime-gemini/session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ case_id: caseId, attempt_id: attemptId }),
+          body: JSON.stringify({ case_id: caseId, attempt_id: attemptId, ...(level ? { level } : {}) }),
         });
         if (!res.ok) {
           const t = await res.json().catch(() => ({}));
@@ -383,7 +397,9 @@ export default function VoiceInterviewGemini({
         }
         const data = await res.json();
         liveRef.current = data?.interviewer === 'model_led';
-        console.log(`[gemini] interviewer: ${liveRef.current ? 'live (model-led)' : 'renderer (V11 per turn)'}`);
+        if (isVoiceLevel(data?.level)) setSessionLevel(data.level);
+        console.log(`[gemini] interviewer: ${liveRef.current ? 'live (model-led)' : 'renderer (V11 per turn)'}`
+          + ` model=${data?.model} level=${data?.level} resume=${data?.resume}`);
         if (data?.credits?.total_remaining != null) setCreditsLeft(data.credits.total_remaining);
         if (cancelled) return;
 
@@ -453,7 +469,10 @@ export default function VoiceInterviewGemini({
           if (msg.setupComplete) {
             startMic();
             // LIVE: the interviewer opens the call itself.
-            if (liveRef.current && data.open_first !== false) ws.send(JSON.stringify(GEMINI_OPEN_TURN));
+            // Coming back to a call in progress resumes it - never starts over.
+            if (liveRef.current && data.open_first !== false) {
+              ws.send(JSON.stringify(data.resume ? GEMINI_RESUME_TURN : GEMINI_OPEN_TURN));
+            }
             return;
           }
           const sc = msg.serverContent;
@@ -494,9 +513,20 @@ export default function VoiceInterviewGemini({
     })();
 
     const usageTimer = setInterval(() => reportUsage(false), 15000);
-    return () => { cancelled = true; clearInterval(usageTimer); cleanup(); };
+    // Close any interviewer turn Gemini never reported the end of, so turns keep
+    // being shown and saved.
+    const tickTimer = setInterval(() => {
+      if (liveRef.current && !closedRef.current) applyLiveRef.current(liveTurnsRef.current.tick());
+    }, 1000);
+    return () => { cancelled = true; clearInterval(usageTimer); clearInterval(tickTimer); cleanup(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, caseId, attemptId]);
+  }, [token, caseId, attemptId, sessionKey]);
+
+  function changeLevel(next: VoiceLevel) {
+    setStoredLevel(next);
+    setLevel(next);
+    setSessionKey((k) => k + 1);  // reconnect with the new style; the conversation carries over
+  }
 
   function toggleMute() {
     setMuted((m) => { mutedRef.current = !m; return !m; });
@@ -515,6 +545,7 @@ export default function VoiceInterviewGemini({
             <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 tabular-nums text-primary">{Math.round(creditsLeft)} min left</span>
           )}
         </div>
+        <VoiceLevelPicker value={sessionLevel ?? level} onChange={changeLevel} disabled={phase === 'connecting'} />
         <button type="button" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Leave voice mode">
           <X className="h-5 w-5" />
         </button>

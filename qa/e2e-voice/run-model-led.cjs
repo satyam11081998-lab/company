@@ -150,6 +150,15 @@ function check(name, ok, detail = '') {
   check('insisting: the answer is spoken in full (no cut), even with a late transcript',
     full && (await clientEvents('response.cancel')).length === cancelsBefore);
   await http('POST', `${MOCK}/control/config`, { holdTranscriptMs: 0 });
+  // 6. difficulty: switching to Hard reconnects with the hard style and resumes
+  await page.getByRole('radio', { name: 'Hard' }).click();
+  const hardCfg = await waitFor(async () => {
+    const c = (await state()).lastSessionConfig?.session?.instructions || '';
+    return c.includes('DIFFICULTY: HARD') ? c : null;
+  }, 8000);
+  check('Hard: reconnects with the hard style and RESUMES the conversation',
+    hardCfg && hardCfg.includes('You are RESUMING this interview') && hardCfg.includes('CANDIDATE: I would start from households'));
+  check('Hard: the call is live again', await waitFor(async () => (await state()).connected, 8000));
   check('no page errors', pageErrors.length === 0, pageErrors.join(' | '));
 
   await browser.close();

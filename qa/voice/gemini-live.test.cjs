@@ -24,7 +24,7 @@ require.extensions['.ts'] = function (mod, filename) {
   });
   mod._compile(out.outputText, filename);
 };
-const { GeminiLiveTurns, LATE_WORDS_MS, GEMINI_OPEN_TURN } = require(path.join(ROOT, 'lib/voice/gemini-live.ts'));
+const { GeminiLiveTurns, LATE_WORDS_MS, MODEL_QUIET_MS, GEMINI_OPEN_TURN, GEMINI_RESUME_TURN } = require(path.join(ROOT, 'lib/voice/gemini-live.ts'));
 
 const audio = (d = 'AAAA') => ({ modelTurn: { parts: [{ inlineData: { mimeType: 'audio/pcm;rate=24000', data: d } }] } });
 const types = (acts) => acts.map((a) => a.type);
@@ -93,4 +93,29 @@ test('guardrail fallback: if the cut turn never ends, releaseCut stops dropping 
   assert.deepEqual(types(g.releaseCut()), ['readyForSteer']);
   assert.deepEqual(types(g.releaseCut()), [], 'only once');
   assert.deepEqual(types(g.handle({ ...audio(), outputTranscription: { text: 'Think of a funnel.' } }, 3000)), ['play', 'interviewerDraft']);
+});
+
+test('a model turn Gemini never closes is closed by the clock, so turns keep being saved', () => {
+  const g = new GeminiLiveTurns();
+  g.handle({ inputTranscription: { text: 'I would start from households' } }, 0);
+  g.handle({ ...audio(), outputTranscription: { text: 'Yes, go on.' } }, 1000);   // no turnComplete ever
+  assert.deepEqual(finals(g.tick(1000 + MODEL_QUIET_MS - 100)), [], 'not yet');
+  assert.deepEqual(finals(g.tick(1000 + MODEL_QUIET_MS + 100)), [
+    ['candidateTurn', 'I would start from households'], ['interviewerTurn', 'Yes, go on.']]);
+});
+
+test('new candidate words after a quiet, unclosed interviewer turn start a NEW turn', () => {
+  const g = new GeminiLiveTurns();
+  g.handle({ inputTranscription: { text: 'First turn' } }, 0);
+  g.handle({ ...audio(), outputTranscription: { text: 'Reply one.' } }, 1000);  // no turnComplete
+  const out = g.handle({ inputTranscription: { text: 'Second turn' } }, 1000 + 2000);
+  assert.deepEqual(finals(out), [['candidateTurn', 'First turn'], ['interviewerTurn', 'Reply one.']]);
+  assert.equal(g.candidateSoFar, 'Second turn');
+  const out2 = g.handle({ ...audio(), outputTranscription: { text: 'Reply two.' }, turnComplete: true }, 5000);
+  assert.deepEqual(finals(out2), [['candidateTurn', 'Second turn'], ['interviewerTurn', 'Reply two.']]);
+});
+
+test('resuming a call uses its own opening turn (never starts over)', () => {
+  assert.match(GEMINI_RESUME_TURN.realtimeInput.text, /back on the call/);
+  assert.match(GEMINI_RESUME_TURN.realtimeInput.text, /do not start over/);
 });

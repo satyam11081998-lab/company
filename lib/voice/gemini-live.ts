@@ -29,12 +29,16 @@ const tidy = (s: string) => s.replace(/\s+/g, ' ').trim();
 /** Candidate words that land this soon after the interviewer starts answering
  *  still belong to the turn being answered (transcription runs a little behind). */
 export const LATE_WORDS_MS = 900;
+/** A model turn with no output for this long is over, even if Gemini never sent
+ *  turnComplete - so turns keep being shown and saved no matter what. */
+export const MODEL_QUIET_MS = 2500;
 
 export class GeminiLiveTurns {
   private user = '';              // the candidate's open (not yet answered) words
   private pendingUser = '';       // the candidate turn the interviewer is answering
   private asst = '';
   private modelStartedAt: number | null = null;
+  private lastModelAt = 0;
   private dropping = false;       // guardrail cut: drop the rest of this model turn
   private steerPending = false;   // send the steer once the cut turn is over
 
@@ -50,6 +54,11 @@ export class GeminiLiveTurns {
 
     if (sc.inputTranscription?.text) {
       const t = sc.inputTranscription.text;
+      // The interviewer went quiet a while ago and Gemini never closed its turn:
+      // close it now, so these words start a new candidate turn.
+      if (this.modelStartedAt !== null && now - this.lastModelAt > 1500 && now - this.modelStartedAt >= LATE_WORDS_MS) {
+        this.closeModelTurn(out);
+      }
       if (this.modelStartedAt !== null && now - this.modelStartedAt < LATE_WORDS_MS) {
         this.pendingUser += t;                       // late words of the answered turn
         out.push({ type: 'candidateDraft', text: tidy(this.pendingUser) });
@@ -62,7 +71,10 @@ export class GeminiLiveTurns {
     const audio = ((sc.modelTurn?.parts || []) as any[])
       .map((p) => p?.inlineData)
       .filter((d) => d?.data && String(d.mimeType || '').includes('audio'));
-    if (audio.length || sc.outputTranscription?.text) this.openModelTurn(now, out);
+    if (audio.length || sc.outputTranscription?.text) {
+      this.openModelTurn(now, out);
+      this.lastModelAt = now;
+    }
     if (!this.dropping) for (const d of audio) out.push({ type: 'play', data: d.data });
 
     if (sc.outputTranscription?.text && !this.dropping) {
@@ -95,6 +107,13 @@ export class GeminiLiveTurns {
     this.dropping = false;
     this.steerPending = false;
     return [{ type: 'readyForSteer' }];
+  }
+
+  /** Called about once a second: closes a model turn Gemini never reported the end of. */
+  tick(now: number = Date.now()): LiveAction[] {
+    const out: LiveAction[] = [];
+    if (this.modelStartedAt !== null && now - this.lastModelAt > MODEL_QUIET_MS) this.closeModelTurn(out);
+    return out;
   }
 
   /** Session closing: emit whatever is still open, in speaking order. */
@@ -144,6 +163,13 @@ export class GeminiLiveTurns {
 /** The text turn that makes the interviewer open the call (not saved, not shown). */
 export const GEMINI_OPEN_TURN = {
   realtimeInput: { text: 'The candidate has just joined the call. Open the session now, as your instructions say.' },
+};
+
+/** The same when the candidate comes back to a call already in progress. */
+export const GEMINI_RESUME_TURN = {
+  realtimeInput: {
+    text: 'The candidate is back on the call. Continue the interview from exactly where it was, as your instructions say - do not start over.',
+  },
 };
 
 /** The steer after a guardrail cut. */

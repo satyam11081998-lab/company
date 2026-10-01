@@ -65,6 +65,8 @@ export interface RealtimeHandle {
   interviewer: RealtimeInterviewer;
   /** Model-led: ask the server coach after each turn (off unless the backend says so). */
   coach: boolean;
+  /** The difficulty the session runs at (easy | medium | hard), when model-led. */
+  level: string | null;
   /** Model-led: replace the session instructions (server-built playbook + coach notes). */
   updateInstructions: (instructions: string) => void;
   /** Model-led: hand a tool result back to the model and let it continue speaking. */
@@ -74,14 +76,14 @@ export interface RealtimeHandle {
 }
 
 export async function startRealtimeSession(
-  opts: { caseId: string; attemptId: string; token: string },
+  opts: { caseId: string; attemptId: string; token: string; level?: string | null },
   cbs: RealtimeCallbacks = {},
 ): Promise<RealtimeHandle> {
   // 1. Mint an ephemeral secret. The real key never reaches the browser.
   const sessionRes = await fetch(`${API_URL}/realtime/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${opts.token}` },
-    body: JSON.stringify({ case_id: opts.caseId, attempt_id: opts.attemptId }),
+    body: JSON.stringify({ case_id: opts.caseId, attempt_id: opts.attemptId, ...(opts.level ? { level: opts.level } : {}) }),
   });
   if (!sessionRes.ok) {
     let detail = `Could not start voice session (${sessionRes.status})`;
@@ -284,6 +286,7 @@ export async function startRealtimeSession(
     },
     interviewer,
     coach,
+    level: typeof minted.level === 'string' ? minted.level : null,
     updateInstructions(instructions: string) {
       if (!instructions) return;
       send({ type: 'session.update', session: { type: 'realtime', instructions } });
