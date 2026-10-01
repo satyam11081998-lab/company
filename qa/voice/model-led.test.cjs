@@ -103,3 +103,15 @@ test('session: model-led tool call -> result + continue; instructions update; gu
   assert.deepEqual(sent.slice(-4).map((e) => e.type), ['response.cancel', 'output_audio_buffer.clear', 'conversation.item.create', 'response.create']);
   assert.equal(sent.at(-2).item.role, 'system');
 });
+
+test('voice protocol label: never spoken from the instructions, never shown or saved', () => {
+  const v = require(path.join(ROOT, 'lib/voice/v11-voice.ts'));
+  const ins = v.openaiSayInstructions("That's a sensible start.");
+  assert.equal(ins.includes('SAY:'), false);
+  assert.ok(ins.endsWith("That's a sensible start."));
+  assert.equal(v.stripSayLabel("SAY: That's an interesting perspective."), "That's an interesting perspective.");
+  assert.equal(v.stripSayLabel('say:   The data confirms that.'), 'The data confirms that.');
+  assert.equal(v.stripSayLabel('SAY: SAY: Go ahead.'), 'Go ahead.');
+  assert.equal(v.stripSayLabel('Say, what about costs?'), 'Say, what about costs?');
+  assert.equal(v.stripSayLabel('Saying that, carry on.'), 'Saying that, carry on.');
+});

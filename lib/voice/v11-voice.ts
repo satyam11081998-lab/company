@@ -39,13 +39,22 @@ export function geminiSayTurn(line: string) {
   return { realtimeInput: { text: `SAY: ${line}` } };
 }
 
-/** OpenAI Realtime: per-response instructions that carry the V11 line. */
+/** OpenAI Realtime: per-response instructions that carry the V11 line.
+ *  No "SAY:" label here: the model read it out and it ended up in the transcript. */
 export function openaiSayInstructions(line: string): string {
   return (
-    'You are only the voice of the interviewer. Say the following line exactly as written, ' +
-    'word for word, and nothing else - no greeting, no acknowledgement, no extra question.\n\n' +
-    `SAY: ${line}`
+    'You are only the voice of the interviewer. Speak the words below exactly as written, ' +
+    'word for word, and nothing else - no label, no greeting, no acknowledgement, no extra question.\n\n' +
+    line
   );
+}
+
+/** A leading "SAY:" is protocol, never interviewer speech: never show or save it. */
+export function stripSayLabel(text: string): string {
+  let t = text || '';
+  const label = /^\s*(?:say|line)\s*:\s*/i;
+  while (label.test(t)) t = t.replace(label, '');
+  return t === (text || '') ? t : t.trim();
 }
 
 function norm(s: string): string {

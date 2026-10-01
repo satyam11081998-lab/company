@@ -24,7 +24,7 @@ import { Mic, MicOff, X, Loader2, Keyboard } from 'lucide-react';
 import { postRealtimeTurn, postVoiceDecision, postVoiceFold, type VoiceDecision } from '@/lib/interview-api';
 import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 import {
-  CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, type GateAction,
+  CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, stripSayLabel, type GateAction,
 } from '@/lib/voice/v11-voice';
 
 // Ending a candidate turn (unchanged): SETTLE_MS after Gemini closes its own
@@ -269,12 +269,13 @@ export default function VoiceInterviewGemini({
       else if (a.type === 'sendSay') sendSay(a.line);
       else if (a.type === 'dropSay') console.log('[gemini][v11] held line dropped: the candidate kept talking');
       else if (a.type === 'candidateDraft') setDrafts((d) => ({ ...d, you: a.text }));
-      else if (a.type === 'interviewerDraft') setDrafts((d) => ({ ...d, interviewer: a.text }));
+      else if (a.type === 'interviewerDraft') setDrafts((d) => ({ ...d, interviewer: stripSayLabel(a.text) }));
       else if (a.type === 'interviewerTurn') {
-        lastLineRef.current = { text: a.text, at: Date.now() };
-        setTranscript((t) => [...t.slice(-12), { who: 'interviewer' as const, text: a.text }]);
+        const said = stripSayLabel(a.text);
+        lastLineRef.current = { text: said, at: Date.now() };
+        setTranscript((t) => [...t.slice(-12), { who: 'interviewer' as const, text: said }]);
         setDrafts((d) => ({ ...d, interviewer: '' }));
-        queueSave('assistant', a.text);
+        queueSave('assistant', said);
       } else if (a.type === 'candidateTurn') {
         if (a.sealed) setDrafts((d) => ({ ...d, you: '' }));
         else earlyTextRef.current = a.text;

@@ -27,7 +27,7 @@ import type { AttemptMessage } from '@/lib/interview-api';
 import { postRealtimeTurn, postVoiceDecision, postVoiceCoach, postVoiceTool, type VoiceDecision } from '@/lib/interview-api';
 import { startRealtimeSession, type RealtimeHandle, type RealtimeInterviewer } from '@/lib/voice/realtime-session';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
-import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue } from '@/lib/voice/v11-voice';
+import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue, stripSayLabel } from '@/lib/voice/v11-voice';
 import { answerLeakTripwire, ANSWER_LEAK_STEER, TOOL_UNAVAILABLE_OUTPUT, type ToolCall } from '@/lib/voice/model-led';
 import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 
@@ -251,7 +251,7 @@ export default function VoiceInterviewRealtime({
             onUserTurn: (t) => void (interviewerRef.current === 'model_led' ? handleModelLedTurn(t) : handleUserTurn(t)),
             onToolCall: (call) => void handleToolCall(call),
             onAssistantDelta: (p) => {
-              if (!cancelled) setAsstDraft(p);
+              if (!cancelled) setAsstDraft(stripSayLabel(p));
               // Live guardrail (model-led): the answer only ever comes through
               // answer_request. If the model starts stating it anyway, cut the
               // reply and steer it back to a framework.
@@ -262,7 +262,8 @@ export default function VoiceInterviewRealtime({
                 sessionRef.current?.cancelAndSteer(ANSWER_LEAK_STEER);
               }
             },
-            onAssistantTurn: (t) => {
+            onAssistantTurn: (raw) => {
+              const t = stripSayLabel(raw);
               trippedRef.current = false;
               setAsstDraft('');
               lastLineRef.current = { text: t, at: performance.now() };

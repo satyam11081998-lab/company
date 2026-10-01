@@ -33,6 +33,7 @@ import { useOptionalUser } from '@/components/user-context';
 import VoiceInterviewGemini from '@/components/solve/VoiceInterviewGemini';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import { Vad } from '@/lib/voice/vad';
+import { stripSayLabel } from '@/lib/voice/v11-voice';
 
 /** Voice mode (realtime speech-to-speech vs the cheaper pipeline) is an ADMIN
  *  toggle now, read live from the backend's /public-config at mount. The env var
@@ -1542,7 +1543,7 @@ function MessageBubble({ message }: { message: AttemptMessage }) {
         <div
           className={`whitespace-pre-wrap rounded-2xl px-4 py-2 text-body ${isUser ? 'rounded-br-sm bg-primary text-primary-foreground' : 'rounded-bl-sm bg-muted text-foreground'}`}
         >
-          {isUser ? message.content : renderWithBold(message.content || '')}
+          {isUser ? message.content : renderWithBold(stripSayLabel(message.content || ''))}
         </div>
       </div>
     </div>
