@@ -1,9 +1,10 @@
 # ANTIGRAVITY_HANDOFF — unified-interviewer
 
-**Author:** Claude (cloud session), 2026-09-30. **Feature:** Unified interviewer brain — one
+**Author:** Claude (cloud session), 2026-09-30; updated 2026-10-01 (contextual presence + JSON control packet; `main` merged into the branch). **Feature:** Unified interviewer brain — one
 decision system for TEXT chat, STT talk mode and realtime voice. **Branch:**
-`feat/unified-interviewer-brain` in BOTH repos (backend on `main` `9e009c5`, frontend on `main`
-`a73be90`). **Not merged, not pushed to production, flag OFF by default.**
+`feat/unified-interviewer-brain` in BOTH repos, pushed to GitHub (feature branch only), with
+`main` merged in on 2026-10-01 (backend `8c6530f`, frontend `2b8a8ba`, no conflicts). **Not merged
+into main, not deployed, flag OFF by default.**
 
 ```
 touches:  backend  services/interviewer/* (NEW package, 15 modules), routes/attempts_brain.py (NEW),
@@ -47,6 +48,16 @@ one specific correction; META/injection turns get one in-role line without a mod
 realtime voice model only SAYS approved lines (out-of-band responses, app-controlled barge-in,
 held/stale line handling, item_id dedupe). Full spec: `consilio-backend/docs/interviewer/`.
 
+**2026-10-01 — function first, language second.** Substantive beats that used to get a stock line
+(a finished structure, "is my approach okay?", a hypothesis + "shall I proceed?", a long finished
+step in voice) now get one of three contextual functions — `REFLECT_PROGRESS`,
+`ACKNOWLEDGE_AND_CONTINUE`, `ACKNOWLEDGE_AND_ORIENT` — worded by the model from a JSON
+**interviewer control packet** (function, objective, turn type, what was verified, permissions,
+length, recent functions/lines). The validator rejects stock acknowledgements, lines unrelated to
+what the candidate said, and any "that's right / on track" that no check verified; one
+regeneration, then the plain deterministic hand-back (telemetry `error_type=<type>:fallback`).
+Fixed lines stay for context-free beats ("Shall I proceed?" → "Yes, go ahead."). No new env vars.
+
 ## Env vars (backend) — all optional
 | Var | Default | Meaning |
 |---|---|---|
@@ -76,10 +87,10 @@ do not stash/reset them for this; use a worktree:
 `git worktree add ..\consilio-backend-brain feat/unified-interviewer-brain`.
 
 **Phase 1 — backend** (`consilio-backend`; never `git add -A` there — dormant CRLF churn):
-- Merge or cherry-pick `feat/unified-interviewer-brain` (6 commits on `9e009c5`, the last two are docs).
+- Merge `feat/unified-interviewer-brain` (already contains `main` up to `8c6530f`).
 - Gates:
   - `python -m py_compile routes/attempts.py routes/attempts_brain.py routes/realtime.py services/ai_usage.py services/interviewer/*.py services/copilot/engine/prompts_interview.py` → **EXIT 0 (verified)**
-  - `python -m pytest -q tests/test_interviewer_brain_unit.py tests/test_interviewer_brain_routes.py tests/test_interviewer_brain_regression.py tests/test_interviewer_brain_properties.py tests/test_interviewer_brain_adversarial.py` → **354 passed (verified)**
+  - `python -m pytest -q tests/test_interviewer_brain_unit.py tests/test_interviewer_brain_routes.py tests/test_interviewer_brain_regression.py tests/test_interviewer_brain_properties.py tests/test_interviewer_brain_adversarial.py` (+ `tests/test_interviewer_brain_contextual.py`) → **375 passed (verified)**
   - `python -m tests.test_v11_voice_integration` → **ALL PASS (verified)** (flag OFF path)
   - `python -m tests.test_count_clarifications` → **14/14 (verified)**
   - `python -m tools.interviewer_chaos_sim --sequences 3000 --turns 25` → **0 violations (verified)**
@@ -87,12 +98,12 @@ do not stash/reset them for this; use a worktree:
 - Suggested message: `feat(interviewer): unified interviewer brain behind INTERVIEWER_BRAIN (default off)`
 
 **Phase 2 — frontend** (`consilio`):
-- Merge `feat/unified-interviewer-brain` (3 commits on `a73be90`, the last one is this handoff).
+- Merge `feat/unified-interviewer-brain` (already contains `main` up to `2b8a8ba`).
 - Gates:
   - `npx tsc --noEmit` → **EXIT 0 (verified)**
   - `next build` → **EXIT 0 (verified; Google Fonts mocked offline, so re-run it on your machine)**
   - `node --require ./qa/ts-register.cjs --test qa/voice/*.test.cjs` → **19/19 (verified)**
-  - optional browser E2E: see `qa/e2e-voice/run.cjs` header (needs werift, esbuild, playwright-core and a Chromium headless shell) → **24/24 realtime, 13/13 STT (verified)**
+  - optional browser E2E: see `qa/e2e-voice/run.cjs` header (needs werift, esbuild, playwright-core and a Chromium headless shell) → **24/24 realtime (6 consecutive runs), 13/13 STT (verified)**
 - The client changes are safe against a flag-OFF backend: V11 never sends `silence`, and the new
   request fields are optional.
 
@@ -111,7 +122,7 @@ do not stash/reset them for this; use a worktree:
 4. Widen the allowlist, then `on`. Rollback at any step = `INTERVIEWER_BRAIN=off` (instant, no deploy of code).
 
 ## Proposed LEDGER row (owner to approve; not written)
-| **Unified interviewer brain** | Cloud (Claude) | feat/unified-interviewer-brain | BUILT 2026-09-30, NOT MERGED, flag OFF — 354 backend tests, chaos 75k requests 0 violations, browser E2E 24/24 + 13/13, tsc/next build EXIT 0; live-provider latency/quality UNVERIFIED | backend `services/interviewer/*`, `routes/attempts_brain.py`; frontend `lib/voice/realtime-turns.ts`, `lib/voice/live-transcribe.ts` | C4 (additive), C9 (reader, unchanged), Case solve UX, Voice interview (talk mode), Voice + image input |
+| **Unified interviewer brain** | Cloud (Claude) | feat/unified-interviewer-brain | BUILT 2026-09-30, NOT MERGED, flag OFF — 375 backend tests, chaos 75k requests 0 violations, browser E2E 24/24 + 13/13, tsc/next build EXIT 0; live-provider latency/quality UNVERIFIED | backend `services/interviewer/*`, `routes/attempts_brain.py`; frontend `lib/voice/realtime-turns.ts`, `lib/voice/live-transcribe.ts` | C4 (additive), C9 (reader, unchanged), Case solve UX, Voice interview (talk mode), Voice + image input |
 
 ## Proposed CHANGELOG entry (for Antigravity on merge)
 ```

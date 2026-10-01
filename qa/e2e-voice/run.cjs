@@ -95,6 +95,12 @@ function check(name, ok, detail = '') {
     page.on('response', (r) => console.log('[resp]', r.status(), r.url().slice(0, 90)));
   }
   page.on('request', (r) => { if (r.url().startsWith(API)) apiCalls.push({ at: Date.now(), method: r.method(), url: r.url().replace(API, ''), body: r.postData() }); });
+  const decisionBodies = [];
+  page.on('response', async (r) => {
+    if (r.url().endsWith('/voice-decision')) {
+      try { decisionBodies.push({ at: Date.now(), status: r.status(), body: (await r.text()).slice(0, 300) }); } catch { /* closed */ }
+    }
+  });
   // Instrument the data channel inside the page: when did the client RECEIVE each server
   // event and SEND each client event (performance clock). Lets us split client-side
   // reaction time from transport time.
@@ -231,13 +237,20 @@ function check(name, ok, detail = '') {
   const BARGE_N = Number(process.env.BARGE_N || 30);
   const clientMsAll = [];
   const roundTripAll = [];
-  await http('POST', `${MOCK}/control/config`, { audioMs: 4000 });
+  await http('POST', `${MOCK}/control/config`, { audioMs: 4000, doneDelayMs: 2500 });
   const askTexts = ['Can you give me a hint?', 'What time period?', 'Are we talking new cars only?', 'I am stuck.'];
+  const bargeMisses = [];
   for (let i = 0; i < BARGE_N; i++) {
     const n0 = (await creates()).length;
+    const d0 = decisions().length;
     await http('POST', `${MOCK}/control/say`, { text: askTexts[i % askTexts.length], itemId: `item_b${i}` });
     const spoke = await waitFor(async () => (await creates()).length > n0, 6000);
-    if (!spoke) continue;
+    if (!spoke) {
+      const d = decisions().slice(d0);
+      bargeMisses.push({ i, stage: 'no_response_create', decisions: d.length,
+                         lastDecision: decisionBodies.length ? decisionBodies[decisionBodies.length - 1] : null });
+      continue;
+    }
     await sleep(250);
     const tb = Date.now();
     await http('POST', `${MOCK}/control/speech_start`);
@@ -254,6 +267,9 @@ function check(name, ok, detail = '') {
       const inAt = [...dc].reverse().find((x) => x.dir === 'in' && x.type === 'input_audio_buffer.speech_started');
       const outAt = inAt && dc.find((x) => x.dir === 'out' && x.type === 'response.cancel' && x.t >= inAt.t);
       if (inAt && outAt) clientMsAll.push(outAt.t - inAt.t);
+      else bargeMisses.push({ i, stage: 'no_client_cancel_pair' });
+    } else {
+      bargeMisses.push({ i, stage: 'no_cancel_seen' });
     }
     await http('POST', `${MOCK}/control/speech_stop`);
     await sleep(900);
@@ -265,8 +281,8 @@ function check(name, ok, detail = '') {
     loopback_round_trip_ms: { p50: pct(roundTripAll, 50), p90: pct(roundTripAll, 90), p95: pct(roundTripAll, 95) },
   };
   check(`barge-in x${BARGE_N}: every line cancelled; client reaction P95 ${bargeStats.client_reaction_ms.p95} ms`,
-    clientMsAll.length === BARGE_N && bargeStats.client_reaction_ms.p95 < 50, JSON.stringify(bargeStats));
-  await http('POST', `${MOCK}/control/config`, { audioMs: 900 });
+    clientMsAll.length === BARGE_N && bargeStats.client_reaction_ms.p95 < 50, JSON.stringify({ ...bargeStats, bargeMisses }));
+  await http('POST', `${MOCK}/control/config`, { audioMs: 900, doneDelayMs: 0 });
 
   // 9. no page errors
   const errs = (await page.evaluate(() => (window).__errors || [])).concat(pageErrors);

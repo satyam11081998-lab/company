@@ -30,6 +30,10 @@ const state = {
   activeResponse: null,  // { id, timer, cancelled }
   responseDelayMs: 150,
   audioMs: 900,
+  // The mock sends no interviewer audio, so the client's drain detector (quiet for ~600 ms after
+  // response.done) ends "speaking" early. A real provider keeps audio flowing; doneDelayMs lets a
+  // test hold response.done back for long lines so timing on a busy CI box cannot end it early.
+  doneDelayMs: 0,
   connected: false,
 };
 
@@ -74,7 +78,7 @@ function onClientEvent(raw) {
           if (!r.cancelled) emit({ type: 'output_audio_buffer.stopped', response_id: id });
           if (state.activeResponse === r) state.activeResponse = null;
         }, state.audioMs));
-      }, 20 * words.length + 30));
+      }, Math.max(20 * words.length + 30, state.doneDelayMs || 0)));
     }, state.responseDelayMs));
   } else if (evt.type === 'response.cancel' || evt.type === 'output_audio_buffer.clear') {
     const r = state.activeResponse;
