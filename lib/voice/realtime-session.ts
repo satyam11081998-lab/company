@@ -46,6 +46,8 @@ export interface RealtimeCallbacks {
   onInterviewer?: (interviewer: RealtimeInterviewer) => void;
   /** Model-led only: the model called a tool; answer with sendToolResult. */
   onToolCall?: (call: ToolCall) => void;
+  /** The candidate's words as they are transcribed (live, when the model streams deltas). */
+  onUserDelta?: (partial: string) => void;
 }
 
 export interface RealtimeHandle {
@@ -61,6 +63,8 @@ export interface RealtimeHandle {
   say: (line: string) => void;
   /** 'renderer' (V11 decides each turn) or 'model_led' (the model converses). */
   interviewer: RealtimeInterviewer;
+  /** Model-led: ask the server coach after each turn (off unless the backend says so). */
+  coach: boolean;
   /** Model-led: replace the session instructions (server-built playbook + coach notes). */
   updateInstructions: (instructions: string) => void;
   /** Model-led: hand a tool result back to the model and let it continue speaking. */
@@ -89,9 +93,12 @@ export async function startRealtimeSession(
     }
     throw new Error(detail);
   }
-  const { client_secret: clientSecret, model, interviewer: minted } = await sessionRes.json();
+  const minted = await sessionRes.json();
+  const { client_secret: clientSecret, model } = minted;
   if (!clientSecret) throw new Error('Voice session did not return a token.');
-  const interviewer: RealtimeInterviewer = minted === 'model_led' ? 'model_led' : 'renderer';
+  const interviewer: RealtimeInterviewer = minted.interviewer === 'model_led' ? 'model_led' : 'renderer';
+  const openFirst = interviewer === 'model_led' && minted.open_first !== false;
+  const coach = interviewer === 'model_led' && minted.coach === true;
   cbs.onInterviewer?.(interviewer);
 
   // 2. Peer connection. Echo cancellation is not optional here: the
@@ -143,7 +150,13 @@ export async function startRealtimeSession(
     cbs.onSpeakingChange?.(v);
   };
 
-  dc.addEventListener('open', () => cbs.onReady?.());
+  let userDraft = '';
+  dc.addEventListener('open', () => {
+    cbs.onReady?.();
+    // Model-led: the interviewer opens the call itself (greets and sets up the
+    // case, or picks up where a chat left off) - no waiting for the candidate.
+    if (openFirst) dc.send(JSON.stringify({ type: 'response.create' }));
+  });
   dc.addEventListener('message', (e) => {
     let evt: any;
     try {
@@ -155,7 +168,15 @@ export async function startRealtimeSession(
       // The candidate's speech, transcribed at the far end.
       case 'conversation.item.input_audio_transcription.completed': {
         const text = (evt.transcript || '').trim();
+        userDraft = '';
+        cbs.onUserDelta?.('');
         if (text) cbs.onUserTurn?.(text);
+        break;
+      }
+      // Live candidate transcript (transcription models that stream deltas).
+      case 'conversation.item.input_audio_transcription.delta': {
+        userDraft += evt.delta || '';
+        if (userDraft) cbs.onUserDelta?.(userDraft);
         break;
       }
       // The interviewer's reply, streamed as text. GA and beta use different
@@ -255,6 +276,7 @@ export async function startRealtimeSession(
       dc.send(JSON.stringify({ type: 'response.create', response: { instructions: openaiSayInstructions(text) } }));
     },
     interviewer,
+    coach,
     updateInstructions(instructions: string) {
       if (!instructions) return;
       send({ type: 'session.update', session: { type: 'realtime', instructions } });

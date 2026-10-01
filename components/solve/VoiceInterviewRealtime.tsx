@@ -28,7 +28,9 @@ import { postRealtimeTurn, postVoiceDecision, postVoiceCoach, postVoiceTool, typ
 import { startRealtimeSession, type RealtimeHandle, type RealtimeInterviewer } from '@/lib/voice/realtime-session';
 import { isLikelyNoise } from '@/lib/voice/noise-guard';
 import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue, stripSayLabel } from '@/lib/voice/v11-voice';
-import { answerLeakTripwire, ANSWER_LEAK_STEER, TOOL_UNAVAILABLE_OUTPUT, type ToolCall } from '@/lib/voice/model-led';
+import {
+  answerLeakTripwire, answerAllowedAfterAsks, isAnswerRequest, ANSWER_LEAK_STEER, TOOL_UNAVAILABLE_OUTPUT, type ToolCall,
+} from '@/lib/voice/model-led';
 import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 
 // Before V11 decides a turn, earlier turns should be in the saved history. Saves
@@ -74,6 +76,7 @@ export default function VoiceInterviewRealtime({
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [live, setLive] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
   const [asstDraft, setAsstDraft] = useState('');  // interviewer reply as it streams
+  const [userDraft, setUserDraft] = useState('');  // candidate's words as they are transcribed
 
   const sessionRef = useRef<RealtimeHandle | null>(null);
   const closingRef = useRef(false);
@@ -106,6 +109,7 @@ export default function VoiceInterviewRealtime({
   const interviewerRef = useRef<RealtimeInterviewer>('renderer');
   const answerAllowedRef = useRef(false);
   const trippedRef = useRef(false);  // guardrail fired for the reply in progress
+  const answerAsksRef = useRef(0);   // how many times the candidate asked for the answer
 
   // Props read inside callbacks that are created ONCE. A spoken case outlives a
   // Supabase token, so these must not be captured by value.
@@ -202,6 +206,15 @@ export default function VoiceInterviewRealtime({
       if (!text || isLikelyNoise(text)) return;
       if (isEchoOfLine(text, lastLineRef.current, performance.now())) return;
       queueSave('user', text);
+      // The answer rule (framework first, answer once they insist) is in the
+      // interviewer's prompt; the guardrail follows the same count.
+      if (isAnswerRequest(text)) {
+        answerAsksRef.current += 1;
+        if (answerAllowedAfterAsks(answerAsksRef.current)) answerAllowedRef.current = true;
+      }
+      // Per-turn coaching is optional (backend VOICE_COACH): the prompt does the work,
+      // and nothing here ever sits between the candidate and the reply.
+      if (!sessionRef.current?.coach) return;
       await savesRef.current.settled(SAVE_WAIT_MS);
       try {
         const coach = await postVoiceCoach(attemptId, tokenRef.current);
@@ -250,6 +263,7 @@ export default function VoiceInterviewRealtime({
             onInterviewer: (who) => { interviewerRef.current = who; },
             onUserTurn: (t) => void (interviewerRef.current === 'model_led' ? handleModelLedTurn(t) : handleUserTurn(t)),
             onToolCall: (call) => void handleToolCall(call),
+            onUserDelta: (p) => { if (!cancelled) setUserDraft(p); },
             onAssistantDelta: (p) => {
               if (!cancelled) setAsstDraft(stripSayLabel(p));
               // Live guardrail (model-led): the answer only ever comes through
@@ -346,7 +360,7 @@ export default function VoiceInterviewRealtime({
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, closeSession]);
 
-  useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [live.length, messages.length, asstDraft]);
+  useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [live.length, messages.length, asstDraft, userDraft]);
 
   function toggleMute() {
     const next = !muted;
@@ -423,6 +437,12 @@ export default function VoiceInterviewRealtime({
                 <p className="mt-0.5 text-small leading-relaxed text-foreground">{m.text}</p>
               </div>
             ))}
+            {userDraft && (
+              <div className="text-right">
+                <span className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">You</span>
+                <p className="mt-0.5 text-small leading-relaxed text-muted-foreground">{userDraft}</p>
+              </div>
+            )}
             {asstDraft && (
               <div className="text-left">
                 <span className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</span>

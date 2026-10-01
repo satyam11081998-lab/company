@@ -87,7 +87,11 @@ function onClientEvent(raw) {
     // A bare response.create continues after a tool result or a system steer.
     const items = state.events.filter((e) => e.type === 'conversation.item.create');
     const last = items[items.length - 1];
-    if (last && last.item && last.item.type === 'function_call_output') {
+    if (!last && state.events.filter((e) => e.type === 'response.create').length === 1) {
+      // The very first response.create with nothing in the conversation: the
+      // interviewer opening the call.
+      setTimeout(() => speak('GREETING: Hi, let us size electric scooters in Chennai. How would you like to start?'), 30);
+    } else if (last && last.item && last.item.type === 'function_call_output') {
       setTimeout(() => speak(`TOOL_SAID: ${String(last.item.output).slice(0, 80)}`), 30);
     } else if (last && last.item && last.item.role === 'system') {
       setTimeout(() => speak('STEERED: think of it as a funnel, the full answer is on your results page.'), 30);
@@ -113,11 +117,21 @@ async function answer(offerSdp) {
 function candidateSays(text) {
   const id = `item_${++state.itemSeq}`;
   emit({ type: 'input_audio_buffer.speech_started', item_id: id });
+  // Live transcript deltas while they speak (streaming transcription models).
+  const words = text.split(' ');
+  const half = Math.ceil(words.length / 2);
+  setTimeout(() => emit({ type: 'conversation.item.input_audio_transcription.delta', item_id: id, delta: words.slice(0, half).join(' ') + ' ' }), 20);
   setTimeout(() => {
     emit({ type: 'input_audio_buffer.speech_stopped', item_id: id });
+    if (state.holdTranscriptMs) {
+      // The model answers from audio; the final transcript can land later.
+      onCandidateTurn(text);
+      setTimeout(() => emit({ type: 'conversation.item.input_audio_transcription.completed', item_id: id, content_index: 0, transcript: text }), state.holdTranscriptMs);
+      return;
+    }
     emit({ type: 'conversation.item.input_audio_transcription.completed', item_id: id, content_index: 0, transcript: text });
     onCandidateTurn(text);
-  }, 60);
+  }, state.deltaHoldMs || 60);
   return id;
 }
 
@@ -142,6 +156,7 @@ http.createServer(async (req, res) => {
       return res.end(sdp);
     }
     if (url.pathname === '/control/say') { const b = JSON.parse((await readBody(req)) || '{}'); return json(200, { itemId: candidateSays(b.text) }); }
+    if (url.pathname === '/control/config') { Object.assign(state, JSON.parse((await readBody(req)) || '{}')); return json(200, { ok: true }); }
     if (url.pathname === '/control/script') { state.script = JSON.parse((await readBody(req)) || '[]'); return json(200, { ok: true }); }
     if (url.pathname === '/control/state') {
       return json(200, { connected: state.connected, modelLed: state.modelLed, events: state.events, lastSessionConfig: state.lastSessionConfig });

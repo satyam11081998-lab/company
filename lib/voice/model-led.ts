@@ -34,6 +34,25 @@ export function answerLeakTripwire(spokenSoFar: string, answerAllowed: boolean):
   return sentences.some((s) => ANSWER_PHRASE.test(s) && HAS_NUMBER.test(s));
 }
 
+const ANSWER_ASK =
+  /\b((tell|give|show)\s+me\s+(the\s+)?(answer|solution|final|approach)|what('?s| is)\s+the\s+(answer|solution|final\s+(answer|number|estimate))|just\s+(tell|give)\s+(me|it)|solve\s+it|give\s+it\s+to\s+me)\b/i;
+
+/** The candidate is asking for the answer / solution (any phrasing we can catch). */
+export function isAnswerRequest(text: string): boolean {
+  return ANSWER_ASK.test(text || '');
+}
+
+/**
+ * When the live guardrail stops cutting the answer. The prompt carries the full
+ * rule (first ask: a framework; insisting: the answer). The guardrail only stops
+ * the answer being VOLUNTEERED before the candidate has asked at all: the
+ * candidate's transcript can land after the model has already started replying,
+ * so a stricter count would cut a legitimate answer to a second ask.
+ */
+export function answerAllowedAfterAsks(asks: number, after = 1): boolean {
+  return asks >= after;
+}
+
 export interface ToolCall {
   name: string;
   callId: string;

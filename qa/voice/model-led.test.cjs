@@ -72,24 +72,35 @@ function fakeBrowser(interviewer) {
     return { ok: true, text: async () => 'answer' };
   };
   const emit = (evt) => (listeners.message || []).forEach((fn) => fn({ data: JSON.stringify(evt) }));
-  return { sent, emit };
+  const open = () => (listeners.open || []).forEach((fn) => fn());
+  return { sent, emit, open };
 }
 
 test('session: renderer stays the default when the backend does not say otherwise', async () => {
-  fakeBrowser(undefined);
+  const fb = fakeBrowser(undefined);
   const { startRealtimeSession } = require(path.join(ROOT, 'lib/voice/realtime-session.ts'));
   let who = null;
   const h = await startRealtimeSession({ caseId: 'c', attemptId: 'a', token: 't' }, { onInterviewer: (w) => { who = w; } });
   assert.equal(h.interviewer, 'renderer');
   assert.equal(who, 'renderer');
+  fb.open();
+  assert.equal(fb.sent.length, 0, 'renderer: the voice never speaks first');
 });
 
 test('session: model-led tool call -> result + continue; instructions update; guardrail cut', async () => {
-  const { sent, emit } = fakeBrowser('model_led');
+  const { sent, emit, open } = fakeBrowser('model_led');
   const { startRealtimeSession } = require(path.join(ROOT, 'lib/voice/realtime-session.ts'));
   const calls = [];
-  const h = await startRealtimeSession({ caseId: 'c', attemptId: 'a', token: 't' }, { onToolCall: (c) => calls.push(c) });
+  const drafts = [];
+  const h = await startRealtimeSession({ caseId: 'c', attemptId: 'a', token: 't' },
+    { onToolCall: (c) => calls.push(c), onUserDelta: (d) => drafts.push(d) });
   assert.equal(h.interviewer, 'model_led');
+  assert.equal(h.coach, false, 'coaching is off unless the backend turns it on');
+  open();
+  assert.deepEqual(sent.at(-1), { type: 'response.create' }, 'model-led: the interviewer opens the call itself');
+  emit({ type: 'conversation.item.input_audio_transcription.delta', item_id: 'i1', delta: 'I would ' });
+  emit({ type: 'conversation.item.input_audio_transcription.delta', item_id: 'i1', delta: 'start from' });
+  assert.deepEqual(drafts, ['I would ', 'I would start from'], 'live candidate transcript streams');
   emit({ type: 'response.output_item.done', item: { type: 'function_call', name: 'answer_request', call_id: 'x9', arguments: '{}' } });
   assert.deepEqual(calls, [{ name: 'answer_request', callId: 'x9', arguments: '{}' }]);
   h.sendToolResult('x9', 'Offer a framework.');
@@ -114,4 +125,15 @@ test('voice protocol label: never spoken from the instructions, never shown or s
   assert.equal(v.stripSayLabel('SAY: SAY: Go ahead.'), 'Go ahead.');
   assert.equal(v.stripSayLabel('Say, what about costs?'), 'Say, what about costs?');
   assert.equal(v.stripSayLabel('Saying that, carry on.'), 'Saying that, carry on.');
+});
+
+test('answer asks: caught in natural phrasings; the guardrail stops cutting once they have asked', () => {
+  for (const t of ['Just tell me the answer', "what's the answer", 'Can you give me the solution', 'just give it to me', 'show me the approach']) {
+    assert.equal(ml.isAnswerRequest(t), true, t);
+  }
+  for (const t of ['I think the answer is around 40 lakh', 'Give me a second', 'What is the population of Chennai?']) {
+    assert.equal(ml.isAnswerRequest(t), false, t);
+  }
+  assert.equal(ml.answerAllowedAfterAsks(0), false);
+  assert.equal(ml.answerAllowedAfterAsks(1), true);
 });

@@ -8,12 +8,13 @@
  *   real backend routes (/realtime/session, /realtime-turn, /voice-coach, /voice-tool)
  *   on an in-memory DB with a scripted hint model (consilio-backend tools/e2e_voice_model_led.py)
  *
- * Proves: the session lets the model answer by itself and offers the tools; no
- * per-turn /voice-decision; turns saved; the coach refreshes instructions with
- * session.update; tool calls go to /voice-tool and come back as function_call_output +
- * response.create; the answer rule (framework first, answer on insisting); the live
- * guardrail cuts a reply that starts stating the answer, and stops cutting once the
- * answer is allowed.
+ * Proves: the session is prompt-led (the model answers by itself, eagerness medium,
+ * no tools, case on top of the prompt with private notes and the playbook); the
+ * interviewer opens the call; the candidate sees a live transcript while speaking;
+ * nothing runs in the reply path (no /voice-decision, /voice-coach or /voice-tool);
+ * turns are saved; the guardrail cuts an answer volunteered before any ask; the
+ * answer rule (framework first, the answer once they insist) is not cut even when
+ * the candidate's transcript lands after the model has started speaking.
  * Cannot prove (needs the real provider): how well the real model converses, latency,
  * transcription accuracy.
  *
@@ -84,91 +85,71 @@ function check(name, ok, detail = '') {
 
   await http('POST', `${API}/__e2e/reset`);
   await http('POST', `${MOCK}/control/script`, [
-    { match: 'households', say: 'Yes, starting from households is the right way in, carry on.' },
-    { match: 'stuck', tool: 'get_hint', args: '{"reason":"asked_for_help","where_stuck":"what comes after households"}' },
+    { match: 'households', say: 'Yes, starting from your 27 lakh households is the right way in, carry on.' },
     { match: 'what is the total', slow: 'So the final answer is about 48,000 electric scooters in Chennai.' },
-    { match: 'tell me the answer', tool: 'answer_request', args: '{}' },
-    { match: 'just give it', tool: 'answer_request', args: '{}' },
-    { match: 'repeat the total', slow: 'So the final answer is about 48,000 electric scooters in Chennai.' },
+    { match: 'tell me the answer', say: 'I would rather you think of it as a funnel, households to scooters; the full worked answer is on your results page.' },
+    { match: 'just give it', slow: 'So the final answer is about 48,000 electric scooters in Chennai.' },
   ]);
   await page.goto(`${MOCK}/harness.html`);
 
   const state = () => http('GET', `${MOCK}/control/state`);
   const clientEvents = async (type) => (await state()).events.filter((e) => e.type === type);
   const db = () => http('GET', `${API}/__e2e/db`);
+  const said = (prefix) => db().then((d) => d.messages.some((m) => m.role === 'assistant' && m.content.startsWith(prefix)));
 
-  // 1. session
+  // 1. session: prompt-led, nothing in the reply path
   check('browser: real WebRTC session + data channel open', await waitFor(async () => (await state()).connected, 15000));
-  check('browser: UI reaches Listening', await waitFor(async () => (await page.textContent('body')).includes('Listening'), 8000));
+  check('browser: UI reaches Listening or Speaking', await waitFor(async () => /Listening|Interviewer speaking/.test(await page.textContent('body')), 8000));
   const cfg = (await state()).lastSessionConfig?.session || {};
   const td = cfg.audio?.input?.turn_detection || {};
-  check('session: the model answers by itself (create_response on), barge-in kept',
-    td.create_response === true && td.interrupt_response === true, JSON.stringify(td));
-  check('session: hint + answer tools offered', JSON.stringify((cfg.tools || []).map((t) => t.name)) === '["get_hint","answer_request"]');
-  check('session: case in the instructions, solution not', (cfg.instructions || '').includes('electric scooters currently operating in Chennai')
-    && !(cfg.instructions || '').includes('48,000'));
+  const ins = cfg.instructions || '';
+  check('session: the model answers by itself, barge-in kept, eagerness medium',
+    td.create_response === true && td.interrupt_response === true && td.eagerness === 'medium', JSON.stringify(td));
+  check('session: no tools (no round trip in a reply)', !cfg.tools);
+  check('session: case on top, then private notes, then the playbook',
+    ins.startsWith('=== THE CASE') && ins.indexOf('PRIVATE INTERVIEWER NOTES') > 0 && ins.indexOf('HOW A STRUCTURED THINKER') > ins.indexOf('PRIVATE INTERVIEWER NOTES'));
 
-  // 2. a substantive turn: the model replies itself; turn saved; coach consulted
+  // 2. the interviewer opens the call by itself
+  check('interviewer opens the call (response.create on connect, greeting spoken and saved)',
+    (await waitFor(() => said('GREETING:'), 6000)) && (await clientEvents('response.create')).length >= 1);
+
+  // 3. a turn: live transcript while speaking, model reply, nothing else in the path
+  await http('POST', `${MOCK}/control/config`, { deltaHoldMs: 700 });
   await http('POST', `${MOCK}/control/say`, { text: 'I would start from households in Chennai, about 27 lakh, then two-wheeler ownership.' });
-  const saidOk = await waitFor(async () => (await db()).messages.some((m) => m.role === 'assistant' && m.content.startsWith('Yes, starting from households')), 6000);
-  check('model reply spoken by the model itself and saved as the interviewer turn', saidOk);
-  check('no per-turn /voice-decision round trip in model-led mode', !apiCalls.some((c) => c.url.endsWith('/voice-decision')));
+  check('live transcript: the candidate sees their words while speaking',
+    await waitFor(async () => (await page.textContent('body')).includes('I would start from households'), 1500));
+  await http('POST', `${MOCK}/control/config`, { deltaHoldMs: 60 });
+  check('model reply (in their words) spoken by the model itself and saved',
+    await waitFor(() => said('Yes, starting from your 27 lakh households'), 6000));
+  check('no per-turn /voice-decision', !apiCalls.some((c) => c.url.endsWith('/voice-decision')));
+  check('no per-turn /voice-coach or /voice-tool (coach and tools off)',
+    !apiCalls.some((c) => c.url.endsWith('/voice-coach') || c.url.endsWith('/voice-tool')));
   check('candidate turn saved via /realtime-turn', (await db()).messages.some((m) => m.role === 'user' && m.content.includes('27 lakh')));
-  check('server coach consulted after the saved turn', await waitFor(async () => apiCalls.some((c) => c.url.endsWith('/voice-coach')), 4000));
 
-  // 3. stuck -> get_hint tool -> /voice-tool -> function_call_output + response.create
-  await http('POST', `${MOCK}/control/say`, { text: "I'm stuck, I don't know what comes next" });
-  const out = await waitFor(async () => (await clientEvents('conversation.item.create')).find((e) => e.item?.type === 'function_call_output'), 8000);
-  check('tool call relayed to /voice-tool', apiCalls.some((c) => c.url.endsWith('/voice-tool') && (c.body || '').includes('get_hint')));
-  check('hint returned to the model as function_call_output', out && String(out.item.output).includes('Look at households before scooters'), out && out.item.output);
-  check('model continues speaking after the tool result',
-    await waitFor(async () => (await db()).messages.some((m) => m.role === 'assistant' && m.content.startsWith('TOOL_SAID: Hint to give')), 6000));
-  const updates = await waitFor(async () => {
-    const u = await clientEvents('session.update');
-    return u.find((e) => {
-      const ins = e.session?.instructions || '';
-      const notes = ins.split('LIVE COACH NOTES')[1] || '';
-      return notes.includes('get_hint') && ins.includes('electric scooters currently operating in Chennai');
-    }) || null;
-  }, 6000);
-  check('coach notes pushed into the live session (session.update)', updates);
-  check('hint level saved on the attempt', ((await db()).session_state?.voice || {}).hint_level === 1);
-
-  // 4. live guardrail: the model starts stating the answer before it is allowed -> cut + steer
+  // 4. guardrail: the model volunteers the answer before any ask -> cut + steer
   await http('POST', `${MOCK}/control/say`, { text: 'so what is the total then' });
   const cut = await waitFor(async () => (await clientEvents('response.cancel')).length > 0, 6000);
   const ev = (await state()).events.map((e) => e.type);
   const i = ev.indexOf('response.cancel');
-  check('guardrail: answer-leak reply cut mid-speech (response.cancel + output_audio_buffer.clear)',
-    cut && ev[i + 1] === 'output_audio_buffer.clear', ev.slice(i, i + 4).join(','));
-  check('guardrail: model steered with a system note, then continues',
-    ev.slice(i, i + 4).join(',') === 'response.cancel,output_audio_buffer.clear,conversation.item.create,response.create');
-  check('guardrail: the steered reply follows', await waitFor(async () => (await db()).messages.some((m) => m.content.startsWith('STEERED:')), 6000));
+  check('guardrail: a volunteered answer is cut mid-speech and steered',
+    cut && ev.slice(i, i + 4).join(',') === 'response.cancel,output_audio_buffer.clear,conversation.item.create,response.create',
+    ev.slice(i, i + 4).join(','));
+  check('guardrail: the steered reply follows', await waitFor(() => said('STEERED:'), 6000));
 
-  // 5. answer rule: first ask -> framework, no answer; asking again -> answer + caveat
+  // 5. answer rule: the first ask gets the framework (from the prompt)...
+  await sleep(500);
   await http('POST', `${MOCK}/control/say`, { text: 'please just tell me the answer' });
-  const first = await waitFor(async () => {
-    const o = (await clientEvents('conversation.item.create')).filter((e) => e.item?.type === 'function_call_output');
-    return o.length >= 2 ? o[1] : null;
-  }, 8000);
-  check('first answer request: a way of thinking + results page, no answer',
-    first && first.item.output.includes('results page') && first.item.output.includes('funnel') && !first.item.output.includes('48,000'), first && first.item.output);
-  await sleep(800);
-  await http('POST', `${MOCK}/control/say`, { text: 'no, just give it to me' });
-  const second = await waitFor(async () => {
-    const o = (await clientEvents('conversation.item.create')).filter((e) => e.item?.type === 'function_call_output');
-    return o.length >= 3 ? o[2] : null;
-  }, 8000);
-  check('insisting: the worked answer with the honest results caveat',
-    second && second.item.output.includes('48,000') && second.item.output.includes('results will show'), second && second.item.output);
-  check('answer recorded on the attempt', ((await db()).session_state?.voice || {}).answer_revealed === true);
-
-  // 6. once the answer is allowed, the guardrail no longer cuts it
-  await sleep(800);
+  check('first ask: the model offers a way of thinking + results page', await waitFor(() => said('I would rather you think of it as a funnel'), 6000));
+  // ...and when they insist, the answer is spoken in full - even if the model starts
+  // before the candidate's transcript lands (the guardrail must not cut it).
+  await sleep(500);
   const cancelsBefore = (await clientEvents('response.cancel')).length;
-  await http('POST', `${MOCK}/control/say`, { text: 'can you repeat the total' });
-  const spoke = await waitFor(async () => (await db()).messages.filter((m) => m.content.startsWith('So the final answer is about 48,000')).length >= 1, 8000);
-  check('after the answer is allowed, it is spoken in full (no cut)', spoke && (await clientEvents('response.cancel')).length === cancelsBefore);
+  await http('POST', `${MOCK}/control/config`, { holdTranscriptMs: 900 });
+  await http('POST', `${MOCK}/control/say`, { text: 'no, just give it to me' });
+  const full = await waitFor(async () => (await db()).messages.filter((m) => m.content.startsWith('So the final answer is about 48,000')).length >= 1, 9000);
+  check('insisting: the answer is spoken in full (no cut), even with a late transcript',
+    full && (await clientEvents('response.cancel')).length === cancelsBefore);
+  await http('POST', `${MOCK}/control/config`, { holdTranscriptMs: 0 });
   check('no page errors', pageErrors.length === 0, pageErrors.join(' | '));
 
   await browser.close();
