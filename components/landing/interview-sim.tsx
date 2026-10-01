@@ -190,6 +190,70 @@ const GUESS_SAMPLE: SimCase = {
   ],
 };
 
+/** US market sizing warm-up (2026-09-30): the same shape as GUESS_SAMPLE,
+    set in a US city with coffee, US spelling and the US site's vocabulary. */
+const GUESS_SAMPLE_US: SimCase = {
+  meta: 'Market sizing · Medium',
+  steps: [
+    {
+      no: 'Step 1 of 4 · Assumptions',
+      kind: 'multi',
+      prompt:
+        'Estimate the cups of coffee bought on a typical weekday in a US city of 3 million people. Which assumptions do you state up front? (pick up to 2)',
+      qhint: 'Assumptions you make explicit',
+      craft: true,
+      reply:
+        'Interviewer: Fair. Use ~65% daily coffee drinkers, ~2 cups a day, and assume ~30% of cups are bought out (cafés, drive-thrus, office carts). Walk me to a number.',
+      opts: [
+        { t: 'Share of adults who drink coffee daily (~65%).', v: 2 },
+        { t: 'Average cups per coffee drinker per day (~2).', v: 2 },
+        { t: 'Split of home-brewed vs bought cups.', v: 2 },
+        { t: 'Rounding the population to 3M for clean math.', v: 1 },
+        { t: 'Ignoring commuters and visitors for now.', v: 1 },
+      ],
+    },
+    {
+      no: 'Step 2 of 4 · Approach',
+      kind: 'single',
+      prompt: 'Which path do you take?',
+      qhint: 'Your approach',
+      opts: [
+        { t: 'Bottom-up: population → drinkers → cups/day → total, then split bought vs home.', dims: { 0: 9, 3: 2 } },
+        { t: 'Top-down from a national coffee figure I half-remember.', dims: { 0: 3, 1: 2 } },
+        { t: 'Number of coffee shops × cups each.', dims: { 0: 6, 4: 3 } },
+        { t: 'Guess a round number, sanity-check after.', dims: { 0: 2, 4: 2 } },
+        { t: 'Both bottom-up and store count, then triangulate.', dims: { 0: 8, 4: 4, 2: 3 } },
+      ],
+    },
+    {
+      no: 'Step 3 of 4 · Compute',
+      kind: 'single',
+      prompt: '3M × 65% × 2 cups ≈ 3.9M cups/day. Cleanest next move?',
+      qhint: 'Your math',
+      opts: [
+        { t: 'Total ≈ 3.9M cups; ~30% bought out → ~1.2M bought cups/day.', dims: { 1: 13, 0: 4, 2: 5 } },
+        { t: 'Say “about 4 million” and stop.', dims: { 1: 5 } },
+        { t: 'Multiply by 7 for a weekly figure.', dims: { 1: 4, 2: 2 } },
+        { t: 'Assume everyone buys → 3.9M bought.', dims: { 1: 6, 3: 1 } },
+        { t: 'Add a vague 20% buffer.', dims: { 1: 5, 4: 2 } },
+      ],
+    },
+    {
+      no: 'Step 4 of 4 · Sanity check',
+      kind: 'single',
+      prompt: 'How do you pressure-test ~1.2M bought cups/day?',
+      qhint: 'Your sanity check',
+      opts: [
+        { t: '≈ one bought cup per 2.5 people a day — plausible; cross-check against the coffee shops it implies.', dims: { 2: 13, 3: 9, 5: 8 } },
+        { t: 'No check needed, math is math.', dims: { 2: 3 } },
+        { t: 'Restate the number louder.', dims: { 2: 3, 5: 2 } },
+        { t: 'Flag the two assumptions that move it most (drinker % and bought %).', dims: { 2: 11, 3: 8, 5: 6, 4: 4 } },
+        { t: 'Round to 1M for a clean headline.', dims: { 2: 6, 5: 4 } },
+      ],
+    },
+  ],
+};
+
 const WORK_MSG: Record<number, string> = {
   0: 'Name the framework out loud before you answer — “profit = revenue − cost, I’ll test each side.”',
   1: 'Show the arithmetic and where the number comes from; prove the leak, don’t assert it.',
@@ -339,9 +403,15 @@ interface Props {
   variant?: 'card' | 'tile';
   /** Told whenever the visitor switches Case / Guesstimate (the tile uses it to swap its topic photo). */
   onModeChange?: (mode: 'case' | 'guess') => void;
+  /**
+   * 'US' (2026-09-30): the /us landing — the market sizing warm-up is set in a
+   * US city (coffee) and the toggle says "Market sizing", the US site's word.
+   * 'IN' (default) is unchanged.
+   */
+  market?: 'IN' | 'US';
 }
 
-export default function InterviewSim({ today, caseId = null, guesstimateId = null, signupHref = '/signup', loginHref = '/login', variant = 'card', onModeChange }: Props) {
+export default function InterviewSim({ today, caseId = null, guesstimateId = null, signupHref = '/signup', loginHref = '/login', variant = 'card', onModeChange, market = 'IN' }: Props) {
   const tile = variant === 'tile';
   const [s, dispatch] = useReducer(reducer, freshPlay('case'));
   useEffect(() => {
@@ -351,7 +421,7 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
   const [, startTransition] = useTransition();
   const [starting, setStarting] = useState(false);
   const caseData = today ?? CASE_SAMPLE;
-  const data = s.mode === 'case' ? caseData : GUESS_SAMPLE;
+  const data = s.mode === 'case' ? caseData : market === 'US' ? GUESS_SAMPLE_US : GUESS_SAMPLE;
   const steps = data.steps;
   const step = steps[s.stepIdx];
 
@@ -409,22 +479,22 @@ export default function InterviewSim({ today, caseId = null, guesstimateId = nul
     <div className={tile ? 'flex h-full min-h-0 flex-col bg-card' : 'ui-card overflow-hidden'}>
       {/* top bar: toggle + meta */}
       <div className={`flex items-center justify-between gap-3 border-b border-border ${tile ? 'px-5 py-2.5' : 'bg-muted/50 px-3.5 py-3'}`}>
-        <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
+        <div className={`inline-flex rounded-lg border border-border bg-background p-0.5 ${tile ? 'shrink-0' : ''}`}>
           {(['case', 'guess'] as Mode[]).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => dispatch({ type: 'setMode', mode: m })}
               aria-pressed={s.mode === m}
-              className={`${tile ? 'min-h-8 px-3 py-1' : 'min-h-9 px-3 py-1.5'} rounded-md text-[13px] font-semibold transition-colors ${
+              className={`${tile ? 'min-h-8 whitespace-nowrap px-3 py-1' : 'min-h-9 px-3 py-1.5'} rounded-md text-[13px] font-semibold transition-colors ${
                 s.mode === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {m === 'case' ? 'Case' : 'Guesstimate'}
+              {m === 'case' ? 'Case' : market === 'US' ? 'Market sizing' : 'Guesstimate'}
             </button>
           ))}
         </div>
-        <span className={`text-right font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground ${tile ? 'truncate whitespace-nowrap' : ''}`}>
+        <span className={`text-right font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground ${tile ? 'hidden truncate whitespace-nowrap sm:block' : ''}`}>
           {data.meta}
         </span>
       </div>

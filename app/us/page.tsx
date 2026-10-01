@@ -102,13 +102,14 @@ export default async function UsHomePage() {
   const today = daily.case
     ? {
         id: daily.case.id,
+        guesstimateId: daily.guesstimate?.id ?? null,
         title: daily.case.title,
         typeLabel: usTypeLabel(daily.case.type),
         difficulty: daily.case.difficulty,
         minutes: bankMatch?.minutes ?? null,
         isDaily: true,
       }
-    : { id: null, title: fallback.title, typeLabel: usTypeLabel(fallback.type), difficulty: fallback.difficulty, minutes: fallback.minutes, isDaily: false };
+    : { id: null, guesstimateId: daily.guesstimate?.id ?? null, title: fallback.title, typeLabel: usTypeLabel(fallback.type), difficulty: fallback.difficulty, minutes: fallback.minutes, isDaily: false };
 
   const exampleCases = ['US-C-01', 'US-C-03', 'US-C-12']
     .map((code) => US_CASES.find((c) => c.code === code))

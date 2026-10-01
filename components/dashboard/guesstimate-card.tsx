@@ -2,8 +2,10 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import HomeImage from '@/components/home/photo';
 import { Bolt } from './icons';
 import type { DailyItemProgress } from '@/lib/dashboard/daily-progress';
+import type { DashPhoto } from '@/lib/dashboard/photos';
 
 /* ── Types ── */
 interface GuesstimateCardProps {
@@ -16,10 +18,11 @@ interface GuesstimateCardProps {
   } | null;
   /** Done-state for today's daily guesstimate. Undefined = treat as not attempted. */
   progress?: DailyItemProgress;
+  /** A photograph of what the question is about, chosen on the server. */
+  photo?: DashPhoto;
 }
 
-/* Small tick used by the attempted state. Inline so the card keeps its
- * zero-dependency, inline-style structure. */
+/* Small tick used by the attempted state. */
 function Tick({ size = 13 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -29,17 +32,26 @@ function Tick({ size = 13 }: { size?: number }) {
   );
 }
 
+/**
+ * Four orders of magnitude, in the Indian system. A gut call, not an answer
+ * key: they fit a count (cups of chai, petrol pumps) and a rupee value
+ * (a market in crores) alike, and none of them claims to be right. The old
+ * card showed 1.2M / 4.8M / 12M / 38M under every question, whatever it asked.
+ */
+const GUT = ['Under 1 lakh', '1–10 lakh', '10 lakh–1 cr', 'Over 1 crore'] as const;
+
 /* ── GuesstimateCard ──
  *
- * Whole card is clickable. The 4 MCQ option buttons are still present (no
- * visual change) but each click — including the buttons — routes the user to
- * the real daily guesstimate case at `/cases/${daily.id}`. MCQ options stay
- * mock until the `cases.mcq` column is authored per case; clicking any of
- * them just opens the case so the user can solve it.
+ * Today's guesstimate (India, 2026-09-30 redesign): the question, a photo of
+ * what it is about melting in from the right, and a one-tap gut call before
+ * you solve it. Tapping a band commits you (it is remembered for this case in
+ * sessionStorage) and turns the button into "Test your gut"; the case itself
+ * is where the real estimate and the score happen.
  */
-export function GuesstimateCard({ u, daily, progress }: GuesstimateCardProps) {
+export function GuesstimateCard({ u: _u, daily, progress, photo }: GuesstimateCardProps) {
   const router = useRouter();
   const hasDaily = !!daily?.id;
+  const [gut, setGut] = React.useState<string | null>(null);
 
   // Already done today? Send them to their result rather than back into a case
   // they cannot re-attempt on free tier. `attempted` without a submissionId
@@ -54,105 +66,116 @@ export function GuesstimateCard({ u, daily, progress }: GuesstimateCardProps) {
   const goToCase = () => router.push(href);
   const goToPractice = () => router.push('/practice?tab=guesstimates');
 
-  // Visual hover hint without restructuring the card or adding new className.
-  const [hover, setHover] = React.useState(false);
-  const titleText = daily?.title || 'How many cups of chai are drunk in Bangalore on a weekday?';
+  const gutKey = daily?.id ? `mece:gut:${daily.id}` : null;
+  React.useEffect(() => {
+    if (!gutKey) return;
+    try {
+      const saved = window.sessionStorage.getItem(gutKey);
+      if (saved && (GUT as readonly string[]).includes(saved)) setGut(saved);
+    } catch {
+      /* storage blocked — the pick just isn't remembered */
+    }
+  }, [gutKey]);
+  const pickGut = (g: string) => {
+    setGut(g);
+    if (!gutKey) return;
+    try {
+      window.sessionStorage.setItem(gutKey, g);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const titleText = daily?.title || 'Today’s guesstimate is on its way.';
 
   return (
-    <div
-      className="card"
-      role="link"
-      tabIndex={0}
-      onClick={goToCase}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          goToCase();
-        }
-      }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        padding: '16px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        background: 'linear-gradient(160deg, var(--card) 0%, rgba(200,16,46,0.04) 100%)',
-        cursor: 'pointer',
-        // Subtle press affordance — boxShadow + translate only, no layout shift.
-        boxShadow: hover ? '0 6px 22px rgba(200,16,46,0.10)' : 'none',
-        transform: hover ? 'translateY(-1px)' : 'none',
-        transition: 'box-shadow .15s ease, transform .15s ease',
-      }}
+    <section
+      aria-labelledby="guess-title"
+      className="relative isolate flex min-h-[214px] flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--card-hex)] px-5 pb-4 pt-4"
     >
-      <div className="between">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Bolt style={{ width: 14, height: 14, color: 'var(--red)' }} />
-          <span className="eyebrow" style={{ color: 'var(--red)' }}>Daily guesstimate</span>
+      {/* Photo: top-right, fading out to the left and downward (two layers). */}
+      {photo && (
+        <div aria-hidden className="dash-fade-b pointer-events-none absolute right-0 top-0 -z-10 h-[78%] w-[62%] sm:w-[56%]">
+          <div className="dash-fade-l h-full w-full">
+            <HomeImage
+              photo={photo}
+              decorative
+              sizes="(min-width: 1280px) 280px, (min-width: 768px) 24vw, 60vw"
+              widths={[320, 480, 720]}
+              className="dash-photo-img h-full w-full object-cover"
+            />
+          </div>
         </div>
+      )}
+
+      <div className="flex items-center gap-2.5">
+        <Bolt style={{ width: 14, height: 14, color: 'var(--red)' }} />
+        <span className="eyebrow whitespace-nowrap" style={{ color: 'var(--red)' }}>Daily guesstimate</span>
         {done ? (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--green, #17803d)' }}>
+          <span className="inline-flex items-center gap-[5px] text-[10.5px] font-bold uppercase tracking-[0.04em] text-[var(--green)]">
             <Tick /> Done
             {progress?.score != null && (
-              <span className="mono tnum" style={{ marginLeft: 2, padding: '1px 6px', borderRadius: 999, background: 'rgba(23,128,61,0.12)', fontSize: 10.5 }}>
-                {progress.score}
-              </span>
+              <span className="mono tnum ml-0.5 rounded-full bg-[rgba(23,128,61,0.12)] px-1.5 py-px text-[10.5px]">{progress.score}</span>
             )}
           </span>
         ) : (
-          <span className="mono tnum" style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>60 SEC</span>
+          <span className="mono tnum whitespace-nowrap text-[10.5px] text-[var(--ink-4)]">60 SEC</span>
         )}
       </div>
-      <h3 className="serif" style={{ margin: 0, fontSize: 18, lineHeight: 1.25, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+
+      <h3 id="guess-title" className="serif mb-0 mt-2.5 max-w-[62%] text-[18px] leading-[1.25] tracking-[-0.01em] text-[var(--ink)] sm:max-w-[58%]">
         {titleText}
       </h3>
-      {/* MCQ teaser is a pre-attempt affordance only. Once they've solved it,
-          four fake options that just re-open the case are noise. */}
-      {!done && (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 2 }}>
-        {['1.2M', '4.8M', '12M', '38M'].map((opt, i) => (
-          <button
-            key={i}
-            type="button"
-            className="btn"
-            onClick={(e) => {
-              // Don't double-fire the card click; route directly.
-              e.stopPropagation();
-              goToCase();
-            }}
-            style={{
-              padding: '8px 4px',
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: 'var(--ff-mono)',
-              background: 'var(--card-hex)',
-              color: 'var(--ink)',
-              borderColor: 'var(--line-2)',
-              justifyContent: 'center',
-            }}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
+
+      {/* The gut call — a pre-attempt affordance only. */}
+      {!done && hasDaily && (
+        <div className="mt-auto pt-4">
+          <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-4)]">Your gut call</p>
+          <div role="radiogroup" aria-label="Your gut call" className="grid grid-cols-2 gap-1.5 xl:grid-cols-4">
+            {GUT.map((g) => {
+              const on = gut === g;
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => pickGut(g)}
+                  className={`whitespace-nowrap rounded-[8px] border px-1 py-2 text-[12px] font-semibold tabular-nums transition-colors ${
+                    on
+                      ? 'border-[var(--red)] bg-[var(--red-soft)] text-[var(--red)]'
+                      : 'border-[var(--line-2)] bg-[var(--card-hex)] text-[var(--ink)] hover:border-[var(--ink-4)]'
+                  }`}
+                >
+                  {g}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+
+      <div className={`flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between ${!done && hasDaily ? 'mt-3' : 'mt-auto pt-4'}`}>
+        <span className="min-w-0 flex-1 text-[11px] leading-snug text-[var(--ink-3)]">
           {done ? (
-            progress?.score != null
-              ? <>You scored <b style={{ color: 'var(--ink)' }}>{progress.score}</b> on today&apos;s guesstimate{progress.attempts > 1 ? ` · ${progress.attempts} attempts` : ''} · come back tomorrow for a new one</>
-              : <>Already attempted today · finish it or keep practising</>
+            progress?.score != null ? (
+              <>You scored <b className="text-[var(--ink)]">{progress.score}</b> on today&apos;s guesstimate{progress.attempts > 1 ? ` · ${progress.attempts} attempts` : ''} · a new one tomorrow</>
+            ) : (
+              <>Already attempted today · finish it or keep practising</>
+            )
+          ) : gut ? (
+            <>Locked in: <b className="text-[var(--ink)]">{gut}</b>. Now build it and see how close you were.</>
           ) : (
-            <><b style={{ color: 'var(--ink)' }}>60-second</b> mental-math warm-up · sharpen your estimation reflex</>
+            <><b className="text-[var(--ink)]">60-second</b> mental-maths warm-up · sharpen your estimation reflex</>
           )}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <div className="flex shrink-0 items-center gap-2">
           {done && (
             <button
               type="button"
               className="btn"
               style={{ padding: '8px 12px', fontSize: 12.5, fontWeight: 600, borderRadius: 9, whiteSpace: 'nowrap', background: 'var(--card-hex)', color: 'var(--ink)', borderColor: 'var(--line-2)' }}
-              onClick={(e) => { e.stopPropagation(); goToPractice(); }}
+              onClick={goToPractice}
             >
               Practice more
             </button>
@@ -161,14 +184,18 @@ export function GuesstimateCard({ u, daily, progress }: GuesstimateCardProps) {
             type="button"
             className="btn primary"
             style={{ padding: '8px 14px', fontSize: 12.5, fontWeight: 600, borderRadius: 9, whiteSpace: 'nowrap' }}
-            onClick={(e) => { e.stopPropagation(); goToCase(); }}
+            onClick={goToCase}
           >
-            {done
-              ? <>{resultHref ? 'View your score' : 'Finish it'}</>
-              : <><Bolt style={{ width: 13, height: 13 }} /> {hasDaily ? 'Start the guesstimate' : 'Browse guesstimates'}</>}
+            {done ? (
+              <>{resultHref ? 'View your score' : 'Finish it'}</>
+            ) : (
+              <>
+                <Bolt style={{ width: 13, height: 13 }} /> {hasDaily ? (gut ? 'Test your gut' : 'Start the guesstimate') : 'Browse guesstimates'}
+              </>
+            )}
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

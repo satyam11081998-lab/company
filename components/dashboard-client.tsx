@@ -1,6 +1,8 @@
 'use client';
 
-import { Hero, VARIANTS, type UserVariant } from '@/components/dashboard/hero';
+import { VARIANTS, type UserVariant } from '@/components/dashboard/hero';
+import FocusHero from '@/components/dashboard/focus-hero';
+import { HOME_PHOTOS } from '@/lib/home/photos';
 import { ConstellationSection } from '@/components/dashboard/constellation';
 import { CommandPanel } from '@/components/dashboard/command-panel';
 import { NewsCard } from '@/components/dashboard/news-card';
@@ -59,6 +61,18 @@ export interface DashboardClientProps {
    * (GD news brief, casebook links); everything else is shared.
    */
   intl?: boolean;
+  /**
+   * India dashboard top (2026-09-30): the photos of what today's case, brief
+   * and guesstimate are about, and the handwritten line of the day. Picked on
+   * the server (lib/dashboard/photos.ts, lib/dashboard/daily-lines.ts) so the
+   * photo library and its keyword rules never ship to the browser.
+   */
+  top?: {
+    heroPhoto: import('@/lib/dashboard/photos').DashPhoto;
+    briefPhoto: import('@/lib/dashboard/photos').DashPhoto;
+    guessPhoto: import('@/lib/dashboard/photos').DashPhoto;
+    line: string;
+  };
 }
 
 export default function DashboardClient(props: DashboardClientProps) {
@@ -120,14 +134,14 @@ export default function DashboardClient(props: DashboardClientProps) {
     proofRail,
   };
 
-  // Hero variant: newcomer → case, high streak → streak, has readiness → readiness, default → case
-  const heroVariant = solved < 5
-    ? 'case'
-    : streak > 30
-    ? 'streak'
-    : readinessVal != null && readinessVal >= 65
-    ? 'readiness'
-    : 'case';
+  // Photos + line of the day come from the server; this fallback only covers
+  // a caller that passes none (lib/dashboard/guest-sample.ts).
+  const top = props.top ?? {
+    heroPhoto: HOME_PHOTOS.estimate,
+    briefPhoto: HOME_PHOTOS.news,
+    guessPhoto: HOME_PHOTOS.whiteboard,
+    line: 'Structure first. Numbers second. The story, always.',
+  };
 
   // Mobile layout switch. Below 768px every grid stacks to a single column
   // and outer padding tightens so the page doesn't waste edge space on a
@@ -157,13 +171,17 @@ export default function DashboardClient(props: DashboardClientProps) {
         />
       )}
 
-      {/* HERO SECTION */}
-      <Hero
+      {/* FOCUS CASE — photo of today's case, practice streak, line of the day.
+          One card for every user (it replaced the case / streak / readiness
+          hero variants on 2026-09-30). */}
+      <FocusHero
         u={u}
-        variant={heroVariant}
-        proofRail={proofRail}
         today={todayMeta.casePick}
+        todayTitle={props.initialDaily?.case?.title ?? null}
         progress={props.dailyProgress?.case}
+        proofRail={proofRail}
+        photo={top.heroPhoto}
+        line={top.line}
       />
 
       {/* NEWS + GUESSTIMATE */}
@@ -175,11 +193,12 @@ export default function DashboardClient(props: DashboardClientProps) {
         }}
       >
         {/* GD news briefs are India-only; the guesstimate takes the full row. */}
-        {!props.intl && <NewsCard u={u} brief={props.initialDaily?.brief || undefined} />}
+        {!props.intl && <NewsCard u={u} brief={props.initialDaily?.brief || undefined} photo={top.briefPhoto} />}
         <GuesstimateCard
           u={u}
           daily={props.initialDaily?.guesstimate || undefined}
           progress={props.dailyProgress?.guesstimate}
+          photo={top.guessPhoto}
         />
       </div>
 
