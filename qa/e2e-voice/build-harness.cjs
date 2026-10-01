@@ -5,10 +5,10 @@
 const path = require('path');
 const esbuild = require(require.resolve('esbuild', { paths: [process.env.ESBUILD_DIR || process.cwd()] }));
 const api = process.argv[2] || 'http://127.0.0.1:8765';
-esbuild.buildSync({
-  entryPoints: [path.join(__dirname, 'harness-entry.tsx')],
+for (const [entry, out] of [['harness-entry.tsx', 'harness.js'], ['harness-gemini-entry.tsx', 'harness-gemini.js']]) esbuild.buildSync({
+  entryPoints: [path.join(__dirname, entry)],
   bundle: true,
-  outfile: path.join(__dirname, 'harness.js'),
+  outfile: path.join(__dirname, out),
   platform: 'browser',
   format: 'iife',
   jsx: 'automatic',

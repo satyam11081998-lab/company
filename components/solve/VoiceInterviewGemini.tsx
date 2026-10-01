@@ -5,11 +5,16 @@
  * realtime mode (chat-column overlay, animated listening mic, live transcript),
  * so the only difference the candidate feels is the interviewer itself.
  *
- * MECE Interviewer V11 decides every interviewer turn; Gemini is only the voice.
- * Each final candidate transcript goes to /attempts/{id}/voice-decision and
- * Gemini is asked to "SAY:" exactly V11's line (nothing for V11 SILENCE).
- * Gemini also answers candidate audio on its own and cannot be told not to, so
- * GeminiTurnGate discards that unprompted answer: it is never played or saved.
+ * LIVE mode (default; backend interviewer="model_led"): Gemini IS the interviewer.
+ * It hears the candidate and answers in its own voice straight away - speech to
+ * speech, like ChatGPT voice - from the prompt the backend pinned into the session
+ * (the case on top, private notes, the conversation so far, the structured-thinking
+ * playbook). Both sides' transcripts stream live and are saved in speaking order
+ * (lib/voice/gemini-live.ts). The only client-side check is the answer guardrail.
+ *
+ * RENDERER mode (backend VOICE_INTERVIEWER=renderer): the old flow - V11 decides
+ * every turn via /attempts/{id}/voice-decision and Gemini says the approved line;
+ * GeminiTurnGate discards Gemini's own unprompted answers.
  *
  * Transport: ephemeral-token WebSocket straight to Google (minted by the backend
  * at POST /realtime-gemini/session). Mic is captured as 16 kHz PCM; Gemini streams
@@ -26,6 +31,8 @@ import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 import {
   CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, stripSayLabel, type GateAction,
 } from '@/lib/voice/v11-voice';
+import { GeminiLiveTurns, GEMINI_OPEN_TURN, geminiSteerTurn, type LiveAction } from '@/lib/voice/gemini-live';
+import { answerLeakTripwire, isAnswerRequest, ANSWER_LEAK_STEER } from '@/lib/voice/model-led';
 
 // Ending a candidate turn (unchanged): SETTLE_MS after Gemini closes its own
 // (discarded) turn, so late transcript chunks land in the same turn; if Gemini
@@ -114,6 +121,12 @@ export default function VoiceInterviewGemini({
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sayWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tailRef = useRef<HTMLDivElement | null>(null);
+  // LIVE mode state (see the header).
+  const liveRef = useRef(false);
+  const liveTurnsRef = useRef(new GeminiLiveTurns());
+  const answerAllowedRef = useRef(false);  // set once the candidate has asked for the answer
+  const trippedRef = useRef(false);        // guardrail fired for the reply in progress
+  const steerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [transcript.length, drafts]);
 
@@ -297,8 +310,53 @@ export default function VoiceInterviewGemini({
     }
   }, [enqueueAudio, stopPlayback, queueSave, handleCandidateTurn, drainCandidateSaves, voidEarlyTurn, sendSay]);
 
+  // LIVE mode: Gemini's own answers play as they stream; turns are saved in order.
+  const applyLive = useCallback((actions: LiveAction[]) => {
+    for (const a of actions) {
+      if (a.type === 'play') enqueueAudio(base64ToInt16(a.data));
+      else if (a.type === 'stopPlayback') stopPlayback();
+      else if (a.type === 'candidateDraft') {
+        setDrafts((d) => ({ ...d, you: a.text }));
+        if (isAnswerRequest(a.text)) answerAllowedRef.current = true;
+      } else if (a.type === 'interviewerDraft') {
+        setDrafts((d) => ({ ...d, interviewer: a.text }));
+        // Guardrail: the answer only after they have asked for it. If the model
+        // volunteers it, cut the voice now and steer it back to a framework.
+        if (!trippedRef.current && answerLeakTripwire(a.text, answerAllowedRef.current)) {
+          trippedRef.current = true;
+          console.warn('[gemini][live] answer volunteered - reply cut');
+          applyLiveRef.current(liveTurnsRef.current.cut());
+          // The steer goes once the cut turn is over (readyForSteer); this is the
+          // fallback if Gemini never reports its end.
+          if (steerTimerRef.current) clearTimeout(steerTimerRef.current);
+          steerTimerRef.current = setTimeout(() => applyLiveRef.current(liveTurnsRef.current.releaseCut()), 2500);
+        }
+      } else if (a.type === 'readyForSteer') {
+        if (steerTimerRef.current) { clearTimeout(steerTimerRef.current); steerTimerRef.current = null; }
+        const ws = wsRef.current;
+        if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(geminiSteerTurn(ANSWER_LEAK_STEER)));
+        console.log('[gemini][live] steer sent');
+      } else if (a.type === 'candidateTurn') {
+        if (isAnswerRequest(a.text)) answerAllowedRef.current = true;
+        setTranscript((t) => [...t.slice(-12), { who: 'you' as const, text: a.text }]);
+        setDrafts((d) => ({ ...d, you: '' }));
+        queueSave('user', a.text);
+      } else if (a.type === 'interviewerTurn') {
+        trippedRef.current = false;
+        lastLineRef.current = { text: a.text, at: Date.now() };
+        setTranscript((t) => [...t.slice(-12), { who: 'interviewer' as const, text: a.text }]);
+        setDrafts((d) => ({ ...d, interviewer: '' }));
+        queueSave('assistant', a.text);
+      }
+    }
+  }, [enqueueAudio, stopPlayback, queueSave]);
+  const applyLiveRef = useRef(applyLive);
+  applyLiveRef.current = applyLive;
+
   const cleanup = useCallback(() => {
     if (closedRef.current) return;
+    if (liveRef.current) applyLiveRef.current(liveTurnsRef.current.flush());  // save what is still open
+    if (steerTimerRef.current) clearTimeout(steerTimerRef.current);
     closedRef.current = true;
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
     if (sayWatchdogRef.current) clearTimeout(sayWatchdogRef.current);
@@ -324,6 +382,8 @@ export default function VoiceInterviewGemini({
           throw new Error(t.detail || `Could not start voice session (${res.status})`);
         }
         const data = await res.json();
+        liveRef.current = data?.interviewer === 'model_led';
+        console.log(`[gemini] interviewer: ${liveRef.current ? 'live (model-led)' : 'renderer (V11 per turn)'}`);
         if (data?.credits?.total_remaining != null) setCreditsLeft(data.credits.total_remaining);
         if (cancelled) return;
 
@@ -390,9 +450,19 @@ export default function VoiceInterviewGemini({
           let msg: any;
           try { msg = JSON.parse(text); } catch { return; }
 
-          if (msg.setupComplete) { startMic(); return; }
+          if (msg.setupComplete) {
+            startMic();
+            // LIVE: the interviewer opens the call itself.
+            if (liveRef.current && data.open_first !== false) ws.send(JSON.stringify(GEMINI_OPEN_TURN));
+            return;
+          }
           const sc = msg.serverContent;
           if (!sc) return;
+
+          if (liveRef.current) {
+            applyLiveRef.current(liveTurnsRef.current.handle(sc));
+            return;
+          }
 
           // Everything Gemini sends goes through the V11 gate: only the reply to
           // our SAY is played; its own answers are discarded.

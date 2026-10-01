@@ -173,6 +173,13 @@ export async function startRealtimeSession(
         if (text) cbs.onUserTurn?.(text);
         break;
       }
+      case 'conversation.item.input_audio_transcription.failed':
+        // The reply is unaffected (the model hears the audio); only this turn's
+        // saved text is missing.
+        console.warn('[realtime] transcription failed for one turn:', evt.error?.message || evt.error);
+        userDraft = '';
+        cbs.onUserDelta?.('');
+        break;
       // Live candidate transcript (transcription models that stream deltas).
       case 'conversation.item.input_audio_transcription.delta': {
         userDraft += evt.delta || '';
