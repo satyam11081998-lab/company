@@ -314,6 +314,10 @@ length; and a plans layer that is invisible to the public: one free 15-minute in
 (off for everyone until `plans.trial_open`), Ultra by grant (or a future MECE tier "ultra") with a
 fair-use cap, a plans page only people with access can open, and "Tell me when it opens" interest.
 
+Plans page layout (2026-10-03, owner request): three short cards (price, one line, one button) and
+one "Compare every feature" table, tick or cross per plan (Free / Pro / Ultra), so nothing is listed
+twice. Case-practice rows read `TIER_LIMITS` from lib/tier, so they follow any change to Free or Pro.
+
 **Decision needed before Ultra can be sold (ask first — CONTRACTS surfaces):** a real Ultra plan means
 C6 `users.subscription_tier` gains `ultra` (+ any DB check constraint), the Payments flow (Razorpay
 order/verify/webhook, `lib/tier.ts` TIER_PRICING, `/upgrade`) gains a tier, and the backend's
