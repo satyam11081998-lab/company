@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { iiAdmin, IIError, isConfigured } from '@/lib/interview-intelligence/api';
+import { iiAdmin, IIError, isConfigured, type AiRouting } from '@/lib/interview-intelligence/api';
 import type { AccessGrantRow, AdminOverview } from '@/lib/interview-intelligence/types';
 import { ErrorNote, Spinner } from '../primitives';
 
-type Tab = 'access' | 'settings' | 'overview' | 'sessions' | 'ai' | 'evaluation' | 'audit';
+type Tab = 'access' | 'settings' | 'routing' | 'overview' | 'sessions' | 'ai' | 'evaluation' | 'audit';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'access', label: 'Test users' },
   { id: 'settings', label: 'Settings' },
+  { id: 'routing', label: 'AI routing' },
   { id: 'overview', label: 'Health' },
   { id: 'sessions', label: 'Interviews' },
   { id: 'ai', label: 'AI runs' },
@@ -48,6 +49,7 @@ export default function IIAdminClient() {
       <div className="mt-6">
         {tab === 'access' && <AccessTab />}
         {tab === 'settings' && <SettingsTab />}
+        {tab === 'routing' && <RoutingTab />}
         {tab === 'overview' && <OverviewTab />}
         {tab === 'sessions' && <SessionsTab />}
         {tab === 'ai' && <RunsTab />}
@@ -149,7 +151,11 @@ function AccessTab() {
 /* ------------------------------------------------------------------ settings */
 /** Flags that take one of a few named values. */
 const FLAG_OPTIONS: Record<string, { value: string; label: string }[]> = {
-  'voice.engine': [{ value: 'realtime', label: 'Live call' }, { value: 'standard', label: 'Standard' }],
+  'voice.engine': [
+    { value: 'realtime', label: 'OpenAI live' },
+    { value: 'gemini', label: 'Gemini live' },
+    { value: 'standard', label: 'Standard' },
+  ],
 };
 
 const FLAG_HELP: Record<string, string> = {
@@ -157,7 +163,7 @@ const FLAG_HELP: Record<string, string> = {
   'ii.enabled_for_pro': 'Launch flag. Off = private preview (admins + test users only). On = every Pro user.',
   'admin.test_access': 'Whether the test-user list grants access.',
   'voice.enabled': 'Voice interviews (a spoken call with the interviewer). Off = text only.',
-  'voice.engine': 'Live call = realtime speech (best: barge-in, fastest replies; ≈ $0.7 per 30 min). Standard = record → transcribe → speak (cheaper ≈ $0.25, slower). Live falls back to standard by itself if it cannot connect.',
+  'voice.engine': 'How the interview call talks. OpenAI live = realtime speech (most natural, fastest replies). Gemini live = the same on Google’s Gemini Live with the Gemini key (free tier has a small number of concurrent calls). Standard = record → transcribe → speak (cheapest, a little slower). Either live engine falls back to standard by itself if it cannot connect. Every call pauses and hangs up after 4 minutes of silence or 2 minutes on another tab, so an abandoned call stops costing money.',
   'company_intel.enabled': 'Use JD-stated and user-provided company context.',
   'company_intel.web_research': 'Public web research for company context (not built — keep off).',
   'technical.advanced_mode': 'Offer the technical deep-dive mode.',
@@ -190,8 +196,8 @@ function SettingsTab() {
     <div className="space-y-4">
       <ErrorNote error={error} />
       <ul className="divide-y divide-border rounded-xl border border-border bg-card">
-        {Object.entries(data.flags).map(([key, value]) => (
-          <li key={key} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_16rem] sm:items-center">
+        {Object.entries(data.flags).filter(([, value]) => !isObjectFlag(value)).map(([key, value]) => (
+          <li key={key} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
             <div>
               <p className="font-mono text-sm">{key}</p>
               <p className="text-sm text-muted-foreground">{FLAG_HELP[key] || ''}</p>
@@ -227,6 +233,78 @@ function SettingsTab() {
                   </Button>
                 </>
               )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const isObjectFlag = (v: unknown) => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/* ------------------------------------------------------------------ AI routing */
+const PROVIDER_NAMES: Record<string, string> = { openai: 'OpenAI', gemini: 'Gemini', groq: 'Groq', anthropic: 'Anthropic', simulated: 'Simulator' };
+
+function RoutingTab() {
+  const { data, error, reload, setError } = useLoad(iiAdmin.aiRouting);
+  const [view, setView] = useState<AiRouting | null>(null);
+  const [saving, setSaving] = useState<string | null>(null);
+  useEffect(() => { if (data) setView(data); }, [data]);
+
+  async function change(stage: string, preset: string) {
+    setSaving(stage);
+    setError(null);
+    try { setView(await iiAdmin.setAiRouting({ [stage]: preset })); }
+    catch (e) { setError((e as IIError).message); }
+    finally { setSaving(null); }
+  }
+
+  if (!view) return error ? <ErrorNote error={error} onRetry={reload} /> : <Spinner />;
+  const keys = Object.entries(view.providers).filter(([, on]) => on).map(([p]) => PROVIDER_NAMES[p] || p);
+  return (
+    <div className="space-y-4">
+      <ErrorNote error={error} />
+      <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+        <p>
+          Which model does each step of an interview. Reading documents and light checks run on <strong className="text-foreground">Gemini</strong> (free
+          tier; OpenAI takes over by itself if Gemini is busy, rate-limited or not set up). Steps that need judgement — following
+          up on answers, extracting evidence, scoring, the feedback report — run on <strong className="text-foreground">OpenAI</strong>.
+          Changes apply to the next model call; nothing restarts.
+        </p>
+        <p className="mt-2">
+          Keys on the server: {keys.length ? keys.join(', ') : 'none (the simulator answers)'}. Gemini model: <span className="font-mono">{view.gemini_model}</span>.
+          {' '}On Gemini’s free tier Google may use what is sent to improve its products; contact details and protected attributes are removed
+          from documents before any model sees them, names and employers are not.
+        </p>
+      </div>
+      <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+        {view.stages.map((st) => (
+          <li key={st.id} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{st.label}</p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground" title={st.chain.map((c) => `${c.provider}:${c.model}`).join(' → ')}>
+                {st.chain.map((c, i) => (
+                  <span key={i}>
+                    {i > 0 && ' → '}
+                    <span className={c.configured ? '' : 'line-through opacity-60'}>{PROVIDER_NAMES[c.provider] || c.provider} <span className="font-mono">{c.model}</span></span>
+                  </span>
+                ))}
+                {st.env_override && <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-700 dark:text-amber-300">pinned by II_MODEL_ROUTES</span>}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 sm:justify-end">
+              <select value={st.current} disabled={saving === st.id || st.env_override} aria-label={`Model for: ${st.label}`}
+                onChange={(e) => change(st.id, e.target.value)}
+                className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                {Object.entries(view.presets).map(([id, label]) => (
+                  <option key={id} value={id}>{label}{id === st.default ? ' (default)' : ''}</option>
+                ))}
+              </select>
+              {st.current !== st.default && (
+                <Button size="sm" variant="ghost" disabled={saving === st.id} onClick={() => change(st.id, 'default')}>Reset</Button>
+              )}
+              {saving === st.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />}
             </div>
           </li>
         ))}

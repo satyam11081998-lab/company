@@ -58,6 +58,7 @@ test('connects with the minted secret and only speaks the lines it is given', as
   assert.equal(dc.sent.length, 1, 'one response at a time');
   assert.equal(dc.sent[0].type, 'response.create');
   assert.match(dc.sent[0].response.instructions, /^PREFIX\n\nTell me about yourself\.$/);
+  assert.deepStrictEqual(dc.sent[0].response.input, [], 'spoken from the instructions alone, not the whole call');
   dc.emit('message', { type: 'response.created' });
   assert.deepStrictEqual(ev.calls.find((c) => c[0] === 'speaking'), ['speaking', true, 'line', 'Tell me about yourself.']);
   assert.ok(t.busy);

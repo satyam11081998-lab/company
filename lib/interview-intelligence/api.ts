@@ -171,7 +171,42 @@ export const ii = {
   /** Meter one spoken response of a live call (fire and forget). */
   liveUsage: (sessionId: string, usage: unknown, kind: string) => call<void>('/v1/voice/live/usage', {
     method: 'POST', json: { session_id: sessionId, usage, kind } }),
+  /** Mint a Gemini Live token for this interview (session config `tier`, 0 = most tuned). */
+  geminiSession: (sessionId: string, voice?: string, tier = 0) => call<GeminiSession>('/v1/voice/gemini', {
+    method: 'POST', json: { session_id: sessionId, voice, tier } }),
+  /** Meter a stretch of a Gemini call (fire and forget). */
+  geminiUsage: (sessionId: string, secondsIn: number, secondsOut: number) => call<void>('/v1/voice/gemini/usage', {
+    method: 'POST', json: { session_id: sessionId, seconds_connected: secondsIn, seconds_spoken: secondsOut } }),
 };
+
+export interface GeminiSession {
+  token: string;
+  ws_url: string;
+  model: string;
+  voice: string;
+  setup: Record<string, unknown>;
+  tier: number;
+  tiers: number;
+  max_session_s: number;
+}
+
+export interface AiRoutingStage {
+  id: string;
+  label: string;
+  default: string;
+  current: string;
+  /** II_MODEL_ROUTES on the server pins this stage; the setting here has no effect. */
+  env_override: boolean;
+  /** Models tried in order (the next one only if the previous fails). */
+  chain: { provider: string; model: string; configured: boolean }[];
+}
+
+export interface AiRouting {
+  stages: AiRoutingStage[];
+  presets: Record<string, string>;
+  providers: Record<string, boolean>;
+  gemini_model: string;
+}
 
 export interface LiveSession {
   client_secret: string;
@@ -201,6 +236,10 @@ export const iiAdmin = {
   evaluationRuns: () => call<{ runs: Record<string, any>[] }>('/v1/admin/evaluation-runs'),
   audit: () => call<{ entries: Record<string, any>[] }>('/v1/admin/audit'),
   driveRetry: () => call<{ requeued: number }>('/v1/admin/drive/retry-failed', { method: 'POST' }),
+  aiRouting: () => call<AiRouting>('/v1/admin/ai-routing'),
+  /** `preset` per stage; "default" puts a stage back to its default. */
+  setAiRouting: (values: Record<string, string>) =>
+    call<AiRouting>('/v1/admin/ai-routing', { method: 'PATCH', json: { values } }),
 };
 
 export function newTurnId(): string {

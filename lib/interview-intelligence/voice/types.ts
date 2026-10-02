@@ -3,8 +3,9 @@
  *
  * A transport moves audio (mic in, interviewer voice out) and turns speech into text. It never
  * decides anything: II's orchestrator decides every interviewer line, the Conductor decides
- * when a candidate turn is finished and when to speak. Two transports implement this:
+ * when a candidate turn is finished and when to speak. Three transports implement this:
  *   - RealtimeTransport: OpenAI Realtime over WebRTC (live call, barge-in, streaming transcripts)
+ *   - GeminiLiveTransport: Gemini Live over a WebSocket (live call; only replies to SAY play)
  *   - StandardTransport: VAD + record -> /voice/transcribe, /voice/speak sentence by sentence
  */
 
@@ -31,7 +32,7 @@ export interface TransportEvents {
 }
 
 export interface VoiceTransport {
-  readonly kind: 'realtime' | 'standard';
+  readonly kind: 'realtime' | 'gemini' | 'standard';
   /** Connect. Resolves when audio can flow both ways. */
   start(): Promise<void>;
   /** Speak a line. Lines are queued and played strictly in order. */

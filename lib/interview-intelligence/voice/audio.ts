@@ -107,3 +107,8 @@ export function supportsLiveVoice(): boolean {
 export function supportsStandardVoice(): boolean {
   return typeof window !== 'undefined' && 'MediaRecorder' in window && !!navigator.mediaDevices?.getUserMedia;
 }
+
+export function supportsGeminiVoice(): boolean {
+  return typeof window !== 'undefined' && 'WebSocket' in window && !!navigator.mediaDevices?.getUserMedia
+    && !!(window.AudioContext || (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext);
+}

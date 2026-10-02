@@ -26,7 +26,47 @@ export function isEchoOfLine(heard: string, last: { text: string; at: number } |
   if (!h || !l) return false;
   if (h === l) return true;
   const words = h.split(' ');
-  return words.length >= 3 && l.includes(h);
+  if (words.length >= 3 && l.includes(h)) return true;
+  // Speech recognisers mis-hear an echo a little ("trough" for "through"), so a longer stretch
+  // that is almost all the line's own words is an echo too. A candidate who quotes the question
+  // and then answers adds their own words and drops well below the bar.
+  if (words.length < 4) return false;
+  const pool = new Map<string, number>();
+  for (const w of l.split(' ')) pool.set(w, (pool.get(w) || 0) + 1);
+  let hit = 0;
+  for (const w of words) {
+    const n = pool.get(w) || 0;
+    if (n > 0) { hit++; pool.set(w, n - 1); }
+  }
+  return hit / words.length >= 0.85;
+}
+
+function words(s: string): string[] {
+  const n = norm(s);
+  return n ? n.split(' ') : [];
+}
+
+/**
+ * While the interviewer is speaking, is what the mic heard the candidate cutting in — or the
+ * interviewer's own voice leaking back from the speakers? An echo is made of the line's own
+ * words (give or take a mis-heard one); a candidate cutting in says words the line doesn't
+ * have ("sorry, could you repeat that?"). Needs two such words, and at least a third of what was
+ * heard, so a mis-transcribed echo never cuts the interviewer off.
+ */
+export function isBargeIn(heard: string, lines: (string | null | undefined)[]): boolean {
+  const w = words(heard);
+  if (w.length < 2) return false;
+  const pool = new Set(lines.flatMap((l) => words(l || '')));
+  const foreign = w.filter((x) => !pool.has(x)).length;
+  return foreign >= 2 && foreign / w.length >= 0.34;
+}
+
+/** Share of the words spoken that belong to the line (1 = all of them). */
+export function lineCoverage(spoken: string, line: string): number {
+  const w = words(spoken);
+  if (!w.length) return 1;
+  const pool = new Set(words(line));
+  return w.filter((x) => pool.has(x)).length / w.length;
 }
 
 /**
@@ -122,3 +162,7 @@ export function pickAck(previous: string | null, rnd: () => number = Math.random
 
 /** Calm nudge after a long silence. Not part of the interview transcript. */
 export const NUDGE = 'Take your time. Whenever you are ready — or I can repeat the question.';
+
+/** Second, firmer check after a long silence. The interview pauses (and the voice line closes,
+ *  so nothing is billed) if there is still no answer a minute later. */
+export const STILL_THERE = "Are you still there? I'll pause the interview in a minute if I don't hear from you.";

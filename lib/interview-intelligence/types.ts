@@ -29,7 +29,7 @@ export interface IIMe {
     allowed_durations: number[];
     max_upload_mb: number;
   };
-  flags: { voice: boolean; voice_engine?: 'realtime' | 'standard'; company_intel: boolean; advanced_technical: boolean };
+  flags: { voice: boolean; voice_engine?: 'realtime' | 'gemini' | 'standard'; company_intel: boolean; advanced_technical: boolean };
 }
 
 export interface IIDocument {

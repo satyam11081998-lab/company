@@ -166,6 +166,58 @@ Cost: live ≈ $0.02/min of the candidate speaking + ≈ $0.08/min of the interv
 (≈ $0.6–0.9 per 30-min interview); standard ≈ $0.25. Voice spend counts in II's daily budget
 (`limits.daily_budget_usd`, default $25), never in the per-interview AI cap.
 
+## Call stability, Gemini Live, per-step AI routing (fourth pass, 2026-10-02)
+
+Owner feedback: the call cut itself off / lines went unspoken; an open call must not keep costing
+money; add Gemini Live as an engine switchable in admin; parse documents on Gemini's free tier and
+keep judgement-heavy steps on OpenAI.
+
+```
+touches:  consilio
+            NEW  lib/interview-intelligence/voice/gemini.ts        (Gemini Live transport)
+            NEW  qa/interview-intelligence/voice/gemini.test.cjs   (12 tests, fake socket)
+            EDIT lib/interview-intelligence/voice/{conductor,text,types,realtime,standard,audio}.ts
+                 (echo-aware barge-in, 5-min answer cap, silence ladder, out-of-context OpenAI lines)
+            EDIT components/interview-intelligence/call/CallRoom.tsx (engine choice, hang-up on
+                 break / 4 min silence / 2 min hidden tab, redial on resume and on drops)
+            EDIT components/interview-intelligence/admin/IIAdminClient.tsx (Gemini option, AI routing tab)
+            EDIT lib/interview-intelligence/{api,types}.ts, qa/.../{conductor,realtime}.test.cjs
+          consilio-backend/interview-intelligence
+            EDIT voice/routes.py (POST /v1/voice/gemini, /v1/voice/gemini/usage; OpenAI
+                 interrupt_response off), ai/routing.py (per-step presets), ai/runner.py
+                 (Gemini minutes metering), access/flags.py (ai.routes; voice.engine += gemini),
+                 api/admin_routes.py (GET/PATCH /v1/admin/ai-routing), config.py (II_GEMINI_MODEL),
+                 .env.example, docs/BUILD_STATUS.md
+            NEW  tests/test_routing.py; EDIT tests/test_voice.py, tests/conftest.py
+breaking: no. New II endpoints only; no CONTRACTS.md surface; no DB migration (flags are rows).
+          No new env var is required: Gemini uses the backend's existing GEMINI_API_KEY /
+          GOOGLE_API_KEY and google-genai (already in requirements.txt).
+```
+
+What changed for the candidate: the interviewer no longer cuts itself off on laptop speakers
+(server-side interruption off; the browser cuts in only on words that are not the line's own);
+talking over the interviewer works on the live engines; an answer is capped at 5 minutes (warning
+at 4:30); silence → nudge at 1 min, "are you still there?" at 3, pause at 4; 2 minutes on another
+tab → pause. Every pause hangs the voice line up and releases the mic; Resume redials.
+
+Admin: Settings → `voice.engine` = OpenAI live | Gemini live | Standard. New tab **AI routing**:
+each step's model preset (Gemini free tier → OpenAI fallback, OpenAI fast, OpenAI strong, Groq),
+reset to default. Defaults: resume/JD parsing, role family, plan check → Gemini; everything that
+judges answers → OpenAI. Free-tier caveat shown in the tab: Google may use free-tier content; II
+redacts contact details and protected attributes from documents before any model call.
+
+Gates (2026-10-02): II suite **287 passed** on Postgres 16 with the backend-pinned venv;
+SQLite 286 + 1 skipped; voice node tests **47/47** on the device; device `tsc --noEmit` EXIT 0;
+`next build` OK (copy). Browser runs (built app, Chromium): Gemini call against a local fake Gemini
+Live socket (pinned token config, SAY lines, 2 voice answers, no SAY during Gemini's own answer,
+mic streamed only while talking, break closes the socket + meters, resume redials, a dropped
+socket redials by itself, admin AI-routing change/reset); OpenAI live call (lines with
+`input: []`, echo ignored, words barge in); standard voice regression; hidden tab 2 min → paused.
+NOT verified here: real Gemini Live / OpenAI audio and Gemini free-tier concurrency limits.
+
+Phase for this pass: push both repos (Render + Vercel redeploy). To try Gemini voice: Admin →
+Interview Intelligence → Settings → voice.engine → Gemini live. Nothing else to configure.
+
 ## Proposed LEDGER row
 | Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, DORMANT** until `II_DATABASE_URL` is set; offline gates green; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |
 

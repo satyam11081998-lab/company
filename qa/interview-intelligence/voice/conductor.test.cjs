@@ -102,13 +102,123 @@ test('short answers get no acknowledgement', async () => {
   assert.equal(h.said.filter((s) => s.kind === 'ack').length, 0);
 });
 
-test('talking over the interviewer interrupts it (barge-in)', async () => {
+test('talking over the interviewer interrupts it (barge-in) once real words are heard', async () => {
   const h = harness();
   h.c.begin(['A long question about your background and choices?']);
   assert.equal(h.t.busy, true);
   h.ev.onSpeechStart();
+  assert.equal(h.t.interrupted, 0, 'a sound alone (maybe our own echo) does not cut the interviewer off');
+  h.ev.onPartial('sorry can');
   assert.equal(h.t.interrupted, 1);
   assert.equal(h.c.phase, 'hearing');
+  h.ev.onSpeechStop(); h.ev.onFinal('Sorry, can you say that again slowly please?', { durationMs: 2500 });
+  h.clock.advance(1000);
+  assert.equal(h.submits[0].txt, 'Sorry, can you say that again slowly please?');
+});
+
+test('the interviewer\'s own voice leaking into the mic never cuts it off or becomes an answer', async () => {
+  const LINE = 'Tell me about a time you led a team through a crisis and what you changed afterwards.';
+  const h = harness();
+  h.c.begin([LINE]);
+  h.ev.onSpeechStart();
+  h.ev.onPartial('tell me about a time');
+  h.ev.onPartial('tell me about a time you led a team trough a crisis');   // mis-heard echo
+  assert.equal(h.t.interrupted, 0);
+  assert.equal(h.c.phase, 'speaking');
+  h.ev.onSpeechStop(); h.ev.onFinal('Tell me about a time you led a team trough a crisis.', { durationMs: 3000 });
+  assert.equal(h.t.interrupted, 0);
+  assert.equal(h.c.phase, 'speaking');
+  h.t.finishSpeaking();
+  assert.equal(h.c.phase, 'listening');
+  // the tail of the echo arriving just after the line finished is dropped too
+  h.ev.onSpeechStart(); h.ev.onSpeechStop(); h.ev.onFinal('and what you changed afterwards', { durationMs: 1800 });
+  h.clock.advance(8000);
+  assert.equal(h.submits.length, 0);
+  assert.equal(h.c.phase, 'listening');
+  // a final transcript with real words during speech is a barge-in (no live partials on some engines)
+  h.c.repeat();
+  h.ev.onSpeechStart(); h.ev.onFinal('I was the one who stepped in when our vendor failed', { durationMs: 3000 });
+  assert.equal(h.t.interrupted, 1);
+  h.clock.advance(1000);
+  assert.equal(h.submits[0].txt, 'I was the one who stepped in when our vendor failed');
+});
+
+test('one answer is capped: a warning, then it is sent and the interview moves on', async () => {
+  const h = harness({ maxAnswerMs: 300000, answerWarnMs: 270000 });
+  h.c.begin(['Q?']); h.t.finishSpeaking();
+  h.ev.onSpeechStart();
+  h.ev.onPartial('so the first thing we did was');
+  h.clock.advance(269000);
+  assert.ok(!h.log.some((x) => x[0] === 'notice'));
+  h.clock.advance(1000);
+  assert.match(h.log.filter((x) => x[0] === 'notice').pop()[1], /30 seconds/);
+  h.ev.onPartial('so the first thing we did was rebuild the whole pipeline and');
+  h.clock.advance(30000);
+  assert.match(h.log.filter((x) => x[0] === 'notice').pop()[1], /five minutes/);
+  assert.equal(h.submits.length, 1);
+  assert.equal(h.submits[0].txt, 'so the first thing we did was rebuild the whole pipeline and');
+  assert.equal(h.c.phase, 'thinking');
+  assert.equal(h.t.listening, false, 'mic closed while II answers');
+});
+
+test('the answer cap spans pauses inside one answer and resets for the next answer', async () => {
+  const h = harness({ maxAnswerMs: 300000, answerWarnMs: 270000 });
+  h.c.begin(['Q?']); h.t.finishSpeaking();
+  h.ev.onSpeechStart(); h.ev.onSpeechStop(); h.ev.onFinal('First part of the answer here.', { durationMs: 2000 });
+  h.ev.onSpeechStart();                       // carried on within the grace window
+  h.clock.advance(200000);
+  h.ev.onSpeechStop(); h.ev.onFinal('second part.', { durationMs: 2000 });
+  h.ev.onSpeechStart();
+  h.clock.advance(100000);
+  assert.equal(h.submits.length, 1, 'capped at five minutes from the first word');
+  await h.flush(); h.t.finishSpeaking();     // ack
+  h.t.finishSpeaking();                       // next question
+  assert.equal(h.c.phase, 'listening');
+  h.ev.onSpeechStart();
+  h.clock.advance(290000);
+  assert.equal(h.submits.length, 1, 'a fresh five minutes for the next answer');
+});
+
+test('silence ladder: nudge at 1 min, "still there?" at 3, away at 4 — counted from the question', async () => {
+  const h = harness({ nudgeAfterMs: 60000, stillThereAfterMs: 180000, idleAfterMs: 240000 });
+  h.c.begin(['Q?']); h.t.finishSpeaking();
+  h.clock.advance(60000);
+  assert.equal(h.said[h.said.length - 1].txt, text.NUDGE);
+  h.clock.advance(5000); h.t.finishSpeaking();          // nudge took 5 s to say
+  h.clock.advance(115000);                               // t = 180 s
+  assert.equal(h.said[h.said.length - 1].txt, text.STILL_THERE);
+  h.clock.advance(4000); h.t.finishSpeaking();
+  assert.ok(!h.log.some((x) => x[0] === 'idle'));
+  h.clock.advance(55000);                                // t = 239 s
+  assert.ok(!h.log.some((x) => x[0] === 'idle'));
+  h.clock.advance(1000);                                 // t = 240 s
+  assert.equal(h.log.filter((x) => x[0] === 'idle').length, 1);
+});
+
+test('speaking resets the silence ladder', async () => {
+  const h = harness({ nudgeAfterMs: 60000, stillThereAfterMs: 180000, idleAfterMs: 240000 });
+  h.c.begin(['Q?']); h.t.finishSpeaking();
+  h.clock.advance(60000); h.t.finishSpeaking();            // the 1-minute nudge
+  h.clock.advance(110000);
+  h.ev.onSpeechStart(); h.ev.onSpeechStop(); h.ev.onFinal('', { durationMs: 2000 });   // not caught
+  h.t.finishSpeaking();
+  h.clock.advance(170000);
+  assert.ok(!h.said.some((s) => s.txt === text.STILL_THERE));
+  assert.ok(!h.log.some((x) => x[0] === 'idle'));
+});
+
+test('swap mid-answer keeps what was heard; swap mid-question re-says it', async () => {
+  const h = harness();
+  h.c.begin(['Q1?']); h.t.finishSpeaking();
+  h.ev.onSpeechStart(); h.ev.onPartial('we cut costs by thirty percent across');
+  const t2 = Object.assign(Object.create(Object.getPrototypeOf(h.t)), h.t, { said: [] });
+  h.c.swap(t2);
+  h.clock.advance(1000);
+  assert.equal(h.submits[0].txt, 'we cut costs by thirty percent across');
+  const h2 = harness();
+  h2.c.begin(['A question that was cut off?']);
+  h2.c.swap(h2.t);
+  assert.equal(h2.said.filter((s) => s.txt === 'A question that was cut off?').length, 2);
 });
 
 test('echo of the interviewer and recogniser noise never become an answer', async () => {
@@ -240,6 +350,10 @@ test('text helpers', () => {
   assert.ok(text.isEchoOfLine('tell me about a decision', { text: 'Tell me about a decision you owned.', at: 0 }, 1000));
   assert.ok(!text.isEchoOfLine('tell me', { text: 'Tell me about a decision you owned.', at: 0 }, 1000), 'two words are not enough');
   assert.ok(!text.isEchoOfLine('tell me about a decision', { text: 'Tell me about a decision you owned.', at: 0 }, 9000), 'too late to be an echo');
+  const Q = { text: 'Tell me about the biggest risk you took in your last role.', at: 0 };
+  assert.ok(text.isEchoOfLine('tell me about the biggest risk you took in your lost role', Q, 500), 'a mis-heard echo is still an echo');
+  assert.ok(!text.isEchoOfLine('the biggest risk I took was leaving a stable job', Q, 500), 'quoting the question then answering is an answer');
+  assert.ok(!text.isEchoOfLine('the biggest risk I took', Q, 500));
   for (let i = 0; i < 20; i++) { const a = text.pickAck('Okay.'); assert.notEqual(a, 'Okay.'); }
 });
 
@@ -258,4 +372,47 @@ test('answer time is sent as whole milliseconds (the API takes an integer)', asy
   h.ev.onSpeechStart(); h.ev.onSpeechStop(); h.ev.onFinal(LONG, { durationMs: 5000 });
   h.clock.advance(1000.3);
   assert.ok(Number.isInteger(h.submits[0].ms), String(h.submits[0].ms));
+});
+
+test('a reply that lands while the line is reconnecting is spoken as soon as it is back', async () => {
+  const h = harness();
+  h.c.begin(['Q1?']); h.t.finishSpeaking();
+  h.ev.onSpeechStart(); h.ev.onSpeechStop(); h.ev.onFinal(LONG, { durationMs: 5000 });
+  h.clock.advance(1000);
+  h.t.finishSpeaking();                 // the ack
+  h.c.detach();                         // the line dropped while II was thinking
+  await h.flush();
+  assert.equal(h.c.phase, 'thinking');
+  h.c.swap(h.t);
+  assert.equal(h.said[h.said.length - 1].txt, 'Next question?');
+  h.t.finishSpeaking();
+  assert.equal(h.c.phase, 'listening');
+});
+
+test('a reply that lands during a break is not spoken over the break', async () => {
+  const h = harness();
+  h.c.begin(['Q1?']); h.t.finishSpeaking();
+  h.ev.onSpeechStart(); h.ev.onSpeechStop(); h.ev.onFinal(LONG, { durationMs: 5000 });
+  h.clock.advance(1000);
+  h.c.pause(); h.c.detach();
+  const n = h.said.length;
+  await h.flush();
+  assert.equal(h.c.phase, 'paused');
+  h.c.swap(h.t);
+  assert.equal(h.said.length, n, 'nothing spoken until the candidate resumes');
+  assert.equal(h.c.question, 'Next question?');
+});
+
+test('unmuting (or coming back to the tab) restarts the silence clock', async () => {
+  const h = harness({ nudgeAfterMs: 60000, stillThereAfterMs: 180000, idleAfterMs: 240000 });
+  h.c.begin(['Q?']); h.t.finishSpeaking();
+  h.clock.advance(59000);
+  h.c.setMuted(true);
+  h.clock.advance(300000);
+  h.c.setMuted(false);
+  h.clock.advance(59000);
+  assert.equal(h.said.filter((s) => s.kind === 'nudge').length, 0);
+  assert.ok(!h.log.some((x) => x[0] === 'idle'));
+  h.clock.advance(1000);
+  assert.equal(h.said.filter((s) => s.kind === 'nudge').length, 1);
 });

@@ -211,7 +211,8 @@ export class StandardTransport implements VoiceTransport {
     } else {
       this.vad?.pause();
       this.uttering = false;
-      if (!this.listening || this.muted) this.stopRecorder(true);
+      // Also while the interviewer speaks: a recording must never carry its voice into an answer.
+      this.stopRecorder(true);
     }
   }
 

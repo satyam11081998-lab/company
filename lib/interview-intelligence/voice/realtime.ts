@@ -199,7 +199,10 @@ export class RealtimeTransport implements VoiceTransport {
     const instructions = item.kind === 'ack'
       ? `${this.prefix} Say it briefly and softly, like a listener acknowledging.\n\n${item.text}`
       : `${this.prefix}\n\n${item.text}`;
-    this.send({ type: 'response.create', response: { instructions } });
+    // `input: []` = the line is spoken from these instructions alone, not from the whole call so
+    // far. The model never sees (or answers) the candidate's audio, and each line costs the
+    // same at minute 40 as at minute 1 instead of re-billing every earlier answer.
+    this.send({ type: 'response.create', response: { instructions, input: [] } });
   }
 
   private announce(item: Item) {
