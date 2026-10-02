@@ -40,7 +40,7 @@ const inputCls =
   'h-10 w-full rounded-md border border-input bg-background px-3 text-body shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary';
 
 const EMPTY_PREVIEW =
-  '<!doctype html><html><body style="margin:0;font-family:Inter,Helvetica,Arial,sans-serif;color:#8C8A82;padding:48px 24px;text-align:center;background:#FAF9F6;">Your email preview will appear here as you type. Fill in a message on the left — or hit &ldquo;Generate today’s digest&rdquo;.</body></html>';
+  '<!doctype html><html><body style="margin:0;font-family:Inter,Helvetica,Arial,sans-serif;color:#8C8A82;padding:48px 24px;text-align:center;background:#FAF9F6;">Your email preview will appear here as you type. Fill in a message on the left — or build today&rsquo;s India or US digest.</body></html>';
 
 type PracticeCardT = { kind: 'case' | 'guesstimate'; title: string; hook: string; url: string; focus?: string; market: ContentMarket };
 
@@ -85,7 +85,9 @@ export default function BroadcastComposer() {
   const [rawHtml, setRawHtml] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [split, setSplit] = useState<Record<ContentMarket, number> | null>(null);
-  const [busy, setBusy] = useState<'preview' | 'send' | 'digest' | null>(null);
+  const [busy, setBusy] = useState<'preview' | 'send' | 'digest-IN' | 'digest-US' | null>(null);
+  // How many extra cases AND extra guesstimates the daily digest adds from the bank.
+  const [digestExtra, setDigestExtra] = useState(2);
   const [log, setLog] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Targeted practice (optional): generate a company/topic case or guesstimate,
@@ -184,20 +186,20 @@ export default function BroadcastComposer() {
     setBusy(null);
   };
 
-  const doGenerateDigest = async () => {
-    if (!practiceMarket) {
-      setLog({ type: 'error', message: 'Pick India or US & Europe first: each market has its own daily pair.' });
-      return;
-    }
-    setBusy('digest');
+  // One button per market. Building a digest for a market also points the
+  // audience (or, for one person, the practice market) at that market, so the
+  // email and its recipients always match.
+  const doGenerateDigest = async (market: ContentMarket) => {
+    if (audience !== market) onAudienceChange(market);
+    setBusy(`digest-${market}`);
     setLog(null);
-    const r = await generateDailyDigest(practiceMarket);
+    const r = await generateDailyDigest(market, digestExtra);
     if (r.success && r.html) {
       setRawHtml(true);
       setSubject(r.subject || 'Your daily reps are ready');
       setBody(r.html);
-      setBuiltFor(r.market ?? practiceMarket);
-      setLog({ type: 'success', message: r.note || `${MARKET_LABEL[practiceMarket]} digest generated — preview it on the right, then send.` });
+      setBuiltFor(r.market ?? market);
+      setLog({ type: 'success', message: r.note || `${MARKET_LABEL[market]} digest generated — preview it on the right, then send.` });
     } else {
       setLog({ type: 'error', message: r.error || 'Could not generate the digest' });
     }
@@ -376,16 +378,37 @@ export default function BroadcastComposer() {
             Send to a segment or one person. Unsubscribed users are skipped and an unsubscribe link is added automatically.
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={doGenerateDigest}
-          disabled={busy !== null || !practiceMarket}
-          title={practiceMarket ? undefined : 'Pick India or US & Europe: each market has its own daily pair'}
-          className="h-10 gap-2 shrink-0"
-        >
-          <Sparkles className="h-4 w-4 text-primary" />
-          {busy === 'digest' ? 'Generating…' : practiceMarket ? `Generate today’s ${practiceMarket === 'US' ? 'US' : 'India'} digest` : "Generate today’s digest"}
-        </Button>
+        <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+          <div className="flex flex-wrap gap-2">
+            {(['IN', 'US'] as ContentMarket[]).map((m) => (
+              <Button
+                key={m}
+                variant="outline"
+                onClick={() => doGenerateDigest(m)}
+                disabled={busy !== null}
+                className="h-10 gap-2"
+              >
+                <Sparkles className="h-4 w-4 text-primary" />
+                {busy === `digest-${m}` ? 'Generating…' : `Today’s ${m === 'US' ? 'US' : 'India'} digest`}
+              </Button>
+            ))}
+          </div>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            Digest links: today&rsquo;s pair +
+            <select
+              value={digestExtra}
+              onChange={(e) => setDigestExtra(Number(e.target.value))}
+              className="h-7 rounded-md border border-input bg-background px-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              {[0, 1, 2, 3, 4].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            more cases and guesstimates each
+          </label>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-start gap-x-6 gap-y-3">

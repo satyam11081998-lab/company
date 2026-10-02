@@ -6,6 +6,8 @@ import { sendBulk, unsubscribeUrl } from '@/lib/email/send';
 import { broadcastEmail, baseEmailLayout, emailTagline } from '@/lib/email/templates';
 import { contentMarketOf, marketToday, type ContentMarket } from '@/lib/market';
 import { MARKET_LABEL, audienceProblem, inAudience, parseAudience, parseContentMarket, type Audience } from '@/lib/broadcast-audience';
+import { marketScoped } from '@/lib/market-db';
+import { usTypeLabel } from '@/lib/us-market/labels';
 import type { UserRow } from '@/lib/types';
 
 type SegmentType = 'all' | 'tier' | 'activity' | 'lifecycle';
@@ -268,14 +270,146 @@ function digestCard(label: string, title: string, sub: string, href: string, cta
 
 type DigestResult = { success: boolean; subject?: string; html?: string; note?: string; market?: ContentMarket; error?: string };
 
+type DigestItem = { id: string; title: string; type: string; difficulty: string | null };
+
+const DIGEST_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DIGEST_COLS = 'id, title, type, difficulty';
+
+/** A daily-schedule ref is a case UUID or, for some generators, the short `code` (see lib/daily-server.ts). */
+async function resolveCaseRef(db: ReturnType<typeof createServiceClient>, ref: string | null | undefined): Promise<DigestItem | null> {
+  if (!ref) return null;
+  const { data } = await db.from('cases').select(DIGEST_COLS).eq(DIGEST_UUID.test(ref) ? 'id' : 'code', ref).limit(1);
+  return ((data as DigestItem[] | null) ?? [])[0] ?? null;
+}
+
 /**
- * Today's digest for ONE market. India (default) is the original digest:
- * daily_schedule on the IST day, plus the GD news block. US & Europe uses the
- * US daily pair (market_daily_schedule on the US Eastern day, the same
- * most-recent-on-or-before rule the US dashboard uses) with US copy, and no
- * GD block (GD briefs are an India-only product).
+ * The market's daily pair, exactly as its dashboard shows it: today's row, or
+ * the most recent one before it when today's has not been written yet (the
+ * India cron runs after IST midnight, and GitHub often starts it hours late).
  */
-export async function generateDailyDigest(market: ContentMarket = 'IN'): Promise<DigestResult> {
+async function digestDailyPair(db: ReturnType<typeof createServiceClient>, market: ContentMarket) {
+  const today = marketToday(market);
+  let date: string | null = null;
+  let caseRef: string | null = null;
+  let guessRef: string | null = null;
+  if (market === 'US') {
+    const { data } = await db
+      .from('market_daily_schedule')
+      .select('case_id, guesstimate_id, scheduled_date')
+      .eq('market', 'US')
+      .lte('scheduled_date', today)
+      .order('scheduled_date', { ascending: false })
+      .limit(1);
+    const row = ((data as any[] | null) ?? [])[0];
+    if (row) ({ scheduled_date: date, case_id: caseRef, guesstimate_id: guessRef } = row);
+  } else {
+    const { data } = await db
+      .from('daily_schedule')
+      .select('case_id, guesstimate_code, scheduled_date')
+      .lte('scheduled_date', today)
+      .order('scheduled_date', { ascending: false })
+      .limit(1);
+    const row = ((data as any[] | null) ?? [])[0];
+    if (row) ({ scheduled_date: date, case_id: caseRef, guesstimate_code: guessRef } = row);
+  }
+  const [c, g] = await Promise.all([resolveCaseRef(db, caseRef), resolveCaseRef(db, guessRef)]);
+  return { today, date, case: c, guess: g };
+}
+
+/**
+ * A stable hash (FNV-1a + murmur3's final mix), so a given day's picks are the
+ * same every time the digest is rebuilt, and change from one day to the next.
+ */
+function digestHash(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
+/**
+ * `n` more practice items from the market's live bank (is_active only, so never
+ * an unlisted broadcast case or someone's private case), different every day and
+ * never repeating the daily pair.
+ */
+async function digestBankPicks(
+  db: ReturnType<typeof createServiceClient>,
+  market: ContentMarket,
+  kind: 'case' | 'guesstimate',
+  n: number,
+  exclude: Set<string>,
+  seed: string,
+): Promise<DigestItem[]> {
+  if (n <= 0) return [];
+  const base = () => {
+    const q = db.from('cases').select(DIGEST_COLS).eq('is_active', true);
+    return kind === 'guesstimate' ? q.eq('type', 'guesstimate') : q.neq('type', 'guesstimate');
+  };
+  const { data } = await marketScoped(
+    market,
+    () => base().eq('market', market).order('created_at', { ascending: false }).limit(500),
+    () => base().order('created_at', { ascending: false }).limit(500),
+  );
+  return ((data as DigestItem[] | null) ?? [])
+    .filter((c) => c && c.id && c.title && !exclude.has(c.id))
+    .map((c) => ({ c, k: digestHash(`${seed}:${c.id}`) }))
+    .sort((a, b) => a.k - b.k)
+    .slice(0, n)
+    .map((x) => x.c);
+}
+
+function digestTypeLabel(item: DigestItem, market: ContentMarket): string {
+  if (item.type === 'guesstimate') return market === 'US' ? 'Market sizing' : 'Guesstimate';
+  const t = market === 'US' ? usTypeLabel(item.type) : item.type.replace(/_/g, ' ');
+  return `Case · ${t.charAt(0).toUpperCase()}${t.slice(1)}`;
+}
+
+/** Compact list of extra practice links (one row per case / guesstimate). */
+function digestMoreBlock(items: DigestItem[], market: ContentMarket): string {
+  if (!items.length) return '';
+  const rows = items
+    .map((it, i) => {
+      const href = `${_SITE}/cases/${it.id}`;
+      const meta = [digestTypeLabel(it, market), it.difficulty ? `${it.difficulty.charAt(0).toUpperCase()}${it.difficulty.slice(1)}` : '']
+        .filter(Boolean)
+        .join(' · ');
+      return `
+      <tr><td style="padding:12px 20px ${i === items.length - 1 ? '16' : '12'}px;border-top:1px solid #F0ECE6;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td style="vertical-align:middle;">
+            <p style="margin:0 0 3px;font-size:12px;color:#5B6472;line-height:1.4;">${esc(meta)}</p>
+            <a href="${href}" style="font-size:15px;font-weight:600;color:#0F1C33;text-decoration:none;line-height:1.35;">${esc(it.title)}</a>
+          </td>
+          <td align="right" style="vertical-align:middle;padding-left:14px;white-space:nowrap;">
+            <a href="${href}" style="font-size:13px;font-weight:600;color:#C8102E;text-decoration:none;">Practice &rarr;</a>
+          </td>
+        </tr></table>
+      </td></tr>`;
+    })
+    .join('');
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;border:1px solid #E7E3DC;border-radius:12px;">
+    <tr><td style="padding:16px 20px 10px;">
+      <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C8102E;">More practice${market === 'US' ? '' : ' from the case bank'}</p>
+    </td></tr>${rows}
+  </table>`;
+}
+
+/**
+ * Today's digest for ONE market. Every digest links to real cases and
+ * guesstimates — today's daily pair (the same one the market's dashboard shows)
+ * plus `extra` more of each from that market's bank, different every day — and
+ * never only to the dashboard. India adds the GD news block; US & Europe uses US
+ * copy and no GD block (GD briefs are an India-only product).
+ */
+export async function generateDailyDigest(market: ContentMarket = 'IN', extra: number = 2): Promise<DigestResult> {
   await requireAdmin();
   let m: ContentMarket;
   try {
@@ -283,116 +417,70 @@ export async function generateDailyDigest(market: ContentMarket = 'IN'): Promise
   } catch (e: any) {
     return { success: false, error: e?.message || 'Unknown market.' };
   }
-  if (m === 'US') return usDailyDigest();
-  const r = await indiaDailyDigest();
-  return r.success ? { ...r, market: 'IN' } : r;
-}
-
-async function usDailyDigest(): Promise<DigestResult> {
+  const nExtra = Math.max(0, Math.min(4, Math.floor(Number(extra) || 0)));
+  const us = m === 'US';
   try {
     const db = createServiceClient();
-    const today = marketToday('US');
-    const { data: rows, error } = await db
-      .from('market_daily_schedule')
-      .select('case_id, guesstimate_id, scheduled_date')
-      .eq('market', 'US')
-      .lte('scheduled_date', today)
-      .order('scheduled_date', { ascending: false })
-      .limit(1);
-    if (error) throw new Error(error.message);
-    const sched = (rows?.[0] ?? null) as { case_id?: string | null; guesstimate_id?: string | null; scheduled_date?: string } | null;
-    const ids = [sched?.case_id, sched?.guesstimate_id].filter(Boolean) as string[];
-    const byId = new Map<string, any>();
-    if (ids.length) {
-      const { data: cs } = await db.from('cases').select('id, title, difficulty').in('id', ids);
-      for (const c of (cs || []) as any[]) byId.set(c.id, c);
-    }
-    const caseRow = sched?.case_id ? byId.get(sched.case_id) ?? null : null;
-    const guessRow = sched?.guesstimate_id ? byId.get(sched.guesstimate_id) ?? null : null;
+    const pair = await digestDailyPair(db, m);
+    const seed = `${m}:${pair.today}`;
+    const exclude = new Set([pair.case?.id, pair.guess?.id].filter(Boolean) as string[]);
+    // One more of each kind is fetched in case the daily pair is missing and a
+    // bank pick has to stand in for it.
+    const [moreCases, moreGuesses] = await Promise.all([
+      digestBankPicks(db, m, 'case', nExtra + (pair.case ? 0 : 1), exclude, seed),
+      digestBankPicks(db, m, 'guesstimate', nExtra + (pair.guess ? 0 : 1), exclude, seed),
+    ]);
+    const headCase = pair.case ?? moreCases.shift() ?? null;
+    const headGuess = pair.guess ?? moreGuesses.shift() ?? null;
+    const caseIsDaily = !!pair.case;
+    const guessIsDaily = !!pair.guess;
 
-    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s today&rsquo;s pair. Work through it like a real interview, then see your score.</p>`;
-    if (caseRow) {
-      const diff = caseRow.difficulty ? ` · ${esc(caseRow.difficulty)}` : '';
-      body += digestCard(`Today’s case${diff}`, caseRow.title, 'Clarify, structure, run the numbers and make a recommendation. The MECE interviewer pushes back, then scores you.', `${_SITE}/cases/${caseRow.id}`, 'Start the case');
-    }
-    if (guessRow) {
-      body += digestCard('Today’s market sizing', guessRow.title, 'Build your estimate step by step, state your assumptions and land on a number you can defend.', `${_SITE}/cases/${guessRow.id}`, 'Practice market sizing');
-    }
-    if (!guessRow && !caseRow) {
-      body += digestCard('Practice', 'Your daily case and market sizing question', 'Today’s pair is waiting on your dashboard.', `${_SITE}/dashboard`, 'Open the dashboard');
-    }
-    body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s it for today. Keep practicing.</p>`;
-
-    const html = baseEmailLayout({
-      preheader: guessRow || caseRow ? 'A fresh case and market sizing question to sharpen your thinking.' : 'Your practice set is ready inside.',
-      heading: 'Your MECE practice for today',
-      contentHtml: body,
-      unsubscribeUrl: '{{UNSUBSCRIBE}}',
-      tagline: emailTagline('US'),
-    });
-    const stale = sched?.scheduled_date && sched.scheduled_date !== today;
-    const note = !sched
-      ? 'No US daily pair is scheduled yet, so this is a generic nudge to the dashboard.'
-      : stale
-        ? `No US pair for today (${today}, US Eastern) yet; this uses the most recent one (${sched!.scheduled_date}), which is what US users see on their dashboard too.`
-        : undefined;
-    return { success: true, subject: 'Your MECE practice for today', html, note, market: 'US' };
-  } catch (e: any) {
-    return { success: false, error: e?.message || 'Could not build the US digest.' };
-  }
-}
-
-/** The original India digest, unchanged. */
-async function indiaDailyDigest(): Promise<DigestResult> {
-  try {
-    const db = createServiceClient();
-    // Today's date in IST (UTC+5:30), matching the backend's daily_schedule key.
-    const today = new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
-
-    const { data: sched } = await db
-      .from('daily_schedule')
-      .select('case_id, guesstimate_code')
-      .eq('scheduled_date', today)
-      .maybeSingle();
-
-    let caseRow: any = null;
-    let guessRow: any = null;
-    if ((sched as any)?.case_id) {
-      const { data } = await db.from('cases').select('id, title, difficulty').eq('id', (sched as any).case_id).maybeSingle();
-      caseRow = data;
-    }
-    if ((sched as any)?.guesstimate_code) {
-      const { data } = await db.from('cases').select('id, title, difficulty').eq('id', (sched as any).guesstimate_code).maybeSingle();
-      guessRow = data;
+    const more: DigestItem[] = [];
+    for (let i = 0; i < Math.max(moreCases.length, moreGuesses.length); i++) {
+      if (moreCases[i]) more.push(moreCases[i]);
+      if (moreGuesses[i]) more.push(moreGuesses[i]);
     }
 
-    // Top news from the last ~2 days for the GD angle.
-    const since = new Date(Date.now() - 2 * 86_400_000).toISOString();
-    const { data: news } = await db
-      .from('news_headlines')
-      .select('title, source_name')
-      .gte('published_at', since)
-      .order('published_at', { ascending: false })
-      .limit(3);
-
-    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s the set — about 10 focused minutes, start to finish.</p>`;
-
-    if (guessRow) {
-      body += digestCard('Today’s guesstimate', guessRow.title, 'Build your estimate step by step, make your assumptions explicit, and arrive at a defendable number.', `${_SITE}/cases/${guessRow.id}`, 'Practice the guesstimate');
+    let body: string;
+    if (us) {
+      body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s today&rsquo;s pair${more.length ? ', plus a few more from the case bank if you have time' : ''}. Work through each like a real interview, then see your score.</p>`;
+      if (headCase) {
+        const diff = headCase.difficulty ? ` · ${esc(headCase.difficulty)}` : '';
+        body += digestCard(`${caseIsDaily ? 'Today’s case' : 'Case to practice'}${diff}`, headCase.title, 'Clarify, structure, run the numbers and make a recommendation. The MECE interviewer pushes back, then scores you.', `${_SITE}/cases/${headCase.id}`, 'Start the case');
+      }
+      if (headGuess) {
+        body += digestCard(guessIsDaily ? 'Today’s market sizing' : 'Market sizing to practice', headGuess.title, 'Build your estimate step by step, state your assumptions and land on a number you can defend.', `${_SITE}/cases/${headGuess.id}`, 'Practice market sizing');
+      }
+    } else {
+      body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">${more.length ? 'Here&rsquo;s today&rsquo;s set — the daily guesstimate and case, plus a few more from the case bank if you have time.' : 'Here&rsquo;s the set — about 10 focused minutes, start to finish.'}</p>`;
+      if (headGuess) {
+        body += digestCard(guessIsDaily ? 'Today’s guesstimate' : 'Guesstimate to practise', headGuess.title, 'Build your estimate step by step, make your assumptions explicit, and arrive at a defendable number.', `${_SITE}/cases/${headGuess.id}`, 'Practice the guesstimate');
+      }
+      if (headCase) {
+        const diff = headCase.difficulty ? ` · ${esc(headCase.difficulty)}` : '';
+        body += digestCard(`${caseIsDaily ? 'Today’s case' : 'Case to practise'}${diff}`, headCase.title, 'Clarify, structure, quantify, and recommend — then get scored by the MECE AI interviewer.', `${_SITE}/cases/${headCase.id}`, 'Start the case');
+      }
     }
-    if (caseRow) {
-      const diff = caseRow.difficulty ? ` · ${esc(caseRow.difficulty)}` : '';
-      body += digestCard(`Today’s case${diff}`, caseRow.title, 'Clarify, structure, quantify, and recommend — then get scored by the MECE AI interviewer.', `${_SITE}/cases/${caseRow.id}`, 'Start the case');
+    if (!headCase && !headGuess) {
+      // Only when the bank itself is empty: never the normal outcome.
+      body += digestCard('Practice', us ? 'Your daily case and market sizing question' : 'Your daily case & guesstimate', 'Open MECE to practise.', `${_SITE}/practice`, 'Open practice');
     }
-    if (!guessRow && !caseRow) {
-      body += digestCard('Practice', 'Your daily case & guesstimate', 'Your case and guesstimate for today are inside.', `${_SITE}/dashboard`, 'Open the dashboard');
-    }
+    body += digestMoreBlock(more, m);
 
-    if (news && news.length > 0) {
-      const items = news
-        .map((n: any) => `<li style="margin:0 0 6px;">${esc(n.title)}${n.source_name ? ` <span style="color:#5B6472;">— ${esc(n.source_name)}</span>` : ''}</li>`)
-        .join('');
-      body += `
+    if (!us) {
+      // Top news from the last ~2 days for the GD angle (India only).
+      const since = new Date(Date.now() - 2 * 86_400_000).toISOString();
+      const { data: news } = await db
+        .from('news_headlines')
+        .select('title, source_name')
+        .gte('published_at', since)
+        .order('published_at', { ascending: false })
+        .limit(3);
+      if (news && news.length > 0) {
+        const items = news
+          .map((n: any) => `<li style="margin:0 0 6px;">${esc(n.title)}${n.source_name ? ` <span style="color:#5B6472;">— ${esc(n.source_name)}</span>` : ''}</li>`)
+          .join('');
+        body += `
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;border:1px solid #E7E3DC;border-radius:12px;">
         <tr><td style="padding:18px 20px;">
           <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C8102E;">In the news — for your GD</p>
@@ -400,22 +488,35 @@ async function indiaDailyDigest(): Promise<DigestResult> {
           <a href="${_SITE}/gd-briefs" style="display:inline-block;background:#0F1C33;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:9px 18px;border-radius:8px;">Read today’s GD briefs &rarr;</a>
         </td></tr>
       </table>`;
+      }
     }
 
     body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s it for today. Keep practicing.</p>`;
 
     const html = baseEmailLayout({
-      preheader: guessRow || caseRow ? 'A fresh guesstimate and case to sharpen your thinking.' : 'Your practice set is ready inside.',
+      preheader: us ? 'A fresh case and market sizing question to sharpen your thinking.' : 'A fresh guesstimate and case to sharpen your thinking.',
       heading: 'Your MECE practice for today',
       contentHtml: body,
       unsubscribeUrl: '{{UNSUBSCRIBE}}',
+      ...(us ? { tagline: emailTagline('US') } : {}),
     });
 
-    const subject = 'Your MECE practice for today';
-    const note = !sched ? 'No daily schedule set for today (IST) — generated a generic practice nudge. Set today’s schedule for the full case + guesstimate digest.' : undefined;
-    return { success: true, subject, html, note };
+    const label = us ? 'US' : 'India';
+    const zone = us ? 'US Eastern' : 'IST';
+    const total = [headCase, headGuess].filter(Boolean).length + more.length;
+    let note: string;
+    if (!pair.date) {
+      note = `No ${label} daily pair has been scheduled yet, so all ${total} links come from the ${label} case bank.`;
+    } else if (pair.date !== pair.today) {
+      note = `${label} digest built with ${total} practice links. Today’s ${label} pair (${pair.today}, ${zone}) isn’t scheduled yet — the daily job runs after midnight and often starts late — so this uses the latest one (${pair.date}), which is what ${label} users see on their dashboard right now.`;
+    } else {
+      note = `${label} digest built with ${total} practice links — today’s pair plus ${more.length} from the bank. Preview it on the right, then send.`;
+    }
+    if (!pair.case && pair.date) note += ` The scheduled case could not be found, so a bank case stands in.`;
+    if (!pair.guess && pair.date) note += ` The scheduled ${us ? 'market sizing question' : 'guesstimate'} could not be found, so a bank one stands in.`;
+    return { success: true, subject: 'Your MECE practice for today', html, note, market: m };
   } catch (e: any) {
-    return { success: false, error: e?.message || 'Could not build the digest.' };
+    return { success: false, error: e?.message || `Could not build the ${us ? 'US' : 'India'} digest.` };
   }
 }
 

@@ -85,3 +85,47 @@ Either order is safe. Backend first means US targeted practice works the moment 
 
 ## Proposed CHANGELOG line
 `2026-10-02 · broadcast-market · frontend + backend · non-breaking — Admin broadcast gets an India / US & Europe / Both audience; per-market digest and targeted practice (US register, saved as US cases); sends refused when practice links don't match the audience. touches: see handoff. affects: Daily content + admin.`
+
+---
+
+## Addendum 2026-10-03 — digest links to real practice, one button per market
+
+```
+touches:  frontend  MOD  app/(app)/admin/email-actions.ts (digest builder),
+                         app/(app)/admin/broadcast-composer.tsx (two digest buttons + "more" count)
+breaking: no. No API, schema or contract change.
+affects:  Daily content + admin (broadcast composer only).
+```
+
+Owner report: the digest gave one link, to the dashboard. Cause: the India digest looked up
+`daily_schedule` for today's IST date only. The India cron fires after IST midnight and GitHub
+often starts it hours late, so in that window there is no row for "today" and the digest fell back to
+a single "Open the dashboard" card. It also resolved `guesstimate_code` by `id` only, which misses
+rows that store the short code (the same bug lib/daily-server.ts already guards against).
+
+Now (both markets, one builder):
+- **Today's pair** = the dashboard's own rule: today's row, else the most recent before it; refs
+  resolved by id OR code. The admin note says when a previous day's pair is used and why.
+- **More practice**: N more cases AND N more guesstimates from the market's live bank (`is_active`,
+  market-scoped via `marketScoped`; never unlisted or private cases), different every day (stable
+  hash of market + date + id), never repeating the pair. N = 0–4, default 2, chosen in the composer.
+- If the pair is missing entirely, bank picks stand in as the headline cards ("Case to practise").
+  A link to /practice is used only if the bank itself is empty. The dashboard is never linked.
+- **Buttons**: "Today's India digest" and "Today's US digest" are always visible; each also sets the
+  audience (or the one-person practice market) to that market.
+- India keeps the GD news block; US has none (see below).
+
+Checked in production on 2026-10-03 (admin → US & Europe, GitHub Actions):
+- US daily pair IS generated every day: `market_daily_schedule` latest 2026-10-02 (AI-generated
+  titles); US bank 56 cases + 56 guesstimates (50 seeded + one generated pair per day). The Vercel cron
+  (05:15 UTC, `/api/cron/refresh?market=US`) fills it; the GitHub workflow `daily-cases-us.yml`
+  (12/12 runs green) is the backstop and reports "already full".
+- **US news does not exist.** `services/news_fetcher.py` queries Indian domains only (RBI etc.), the
+  US dashboard has no news module, and GD briefs are India-only. Nothing to put in a US digest's
+  news slot. Building it = a US news fetch (US business sources) + a market column on
+  `news_headlines` + a US dashboard module — not done here.
+
+Gates: tsc clean; test-broadcast-audience 20/20; test-intl 51/51; next build clean. E2E against a
+mock database: India digest with a late cron + code-stored guesstimate → 6 distinct case links
+(pair + 2+2), 0 dashboard links, GD block present; US digest → 6 distinct links, no GD, no India
+content; extra = 0 → pair only; no US schedule at all → 8 bank links; unlisted cases never included.
