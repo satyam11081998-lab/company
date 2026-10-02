@@ -18,7 +18,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Mic, MicOff, Keyboard, X, Square } from 'lucide-react';
+import { Loader2, Mic, MicOff, MessageSquare, Square } from 'lucide-react';
+import SwitchToChatButton from '@/components/solve/SwitchToChatButton';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -397,8 +398,8 @@ export default function VoiceInterviewRealtime({
     // shell sits below the nav at xl. Below lg the sidebar is hidden, so this
     // correctly becomes full width on mobile.
     <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+        <div className="flex items-center gap-2 whitespace-nowrap text-micro font-semibold uppercase tracking-widest text-muted-foreground">
           <span className={`h-2 w-2 rounded-full ${phase === 'speaking' ? 'bg-primary' : phase === 'listening' ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
           <span>Voice interview</span>
           {secondsLeft !== null && (
@@ -410,9 +411,7 @@ export default function VoiceInterviewRealtime({
         {interviewerRef.current === 'model_led' && (
           <VoiceLevelPicker value={sessionLevel ?? level} onChange={changeLevel} disabled={phase === 'connecting'} />
         )}
-        <button type="button" onClick={closeSession} className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Leave voice mode">
-          <X className="h-5 w-5" />
-        </button>
+        <SwitchToChatButton onClick={closeSession} />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
@@ -483,8 +482,8 @@ export default function VoiceInterviewRealtime({
             Interrupt
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={closeSession} className="h-9">
-            <Keyboard className="mr-1.5 h-4 w-4" />
-            Type instead
+            <MessageSquare className="mr-1.5 h-4 w-4" />
+            Switch to chat
           </Button>
           <Button type="button" size="sm" onClick={onSubmitSession} className="h-9 bg-primary text-primary-foreground hover:bg-primary-hover">
             End &amp; submit

@@ -33,7 +33,8 @@ console.log('server refusals -> prompt');
 ok('guest (Gemini / speak) -> sign in', () => assert.equal(v.voiceAccessKind(403, 'Create an account to use voice interview mode.'), 'signin'));
 ok('not Pro on Gemini -> upgrade', () => assert.equal(v.voiceAccessKind(403, 'Voice interview is a Pro feature.'), 'upgrade'));
 ok('Pro out of minutes -> credits', () => assert.equal(v.voiceAccessKind(402, "You're out of real-time interview minutes. Buy a minute pack, or use the standard voice mode — it's unlimited on Pro."), 'credits'));
-ok('free trial used -> credits', () => assert.equal(v.voiceAccessKind(402, "You've used your free voice interviews. Upgrade to Pro to keep talking through cases out loud."), 'credits'));
+ok('free trial used (OpenAI) -> credits', () => assert.equal(v.voiceAccessKind(402, "You've used your free voice interviews. Upgrade to Pro to keep talking through cases out loud."), 'credits'));
+ok('free trial used (Gemini) -> credits', () => assert.equal(v.voiceAccessKind(402, "You've used your free voice interview minutes. Upgrade to Pro to keep talking through cases out loud."), 'credits'));
 
 console.log('real failures stay a connection problem');
 ok('503 not configured', () => assert.equal(v.voiceAccessKind(503, 'Gemini voice is not configured on the server.'), 'connection'));
@@ -43,10 +44,11 @@ ok('403 of another kind (region)', () => assert.equal(v.voiceAccessKind(403, "Th
 ok('non-string detail', () => assert.equal(v.voiceAccessKind(403, { msg: 'x' }), 'connection'));
 
 console.log('what a new account gets (no over-promising)');
-ok('Gemini -> Pro', () => assert.equal(v.voicePlanFor('gemini'), 'pro'));
+ok('Gemini Live -> free trial (2026-10-03)', () => assert.equal(v.voicePlanFor('gemini'), 'trial'));
 ok('pipeline -> Pro', () => assert.equal(v.voicePlanFor('pipeline'), 'pro'));
 ok('OpenAI Realtime -> free trial', () => assert.equal(v.voicePlanFor('realtime'), 'trial'));
 ok('unknown -> Pro', () => assert.equal(v.voicePlanFor(undefined), 'pro'));
+ok('trial wording matches backend defaults (14 min, 7 per session)', () => assert.deepEqual([v.FREE_VOICE_TRIAL_MIN, v.FREE_VOICE_SESSION_MIN], [14, 7]));
 
 console.log('return path');
 ok('back to the case', () => assert.equal(v.voiceReturnPath('abc-123'), '/cases/abc-123'));

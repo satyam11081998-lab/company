@@ -25,15 +25,23 @@ export function voiceAccessKind(status: number, detail?: unknown): VoiceAccessKi
 
 /**
  * What a guest gets once they have an account, so the sign-in prompt never
- * promises more than the account delivers. Gemini Live and the standard voice
- * pipeline are Pro only on the server; OpenAI Realtime gives every new account a
- * one-time free trial (routes/realtime.py).
+ * promises more than the account delivers. Real-time voice (Gemini Live and
+ * OpenAI Realtime) gives every new account a one-time free trial
+ * (services/realtime_credits.py FREE_TRIAL_MIN, sessions capped by
+ * REALTIME_FREE_SESSION_SECONDS); the standard voice pipeline is Pro only.
  */
 export type VoicePlan = 'pro' | 'trial';
 
 export function voicePlanFor(voiceMode: string | null | undefined): VoicePlan {
-  return voiceMode === 'realtime' ? 'trial' : 'pro';
+  return voiceMode === 'realtime' || voiceMode === 'gemini' ? 'trial' : 'pro';
 }
+
+/**
+ * The free trial in words. Mirrors the backend defaults (REALTIME_FREE_TRIAL_MIN
+ * = 14, REALTIME_FREE_SESSION_SECONDS = 420): change both together.
+ */
+export const FREE_VOICE_TRIAL_MIN = 14;
+export const FREE_VOICE_SESSION_MIN = 7;
 
 /** Where sign-up / log-in should bring the candidate back to: the case they were on. */
 export function voiceReturnPath(caseId: string): string {

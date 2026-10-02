@@ -29,7 +29,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, X, Loader2, Keyboard } from 'lucide-react';
+import { Mic, MicOff, Loader2, MessageSquare } from 'lucide-react';
+import { toast } from 'sonner';
+import SwitchToChatButton from '@/components/solve/SwitchToChatButton';
 import { postRealtimeTurn, postVoiceDecision, postVoiceFold, type VoiceDecision } from '@/lib/interview-api';
 import VoiceAccessCard from '@/components/solve/VoiceAccessCard';
 import { voiceAccessKind, voiceReturnPath, type VoiceAccessKind } from '@/lib/voice/access';
@@ -147,6 +149,16 @@ export default function VoiceInterviewGemini({
   const tierRef = useRef(0);
   const reconnectsRef = useRef<number[]>([]);
   const [reconnecting, setReconnecting] = useState(false);
+  // FREE TRIAL CAP (2026-10-03). The server sends max_session_seconds for a
+  // non-Pro account (7 min, or less when the trial is nearly used; null for Pro).
+  // One deadline per voice session, carried across reconnects: a reconnect may
+  // only shorten it, never restart the 7 minutes.
+  const deadlineRef = useRef<number | null>(null);
+  const capWarnedRef = useRef(false);
+  const capEndedRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
   useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [transcript.length, drafts]);
 
@@ -431,6 +443,11 @@ export default function VoiceInterviewGemini({
         console.log(`[gemini] interviewer: ${liveRef.current ? 'live (model-led)' : 'renderer (V11 per turn)'}`
           + ` model=${data?.model} level=${data?.level} resume=${data?.resume} config=${data?.tier}/${tiers}`);
         if (data?.credits?.total_remaining != null) setCreditsLeft(data.credits.total_remaining);
+        if (typeof data?.max_session_seconds === 'number') {
+          const until = Date.now() + data.max_session_seconds * 1000;
+          deadlineRef.current = deadlineRef.current ? Math.min(deadlineRef.current, until) : until;
+          setSecondsLeft(Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000)));
+        }
         if (cancelled) return;
 
         const AC: typeof AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
@@ -573,6 +590,29 @@ export default function VoiceInterviewGemini({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, caseId, attemptId, sessionKey]);
 
+  // Free-trial session clock: warn at one minute, end the call at zero. The
+  // conversation is saved turn by turn, so ending here loses nothing.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const until = deadlineRef.current;
+      if (!until) return;
+      const left = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+      setSecondsLeft(left);
+      if (left <= 60 && left > 0 && !capWarnedRef.current) {
+        capWarnedRef.current = true;
+        toast.message('About a minute of free voice time left');
+      }
+      if (left <= 0 && !capEndedRef.current) {
+        capEndedRef.current = true;
+        toast.message('Free voice time for this session is up', {
+          description: 'Everything you said is saved. Carry on in the chat, or upgrade to Pro for more voice interview time.',
+        });
+        onCloseRef.current();
+      }
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
   function changeLevel(next: VoiceLevel) {
     setStoredLevel(next);
     setLevel(next);
@@ -589,14 +629,12 @@ export default function VoiceInterviewGemini({
   if (access) {
     return (
       <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
-        <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-          <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+          <div className="flex items-center gap-2 whitespace-nowrap text-micro font-semibold uppercase tracking-widest text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
             <span>Voice interview</span>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Leave voice mode">
-            <X className="h-5 w-5" />
-          </button>
+          <SwitchToChatButton onClick={onClose} />
         </div>
         <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 py-8">
           <VoiceAccessCard
@@ -612,18 +650,20 @@ export default function VoiceInterviewGemini({
 
   return (
     <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+        <div className="flex items-center gap-2 whitespace-nowrap text-micro font-semibold uppercase tracking-widest text-muted-foreground">
           <span className={`h-2 w-2 rounded-full ${speaking ? 'bg-primary' : listening ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
           <span>Voice interview</span>
-          {creditsLeft !== null && (
+          {secondsLeft !== null ? (
+            <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 tabular-nums text-primary" title="Free voice time left in this session">
+              {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')} left
+            </span>
+          ) : creditsLeft !== null && (
             <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 tabular-nums text-primary">{Math.round(creditsLeft)} min left</span>
           )}
         </div>
         <VoiceLevelPicker value={sessionLevel ?? level} onChange={changeLevel} disabled={phase === 'connecting'} />
-        <button type="button" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Leave voice mode">
-          <X className="h-5 w-5" />
-        </button>
+        <SwitchToChatButton onClick={onClose} />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
@@ -687,14 +727,14 @@ export default function VoiceInterviewGemini({
       </div>
 
       <div className="shrink-0 border-t px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <div className="mx-auto flex max-w-2xl items-center justify-center gap-2">
+        <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={toggleMute} className="h-9">
             {muted ? <Mic className="mr-1.5 h-4 w-4" /> : <MicOff className="mr-1.5 h-4 w-4" />}
             {muted ? 'Resume' : 'Hold'}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-9">
-            <Keyboard className="mr-1.5 h-4 w-4" />
-            Type instead
+            <MessageSquare className="mr-1.5 h-4 w-4" />
+            Switch to chat
           </Button>
           {onSubmitSession && (
             <Button type="button" size="sm" onClick={onSubmitSession} className="h-9 bg-primary text-primary-foreground hover:bg-primary-hover">

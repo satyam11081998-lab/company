@@ -80,3 +80,59 @@ Frontend only. Vercel redeploy picks it up; nothing to run on the backend.
 
 ## Proposed CHANGELOG line
 `2026-10-03 · voice-guest-gate · frontend · non-breaking — Guests tapping Talk get a "Sign in to continue to voice interview mode" prompt (sign up / log in / continue in chat) instead of "Connection issue"; signed-in refusals (not Pro, out of minutes) get upgrade/minutes cards; the voice BETA note is removed. touches: see handoff. affects: Solve screen voice entry.`
+
+---
+
+## Addendum 2026-10-03 (b) — free voice trial on Gemini Live; "Switch to chat" back on every voice screen
+
+```
+touches:  backend   MOD  routes/realtime_gemini.py (non-Pro accounts use the one-time free trial:
+                         per-network daily cap, 402 when used up, max_session_seconds 420 or what
+                         is left, token expiry = cap + 3 min; Pro unchanged; free_session_cap())
+                    NEW  tests/test_gemini_free_trial.py (19 checks, fakes only)
+          frontend  MOD  components/solve/VoiceInterviewGemini.tsx (session clock from
+                         max_session_seconds, carried across reconnects; 1-minute warning; ends
+                         the call at the cap with "Free voice time for this session is up")
+                    NEW  components/solve/SwitchToChatButton.tsx (top right of every voice screen,
+                         replaces the bare X); footer "Type instead" renamed "Switch to chat";
+                         header/footer wrap on phones
+                    MOD  components/solve/VoiceInterviewRealtime.tsx, VoiceInterview.tsx (same button)
+                    MOD  lib/voice/access.ts (gemini -> 'trial'; FREE_VOICE_TRIAL_MIN 14 /
+                         FREE_VOICE_SESSION_MIN 7), components/solve/VoiceAccessCard.tsx (trial
+                         line, "score at the end" line), scripts/test-voice-access.mjs (17 checks)
+breaking: no. C4 (API): POST /realtime-gemini/session gains one additive response key
+          `max_session_seconds` (int | null) and now answers non-Pro accounts with a session
+          instead of 403 "Voice interview is a Pro feature". Old frontends ignore the new key
+          (they would not end a free call at 7 min; the token expiry still bounds it).
+affects:  Solve screen voice (Gemini Live). OpenAI Realtime and the pipeline are unchanged.
+```
+
+**Why (owner, 2026-10-03):** the free voice allowance (14 minutes per account, 7 per case) was built
+on the OpenAI Realtime route (`routes/realtime.py` + `services/realtime_credits.FREE_TRIAL_MIN`). The
+Gemini Live route was written Pro-only on 2026-09-04 and never picked it up, so once voice_mode was
+switched to gemini every free account got "Voice interview is a Pro feature". And with the BETA note
+gone, its "Switch to chat" button went too; the exit has to stay obvious.
+
+**Now:** a signed-in free account taps Talk and gets a live Gemini interview with a `7:00 left` clock
+(less when the trial is nearly used). At one minute left a toast warns; at zero the call ends with
+"Free voice time for this session is up — everything you said is saved; carry on in the chat, or
+upgrade to Pro". Usage is reported as before (/realtime-gemini/usage deducts the trial). When the
+14 minutes are used: "You're out of voice minutes" card with See Pro plans + Continue in chat. Same
+per-network daily cap key as OpenAI (`rt_ip_day:<ip>`, REALTIME_FREE_IP_PER_DAY). Pro: no session
+cap, 30-minute token, same 402 minute-pack message as before.
+
+Guest prompt now reads "14 free minutes of voice interview when you sign up, up to 7 minutes per
+case", fine print "Free to sign up. No card needed.", and under "Continue in chat without signing
+up": "Solve the whole case in chat. You only need an account at the end, to see your score and
+feedback." (true: GuestSaveWall asks at submit).
+
+**Gates:** backend `python -m tests.test_gemini_free_trial` 19/19, `tests.test_markets` 48/48,
+`tests.test_broadcast_market` 34/34, py_compile clean. Frontend `tsc --noEmit` clean,
+`test-voice-access` 17/17, `next build` clean. Browser (production build, local stand-ins incl. a
+fake Gemini socket): free account -> live session, clock 1:05 -> warning toast -> call ends at 0 with
+the toast, usage reported (15+15+15+15+6 s); trial used -> minutes card; phone 390 px: header wraps,
+"Chat" pill visible, footer Hold / Switch to chat / End & submit all on screen; Switch to chat
+returns to the chat.
+
+**Deploy order:** backend first is best (until it lands, a free account sees the Pro card, as today).
+Either order is safe.

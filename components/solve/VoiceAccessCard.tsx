@@ -22,7 +22,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check, Lock, MessageSquare, Zap } from 'lucide-react';
 import VoiceWave from '@/components/icons/voice-wave';
-import type { VoiceAccessKind, VoicePlan } from '@/lib/voice/access';
+import { FREE_VOICE_SESSION_MIN, FREE_VOICE_TRIAL_MIN, type VoiceAccessKind, type VoicePlan } from '@/lib/voice/access';
 
 const PRIMARY = 'inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-5 py-3 text-[15px] font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover';
 const SECONDARY = 'inline-flex w-full items-center justify-center rounded-full border border-border bg-background px-5 py-2.5 text-[14px] font-medium text-foreground transition-colors hover:bg-muted';
@@ -71,7 +71,13 @@ export default function VoiceAccessCard({
           <li className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />Your work on this case comes with you</li>
         </ul>
 
-        <div className="mt-5 flex flex-col gap-2.5">
+        {plan === 'trial' && (
+          <p className="mx-auto mt-4 max-w-xs rounded-lg bg-primary/5 px-3 py-2 text-[13px] font-semibold leading-snug text-primary">
+            {FREE_VOICE_TRIAL_MIN} free minutes of voice interview when you sign up, up to {FREE_VOICE_SESSION_MIN} minutes per case
+          </p>
+        )}
+
+        <div className={`${plan === 'trial' ? 'mt-3' : 'mt-5'} flex flex-col gap-2.5`}>
           <Link href={`/signup?next=${nextQ}`} className={PRIMARY}>
             Sign up free <ArrowRight className="h-4 w-4" />
           </Link>
@@ -81,7 +87,7 @@ export default function VoiceAccessCard({
         </div>
         <p className="mt-2.5 text-[11px] text-muted-foreground/80">
           {plan === 'trial'
-            ? 'Free to sign up. New accounts get a free voice interview trial.'
+            ? 'Free to sign up. No card needed.'
             : 'Free to sign up. Voice interview is included with Pro.'}
         </p>
 
@@ -94,6 +100,9 @@ export default function VoiceAccessCard({
           <MessageSquare className="h-4 w-4" />
           Continue in chat without signing up
         </button>
+        <p className="mx-auto mt-1.5 max-w-xs text-[11px] leading-relaxed text-muted-foreground/80">
+          Solve the whole case in chat. You only need an account at the end, to see your score and feedback.
+        </p>
       </div>
     );
   }

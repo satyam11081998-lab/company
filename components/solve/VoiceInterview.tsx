@@ -11,7 +11,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Mic, MicOff, Keyboard, X, Square } from 'lucide-react';
+import { Loader2, Mic, MicOff, MessageSquare, Square } from 'lucide-react';
+import SwitchToChatButton from '@/components/solve/SwitchToChatButton';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -592,8 +593,8 @@ export default function VoiceInterview({
     // case prompt must stay readable while you are talking about it.
     <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
       {/* header */}
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+        <div className="flex items-center gap-2 whitespace-nowrap text-micro font-semibold uppercase tracking-widest text-muted-foreground">
           <span className={`h-2 w-2 rounded-full ${phase === 'speaking' ? 'bg-primary' : active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
           <span>Voice interview</span>
           {secondsLeft !== null && (
@@ -602,14 +603,7 @@ export default function VoiceInterview({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Leave voice mode"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <SwitchToChatButton onClick={onClose} />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
@@ -684,7 +678,7 @@ export default function VoiceInterview({
 
       {/* controls */}
       <div className="shrink-0 border-t px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <div className="mx-auto flex max-w-2xl items-center justify-center gap-2">
+        <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-2">
           <Button type="button" variant="outline" size="sm" onClick={toggleMute} className="h-9">
             {muted ? <Mic className="mr-1.5 h-4 w-4" /> : <MicOff className="mr-1.5 h-4 w-4" />}
             {muted ? 'Resume' : 'Hold'}
@@ -701,8 +695,8 @@ export default function VoiceInterview({
             Interrupt
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-9">
-            <Keyboard className="mr-1.5 h-4 w-4" />
-            Type instead
+            <MessageSquare className="mr-1.5 h-4 w-4" />
+            Switch to chat
           </Button>
           <Button
             type="button"
