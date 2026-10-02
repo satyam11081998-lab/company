@@ -31,6 +31,8 @@ import VoiceInterviewRealtime from '@/components/solve/VoiceInterviewRealtime';
 import RealtimeMinutes from '@/components/solve/realtime-minutes';
 import { useOptionalUser } from '@/components/user-context';
 import VoiceInterviewGemini from '@/components/solve/VoiceInterviewGemini';
+import VoiceAccessCard from '@/components/solve/VoiceAccessCard';
+import { voicePlanFor, voiceReturnPath } from '@/lib/voice/access';
 import { primeAudioPlayback } from '@/lib/voice/tts-queue';
 import { Vad } from '@/lib/voice/vad';
 import { stripSayLabel } from '@/lib/voice/v11-voice';
@@ -167,6 +169,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // must stop gating the moment they do.
   const [isGuest, setIsGuest] = useState(false);
   const [saveWallOpen, setSaveWallOpen] = useState(false);
+  // Voice sign-in prompt (2026-10-03): a guest who taps Talk is asked to sign up
+  // or log in, or to carry on in chat, instead of starting a session the server
+  // will refuse ("Connection issue / Create an account…").
+  const [voiceGateOpen, setVoiceGateOpen] = useState(false);
+  useEffect(() => {
+    if (!voiceGateOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setVoiceGateOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [voiceGateOpen]);
   // The recommendation is held here across the conversion. See handleSubmit.
   const [pendingRec, setPendingRec] = useState('');
   // Set when we come back from an OAuth conversion with a parked answer; the
@@ -937,15 +949,21 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
    *   unavailable — Pro, but out of minutes or the backend lacks /speak. SHOW it
    *                 and say why; never just remove it.
    *   locked      — Free/Lite: show it, name the tier, link to upgrade.
-   *   hidden      — guests only. They have no tier to upgrade from; the
-   *                 save-wall is the right ask.
+   *   guest       — not signed in (2026-10-03). Show Talk as normal; tapping it
+   *                 opens the voice sign-in prompt (sign up / log in, or carry on
+   *                 in chat) instead of a session the server would refuse.
+   *   hidden      — voice switched off, or the attempt is still loading.
+   *
+   * Signed-in accounts the server refuses (not Pro on Gemini, out of minutes)
+   * are answered inside the voice overlay by VoiceAccessCard, never as a
+   * "Connection issue".
    */
-  const talkState: 'active' | 'unavailable' | 'locked' | 'hidden' =
+  const talkState: 'active' | 'unavailable' | 'locked' | 'guest' | 'hidden' =
     !VOICE_INTERVIEW_ENABLED ? 'hidden'          // owner decision: not ROI positive
       : !attempt ? 'hidden'
-      // Realtime / Gemini are CREDIT-gated server-side (guests included — they
-      // get the same one-time trial against their anonymous id, and convert at
-      // the score): Pro gets a monthly
+      : isGuest ? 'guest'
+      // Realtime / Gemini are CREDIT-gated server-side (guests are asked to sign
+      // in first, above): Pro gets a monthly
       // allowance and a non-Pro user gets a ONE-TIME free trial (see
       // routes/realtime.py + services/realtime_credits.py). So on the best-UX
       // pipelines, let ANYONE launch — the session endpoint hands back the
@@ -1287,6 +1305,23 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                     </button>
                   )}
 
+                  {/* GUEST: the same Talk button, but it opens the voice sign-in
+                      prompt. Seeing the real button (not a lock) is the point:
+                      voice is on offer, one sign-up away. */}
+                  {talkState === 'guest' && recording === 'idle' && (
+                    <button
+                      type="button"
+                      onClick={() => setVoiceGateOpen(true)}
+                      disabled={sending}
+                      className="relative shrink-0 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-2 text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Start voice interview (sign in required)"
+                      title="Voice interview — sign in to talk with the interviewer"
+                    >
+                      <VoiceWave className="h-5 w-5" />
+                      <span className="hidden sm:inline text-micro font-semibold uppercase tracking-wide">Talk</span>
+                    </button>
+                  )}
+
                   {/* Pro, but temporarily unavailable. Present and explained,
                       never silently removed — a missing button is read as a
                       broken product. */}
@@ -1448,6 +1483,29 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
               Not yet — keep working on my answer
             </button>
           </div>
+        </div>
+      )}
+
+      {/* VOICE SIGN-IN PROMPT (guests). Unlike the save wall, nothing is held
+          here, so a click outside or Escape simply returns to the chat. */}
+      {voiceGateOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="voice-signin-title"
+          onClick={(e) => { if (e.target === e.currentTarget) setVoiceGateOpen(false); }}
+          className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-background/80 p-4 backdrop-blur-sm"
+        >
+          <VoiceAccessCard
+            kind="signin"
+            titleId="voice-signin-title"
+            next={voiceReturnPath(caseId)}
+            plan={voicePlanFor(voiceMode)}
+            onContinueInChat={() => {
+              setVoiceGateOpen(false);
+              composerTextRef.current?.focus();
+            }}
+          />
         </div>
       )}
     </div>

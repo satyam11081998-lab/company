@@ -31,7 +31,6 @@ import { voiceLine, isEchoOfLine, CandidateTurnLedger, SaveQueue, stripSayLabel 
 import {
   answerLeakTripwire, answerAllowedAfterAsks, isAnswerRequest, ANSWER_LEAK_STEER, TOOL_UNAVAILABLE_OUTPUT, type ToolCall,
 } from '@/lib/voice/model-led';
-import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 import VoiceLevelPicker from '@/components/solve/VoiceLevelPicker';
 import { getStoredLevel, setStoredLevel, withTimeout, isVoiceLevel, type VoiceLevel } from '@/lib/voice/level';
 
@@ -415,8 +414,6 @@ export default function VoiceInterviewRealtime({
           <X className="h-5 w-5" />
         </button>
       </div>
-
-      <VoiceBetaNotice onSwitchToChat={closeSession} />
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
         <div className="relative flex h-44 w-44 items-center justify-center">

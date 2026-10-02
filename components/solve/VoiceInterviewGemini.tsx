@@ -31,7 +31,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, X, Loader2, Keyboard } from 'lucide-react';
 import { postRealtimeTurn, postVoiceDecision, postVoiceFold, type VoiceDecision } from '@/lib/interview-api';
-import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
+import VoiceAccessCard from '@/components/solve/VoiceAccessCard';
+import { voiceAccessKind, voiceReturnPath, type VoiceAccessKind } from '@/lib/voice/access';
 import {
   CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, stripSayLabel, type GateAction,
 } from '@/lib/voice/v11-voice';
@@ -102,6 +103,9 @@ export default function VoiceInterviewGemini({
 }) {
   const [phase, setPhase] = useState<Phase>('connecting');
   const [error, setError] = useState<string | null>(null);
+  // The server refused for a reason that is not a connection problem (guest,
+  // plan without voice, out of minutes): answered with VoiceAccessCard.
+  const [access, setAccess] = useState<{ kind: Exclude<VoiceAccessKind, 'connection'>; detail: string | null } | null>(null);
   const [muted, setMuted] = useState(false);
   const [creditsLeft, setCreditsLeft] = useState<number | null>(null);
   const [transcript, setTranscript] = useState<{ who: 'you' | 'interviewer'; text: string }[]>([]);
@@ -393,6 +397,7 @@ export default function VoiceInterviewGemini({
     trippedRef.current = false;
     procRef.current = null;
     setPhase('connecting');
+    setAccess(null);
     setDrafts({ you: '', interviewer: '' });
     let setupDone = false;
     (async () => {
@@ -408,6 +413,14 @@ export default function VoiceInterviewGemini({
         });
         if (!res.ok) {
           const t = await res.json().catch(() => ({}));
+          const kind = voiceAccessKind(res.status, t.detail);
+          if (kind !== 'connection') {
+            if (!cancelled) {
+              setAccess({ kind, detail: typeof t.detail === 'string' ? t.detail : null });
+              setPhase('error');
+            }
+            return;
+          }
           throw new Error(t.detail || `Could not start voice session (${res.status})`);
         }
         const data = await res.json();
@@ -573,6 +586,30 @@ export default function VoiceInterviewGemini({
   const listening = phase === 'listening' && !muted;
   const speaking = phase === 'speaking';
 
+  if (access) {
+    return (
+      <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
+        <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
+          <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+            <span>Voice interview</span>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Leave voice mode">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 py-8">
+          <VoiceAccessCard
+            kind={access.kind}
+            detail={access.detail}
+            next={voiceReturnPath(caseId)}
+            onContinueInChat={onClose}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed top-0 xl:top-16 bottom-0 right-0 left-0 lg:left-[35%] xl:left-[30%] z-40 flex flex-col bg-background/98 backdrop-blur-sm">
       <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
@@ -588,8 +625,6 @@ export default function VoiceInterviewGemini({
           <X className="h-5 w-5" />
         </button>
       </div>
-
-      <VoiceBetaNotice onSwitchToChat={onClose} />
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
         <div className="relative flex h-44 w-44 items-center justify-center">
