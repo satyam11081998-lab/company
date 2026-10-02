@@ -122,6 +122,50 @@ affects:  none of the existing features. Shares the backend's process (memory/CP
    already there: "More → Interview Intelligence" appears for exactly the accounts II lets in
    (admins, test users, and Pro once this flag is on), checked on every page load.
 
+## Voice call (third pass, 2026-10-02) — the interview is now a spoken call by default
+
+Owner feedback: the room felt like a chat box; the spec (§29) asked for a live spoken interview with
+barge-in. Built:
+
+```
+touches:  consilio
+            NEW  components/interview-intelligence/call/{CallRoom,VoiceOrb}.tsx   (lobby + live call UI)
+            NEW  lib/interview-intelligence/voice/{types,text,conductor,audio,realtime,standard,vad}.ts
+            NEW  qa/interview-intelligence/voice/{conductor,realtime}.test.cjs + run.mjs (25 node tests)
+            EDIT components/interview-intelligence/InterviewRoom.tsx (voice by default; text thread restyled)
+            EDIT components/interview-intelligence/admin/IIAdminClient.tsx (voice.engine selector)
+            EDIT lib/interview-intelligence/{api,types}.ts (liveSession, liveUsage, speak voice, voice_engine)
+          consilio-backend/interview-intelligence
+            EDIT voice/routes.py (POST /v1/voice/live, /v1/voice/live/usage; per-user voice gate cache)
+            EDIT access/flags.py (voice.enabled default ON; voice.engine realtime|standard), rate_limit.py,
+                 ai/pricing.py (realtime usage pricing), ai/runner.py (record_live_usage), config.py
+                 (II_REALTIME_MODEL / _TRANSCRIBE_MODEL / _EAGERNESS), api/routes.py (/me voice_engine),
+                 api/admin_routes.py (grant changes refresh caches), ai/simulated.py (playable audio)
+breaking: no. New II endpoints only; no CONTRACTS.md surface; no DB migration (no schema change).
+```
+
+How it works: lobby (mic check + level meter, mic picker, interviewer voice Marin/Cedar/Alloy) →
+full-screen call. **Live engine** (default): the browser opens WebRTC straight to OpenAI Realtime with
+a secret II mints (`/v1/voice/live`, uses the backend's OPENAI_API_KEY); semantic end-of-turn,
+barge-in, streaming transcript; auto-replies OFF — the speech model only says the line II decided.
+**Standard engine**: own VAD → /voice/transcribe → /turns → /voice/speak sentence by sentence; also
+the automatic fallback if a live call cannot connect. Admin → Interview Intelligence → Settings →
+`voice.engine` switches between them; `voice.enabled` off = text only.
+
+Gates (2026-10-02): II suite 279 passed (Postgres, backend pins) / 278 + 1 skipped (SQLite);
+voice node tests 25/25 (device); `tsc --noEmit` EXIT 0 (device); `next build` OK (copy).
+Browser runs (built app, real Chromium): standard voice with a fake microphone — lobby, mic check,
+2 spoken answers reached II as `kind=voice`, typed answer inside the call, mute, break/resume,
+mobile, end → completed; live call over real WebRTC to a mock realtime peer — secret minted with
+the chosen voice and auto-replies off, opening line spoken verbatim, streamed words on screen,
+"Okay." ack then next line, a mid-answer pause kept as ONE answer, barge-in sent cancel + clear,
+7 responses metered, end → completed; text mode thread + switch back to voice. No console errors.
+NOT verified here: real OpenAI Realtime audio quality/latency (first heard on the live site).
+
+Cost: live ≈ $0.02/min of the candidate speaking + ≈ $0.08/min of the interviewer speaking
+(≈ $0.6–0.9 per 30-min interview); standard ≈ $0.25. Voice spend counts in II's daily budget
+(`limits.daily_budget_usd`, default $25), never in the per-interview AI cap.
+
 ## Proposed LEDGER row
 | Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, DORMANT** until `II_DATABASE_URL` is set; offline gates green; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |
 

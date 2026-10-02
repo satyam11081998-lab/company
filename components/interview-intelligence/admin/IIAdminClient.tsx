@@ -147,11 +147,17 @@ function AccessTab() {
 }
 
 /* ------------------------------------------------------------------ settings */
+/** Flags that take one of a few named values. */
+const FLAG_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  'voice.engine': [{ value: 'realtime', label: 'Live call' }, { value: 'standard', label: 'Standard' }],
+};
+
 const FLAG_HELP: Record<string, string> = {
   'ii.enabled': 'Kill switch. Off = nobody but II admins can use it.',
   'ii.enabled_for_pro': 'Launch flag. Off = private preview (admins + test users only). On = every Pro user.',
   'admin.test_access': 'Whether the test-user list grants access.',
-  'voice.enabled': 'Turn-based voice answers and spoken interviewer lines.',
+  'voice.enabled': 'Voice interviews (a spoken call with the interviewer). Off = text only.',
+  'voice.engine': 'Live call = realtime speech (best: barge-in, fastest replies; ≈ $0.7 per 30 min). Standard = record → transcribe → speak (cheaper ≈ $0.25, slower). Live falls back to standard by itself if it cannot connect.',
   'company_intel.enabled': 'Use JD-stated and user-provided company context.',
   'company_intel.web_research': 'Public web research for company context (not built — keep off).',
   'technical.advanced_mode': 'Offer the technical deep-dive mode.',
@@ -191,7 +197,17 @@ function SettingsTab() {
               <p className="text-sm text-muted-foreground">{FLAG_HELP[key] || ''}</p>
             </div>
             <div className="flex items-center gap-2 sm:justify-end">
-              {typeof value === 'boolean' ? (
+              {FLAG_OPTIONS[key] ? (
+                <div role="radiogroup" aria-label={key} className="inline-flex rounded-md border border-input p-0.5">
+                  {FLAG_OPTIONS[key].map((o) => (
+                    <button key={o.value} role="radio" aria-checked={value === o.value} disabled={saving === key}
+                      onClick={() => value !== o.value && save(key, o.value)}
+                      className={`rounded px-3 py-1 text-sm transition-colors ${value === o.value ? 'bg-navy text-white dark:bg-foreground dark:text-background' : 'text-muted-foreground hover:text-foreground'}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              ) : typeof value === 'boolean' ? (
                 <button role="switch" aria-checked={value} aria-label={key} disabled={saving === key}
                   onClick={() => save(key, !value)}
                   className={`relative h-6 w-11 rounded-full transition-colors ${value ? 'bg-navy dark:bg-viz-good' : 'bg-muted-foreground/30'}`}>

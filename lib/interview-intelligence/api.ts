@@ -161,11 +161,26 @@ export const ii = {
     f.append('audio', audio, 'answer.webm');
     return call<{ text: string }>('/v1/voice/transcribe', { method: 'POST', form: f });
   },
-  speak: async (text: string): Promise<Blob> => {
-    const r = await call<Response>('/v1/voice/speak', { method: 'POST', json: { text }, raw: true });
+  speak: async (text: string, voice?: string): Promise<Blob> => {
+    const r = await call<Response>('/v1/voice/speak', { method: 'POST', json: { text, voice }, raw: true });
     return r.blob();
   },
+  /** Mint a live-call (OpenAI Realtime) secret for this interview; 403/503 = use standard voice. */
+  liveSession: (sessionId: string, voice?: string) => call<LiveSession>('/v1/voice/live', {
+    method: 'POST', json: { session_id: sessionId, voice } }),
+  /** Meter one spoken response of a live call (fire and forget). */
+  liveUsage: (sessionId: string, usage: unknown, kind: string) => call<void>('/v1/voice/live/usage', {
+    method: 'POST', json: { session_id: sessionId, usage, kind } }),
 };
+
+export interface LiveSession {
+  client_secret: string;
+  expires_at: number | null;
+  model: string;
+  voice: string;
+  max_session_s: number;
+  say_prefix: string;
+}
 
 /* ---------------------------------------------------------------- admin API */
 export const iiAdmin = {
