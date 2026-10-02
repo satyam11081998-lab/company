@@ -49,6 +49,34 @@ export interface IIDocument {
   created_at: string;
   analysis_status: 'pending' | 'running' | 'ready' | 'failed' | 'unreadable';
   analysis?: Record<string, any>;
+  /** Live reading/analysis steps (single-document reads and uploads only). */
+  progress?: LiveProgress | null;
+}
+
+/** One real stage of slow background work, as reported by the work itself. */
+export interface LiveStep {
+  id: string;
+  label: string;
+  state: 'done' | 'active' | 'waiting' | 'todo';
+  detail: string;
+  /** Real findings of this step ("3 roles, 2 organisations, 6 years"). */
+  facts: string[];
+  /** What a running analysis looks for (shown one at a time). */
+  looking_for?: string[];
+}
+
+export interface LiveProgress {
+  steps: LiveStep[];
+  /** 0–100; 100 only when really done. */
+  pct: number;
+  done: boolean;
+  failed?: boolean;
+  /** Lets the page move the bar smoothly between polls. */
+  step_elapsed_s: number;
+  step_eta_s: number;
+  step_weight: number;
+  /** A few chips: skills from the CV / keywords from the JD. */
+  highlights?: string[];
 }
 
 export interface IIProgress {
@@ -102,6 +130,8 @@ export interface IISession {
   jd_document_id?: string;
   pre_interview_summary?: PreInterviewSummary;
   progress?: IIProgress;
+  /** While the interview is being built (null until the build job starts). */
+  prep_progress?: LiveProgress | null;
 }
 
 export interface IIMessage {
@@ -250,6 +280,7 @@ export interface ReportResponse {
   status: 'ready' | 'partial' | 'pending' | 'processing' | 'failed';
   message?: string;
   report?: IIReport;
+  progress?: LiveProgress | null;
 }
 
 export interface IIProgressHistory {

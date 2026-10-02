@@ -7,8 +7,10 @@ import { Check, FileUp, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ii, IIError } from '@/lib/interview-intelligence/api';
 import { DEPTHS, DIFFICULTIES, MODES, titleCase } from '@/lib/interview-intelligence/format';
+import { estimatePct, keywordCoverage, waitingProgress } from '@/lib/interview-intelligence/progress';
 import type { IIDocument, IIMe, IISession, InterviewConfigInput } from '@/lib/interview-intelligence/types';
 import { AccessGate, ErrorNote, Spinner } from './primitives';
+import ProgressCard from './ProgressCard';
 
 const ACCEPT = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const STEPS = ['Resume', 'Job description', 'Role understanding', 'Interview type', 'Difficulty', 'Duration', 'Start'];
@@ -39,7 +41,13 @@ function Setup({ me }: { me: IIMe }) {
   const [cv, setCv] = useState<IIDocument | null>(null);
   const [jd, setJd] = useState<IIDocument | null>(null);
   const [pasted, setPasted] = useState('');
+  // 'cv' | 'jd' = that file is uploading; 'build' = creating the interview
   const [busy, setBusy] = useState<string | null>(null);
+  // analysis runs in the background: the candidate can move on to the JD while the CV is read
+  const [analysing, setAnalysing] = useState<{ cv: boolean; jd: boolean }>({ cv: false, jd: false });
+  const [seenAt, setSeenAt] = useState<{ cv: number; jd: number; session: number }>({ cv: 0, jd: 0, session: 0 });
+  // the document each step currently shows: a slower poll for a replaced upload must not overwrite it
+  const latest = useRef<{ cv: string; jd: string }>({ cv: '', jd: '' });
   const [error, setError] = useState<string | null>(null);
   const [activeConflict, setActiveConflict] = useState<{ id: string; role_title: string; status: string }[] | null>(null);
 
@@ -62,6 +70,7 @@ function Setup({ me }: { me: IIMe }) {
       for (let i = 0; i < 120; i++) {
         const s = await ii.session(id);
         setSession(s);
+        setSeenAt((t) => ({ ...t, session: performance.now() }));
         if (!['created', 'uploading', 'analyzing'].includes(s.status)) break;
         await sleep(2000);
       }
@@ -78,11 +87,17 @@ function Setup({ me }: { me: IIMe }) {
 
   async function pickDoc(kind: 'cv' | 'jd', doc: IIDocument) {
     setError(null);
-    const set = kind === 'cv' ? setCv : setJd;
+    latest.current[kind] = doc.id;
+    const set = (d: IIDocument) => {
+      if (latest.current[kind] !== d.id) return;
+      (kind === 'cv' ? setCv : setJd)(d);
+      setSeenAt((t) => ({ ...t, [kind]: performance.now() }));
+    };
     set(doc);
     if (doc.analysis_status !== 'ready') {
-      setBusy(kind);
-      try { set(await waitForAnalysis(doc.id, set)); } catch (e) { setError((e as IIError).message); } finally { setBusy(null); }
+      setAnalysing((a) => ({ ...a, [kind]: true }));
+      try { set(await waitForAnalysis(doc.id, set)); } catch (e) { if (latest.current[kind] === doc.id) setError((e as IIError).message); }
+      finally { if (latest.current[kind] === doc.id) setAnalysing((a) => ({ ...a, [kind]: false })); }
     } else {
       try { set(await ii.document(doc.id)); } catch { /* keep the summary row */ }
     }
@@ -95,24 +110,28 @@ function Setup({ me }: { me: IIMe }) {
     if (file.size > max) { setError(`That file is larger than ${me.limits.max_upload_mb} MB.`); return; }
     if (!/\.(pdf|docx?|DOCX?|PDF)$/.test(file.name)) { setError('Upload a PDF, DOC or DOCX file.'); return; }
     setBusy(kind);
+    let d: IIDocument;
     try {
-      const d = await ii.upload(kind, file);
-      if (d.parse_status !== 'parsed') {
-        setError(d.parse_error || `We couldn't reliably read that file. Please re-upload it.`);
-        return;
-      }
-      await pickDoc(kind, d);
+      d = await ii.upload(kind, file);
     } catch (e) {
       setError((e as IIError).message);
+      return;
     } finally {
       setBusy(null);
     }
+    if (d.parse_status !== 'parsed') {
+      setError(d.parse_error || `We couldn't reliably read that file. Please re-upload it.`);
+      return;
+    }
+    await pickDoc(kind, d);
   }
 
   async function submitPaste() {
     if (pasted.trim().length < 200) { setError('Paste the full job description (at least a few paragraphs).'); return; }
     setBusy('jd'); setError(null);
-    try { await pickDoc('jd', await ii.pasteJD(pasted)); } catch (e) { setError((e as IIError).message); } finally { setBusy(null); }
+    let d: IIDocument;
+    try { d = await ii.pasteJD(pasted); } catch (e) { setError((e as IIError).message); return; } finally { setBusy(null); }
+    await pickDoc('jd', d);
   }
 
   async function build() {
@@ -140,7 +159,11 @@ function Setup({ me }: { me: IIMe }) {
 
   const cvReady = cv?.analysis_status === 'ready';
   const jdReady = jd?.analysis_status === 'ready';
-  const canNext = [cvReady, jdReady, true, true, true, true, false][step];
+  const usable = (d: IIDocument | null) => Boolean(d && d.parse_status === 'parsed'
+    && !['failed', 'unreadable'].includes(d.analysis_status));
+  // The CV keeps being read in the background while the JD is added; both must be ready to go on.
+  const canNext = [usable(cv), cvReady && jdReady, true, true, true, true, false][step];
+  const waitingFor = step === 1 && jdReady && !cvReady && usable(cv) ? 'Waiting for your CV…' : null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -162,16 +185,23 @@ function Setup({ me }: { me: IIMe }) {
         {step === 0 && (
           <DocStep
             kind="cv" title="Your CV" hint={`PDF, DOC or DOCX, up to ${me.limits.max_upload_mb} MB.`}
-            saved={saved.filter((d) => d.kind === 'cv')} current={cv} busy={busy === 'cv'}
+            saved={saved.filter((d) => d.kind === 'cv')} current={cv} busy={busy === 'cv'} seenAt={seenAt.cv}
             onPick={(d) => pickDoc('cv', d)} onFile={(f) => uploadFile('cv', f)}
+            note={analysing.cv ? 'No need to wait: you can add the job description while this runs.' : null}
           />
         )}
         {step === 1 && (
           <DocStep
             kind="jd" title="The job description" hint="Upload the file or paste the full text."
-            saved={saved.filter((d) => d.kind === 'jd')} current={jd} busy={busy === 'jd'}
+            saved={saved.filter((d) => d.kind === 'jd')} current={jd} busy={busy === 'jd'} seenAt={seenAt.jd}
             onPick={(d) => pickDoc('jd', d)} onFile={(f) => uploadFile('jd', f)}
+            note={cv && !cvReady && usable(cv) ? <BackgroundNote doc={cv} seenAt={seenAt.cv} queued={Boolean(jd && !jdReady)} /> : null}
           >
+            {cv && ['failed', 'unreadable'].includes(cv.analysis_status) && (
+              <p className="mt-4 text-sm text-viz-warning" role="alert">
+                We couldn’t analyse your CV. Go back and upload it again (a PDF or DOCX exported from Word works best).
+              </p>
+            )}
             <label className="mt-6 block text-sm font-medium" htmlFor="jd-paste">Or paste it</label>
             <textarea
               id="jd-paste" value={pasted} onChange={(e) => setPasted(e.target.value)} rows={7}
@@ -240,7 +270,7 @@ function Setup({ me }: { me: IIMe }) {
         {step === 6 && (
           <BuildStep
             session={session} busy={busy === 'build'} canBuild={Boolean(cvReady && jdReady)} onBuild={build}
-            cfg={cfg} activeConflict={activeConflict}
+            cfg={cfg} activeConflict={activeConflict} seenAt={seenAt.session}
           />
         )}
 
@@ -252,7 +282,7 @@ function Setup({ me }: { me: IIMe }) {
               Back
             </Button>
             <Button onClick={() => { setError(null); setStep((s) => s + 1); }} disabled={!canNext || Boolean(busy)}>
-              Continue
+              {waitingFor ? <><Loader2 className="animate-spin" /> {waitingFor}</> : 'Continue'}
             </Button>
           </div>
         )}
@@ -286,9 +316,10 @@ function Pill({ selected, onSelect, children }: { selected: boolean; onSelect: (
   );
 }
 
-function DocStep({ kind, title, hint, saved, current, busy, onPick, onFile, children }: {
+function DocStep({ kind, title, hint, saved, current, busy, seenAt, note, onPick, onFile, children }: {
   kind: 'cv' | 'jd'; title: string; hint: string; saved: IIDocument[]; current: IIDocument | null; busy: boolean;
-  onPick: (d: IIDocument) => void; onFile: (f: File | undefined) => void; children?: ReactNode;
+  seenAt: number; note?: ReactNode; onPick: (d: IIDocument) => void; onFile: (f: File | undefined) => void;
+  children?: ReactNode;
 }) {
   const input = useRef<HTMLInputElement | null>(null);
   return (
@@ -301,23 +332,30 @@ function DocStep({ kind, title, hint, saved, current, busy, onPick, onFile, chil
         <Button variant="outline" onClick={() => input.current?.click()} disabled={busy}>
           <FileUp /> Upload {kind === 'cv' ? 'CV' : 'file'}
         </Button>
-        {busy && <Spinner label={current ? 'Analysing…' : 'Uploading…'} />}
+        {busy && <Spinner label="Uploading and reading the file…" />}
       </div>
+      {!current && note && <div className="mt-3 text-sm text-muted-foreground">{note}</div>}
 
       {current && (
-        <div className="mt-5 rounded-lg border border-border px-4 py-3 text-sm">
-          <p className="font-medium">
+        <div className="mt-5">
+          <p className="text-sm text-muted-foreground">
             {kind === 'cv' ? 'CV' : 'Job description'} v{current.version}
-            {current.file_name ? ` · ${current.file_name}` : ''}
+            {current.file_name ? `, ${current.file_name}` : current.source === 'paste' ? ', pasted text' : ''}
           </p>
-          <p className="mt-0.5 text-muted-foreground">
-            {current.analysis_status === 'ready' ? 'Analysed and ready.' :
-              current.analysis_status === 'failed' ? 'We could not analyse this document. Try uploading it again.' :
-                current.analysis_status === 'unreadable' ? "We couldn't reliably read this file. Please re-upload it." :
-                  'Reading and analysing…'}
-          </p>
+          {current.progress ? (
+            <ProgressCard key={current.id} progress={current.progress} receivedAt={seenAt} className="mt-2"
+                          doneTitle={kind === 'cv' ? 'Your CV, understood' : 'The role, understood'} />
+          ) : (
+            <p className="mt-1 text-sm">
+              {current.analysis_status === 'ready' ? 'Analysed and ready.' :
+                current.analysis_status === 'failed' ? 'We could not analyse this document. Try uploading it again.' :
+                  current.analysis_status === 'unreadable' ? "We couldn't reliably read this file. Please re-upload it." :
+                    'Reading and analysing…'}
+            </p>
+          )}
+          {note && <div className="mt-2 text-sm text-muted-foreground">{note}</div>}
           {current.warnings?.length > 0 && (
-            <ul className="mt-2 space-y-1 text-viz-warning">
+            <ul className="mt-2 space-y-1 text-sm text-viz-warning">
               {current.warnings.map((w) => <li key={w} className="flex gap-1.5"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{w}</li>)}
             </ul>
           )}
@@ -345,6 +383,53 @@ function DocStep({ kind, title, hint, saved, current, busy, onPick, onFile, chil
         </div>
       )}
       {children}
+    </div>
+  );
+}
+
+/** The CV is still being read while the JD is added. */
+function BackgroundNote({ doc, seenAt, queued }: { doc: IIDocument; seenAt: number; queued: boolean }) {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const tick = () => setPct((prev) => Math.max(prev, estimatePct(doc.progress, performance.now() - seenAt)));
+    tick();
+    const t = setInterval(tick, 500);
+    return () => clearInterval(t);
+  }, [doc.progress, seenAt]);
+  return (
+    <p className="flex items-center gap-2" role="status">
+      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+      <span>
+        Your CV is still being read in the background ({pct}%).
+        {queued ? ' The job description is next in line.' : ''}
+      </span>
+    </p>
+  );
+}
+
+function KeywordMatch({ cv, jd }: { cv: IIDocument; jd: IIDocument }) {
+  const { found, missing } = keywordCoverage(jd.analysis, cv.analysis);
+  const total = found.length + missing.length;
+  if (total < 3) return null;
+  return (
+    <div className="mt-8">
+      <p className="text-sm font-medium">Key terms from the job description</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Your CV mentions {found.length} of {total}.
+        {missing.length > 0 && ' The ones it doesn’t are where an interviewer is likely to dig, so have an example ready.'}
+      </p>
+      <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Key terms">
+        {found.map((t) => (
+          <li key={t} className="inline-flex items-center gap-1 rounded-full bg-navy/10 px-2.5 py-0.5 text-xs text-foreground dark:bg-foreground/10">
+            <Check className="h-3 w-3 text-viz-good" aria-hidden /><span className="sr-only">Mentioned: </span>{t}
+          </li>
+        ))}
+        {missing.map((t) => (
+          <li key={t} className="rounded-full border border-dashed border-muted-foreground/60 px-2.5 py-0.5 text-xs text-muted-foreground">
+            <span className="sr-only">Not mentioned: </span>{t}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -400,6 +485,8 @@ function RoleUnderstanding({ cv, jd, company, setCompany, companyIntel }: {
         </div>
       </div>
 
+      <KeywordMatch cv={cv} jd={jd} />
+
       {companyIntel && (
         <div className="mt-8">
           <p className="text-sm font-medium">Company context (optional)</p>
@@ -433,9 +520,9 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function BuildStep({ session, busy, canBuild, onBuild, cfg, activeConflict }: {
+function BuildStep({ session, busy, canBuild, onBuild, cfg, activeConflict, seenAt }: {
   session: IISession | null; busy: boolean; canBuild: boolean; onBuild: () => void; cfg: InterviewConfigInput;
-  activeConflict: { id: string; role_title: string; status: string }[] | null;
+  activeConflict: { id: string; role_title: string; status: string }[] | null; seenAt: number;
 }) {
   const mode = MODES.find((m) => m.id === cfg.mode);
   if (!session) {
@@ -474,9 +561,10 @@ function BuildStep({ session, busy, canBuild, onBuild, cfg, activeConflict }: {
   }
   if (!['ready', 'active', 'paused'].includes(session.status)) {
     return (
-      <div className="py-6">
-        <Spinner label="Building your interview: mapping competencies, choosing questions and checking the plan…" />
-        <p className="mt-3 text-sm text-muted-foreground">This usually takes under a minute. You can leave this page; it keeps going.</p>
+      <div>
+        <h2 className="text-lg font-semibold">Building your interview</h2>
+        <ProgressCard progress={session.prep_progress || waitingProgress('prep')} receivedAt={seenAt} className="mt-4" />
+        <p className="mt-3 text-sm text-muted-foreground">Usually under a minute. You can leave this page; it keeps going.</p>
       </div>
     );
   }

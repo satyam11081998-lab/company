@@ -10,10 +10,13 @@ import { CONFIDENCE_LABEL, STATE, duration, titleCase } from '@/lib/interview-in
 import type {
   CompetencyAssessment, DevelopmentArea, IIMessage, IIReport, LearnedItem, QuestionReview, ReportResponse,
 } from '@/lib/interview-intelligence/types';
+import { waitingProgress } from '@/lib/interview-intelligence/progress';
 import { ConfidenceChip, Disclosure, ErrorNote, Spinner, StateChip } from './primitives';
+import ProgressCard from './ProgressCard';
 
 export default function ReportView({ sessionId }: { sessionId: string }) {
   const [resp, setResp] = useState<ReportResponse | null>(null);
+  const [seenAt, setSeenAt] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -22,6 +25,7 @@ export default function ReportView({ sessionId }: { sessionId: string }) {
       for (let i = 0; i < 200; i++) {
         const r = await ii.report(sessionId);
         setResp(r);
+        setSeenAt(performance.now());
         if (r.status !== 'pending' && r.status !== 'processing') return;
         await new Promise((res) => setTimeout(res, 3000));
       }
@@ -34,12 +38,12 @@ export default function ReportView({ sessionId }: { sessionId: string }) {
   if (error) return <div className="mx-auto max-w-3xl px-4 py-16"><ErrorNote error={error} onRetry={load} /></div>;
   if (!resp || resp.status === 'pending' || resp.status === 'processing') {
     return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4">
         <h1 className="text-2xl font-semibold tracking-tight">Interview complete.</h1>
-        <p className="mt-3 max-w-md text-muted-foreground">
-          We’re analysing your responses, the evidence behind them and how they line up with the role. This usually takes a minute or two.
+        <p className="mt-2 text-muted-foreground">
+          Your report is being written from your answers. It usually takes a minute or two, and you can leave this page.
         </p>
-        <Loader2 className="mt-6 h-5 w-5 animate-spin text-muted-foreground" />
+        <ProgressCard progress={resp?.progress || waitingProgress('report')} receivedAt={seenAt} className="mt-6 bg-card" />
       </div>
     );
   }

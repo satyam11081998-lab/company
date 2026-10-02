@@ -218,6 +218,40 @@ NOT verified here: real Gemini Live / OpenAI audio and Gemini free-tier concurre
 Phase for this pass: push both repos (Render + Vercel redeploy). To try Gemini voice: Admin →
 Interview Intelligence → Settings → voice.engine → Gemini live. Nothing else to configure.
 
+## Live progress while waiting (fifth pass, 2026-10-02)
+
+Owner ask: reading the resume / JD felt like "loading, loading"; show what is happening and a
+percentage, enough to keep people engaged without overdoing it.
+
+```
+touches:  consilio
+            NEW  components/interview-intelligence/ProgressCard.tsx   (steps, %, findings, chips)
+            NEW  lib/interview-intelligence/progress.ts               (smooth %, JD key-term match)
+            NEW  qa/interview-intelligence/progress/{run.mjs,progress.test.cjs} (4 node tests)
+            EDIT components/interview-intelligence/{SetupFlow,ReportView}.tsx, lib/interview-intelligence/types.ts
+          consilio-backend/interview-intelligence
+            NEW  interview_intelligence/jobs/progress.py   (in-memory live progress + ETA from past runs)
+            EDIT documents/{analysis,service}.py, interview_engine/blueprint.py,
+                 report_engine/assessment.py, api/routes.py (progress fields on 3 GET responses)
+            NEW  tests/test_live_progress.py; EDIT tests/conftest.py; docs/BUILD_STATUS.md §0c
+breaking: no. Additive response fields only (`progress`, `prep_progress`); no CONTRACTS.md
+          surface; no DB migration; no env var.
+```
+
+What the candidate sees: CV → "Read your CV (2 pages, 640 words)", "Kept your personal details
+away from the AI (2 contact details hidden)", "Understanding your experience — looking for
+achievements and the numbers behind them…", then the findings (roles, years, achievements with
+numbers, skills, claims to be probed) and skill chips. They can move on to the JD while the CV is
+read. Role understanding adds "Key terms from the job description — your CV mentions 6 of 10".
+Building and the report show their real stages with findings ("9 skills this role needs, 6 clearly
+backed by your CV", "Scoring 8 of 9: Ownership"). Every step and finding is real; only the share of
+the current model call is estimated (from past run times), and 100 % only when done.
+
+Gates (2026-10-02): II suite 292 passed (Postgres 16, backend-pinned venv) / 291 + 1 skipped
+(SQLite); progress node tests 4/4 and voice 47/47 on the device; device `tsc --noEmit` EXIT 0;
+`next build` OK (copy); browser walk-through with simulated models slowed to realistic times
+(setup → build → interview → report, desktop + phone), no console errors.
+
 ## Proposed LEDGER row
 | Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, DORMANT** until `II_DATABASE_URL` is set; offline gates green; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |
 
