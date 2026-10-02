@@ -1,18 +1,27 @@
 /**
- * Browser client for the INDEPENDENT Interview Intelligence service.
+ * Browser client for Interview Intelligence (II).
  *
- * Auth: a short-lived signed assertion minted by this app's own server route
- * (/api/interview-intelligence/token, same origin, cookie-authenticated). II verifies
- * it and decides access itself — nothing here (or in the UI) grants access.
- * The Supabase session token is never sent to II.
+ * Two deployments, chosen by env — no code change between them:
+ *  - HOST MODE (default, free): II runs inside the MECE backend at <NEXT_PUBLIC_API_URL>/ii.
+ *    Calls carry the user's Supabase access token, exactly like every other backend call;
+ *    the backend verifies it and tells II who the user is.
+ *  - STANDALONE: if NEXT_PUBLIC_II_API_URL is set, II is its own service and calls carry a
+ *    short-lived signed assertion minted by /api/interview-intelligence/token (contract C10);
+ *    the Supabase token is never sent to II.
+ * Either way II decides access itself — nothing here (or in the UI) grants access.
  */
 
+import { createClient } from '@/lib/supabase/client';
 import type {
   AccessGrantRow, AdminOverview, IIDocument, IIMe, IIMessage, IIProgressHistory, IISession,
   InterviewConfigInput, ReportResponse, TurnResponse,
 } from './types';
 
-const BASE = (process.env.NEXT_PUBLIC_II_API_URL || '').replace(/\/$/, '');
+const STANDALONE_URL = (process.env.NEXT_PUBLIC_II_API_URL || '').replace(/\/$/, '');
+const ASSERTION_MODE = STANDALONE_URL.length > 0;
+const BASE = ASSERTION_MODE
+  ? STANDALONE_URL
+  : `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')}/ii`;
 
 export class IIError extends Error {
   code: string;
@@ -26,6 +35,7 @@ export class IIError extends Error {
   }
 }
 
+/** Always true in host mode: whether II is switched on is the backend's answer (503 if not). */
 export function isConfigured(): boolean {
   return BASE.length > 0;
 }
@@ -45,11 +55,24 @@ async function mintToken(): Promise<string> {
   return cached.token;
 }
 
-async function token(force = false): Promise<string> {
+async function assertionToken(force = false): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (!force && cached && cached.exp - now > 60) return cached.token;
   if (!inflight) inflight = mintToken().finally(() => { inflight = null; });
   return inflight;
+}
+
+/** Host mode: the Supabase session token (refreshed once if the backend rejected it). */
+async function sessionToken(force = false): Promise<string> {
+  const supabase = createClient();
+  const { data } = force ? await supabase.auth.refreshSession() : await supabase.auth.getSession();
+  const t = data.session?.access_token;
+  if (!t) throw new IIError(401, 'not_signed_in', 'Please sign in to use Interview Intelligence.');
+  return t;
+}
+
+function token(force = false): Promise<string> {
+  return ASSERTION_MODE ? assertionToken(force) : sessionToken(force);
 }
 
 /* ---------------------------------------------------------------- core fetch */
@@ -72,7 +95,7 @@ async function call<T>(path: string, opts: Opts = {}, retried = false): Promise<
     throw new IIError(0, 'network', 'We could not reach Interview Intelligence. Check your connection and try again.');
   }
   if (r.status === 401 && !retried) {
-    // Assertion expired or rotated: mint a fresh one once.
+    // Token expired (assertion rotated / Supabase session refreshed): get a fresh one once.
     cached = null;
     return call<T>(path, opts, true);
   }

@@ -25,7 +25,7 @@ export default function IIAdminClient() {
       <div className="rounded-xl border border-border bg-card p-6">
         <h1 className="text-xl font-semibold">Interview Intelligence</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Not connected. Set NEXT_PUBLIC_II_API_URL (and the signing key on the server) — see the Interview Intelligence handoff.
+          Not connected: the backend URL is missing (NEXT_PUBLIC_API_URL) — see the Interview Intelligence handoff.
         </p>
       </div>
     );
@@ -34,7 +34,7 @@ export default function IIAdminClient() {
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">Interview Intelligence</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Independent service. Access, limits and flags here are stored in the Interview Intelligence database — no code changes needed.
+        Separate module with its own database. Access, limits and flags here are stored in the Interview Intelligence database — no code changes needed.
       </p>
       <nav className="mt-5 flex flex-wrap gap-1 border-b border-border" aria-label="Interview Intelligence admin sections">
         {TABS.map((t) => (

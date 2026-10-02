@@ -1,145 +1,143 @@
-# ANTIGRAVITY_HANDOFF — interview-intelligence
+# ANTIGRAVITY_HANDOFF — interview-intelligence (host mode)
 
-**Author:** Claude (cloud session, Project "project"). **Date:** 2026-10-02.
-**Feature:** MECE Interview Intelligence — an independent CV + JD → adaptive interview →
-evidence-traced assessment product, Pro-only, built as its **own service** with its own
-schema. **Branches:** new repo `consilio-interview-intelligence` (main); frontend committed on
-`consilio` **`main`** (owner's instruction 2026-10-02: test on the live site). The II pages stay
-dormant ("not available yet") until the env vars below are set.
-Full design: `D:\dev\mece\consilio-interview-intelligence\docs\` (00_AUDIT, A–M, BUILD_STATUS).
+**Author:** Claude (cloud session, Project "project"). **Date:** 2026-10-02 (revised the same
+day: the separate Render service was dropped at the owner's request — no paid instance, no
+new AI keys).
+**Feature:** MECE Interview Intelligence (II) — CV + JD → adaptive interview → evidence-traced
+assessment, Pro-only. II is its own Python package with its own database schema; it now runs
+**inside the existing consilio-backend process**, mounted at `/ii`.
+**Branches:** `main` in both repos (owner's choice: test on the live site; II is invisible to
+users until an admin grants access, and stays dormant until its env var is set).
+Full design: `consilio-backend/interview-intelligence/docs/` (00_AUDIT, A–M, BUILD_STATUS).
 
 ```
-touches:  NEW repo   D:\dev\mece\consilio-interview-intelligence\  (FastAPI service, migrations/,
-                     qa/, tests/, docs/, render.yaml, .env.example) — nothing shared with
-                     consilio-backend, which is NOT touched at all.
-          frontend   NEW  app/api/interview-intelligence/token/route.ts
-                     NEW  app/(app)/interview-intelligence/{page,new/page,session/[id]/page,report/[id]/page}.tsx
-                     NEW  app/(app)/admin/interview-intelligence/page.tsx
-                     NEW  components/interview-intelligence/{Hub,SetupFlow,InterviewRoom,ReportView,primitives}.tsx
-                     NEW  components/interview-intelligence/admin/IIAdminClient.tsx
-                     NEW  lib/interview-intelligence/{api,types,format,assertion}.ts
-                     EDIT components/admin/admin-nav.tsx (+1 import, +1 row "Interview Intelligence")
-          database   NEW schema `interview_intel` + role `ii_service` (no change to public.*)
-breaking: no. No existing CONTRACTS.md surface (C1–C9) changes. PROPOSES a new contract
-          C10 · "II entitlement assertion" (MECE server → II service) — needs owner OK before
-          it is written into CONTRACTS.md (text below).
-affects:  none of the existing features. New feature row proposed for LEDGER (below).
+touches:  consilio-backend
+            NEW  interview-intelligence/   (II package, migrations/, tests/, qa/, docs/, scripts/)
+            NEW  routes/interview_intelligence.py   (glue: identity resolver + mount at /ii)
+            EDIT main.py            (+4 lines at the end: import the glue, mount)
+            EDIT requirements.txt   (+4 packages: SQLAlchemy, psycopg[binary], python-docx, olefile)
+          consilio (frontend)
+            EDIT lib/interview-intelligence/api.ts   (host mode: <NEXT_PUBLIC_API_URL>/ii + Supabase token)
+            EDIT components/interview-intelligence/admin/IIAdminClient.tsx  (2 strings)
+            (all other II frontend files landed earlier in 39065a1)
+          database
+            NEW schema `interview_intel` + role `ii_service` (no change to public.*)
+breaking: no. No CONTRACTS.md surface (C1–C9) changes. New backend path prefix /ii (no
+          existing route uses it). Reads C6 users columns READ-ONLY through the backend's
+          existing service-role client: subscription_tier, subscription_expires_at, is_admin,
+          is_guest. The earlier proposed C10 (signed assertion) is NOT needed in host mode —
+          kept in code as a dormant option for a future standalone service; not proposed now.
+affects:  none of the existing features. Shares the backend's process (memory/CPU) — see Risks.
 ```
 
-## What it is (one paragraph)
-CV + JD in → structured candidate profile, role profile and role family (30 families, not
-consulting-only) → competency model with rubrics frozen before any answer → blueprint for one
-of 16 modes × 3 depths × 5 difficulties × 15–60 min → adaptive interview (deterministic decision
-policy + interview memory + CV-claim ladder + neutral contradiction clarification) → evidence
-with verbatim-quote verification → per-competency evaluation with separate confidence and
-"not sufficiently tested" ≠ weak → feedback that must pass a bad-feedback detector → report
-(role alignment, competency map with evidence drawers, what the interviewer learned, critical
-moments, CV claims, question review with "why was I asked this?", next questions, prep plan,
-progress, recurring patterns, targeted re-attempt). Max 2 active interviews per user. Admin
-console with test-user management (no emails in code), flags/limits, health, model runs, audit.
+## How host mode works
+`main.py` → `routes/interview_intelligence.py` → `interview_intelligence.host.mount(app, "/ii", resolver)`.
+* The resolver uses the backend's own `get_verified_user` (same 60 s auth cache), `is_guest_user`,
+  one `users` read and `_effective_tier_from_row` → `(user id, confirmed email, tier, is_admin, is_guest)`.
+  II caches that per token for 60 s and makes every access decision itself.
+* Lazy: nothing of II (SQLAlchemy, parsers, routers) is imported at backend start-up; it loads on
+  the first `/ii` call, off the event loop. A failure to start is logged and `/ii` answers 503 —
+  the rest of the backend is never affected.
+* Dormant: until `II_DATABASE_URL` is set, every `/ii` call answers 503 `not_configured`.
+* Shared keys: II uses `II_*` keys if set, else the backend's `OPENAI_API_KEY`, `GROQ_API_KEY`,
+  `GEMINI_API_KEY`/`GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_DRIVE_*`.
+* One background worker thread (idle poll every 20 s, fast while there is work), DB pool of 3.
+* CORS and lifespan belong to the backend; II's worker stops with the backend.
 
 ## Gates (run 2026-10-02)
-- II service: `pytest` on **Postgres 16 → 260 passed**; on **SQLite → 259 passed, 1 skipped**
-  (Postgres-only race test). `python -m compileall` clean.
-- Migration: `migrations/0001_interview_intel.sql` applied **twice** to a fresh Postgres 16 DB →
-  idempotent; 26 tables, RLS on all 26, 26 policies; a role given a stray SELECT grant sees 0 rows.
-- Frontend: `tsc --noEmit` on the whole `consilio` project in place → **EXIT 0**.
-  `next build` on a copy of the repo → **compiled**, all 6 II routes built (Google Fonts had to
-  be stubbed in the copy because the sandbox has no internet — nothing stubbed in your tree).
-- Browser walk-through (Playwright; real II service with simulated models + the real II
-  components): free-user Pro gate, admin adds a test user, settings, upload CV → paste JD → role
-  understanding → modes → difficulty → duration → build → room → 5 turns → end → report →
-  mobile. No II console errors.
-- Token interop: the TS signer (`lib/interview-intelligence/assertion.ts`) → II's Python
-  verifier and the live service → accepted.
-- `python -m qa.simulate_interview --all --simulated` → 56/56 interviews produced reports.
-- NOT verified: **assessment quality with real models** (no AI keys here — every run used the
-  offline simulator); golden labels are author drafts; streaming voice not built. See
-  `docs/BUILD_STATUS.md` §3 before launch.
-- Pre-existing, not changed: `consilio` ESLint config throws a circular-config error
-  (eslint-config-next 16 + ESLint 8); `next build` ignores lint.
+- II suite (incl. 11 new host-mode tests): Postgres 16 → **271 passed**; SQLite → **270 passed,
+  1 skipped** (Postgres-only race test).
+- II suite in a venv built from **consilio-backend's own requirements.txt + the 4 new packages**
+  (fastapi 0.136.1, starlette 1.0.0, pydantic 2.13.4, PyJWT 2.12.1, cryptography 48.0.0,
+  python-multipart 0.0.9, SQLAlchemy 2.1.1, psycopg 3.3.6; Python 3.13): **271 passed** on
+  Postgres, **270 + 1 skipped** on SQLite. The combined requirements resolve with no conflicts.
+- Real-backend smoke test: the actual `consilio-backend/main.py` imported with II mounted;
+  backend auth faked only at `get_verified_user` / the users read; II on Postgres **as the
+  `ii_service` role after running the migration** (RLS on): `/health` and `/` unchanged; II not
+  imported at start-up; `/ii/healthz` ok; 401 / guest 403; backend CORS gives one
+  `Access-Control-Allow-Origin`; admin adds a test user by email → that free account gets in,
+  a Pro account without the launch flag does not; CV upload → JD → background worker builds the
+  plan → interview → report; another account gets 404; admin console 200 / non-admin 403.
+- Migration `0001_interview_intel.sql` applied twice → idempotent (26 tables, RLS, 26 policies).
+- Frontend: `tsc --noEmit` on the whole `consilio` project → **EXIT 0** (with the host-mode `api.ts`).
+- NOT verified: assessment quality with real models (Phase 5); behaviour on Render's actual
+  512 MB box (measured locally only — see Risks).
+
+## Risks (owner accepted the shared-process trade-off to stay free)
+1. **Memory.** The backend already sits near Render's 512 MB cap (`RENDER_OOM_FIX.md`).
+   Measured locally: II adds ~**42 MB** when it first loads and ~**65 MB** after a full
+   interview. Before the first `/ii` call it adds nothing. If Render's memory graph shows OOM
+   restarts (exit 137) after II is used, the fixes in `RENDER_OOM_FIX.md` apply (1 worker,
+   drop `pyiceberg`, lazy imports) — or unset `II_DATABASE_URL` to switch II off instantly.
+2. **Latency.** The backend runs in Oregon, the database in Tokyo (~100 ms per round trip).
+   One interview turn runs **~22 SQL statements** (~2 s of round trips) on top of the model
+   call. Acceptable for testing; can be cut later by batching (no schema change).
+3. **Shared AI spend.** II's spend uses the same OpenAI key. II has its own per-session cost
+   cap ($1.50) and global daily budget ($25) — both editable in Admin → Interview Intelligence.
+4. **Free-tier spin-down.** If Render sleeps, an in-flight background job resumes when the
+   service wakes and the next `/ii` call loads II (durable queue; nothing is lost).
 
 ## Phased landing (each phase has its gate)
 
-**Phase 0 — repos**
-1. `D:\dev\mece\consilio-interview-intelligence` is committed locally (no remote yet). Create a
-   private GitHub repo `interview-intelligence` and push `main` to it.
-2. `consilio`: the II files + this handoff are committed on `main` (only those files; not
-   `push_out.txt` or `.brain/STATE.md`). `git push origin main`.
-   Gate: `npx tsc --noEmit` EXIT 0 (run in place 2026-10-02); Vercel build.
+**Phase 0 — code (done in this session, owner pushes)**
+1. `consilio-backend`: commit on `main` with the files under *touches*. `consilio`: commit on
+   `main` with the two frontend edits + this handoff. Owner runs `git push` in both, then
+   `node .brain\sync.mjs` in `consilio`.
+   Gate: Render auto-deploys the backend; `GET <backend>/ii/healthz` → 503 `not_configured`
+   (correct: dormant) and every existing page works as before.
 
-**Phase 1 — secrets** (never into git, `.brain/` or handoffs) — already generated on 2026-10-02
-in `D:\dev\mece\_notes\INTERVIEW_INTELLIGENCE_SECRETS.txt` (outside every repo); step 3 is only
-needed to rotate them.
-3. `cd consilio-interview-intelligence && python -m scripts.generate_keys` → prints
-   `II_ASSERTION_PRIVATE_KEY` (Vercel, server env only), `II_ASSERTION_PUBLIC_KEY`,
-   `II_ENCRYPTION_KEY`, `II_DRIVE_FOLDER_SALT` (Render). Keep `II_ENCRYPTION_KEY` in the
-   password manager: losing it makes stored documents unreadable.
+**Phase 1 — database (Supabase SQL editor, postgres role, once)**
+2. Run `D:\dev\mece\_notes\INTERVIEW_INTELLIGENCE_SUPABASE.sql` (migration + the role password
+   line). Do **not** add `interview_intel` to the API "exposed schemas".
+   Gate: running it a second time succeeds with no changes.
 
-**Phase 2 — database**
-4. Supabase SQL editor (postgres role): run `migrations/0001_interview_intel.sql`, then
-   `ALTER ROLE ii_service WITH PASSWORD '<generated>';`. Do **not** add `interview_intel` to
-   the API "exposed schemas". Gate: running the file a second time succeeds with no changes.
-5. `II_DATABASE_URL = postgres://ii_service:<password>@<direct-db-host>:5432/postgres`
-   (direct connection or session pooler; not the transaction pooler).
+**Phase 2 — switch II on (Render → consilio-backend → Environment)**
+3. Add exactly two variables (values are in `D:\dev\mece\_notes\INTERVIEW_INTELLIGENCE_SECRETS.txt`):
+   `II_DATABASE_URL` = Session pooler URL, user `ii_service.<project-ref>`, port **5432**
+   (Render cannot reach Supabase's IPv6-only direct host; not the transaction pooler 6543);
+   `II_ENCRYPTION_KEY`. Save → Render redeploys.
+   Gate: `GET <backend>/ii/healthz` → `{"ok": true, ...}`.
 
-**Phase 3 — II service on Render**
-6. New Web Service from the II repo using `render.yaml` (region Singapore — closer to the Tokyo
-   DB and to Indian users than Oregon). Set the `sync: false` env vars: `II_DATABASE_URL`,
-   `II_ASSERTION_PUBLIC_KEY`, `II_ENCRYPTION_KEY`, `II_OPENAI_API_KEY` (or other provider keys),
-   `II_ADMIN_EMAILS` (optional — MECE admins are II admins by default),
-   `II_BOOTSTRAP_TEST_EMAILS=<test-account-1-email>,<test-account-2-email>` (the two real test
-   addresses; placeholders only in the repo). Drive vars only if Drive is wanted now.
-   Gate: `GET /healthz` → `{"ok":true,"assertion_keys":1,...}`.
+**Phase 3 — frontend (Vercel)**
+4. Nothing to add. **Do not set `NEXT_PUBLIC_II_API_URL`** (that switches the frontend to the
+   standalone service). If it was added earlier, delete it and redeploy.
 
-**Phase 4 — frontend on Vercel**
-7. Vercel env: `NEXT_PUBLIC_II_API_URL=https://<ii-service>.onrender.com`,
-   `II_ASSERTION_PRIVATE_KEY` (server), `II_ASSERTION_KID=k1`; redeploy `main`
-   (`NEXT_PUBLIC_*` is baked in at build time). Add the preview origin pattern to `II_CORS_ORIGINS`
-   only if it is not matched by the default `*-consilioo.vercel.app` regex.
-   Gate: signed in as an admin, `/admin/interview-intelligence` loads; as a test account,
-   `/interview-intelligence` loads and an interview runs end to end; as a free account, the
-   Pro gate shows.
+**Phase 4 — test on the site**
+5. As an admin (`users.is_admin`): `/admin/interview-intelligence` → Test users → add the test
+   accounts' emails. Those accounts open `/interview-intelligence` and run interviews.
+   Gate: admin page loads; a test account completes an interview and sees the report; a
+   free account without a grant sees the Pro gate.
 
 **Phase 5 — real-model quality gate (before any Pro user sees it)**
-8. With the production model routes: `python -m qa.run_golden --repeats 3 --record` and
-   `python -m qa.simulate_interview --all --llm-candidate`. The golden run must report
-   `gate failures: none`; read the per-archetype agreement and a few full reports per family.
-   Run 5–10 real practice interviews with the two test accounts.
+6. With production keys: `python -m qa.run_golden --repeats 3 --record` and
+   `python -m qa.simulate_interview --all --llm-candidate` from `interview-intelligence/`
+   (needs `II_DATABASE_URL` pointing at a scratch database and the AI key in the shell).
+   Must report `gate failures: none`; read several full reports per family.
 
 **Phase 6 — launch**
-9. Admin → Interview Intelligence → Settings → `ii.enabled_for_pro` = on. Add a nav link to
-   `/interview-intelligence` in the app nav (deliberately not done: nothing changes for users
-   during the preview).
-
-## Proposed CONTRACTS.md C10 (needs owner OK — not written into CONTRACTS.md)
-```
-## C10 · II entitlement assertion   (v1, 2026-10-02)
-Issuer: consilio GET /api/interview-intelligence/token (Node runtime, no-store, Supabase session).
-JWS, alg EdDSA (Ed25519), header kid. Claims: iss "mece-app", aud "mece-interview-intelligence",
-sub (MECE user id, uuid), email (lower-case; "" unless confirmed), tier (effectiveTier: free|lite|pro),
-sub_exp (ISO|null), ent (["interview_intelligence"] iff tier=pro), adm (users.is_admin),
-iat/nbf/exp (exp-iat ≤ 900; issued with 300), jti (uuid), ver 1. Guests are refused.
-Verifier: consilio-interview-intelligence auth/assertion.py (pinned alg, iss/aud/ver/lifetime).
-Access is decided by II (flags + test grants + ent), never by a request field.
-BREAKING if: claim renamed/removed, iss/aud/alg changed (bump ver). Adding optional claims: additive.
-Owner files: consilio app/api/interview-intelligence/token/route.ts, lib/interview-intelligence/assertion.ts;
-             II interview_intelligence/auth/assertion.py.
-```
+7. Admin → Interview Intelligence → Settings → `ii.enabled_for_pro` = on; add a nav link to
+   `/interview-intelligence` in the app nav (deliberately not done yet).
 
 ## Proposed LEDGER row
-| Interview Intelligence | Cloud (this session) | main (consilio) + repo interview-intelligence | **BUILT, NOT DEPLOYED** — offline gates green; real-model quality gate pending (Phase 5) | consilio: app/api/interview-intelligence, app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence; whole II repo | C10 (new); C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |
+| Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, DORMANT** until `II_DATABASE_URL` is set; offline gates green; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |
+
+## Superseded
+- The standalone repo `satyam11081998-lab/interview-intelligence` and the folder
+  `D:\dev\mece\consilio-interview-intelligence` are superseded by
+  `consilio-backend/interview-intelligence/` — archive them; do not develop there.
+- `app/api/interview-intelligence/token/route.ts` and `lib/interview-intelligence/assertion.ts`
+  stay in the frontend, unused unless `NEXT_PUBLIC_II_API_URL` is set (standalone mode).
 
 ## Notes for the record
+- Run II's tests from inside `consilio-backend/interview-intelligence/` (`pytest -q`); from the
+  backend root its `tests` package would clash with the backend's own `tests`.
 - `.brain/STATE.md`, `CHANGELOG.md`, `CONTRACTS.md`, `LEDGER.md` were not edited.
-- This session's `git fetch` in `consilio` left two empty lock files (`.git/index.lock`,
-  `.git/objects/maintenance.lock`) because deletes were not yet allowed; they were removed
-  after you granted delete access. No other git state was changed in `consilio` or
-  `consilio-backend` (both were already up to date with origin; `consilio-backend` has your
-  own uncommitted edits, untouched).
-- A temporary archive used for the build check was written to `D:\dev\mece\Claude outputs\`
-  and deleted again.
+- `consilio-backend` working copy: the many `M` files shown by a Linux `git status` are
+  CRLF-only (Windows checkout); commits from this session were made with
+  `core.autocrlf=true` and contain only the files listed above. Your own untracked files
+  (`migrations/2026-09-15_seo_pages.sql`, `tools/eval_result_*.txt`) were not touched.
+- A stale empty `.git/objects/maintenance.lock` (27 Sep) in `consilio-backend` was removed.
 
 ## After merging
-`git push` in `consilio` and in `consilio-interview-intelligence`, then `node .brain\sync.mjs`
-in `consilio`. Do not hand-edit STATE.md.
+`git push` in `consilio-backend` and `consilio`, then `node .brain\sync.mjs` in `consilio`.
+Do not hand-edit STATE.md.
