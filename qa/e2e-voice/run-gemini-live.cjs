@@ -10,9 +10,12 @@
  * Proves: the session prompt is the live interviewer playbook (case on top, private
  * notes, structured thinking); the interviewer opens the call; the model's OWN
  * audio is played straight away (speech to speech - no transcribe/decide/read-out,
- * no /voice-decision); both transcripts show live and are saved in speaking order;
- * barge-in stops the voice; the guardrail cuts an answer volunteered before any ask
- * and steers it; once the candidate has asked, the answer is not cut.
+ * no /voice-decision); nothing is transcribed on screen while people talk - each
+ * finished turn appears and is saved in speaking order; the fastest session config
+ * (English transcription, quick end-of-turn) is used; the guardrail cuts an answer
+ * volunteered before any ask and steers it; once the candidate has asked, the
+ * answer is not cut; when Google ends the connection the call reconnects by itself
+ * and resumes, stepping down to a simpler config if Google refuses one.
  * Cannot prove (needs Google): Gemini's real voice, latency, transcription accuracy.
  *
  *   E2E_DEPS=<dir with ws, esbuild, playwright-core> BACKEND_DIR=../consilio-backend \
@@ -99,6 +102,11 @@ function check(name, ok, detail = '') {
   check('session prompt: live interviewer playbook with the case on top',
     ins.startsWith('=== THE CASE') && ins.includes('PRIVATE INTERVIEWER NOTES') && ins.includes('HOW A STRUCTURED THINKER'));
   check('speech to speech (AUDIO responses)', JSON.stringify(cfg.response_modalities) === '["AUDIO"]');
+  const aad = (cfg.realtime_input_config || {}).automatic_activity_detection || {};
+  check('fastest config: English transcription, quick end-of-turn, echo-resistant start',
+    JSON.stringify(cfg.input_audio_transcription) === '{"language_codes":["en-IN"]}'
+    && aad.end_of_speech_sensitivity === 'END_SENSITIVITY_HIGH' && aad.start_of_speech_sensitivity === 'START_SENSITIVITY_LOW'
+    && aad.silence_duration_ms === 500, JSON.stringify(cfg));
 
   // 2. the interviewer opens the call, its own audio plays
   check('fresh call: prompt says the case is on screen (no recap), level = case difficulty',
@@ -108,10 +116,16 @@ function check(name, ok, detail = '') {
     && (await waitFor(async () => (await msgs()).some(([r, c]) => r === 'assistant' && c.startsWith('Hi, the case is on your screen')), 6000))
     && (await played()) > 0);
 
-  // 3. a live exchange
+  // 3. a live exchange: nothing is transcribed on screen while they talk; the
+  // finished turn appears with the reply (transcription runs in the background).
   const before = await played();
+  await http('POST', `${MOCK}/control/config`, { replyDelayMs: 1200 });
   await http('POST', `${MOCK}/control/say`, { text: 'I would start from households in Chennai, about 27 lakh, then two-wheeler ownership.' });
-  check('candidate words show live while they speak', await waitFor(async () => (await page.textContent('body')).includes('I would start from households'), 2000));
+  await sleep(700);
+  check('no live transcript while the candidate is talking', !(await page.textContent('body')).includes('I would start from households'));
+  check('the finished turn appears in the conversation once answered',
+    await waitFor(async () => (await page.textContent('body')).includes('I would start from households'), 4000));
+  await http('POST', `${MOCK}/control/config`, { replyDelayMs: 80 });
   check("the model's own reply plays straight away and is saved",
     await waitFor(async () => (await msgs()).some(([r, c]) => r === 'assistant' && c.startsWith('Yes, your 27 lakh households')), 6000)
     && (await played()) > before);
@@ -157,6 +171,29 @@ function check(name, ok, detail = '') {
     await waitFor(async () => (await msgs()).some(([r, c]) => r === 'assistant' && c.startsWith('Welcome back')), 6000)
     && (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Hi, the case is on your screen')).length === 1);
   check('the level is remembered for next time', (await page.evaluate(() => localStorage.getItem('mece.voiceLevel'))) === 'hard');
+
+  // 8. Google ends the connection (it does so about every 10 minutes): the call
+  // reconnects by itself and resumes. Here Google also refuses the fastest config
+  // on the way back, so the browser steps down to the next one.
+  await sleep(400);
+  const conns2 = (await st()).connections;
+  const welcomes = (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Welcome back')).length;
+  await http('POST', `${MOCK}/control/config`, { rejectSetups: 1 });
+  await http('POST', `${MOCK}/control/drop`);
+  check('dropped connection: reconnects by itself (refused config -> the next one)',
+    await waitFor(async () => (await st()).connections >= conns2 + 2, 12000), JSON.stringify(await st()));
+  const cfg3 = await http('GET', `${API}/__e2e/gemini`);
+  check('step-down: the simpler config is used (still the live interviewer prompt)',
+    JSON.stringify(cfg3.input_audio_transcription) === '{}' && cfg3.has_voice === true
+    && (cfg3.system_instruction || '').includes('You are RESUMING this interview'), JSON.stringify(cfg3).slice(0, 200));
+  check('after the reconnect the call resumes (no fresh greeting)',
+    await waitFor(async () => (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Welcome back')).length > welcomes, 8000)
+    && (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Hi, the case is on your screen')).length === 1);
+  await sleep(300);
+  const repliesBefore = (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Yes, your 27 lakh households')).length;
+  await http('POST', `${MOCK}/control/say`, { text: 'so from households in Chennai I take two-wheelers' });
+  check('the conversation carries on after the reconnect',
+    await waitFor(async () => (await msgs()).filter(([r, c]) => r === 'assistant' && c.startsWith('Yes, your 27 lakh households')).length > repliesBefore, 6000));
   check('no page errors', pageErrors.length === 0, pageErrors.join(' | '));
 
   await browser.close();

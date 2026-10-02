@@ -160,6 +160,25 @@ export class GeminiLiveTurns {
   }
 }
 
+/**
+ * What to do when the Live socket closes on its own (not the candidate leaving):
+ * - before setupComplete, Google refused the session config: ask the backend for
+ *   the next, simpler one (`tier` + 1) until there is none left;
+ * - after it, Google ended the connection (it does so about every 10 minutes) or
+ *   the network dropped: reconnect - the new session resumes the conversation from
+ *   the saved turns. A socket that keeps dying is given up after MAX_RECONNECTS
+ *   within RECONNECT_WINDOW_MS, so it can never loop.
+ */
+export const MAX_RECONNECTS = 3;
+export const RECONNECT_WINDOW_MS = 120_000;
+export type CloseDecision = { kind: 'stepDown'; tier: number } | { kind: 'reconnect' } | { kind: 'giveUp' };
+
+export function onLiveClose(o: { setupDone: boolean; tier: number; tiers: number; recent: number[]; now: number }): CloseDecision {
+  if (!o.setupDone) return o.tier < o.tiers - 1 ? { kind: 'stepDown', tier: o.tier + 1 } : { kind: 'giveUp' };
+  const lately = o.recent.filter((t) => o.now - t < RECONNECT_WINDOW_MS);
+  return lately.length < MAX_RECONNECTS ? { kind: 'reconnect' } : { kind: 'giveUp' };
+}
+
 /** The text turn that makes the interviewer open the call (not saved, not shown). */
 export const GEMINI_OPEN_TURN = {
   realtimeInput: { text: 'The candidate has just joined the call. Open the session now, as your instructions say.' },

@@ -16,7 +16,8 @@ const { WebSocketServer } = require('ws');
 const HTTP_PORT = Number(process.argv[2] || 8767);
 const WS_PORT = Number(process.argv[3] || 8768);
 const STATIC = process.argv[4] || __dirname;
-const state = { sock: null, received: [], audioIn: 0, script: [], replying: null, noTurnComplete: false, connections: 0 };
+const state = { sock: null, received: [], audioIn: 0, script: [], replying: null, noTurnComplete: false, connections: 0,
+  replyDelayMs: 80, rejectSetups: 0, setups: 0 };
 const PCM = Buffer.alloc(2400 * 2).toString('base64');  // 50 ms of 24 kHz silence
 
 function send(obj) { if (state.sock && state.sock.readyState === 1) state.sock.send(JSON.stringify(obj)); }
@@ -39,7 +40,17 @@ function reply(text, wordMs = 15) {
 }
 
 function onClient(msg) {
-  if (msg.setup) { state.received.push({ at: Date.now(), type: 'setup' }); send({ setupComplete: {} }); return; }
+  if (msg.setup) {
+    state.received.push({ at: Date.now(), type: 'setup' });
+    state.setups += 1;
+    if (state.rejectSetups > 0) {  // Google refusing the session config at setup
+      state.rejectSetups -= 1;
+      state.sock.close(1007, 'Invalid argument: unsupported field in setup');
+      return;
+    }
+    send({ setupComplete: {} });
+    return;
+  }
   if (msg.realtimeInput && msg.realtimeInput.audio) { state.audioIn += 1; return; }
   if (msg.realtimeInput && typeof msg.realtimeInput.text === 'string') {
     const t = msg.realtimeInput.text;
@@ -56,7 +67,7 @@ function candidateSays(text) {
   setTimeout(() => {
     const rule = state.script.find((s) => text.toLowerCase().includes(String(s.match).toLowerCase()));
     if (rule) reply(rule.say || rule.slow, rule.slow ? 120 : 15);
-  }, 10 * words.length + 80);
+  }, 10 * words.length + state.replyDelayMs);
 }
 
 const wss = new WebSocketServer({ port: WS_PORT });
@@ -72,8 +83,13 @@ http.createServer(async (req, res) => {
   const body = () => new Promise((r) => { let b = ''; req.on('data', (c) => { b += c; }); req.on('end', () => r(b)); });
   if (url.pathname === '/control/say') { candidateSays(JSON.parse((await body()) || '{}').text); return json(200, { ok: true }); }
   if (url.pathname === '/control/script') { state.script = JSON.parse((await body()) || '[]'); return json(200, { ok: true }); }
+  if (url.pathname === '/control/drop') {  // Google ending the connection (about every 10 minutes)
+    send({ goAway: { timeLeft: '0s' } });
+    if (state.sock) state.sock.close(1011, 'The service is currently unavailable.');
+    return json(200, { ok: true });
+  }
   if (url.pathname === '/control/config') { Object.assign(state, JSON.parse((await body()) || '{}')); return json(200, { ok: true }); }
-  if (url.pathname === '/control/state') return json(200, { connected: !!state.sock, audioIn: state.audioIn, received: state.received, connections: state.connections });
+  if (url.pathname === '/control/state') return json(200, { connected: !!state.sock, audioIn: state.audioIn, received: state.received, connections: state.connections, setups: state.setups });
   const file = path.join(STATIC, url.pathname === '/' ? 'harness-gemini.html' : url.pathname.slice(1));
   if (file.startsWith(STATIC) && fs.existsSync(file) && fs.statSync(file).isFile()) {
     res.writeHead(200, { 'Content-Type': file.endsWith('.html') ? 'text/html' : 'text/javascript' });

@@ -24,7 +24,7 @@ require.extensions['.ts'] = function (mod, filename) {
   });
   mod._compile(out.outputText, filename);
 };
-const { GeminiLiveTurns, LATE_WORDS_MS, MODEL_QUIET_MS, GEMINI_OPEN_TURN, GEMINI_RESUME_TURN } = require(path.join(ROOT, 'lib/voice/gemini-live.ts'));
+const { GeminiLiveTurns, LATE_WORDS_MS, MODEL_QUIET_MS, GEMINI_OPEN_TURN, GEMINI_RESUME_TURN, onLiveClose, MAX_RECONNECTS, RECONNECT_WINDOW_MS } = require(path.join(ROOT, 'lib/voice/gemini-live.ts'));
 
 const audio = (d = 'AAAA') => ({ modelTurn: { parts: [{ inlineData: { mimeType: 'audio/pcm;rate=24000', data: d } }] } });
 const types = (acts) => acts.map((a) => a.type);
@@ -118,4 +118,19 @@ test('new candidate words after a quiet, unclosed interviewer turn start a NEW t
 test('resuming a call uses its own opening turn (never starts over)', () => {
   assert.match(GEMINI_RESUME_TURN.realtimeInput.text, /back on the call/);
   assert.match(GEMINI_RESUME_TURN.realtimeInput.text, /do not start over/);
+});
+
+test('a refused session config steps down to the next, simpler one, then gives up', () => {
+  assert.deepEqual(onLiveClose({ setupDone: false, tier: 0, tiers: 3, recent: [], now: 0 }), { kind: 'stepDown', tier: 1 });
+  assert.deepEqual(onLiveClose({ setupDone: false, tier: 1, tiers: 3, recent: [], now: 0 }), { kind: 'stepDown', tier: 2 });
+  assert.deepEqual(onLiveClose({ setupDone: false, tier: 2, tiers: 3, recent: [], now: 0 }), { kind: 'giveUp' });
+});
+
+test('a connection Google ends mid-call reconnects, but a socket that keeps dying is given up', () => {
+  const now = 1_000_000;
+  assert.deepEqual(onLiveClose({ setupDone: true, tier: 0, tiers: 3, recent: [], now }), { kind: 'reconnect' });
+  const many = Array.from({ length: MAX_RECONNECTS }, (_, i) => now - 1000 * (i + 1));
+  assert.deepEqual(onLiveClose({ setupDone: true, tier: 0, tiers: 3, recent: many, now }), { kind: 'giveUp' });
+  const old = many.map((t) => t - RECONNECT_WINDOW_MS);
+  assert.deepEqual(onLiveClose({ setupDone: true, tier: 0, tiers: 3, recent: old, now }), { kind: 'reconnect' });
 });

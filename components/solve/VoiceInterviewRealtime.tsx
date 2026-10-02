@@ -272,9 +272,11 @@ export default function VoiceInterviewRealtime({
             onInterviewer: (who) => { interviewerRef.current = who; },
             onUserTurn: (t) => void (interviewerRef.current === 'model_led' ? handleModelLedTurn(t) : handleUserTurn(t)),
             onToolCall: (call) => void handleToolCall(call),
-            onUserDelta: (p) => { if (!cancelled) setUserDraft(p); },
+            // Live (model-led) calls show no transcript while people are talking:
+            // transcription runs in the background and each turn appears once done.
+            onUserDelta: (p) => { if (!cancelled && interviewerRef.current !== 'model_led') setUserDraft(p); },
             onAssistantDelta: (p) => {
-              if (!cancelled) setAsstDraft(stripSayLabel(p));
+              if (!cancelled && interviewerRef.current !== 'model_led') setAsstDraft(stripSayLabel(p));
               // Live guardrail (model-led): the answer only ever comes through
               // answer_request. If the model starts stating it anyway, cut the
               // reply and steer it back to a framework.

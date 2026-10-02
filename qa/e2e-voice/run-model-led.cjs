@@ -10,7 +10,8 @@
  *
  * Proves: the session is prompt-led (the model answers by itself, eagerness medium,
  * no tools, case on top of the prompt with private notes and the playbook); the
- * interviewer opens the call; the candidate sees a live transcript while speaking;
+ * interviewer opens the call; no transcript is shown while people talk (each
+ * finished turn appears once done; transcription is English and runs alongside);
  * nothing runs in the reply path (no /voice-decision, /voice-coach or /voice-tool);
  * turns are saved; the guardrail cuts an answer volunteered before any ask; the
  * answer rule (framework first, the answer once they insist) is not cut even when
@@ -103,8 +104,10 @@ function check(name, ok, detail = '') {
   const cfg = (await state()).lastSessionConfig?.session || {};
   const td = cfg.audio?.input?.turn_detection || {};
   const ins = cfg.instructions || '';
-  check('session: the model answers by itself, barge-in kept, eagerness medium',
-    td.create_response === true && td.interrupt_response === true && td.eagerness === 'medium', JSON.stringify(td));
+  check('session: the model answers by itself, barge-in kept, eagerness high (fast replies)',
+    td.create_response === true && td.interrupt_response === true && td.eagerness === 'high', JSON.stringify(td));
+  check('session: candidate transcription in English, alongside the call',
+    (cfg.audio?.input?.transcription || {}).language === 'en', JSON.stringify(cfg.audio?.input?.transcription));
   check('session: no tools (no round trip in a reply)', !cfg.tools);
   check('session: case on top, then private notes, then the playbook',
     ins.startsWith('=== THE CASE') && ins.indexOf('PRIVATE INTERVIEWER NOTES') > 0 && ins.indexOf('HOW A STRUCTURED THINKER') > ins.indexOf('PRIVATE INTERVIEWER NOTES'));
@@ -116,8 +119,9 @@ function check(name, ok, detail = '') {
   // 3. a turn: live transcript while speaking, model reply, nothing else in the path
   await http('POST', `${MOCK}/control/config`, { deltaHoldMs: 700 });
   await http('POST', `${MOCK}/control/say`, { text: 'I would start from households in Chennai, about 27 lakh, then two-wheeler ownership.' });
-  check('live transcript: the candidate sees their words while speaking',
-    await waitFor(async () => (await page.textContent('body')).includes('I would start from households'), 1500));
+  await sleep(350);
+  check('no live transcript: nothing is shown while the candidate is talking',
+    !(await page.textContent('body')).includes('I would start from households'));
   await http('POST', `${MOCK}/control/config`, { deltaHoldMs: 60 });
   check('model reply (in their words) spoken by the model itself and saved',
     await waitFor(() => said('Yes, starting from your 27 lakh households'), 6000));
@@ -125,6 +129,7 @@ function check(name, ok, detail = '') {
   check('no per-turn /voice-coach or /voice-tool (coach and tools off)',
     !apiCalls.some((c) => c.url.endsWith('/voice-coach') || c.url.endsWith('/voice-tool')));
   check('candidate turn saved via /realtime-turn', (await db()).messages.some((m) => m.role === 'user' && m.content.includes('27 lakh')));
+  check('the finished turn appears in the conversation', (await page.textContent('body')).includes('I would start from households'));
 
   // 4. guardrail: the model volunteers the answer before any ask -> cut + steer
   await http('POST', `${MOCK}/control/say`, { text: 'so what is the total then' });

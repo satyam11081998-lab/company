@@ -9,8 +9,12 @@
  * It hears the candidate and answers in its own voice straight away - speech to
  * speech, like ChatGPT voice - from the prompt the backend pinned into the session
  * (the case on top, private notes, the conversation so far, the structured-thinking
- * playbook). Both sides' transcripts stream live and are saved in speaking order
- * (lib/voice/gemini-live.ts). The only client-side check is the answer guardrail.
+ * playbook). Transcription runs alongside and never holds a reply up: nothing is
+ * shown while people are talking; each finished turn appears in the conversation
+ * and is saved in speaking order (lib/voice/gemini-live.ts). The only client-side
+ * check is the answer guardrail. If Google refuses a session config the browser
+ * asks for a simpler one; if Google ends the connection (about every 10 minutes)
+ * the call reconnects by itself and resumes.
  *
  * RENDERER mode (backend VOICE_INTERVIEWER=renderer): the old flow - V11 decides
  * every turn via /attempts/{id}/voice-decision and Gemini says the approved line;
@@ -31,7 +35,7 @@ import VoiceBetaNotice from '@/components/solve/VoiceBetaNotice';
 import {
   CandidateTurnLedger, GeminiTurnGate, SaveQueue, geminiSayTurn, isEchoOfLine, voiceLine, stripSayLabel, type GateAction,
 } from '@/lib/voice/v11-voice';
-import { GeminiLiveTurns, GEMINI_OPEN_TURN, GEMINI_RESUME_TURN, geminiSteerTurn, type LiveAction } from '@/lib/voice/gemini-live';
+import { GeminiLiveTurns, GEMINI_OPEN_TURN, GEMINI_RESUME_TURN, geminiSteerTurn, onLiveClose, type LiveAction } from '@/lib/voice/gemini-live';
 import { getStoredLevel, setStoredLevel, withTimeout, isVoiceLevel, type VoiceLevel } from '@/lib/voice/level';
 import VoiceLevelPicker from '@/components/solve/VoiceLevelPicker';
 import { answerLeakTripwire, isAnswerRequest, ANSWER_LEAK_STEER } from '@/lib/voice/model-led';
@@ -115,6 +119,7 @@ export default function VoiceInterviewGemini({
   const playHeadRef = useRef(0);
   const liveSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const startedAtRef = useRef<number>(0);
+  const meteringRef = useRef(false);  // true while this connection's mic is live
   const reportedRef = useRef<number>(0);
   const closedRef = useRef(false);
   const mutedRef = useRef(false);
@@ -133,10 +138,18 @@ export default function VoiceInterviewGemini({
   const answerAllowedRef = useRef(false);  // set once the candidate has asked for the answer
   const trippedRef = useRef(false);        // guardrail fired for the reply in progress
   const steerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Session config tier (the backend steps down if Google refuses one) and recent
+  // automatic reconnects (Google ends a Live connection about every 10 minutes).
+  const tierRef = useRef(0);
+  const reconnectsRef = useRef<number[]>([]);
+  const [reconnecting, setReconnecting] = useState(false);
 
   useEffect(() => { tailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [transcript.length, drafts]);
 
   const reportUsage = useCallback(async (final = false) => {
+    // Only connected time is metered (never the second or two of a reconnect).
+    if (!meteringRef.current) return;
+    if (final) meteringRef.current = false;
     try {
       const elapsed = (Date.now() - startedAtRef.current) / 1000;
       const delta = Math.max(0, elapsed - reportedRef.current);
@@ -323,10 +336,9 @@ export default function VoiceInterviewGemini({
       if (a.type === 'play') enqueueAudio(base64ToInt16(a.data));
       else if (a.type === 'stopPlayback') stopPlayback();
       else if (a.type === 'candidateDraft') {
-        setDrafts((d) => ({ ...d, you: a.text }));
+        // Not shown: transcription runs in the background; the turn appears once done.
         if (isAnswerRequest(a.text)) answerAllowedRef.current = true;
       } else if (a.type === 'interviewerDraft') {
-        setDrafts((d) => ({ ...d, interviewer: a.text }));
         // Guardrail: the answer only after they have asked for it. If the model
         // volunteers it, cut the voice now and steer it back to a framework.
         if (!trippedRef.current && answerLeakTripwire(a.text, answerAllowedRef.current)) {
@@ -346,13 +358,11 @@ export default function VoiceInterviewGemini({
       } else if (a.type === 'candidateTurn') {
         if (isAnswerRequest(a.text)) answerAllowedRef.current = true;
         setTranscript((t) => [...t.slice(-12), { who: 'you' as const, text: a.text }]);
-        setDrafts((d) => ({ ...d, you: '' }));
         queueSave('user', a.text);
       } else if (a.type === 'interviewerTurn') {
         trippedRef.current = false;
         lastLineRef.current = { text: a.text, at: Date.now() };
         setTranscript((t) => [...t.slice(-12), { who: 'interviewer' as const, text: a.text }]);
-        setDrafts((d) => ({ ...d, interviewer: '' }));
         queueSave('assistant', a.text);
       }
     }
@@ -384,22 +394,29 @@ export default function VoiceInterviewGemini({
     procRef.current = null;
     setPhase('connecting');
     setDrafts({ you: '', interviewer: '' });
+    let setupDone = false;
     (async () => {
       try {
+        // A reconnect resumes from the saved turns: let the last saves land first
+        // (normally instant; capped so it never holds the call up).
+        await savesRef.current.settled(1500);
+        if (cancelled) return;
         const res = await fetch(`${API_URL}/realtime-gemini/session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ case_id: caseId, attempt_id: attemptId, ...(level ? { level } : {}) }),
+          body: JSON.stringify({ case_id: caseId, attempt_id: attemptId, tier: tierRef.current, ...(level ? { level } : {}) }),
         });
         if (!res.ok) {
           const t = await res.json().catch(() => ({}));
           throw new Error(t.detail || `Could not start voice session (${res.status})`);
         }
         const data = await res.json();
+        const tiers = typeof data?.tiers === 'number' ? data.tiers : 1;
+        if (typeof data?.tier === 'number') tierRef.current = data.tier;
         liveRef.current = data?.interviewer === 'model_led';
         if (isVoiceLevel(data?.level)) setSessionLevel(data.level);
         console.log(`[gemini] interviewer: ${liveRef.current ? 'live (model-led)' : 'renderer (V11 per turn)'}`
-          + ` model=${data?.model} level=${data?.level} resume=${data?.resume}`);
+          + ` model=${data?.model} level=${data?.level} resume=${data?.resume} config=${data?.tier}/${tiers}`);
         if (data?.credits?.total_remaining != null) setCreditsLeft(data.credits.total_remaining);
         if (cancelled) return;
 
@@ -422,7 +439,7 @@ export default function VoiceInterviewGemini({
         const startMic = () => {
           if (procRef.current) return;
           const source = micCtx.createMediaStreamSource(stream);
-          const proc = micCtx.createScriptProcessor(2048, 1, 1); // ~128ms — snappier upstream
+          const proc = micCtx.createScriptProcessor(1024, 1, 1); // 64 ms chunks: the end of speech reaches Gemini sooner
           procRef.current = proc;
           proc.onaudioprocess = (e) => {
             if (ws.readyState !== WebSocket.OPEN || mutedRef.current) return;
@@ -438,6 +455,7 @@ export default function VoiceInterviewGemini({
           sink.connect(micCtx.destination);
           startedAtRef.current = Date.now();
           reportedRef.current = 0;
+          meteringRef.current = true;
           if (!cancelled) setPhase('listening');
         };
 
@@ -467,6 +485,8 @@ export default function VoiceInterviewGemini({
           try { msg = JSON.parse(text); } catch { return; }
 
           if (msg.setupComplete) {
+            setupDone = true;
+            setReconnecting(false);
             startMic();
             // LIVE: the interviewer opens the call itself.
             // Coming back to a call in progress resumes it - never starts over.
@@ -475,6 +495,7 @@ export default function VoiceInterviewGemini({
             }
             return;
           }
+          if (msg.goAway) console.log('[gemini] Google will close this connection in', msg.goAway.timeLeft, '- the call will reconnect');
           const sc = msg.serverContent;
           if (!sc) return;
 
@@ -502,10 +523,27 @@ export default function VoiceInterviewGemini({
         ws.onerror = (e) => { console.log('[gemini] ws error', e); if (!cancelled) { setError('Voice connection error.'); setPhase('error'); } };
         ws.onclose = (evt) => {
           console.log('[gemini] ws closed', evt.code, evt.reason);
-          if (!cancelled && !closedRef.current) {
-            if (evt.reason && evt.code !== 1000) setError(evt.reason);
-            setPhase('closed');
+          if (cancelled || closedRef.current) return;
+          const now = Date.now();
+          const next = onLiveClose({ setupDone, tier: tierRef.current, tiers, recent: reconnectsRef.current, now });
+          if (next.kind === 'stepDown') {
+            // Google refused this session config: ask for the next, simpler one.
+            console.warn(`[gemini] session config ${tierRef.current} refused (${evt.code} ${evt.reason}); trying ${next.tier}`);
+            tierRef.current = next.tier;
+            setSessionKey((k) => k + 1);
+            return;
           }
+          if (next.kind === 'reconnect' && liveRef.current) {
+            // Google ends a Live connection about every 10 minutes: carry on.
+            reconnectsRef.current = [...reconnectsRef.current.filter((t) => now - t < 120_000), now];
+            console.log('[gemini] connection ended - reconnecting and resuming');
+            setReconnecting(true);
+            setSessionKey((k) => k + 1);
+            return;
+          }
+          if (evt.reason && evt.code !== 1000) setError(evt.reason);
+          setReconnecting(false);
+          setPhase('closed');
         };
       } catch (e: any) {
         if (!cancelled) { setError(e?.message || 'Could not start the voice session.'); setPhase('error'); }
@@ -574,7 +612,7 @@ export default function VoiceInterviewGemini({
 
         <div className="text-center">
           <p className="text-body font-medium text-foreground">
-            {phase === 'connecting' ? 'Setting up the line…'
+            {phase === 'connecting' ? (reconnecting ? 'Reconnecting…' : 'Setting up the line…')
               : phase === 'error' ? 'Connection issue'
               : phase === 'closed' ? 'Session ended'
               : muted ? 'Mic on hold'
