@@ -122,6 +122,8 @@ async function asError(r: Response): Promise<IIError> {
 /* ---------------------------------------------------------------- candidate API */
 export const ii = {
   me: () => call<IIMe>('/v1/me'),
+  /** Cheap nav check: may this user open Interview Intelligence? (see useAccess.ts) */
+  access: () => call<{ allowed: boolean; via: string | null; is_admin: boolean }>('/v1/access'),
 
   documents: (kind?: 'cv' | 'jd') => call<{ documents: IIDocument[] }>(`/v1/documents${kind ? `?kind=${kind}` : ''}`),
   document: (id: string) => call<IIDocument>(`/v1/documents/${id}`),

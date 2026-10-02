@@ -19,6 +19,9 @@ touches:  consilio-backend
           consilio (frontend)
             EDIT lib/interview-intelligence/api.ts   (host mode: <NEXT_PUBLIC_API_URL>/ii + Supabase token)
             EDIT components/interview-intelligence/admin/IIAdminClient.tsx  (2 strings)
+            NEW  lib/interview-intelligence/useAccess.ts  (nav check, once per page load)
+            EDIT components/app-nav.tsx, components/mobile-bottom-nav.tsx  ("Interview Intelligence"
+                 in More — shown only when II's GET /ii/v1/access says allowed)
             (all other II frontend files landed earlier in 39065a1)
           database
             NEW schema `interview_intel` + role `ii_service` (no change to public.*)
@@ -115,8 +118,9 @@ affects:  none of the existing features. Shares the backend's process (memory/CP
    Must report `gate failures: none`; read several full reports per family.
 
 **Phase 6 — launch**
-7. Admin → Interview Intelligence → Settings → `ii.enabled_for_pro` = on; add a nav link to
-   `/interview-intelligence` in the app nav (deliberately not done yet).
+7. Admin → Interview Intelligence → Settings → `ii.enabled_for_pro` = on. The nav link is
+   already there: "More → Interview Intelligence" appears for exactly the accounts II lets in
+   (admins, test users, and Pro once this flag is on), checked on every page load.
 
 ## Proposed LEDGER row
 | Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, DORMANT** until `II_DATABASE_URL` is set; offline gates green; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |

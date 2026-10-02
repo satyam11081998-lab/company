@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Logo from '@/components/logo';
 import { CASEBOOK_TREE } from '@/lib/casebook/tree';
+import { useIIAccess } from '@/lib/interview-intelligence/useAccess';
 
 /**
  * The 27 Industry Primers, DERIVED from the casebook tree rather than
@@ -49,6 +50,9 @@ export default function AppNav() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Interview Intelligence: shown only to accounts II lets in (admins, test users added in
+  // Admin → Interview Intelligence, and Pro once launched). Re-checked on every page load.
+  const iiAccess = useIIAccess(user && !user.is_guest ? user.id : null);
 
   useEffect(() => setMounted(true), []);
   // Close the mobile drawer whenever the route changes.
@@ -128,7 +132,9 @@ export default function AppNav() {
     href: `/learn/casebook/${p.slug}`,
     label: p.title,
   }));
+  const II_LINKS: NavLink[] = iiAccess ? [{ href: '/interview-intelligence', label: 'Interview Intelligence' }] : [];
   const MORE_LINKS: NavLink[] = isIntl ? [
+    ...II_LINKS,
     { href: '/leaderboard', label: 'Leaderboard' },
     { href: '/profile', label: 'Profile' },
   ] : [
@@ -140,6 +146,7 @@ export default function AppNav() {
     // Prep Copilot — the per-user agentic coach. Pro-only (the backend /coach
     // routes are the authoritative gate; this just hides the entry point).
     ...(tier === 'pro' ? [{ href: '/coach', label: 'Prep Copilot' }] as NavLink[] : []),
+    ...II_LINKS,
     { href: '/resume', label: 'CV Pointer Lab' },
     { href: '/leaderboard', label: 'Leaderboard' },
     { href: '/skeletons', label: 'Deck Vault' },

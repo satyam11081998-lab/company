@@ -16,10 +16,12 @@ import {
   Sparkles,
   MoreHorizontal,
   X,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useUser } from '@/components/user-context';
+import { useIIAccess } from '@/lib/interview-intelligence/useAccess';
 
 /**
  * Single source of truth for mobile navigation.
@@ -57,13 +59,15 @@ const PRIMARY_INTL = [
 // Routes that live behind "More" — used to light up the More tab when active.
 // `/learn/casebook` is listed so the generic casebook lights up More, but the
 // primers prefix must NOT, or both Primers and More would appear selected.
-const SECONDARY_PREFIXES = ['/resume', '/leaderboard', '/skeletons', '/cheat-sheet', '/profile', '/upgrade', '/learn/casebook'];
+const SECONDARY_PREFIXES = ['/resume', '/leaderboard', '/skeletons', '/cheat-sheet', '/profile', '/upgrade', '/learn/casebook', '/interview-intelligence'];
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { user, isPro, isIntl } = useUser();
   const [moreOpen, setMoreOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Interview Intelligence link: only for accounts II lets in; re-checked on every page load.
+  const iiAccess = useIIAccess(user && !user.is_guest ? user.id : null);
 
   useEffect(() => setMounted(true), []);
   // Close the sheet on navigation.
@@ -90,15 +94,18 @@ export default function MobileBottomNav() {
   // though it sits under the /learn/casebook prefix listed above.
   const inPrimers = pathname?.startsWith('/learn/casebook/industry-primers') ?? false;
   const moreActive = isIntl
-    ? ['/profile', '/upgrade'].some((p) => pathname === p || pathname.startsWith(p + '/'))
+    ? ['/profile', '/upgrade', '/interview-intelligence'].some((p) => pathname === p || pathname.startsWith(p + '/'))
     : !inPrimers && SECONDARY_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
   const tabs = isIntl ? PRIMARY_INTL : PRIMARY;
+  const iiLinks = iiAccess ? [{ href: '/interview-intelligence', icon: ClipboardCheck, label: 'Interview Intelligence' }] : [];
   const moreLinks = isIntl ? [
+    ...iiLinks,
     { href: '/profile', icon: User, label: 'Profile' },
   ] : [
     { href: '/learn/casebook/case-competitions/why-they-matter', icon: Medal, label: 'Case Competitions' },
     { href: '/learn/casebook', icon: FileText, label: 'Learn' },
+    ...iiLinks,
     { href: '/resume', icon: FileText, label: 'CV Pointer Lab' },
     { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { href: '/skeletons', icon: Library, label: 'Deck Vault' },
