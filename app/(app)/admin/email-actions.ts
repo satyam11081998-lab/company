@@ -3,11 +3,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendBulk, unsubscribeUrl } from '@/lib/email/send';
-import { broadcastEmail, baseEmailLayout } from '@/lib/email/templates';
+import { broadcastEmail, baseEmailLayout, emailTagline } from '@/lib/email/templates';
+import { contentMarketOf, marketToday, type ContentMarket } from '@/lib/market';
+import { MARKET_LABEL, audienceProblem, inAudience, parseAudience, parseContentMarket, type Audience } from '@/lib/broadcast-audience';
 import type { UserRow } from '@/lib/types';
 
 type SegmentType = 'all' | 'tier' | 'activity' | 'lifecycle';
-type PreviewResult = { success: boolean; count?: number; error?: string };
+// Audience (2026-10-02): India, US & Europe, or both — see lib/broadcast-audience.ts.
+type PreviewResult = { success: boolean; count?: number; byMarket?: Record<ContentMarket, number>; error?: string };
 type BroadcastResult = { success: boolean; sent?: number; failed?: number; total?: number; error?: string };
 
 async function requireAdmin() {
@@ -22,6 +25,8 @@ interface Recipient {
   id: string;
   email: string;
   name: string | null;
+  /** The bank the account practises: 'IN', or 'US' for US + Europe accounts. */
+  content: ContentMarket;
 }
 
 /**
@@ -29,13 +34,18 @@ interface Recipient {
  * At MECE's scale (tens–hundreds of users) we fetch + classify in memory, which
  * keeps the segment logic simple and correct. Revisit with SQL if the base grows large.
  */
-async function resolveRecipients(segmentType: SegmentType, segmentValue: string): Promise<Recipient[]> {
+async function resolveRecipients(segmentType: SegmentType, segmentValue: string, audience: Audience): Promise<Recipient[]> {
   const db = createServiceClient();
-  const { data: users } = await db
-    .from('users')
-    .select('id, email, name, subscription_tier, subscription_expires_at, marketing_opt_out');
+  const cols = 'id, email, name, subscription_tier, subscription_expires_at, marketing_opt_out';
+  let { data: users, error } = await db.from('users').select(`${cols}, market`);
+  if (error && /market/i.test(error.message || '')) {
+    // Before migration 0070 there is no users.market: every account is India.
+    ({ data: users, error } = await db.from('users').select(cols));
+  }
+  if (error) throw new Error(error.message);
 
   let pool = (users || []).filter((u: any) => u.email && !u.marketing_opt_out) as any[];
+  pool = pool.filter((u) => inAudience(u.market, audience));
   const now = Date.now();
 
   if (segmentType === 'tier') {
@@ -63,15 +73,17 @@ async function resolveRecipients(segmentType: SegmentType, segmentValue: string)
   }
   // 'all' → no extra filter (still excludes opted-out)
 
-  return pool.map((u) => ({ id: u.id, email: u.email, name: u.name ?? null }));
+  return pool.map((u) => ({ id: u.id, email: u.email, name: u.name ?? null, content: contentMarketOf(u.market) }));
 }
 
-/** Count how many users a segment would reach (admin preview before sending). */
-export async function previewRecipients(segmentType: SegmentType, segmentValue: string): Promise<PreviewResult> {
+/** Count how many users a segment would reach (admin preview before sending), split by market. */
+export async function previewRecipients(segmentType: SegmentType, segmentValue: string, audience: Audience): Promise<PreviewResult> {
   await requireAdmin();
   try {
-    const r = await resolveRecipients(segmentType, segmentValue);
-    return { success: true, count: r.length };
+    const r = await resolveRecipients(segmentType, segmentValue, parseAudience(audience));
+    const byMarket: Record<ContentMarket, number> = { IN: 0, US: 0 };
+    for (const x of r) byMarket[x.content] += 1;
+    return { success: true, count: r.length, byMarket };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Failed to count recipients' };
   }
@@ -86,6 +98,14 @@ export async function sendBroadcast(input: {
   ctaUrl?: string;
   segmentType: SegmentType;
   segmentValue: string;
+  /** India, US & Europe, or both (see Audience). */
+  audience: Audience;
+  /**
+   * The market the email's practice links belong to, when it has any (a daily
+   * digest or targeted practice built for one market). The send is refused if
+   * it does not match the audience — those links would not open for the others.
+   */
+  contentMarket?: ContentMarket;
   // When true, bodyHtml is a COMPLETE email document and is sent verbatim —
   // it is NOT wrapped in baseEmailLayout (no extra header/footer). Any
   // `{{UNSUBSCRIBE}}` token in it is replaced per-recipient with their unique
@@ -105,13 +125,26 @@ export async function sendBroadcast(input: {
   }
   if (!bodyHtml) return { success: false, error: 'Message body is required.' };
 
+  let audience: Audience;
+  let contentMarket: ContentMarket | undefined;
+  try {
+    audience = parseAudience(input.audience);
+    contentMarket = parseContentMarket(input.contentMarket);
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Invalid audience.' };
+  }
+  const mismatch = audienceProblem(audience, contentMarket ? [contentMarket] : []);
+  if (mismatch) return { success: false, error: mismatch };
+
   let recipients: Recipient[];
   try {
-    recipients = await resolveRecipients(input.segmentType, input.segmentValue);
+    recipients = await resolveRecipients(input.segmentType, input.segmentValue, audience);
   } catch (e: any) {
     return { success: false, error: `Could not resolve recipients: ${e?.message || e}` };
   }
-  if (recipients.length === 0) return { success: false, error: 'No recipients match this segment.' };
+  if (recipients.length === 0) {
+    return { success: false, error: audience === 'all' ? 'No recipients match this segment.' : `No ${MARKET_LABEL[audience]} recipients match this segment.` };
+  }
 
   const messages = recipients.map((r) => {
     const unsub = unsubscribeUrl(r.id);
@@ -126,6 +159,8 @@ export async function sendBroadcast(input: {
             ctaLabel: input.ctaLabel,
             ctaUrl: input.ctaUrl,
             unsubscribeUrl: unsub,
+            // Each recipient's footer describes their own market.
+            tagline: emailTagline(r.content),
           }),
       listUnsubscribe: unsub,
     };
@@ -151,6 +186,8 @@ export async function sendToOne(input: {
   ctaLabel?: string;
   ctaUrl?: string;
   bodyIsFullHtml?: boolean;
+  /** Market of the email's practice links, if any — refused if the person is in the other market. */
+  contentMarket?: ContentMarket;
 }): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
   const email = (input.email || '').trim();
@@ -163,8 +200,26 @@ export async function sendToOne(input: {
   if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(subject)) return { success: false, error: 'The subject line looks like an email address — enter a real subject (e.g. “Your MECE practice for today”).' };
   if (!bodyHtml) return { success: false, error: 'Message body is required.' };
 
+  let contentMarket: ContentMarket | undefined;
+  try {
+    contentMarket = parseContentMarket(input.contentMarket);
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Invalid practice market.' };
+  }
+
   const db = createServiceClient();
-  const { data: u } = await db.from('users').select('id').eq('email', email).maybeSingle();
+  let { data: u, error: uErr } = await db.from('users').select('id, market').eq('email', email).maybeSingle();
+  if (uErr && /market/i.test(uErr.message || '')) {
+    ({ data: u } = await db.from('users').select('id').eq('email', email).maybeSingle());
+  }
+  // A known account in the other market could not open these practice links.
+  const personMarket: ContentMarket | null = (u as any)?.id ? contentMarketOf((u as any).market) : null;
+  if (contentMarket && personMarket && audienceProblem(personMarket, [contentMarket])) {
+    return {
+      success: false,
+      error: `${email} has an account in the ${MARKET_LABEL[personMarket]} market, and this email links to ${MARKET_LABEL[contentMarket]} practice they can’t open. Rebuild it for ${MARKET_LABEL[personMarket]}.`,
+    };
+  }
   const unsub = (u as any)?.id
     ? unsubscribeUrl((u as any).id)
     : `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in'}/unsubscribe`;
@@ -178,6 +233,7 @@ export async function sendToOne(input: {
         ctaLabel: input.ctaLabel,
         ctaUrl: input.ctaUrl,
         unsubscribeUrl: unsub,
+        tagline: emailTagline(personMarket ?? contentMarket ?? 'IN'),
       });
 
   const result = await sendBulk([{ to: email, subject, html, listUnsubscribe: (u as any)?.id ? unsub : undefined }]);
@@ -210,8 +266,84 @@ function digestCard(label: string, title: string, sub: string, href: string, cta
   </table>`;
 }
 
-export async function generateDailyDigest(): Promise<{ success: boolean; subject?: string; html?: string; note?: string; error?: string }> {
+type DigestResult = { success: boolean; subject?: string; html?: string; note?: string; market?: ContentMarket; error?: string };
+
+/**
+ * Today's digest for ONE market. India (default) is the original digest:
+ * daily_schedule on the IST day, plus the GD news block. US & Europe uses the
+ * US daily pair (market_daily_schedule on the US Eastern day, the same
+ * most-recent-on-or-before rule the US dashboard uses) with US copy, and no
+ * GD block (GD briefs are an India-only product).
+ */
+export async function generateDailyDigest(market: ContentMarket = 'IN'): Promise<DigestResult> {
   await requireAdmin();
+  let m: ContentMarket;
+  try {
+    m = parseContentMarket(market) ?? 'IN';
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Unknown market.' };
+  }
+  if (m === 'US') return usDailyDigest();
+  const r = await indiaDailyDigest();
+  return r.success ? { ...r, market: 'IN' } : r;
+}
+
+async function usDailyDigest(): Promise<DigestResult> {
+  try {
+    const db = createServiceClient();
+    const today = marketToday('US');
+    const { data: rows, error } = await db
+      .from('market_daily_schedule')
+      .select('case_id, guesstimate_id, scheduled_date')
+      .eq('market', 'US')
+      .lte('scheduled_date', today)
+      .order('scheduled_date', { ascending: false })
+      .limit(1);
+    if (error) throw new Error(error.message);
+    const sched = (rows?.[0] ?? null) as { case_id?: string | null; guesstimate_id?: string | null; scheduled_date?: string } | null;
+    const ids = [sched?.case_id, sched?.guesstimate_id].filter(Boolean) as string[];
+    const byId = new Map<string, any>();
+    if (ids.length) {
+      const { data: cs } = await db.from('cases').select('id, title, difficulty').in('id', ids);
+      for (const c of (cs || []) as any[]) byId.set(c.id, c);
+    }
+    const caseRow = sched?.case_id ? byId.get(sched.case_id) ?? null : null;
+    const guessRow = sched?.guesstimate_id ? byId.get(sched.guesstimate_id) ?? null : null;
+
+    let body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s today&rsquo;s pair. Work through it like a real interview, then see your score.</p>`;
+    if (caseRow) {
+      const diff = caseRow.difficulty ? ` · ${esc(caseRow.difficulty)}` : '';
+      body += digestCard(`Today’s case${diff}`, caseRow.title, 'Clarify, structure, run the numbers and make a recommendation. The MECE interviewer pushes back, then scores you.', `${_SITE}/cases/${caseRow.id}`, 'Start the case');
+    }
+    if (guessRow) {
+      body += digestCard('Today’s market sizing', guessRow.title, 'Build your estimate step by step, state your assumptions and land on a number you can defend.', `${_SITE}/cases/${guessRow.id}`, 'Practice market sizing');
+    }
+    if (!guessRow && !caseRow) {
+      body += digestCard('Practice', 'Your daily case and market sizing question', 'Today’s pair is waiting on your dashboard.', `${_SITE}/dashboard`, 'Open the dashboard');
+    }
+    body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s it for today. Keep practicing.</p>`;
+
+    const html = baseEmailLayout({
+      preheader: guessRow || caseRow ? 'A fresh case and market sizing question to sharpen your thinking.' : 'Your practice set is ready inside.',
+      heading: 'Your MECE practice for today',
+      contentHtml: body,
+      unsubscribeUrl: '{{UNSUBSCRIBE}}',
+      tagline: emailTagline('US'),
+    });
+    const stale = sched?.scheduled_date && sched.scheduled_date !== today;
+    const note = !sched
+      ? 'No US daily pair is scheduled yet, so this is a generic nudge to the dashboard.'
+      : stale
+        ? `No US pair for today (${today}, US Eastern) yet; this uses the most recent one (${sched!.scheduled_date}), which is what US users see on their dashboard too.`
+        : undefined;
+    return { success: true, subject: 'Your MECE practice for today', html, note, market: 'US' };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Could not build the US digest.' };
+  }
+}
+
+/** The original India digest, unchanged. */
+async function indiaDailyDigest(): Promise<DigestResult> {
   try {
     const db = createServiceClient();
     // Today's date in IST (UTC+5:30), matching the backend's daily_schedule key.
@@ -316,10 +448,18 @@ export async function generateBroadcastOptions(input: {
   kind: 'case' | 'guesstimate';
   difficulty: string;
   count?: number;
-}): Promise<{ success: boolean; options?: any[]; kind?: string; error?: string }> {
+  /** Which audience the practice is for: India register or US register. */
+  market: ContentMarket;
+}): Promise<{ success: boolean; options?: any[]; kind?: string; market?: ContentMarket; error?: string }> {
   let token: string;
   try { token = await adminBearer(); } catch (e: any) { return { success: false, error: e?.message || 'Unauthorized' }; }
   if (!(input.topic || '').trim()) return { success: false, error: 'Enter a company or topic to generate around.' };
+  let market: ContentMarket;
+  try {
+    market = parseContentMarket(input.market) ?? 'IN';
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Unknown market.' };
+  }
   try {
     const res = await fetch(`${BROADCAST_API}/broadcast/generate-options`, {
       method: 'POST',
@@ -330,11 +470,18 @@ export async function generateBroadcastOptions(input: {
         kind: input.kind,
         difficulty: input.difficulty,
         count: input.count ?? 3,
+        market,
       }),
     });
     const data = await res.json().catch(() => ({} as any));
     if (!res.ok) return { success: false, error: (data as any)?.detail || `Generation failed (${res.status}).` };
-    return { success: true, options: (data as any).options || [], kind: (data as any).kind };
+    // An older backend ignores `market` and answers in the India register; it
+    // also omits `market` from the response. Refuse rather than mislabel it.
+    if (market === 'US' && (data as any).market !== 'US') {
+      return { success: false, error: 'The backend has not been updated for US practice yet (deploy the backend first).' };
+    }
+    const options = ((data as any).options || []).map((o: any) => ({ ...o, market: o?.market ?? market }));
+    return { success: true, options, kind: (data as any).kind, market };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Could not reach the generator.' };
   }
@@ -343,25 +490,35 @@ export async function generateBroadcastOptions(input: {
 export async function materializeBroadcastOption(input: {
   option: any;
   topic: string;
-}): Promise<{ success: boolean; case_id?: string; code?: string; title?: string; type?: string; difficulty?: string; url?: string; error?: string }> {
+  market: ContentMarket;
+}): Promise<{ success: boolean; case_id?: string; code?: string; title?: string; type?: string; difficulty?: string; url?: string; market?: ContentMarket; error?: string }> {
   let token: string;
   try { token = await adminBearer(); } catch (e: any) { return { success: false, error: e?.message || 'Unauthorized' }; }
   if (!input.option) return { success: false, error: 'No option selected.' };
+  let market: ContentMarket;
+  try {
+    market = parseContentMarket(input.market) ?? 'IN';
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Unknown market.' };
+  }
   try {
     const res = await fetch(`${BROADCAST_API}/broadcast/materialize`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       cache: 'no-store',
-      body: JSON.stringify({ option: input.option, topic: (input.topic || '').trim() }),
+      body: JSON.stringify({ option: input.option, topic: (input.topic || '').trim(), market }),
     });
     const data = await res.json().catch(() => ({} as any));
     if (!res.ok) return { success: false, error: (data as any)?.detail || `Save failed (${res.status}).` };
+    if (market === 'US' && (data as any).market !== 'US') {
+      return { success: false, error: 'The backend saved this as an India case (it has not been updated for US practice yet). Deploy the backend, then generate again.' };
+    }
     const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
     const d = data as any;
     // Short shareable link (mece.in/p/<code>) when the backend returned a code;
     // fall back to the full /cases/<id> path for older rows without one.
     const url = d.code ? `${site}/p/${d.code}` : `${site}/cases/${d.case_id}`;
-    return { success: true, case_id: d.case_id, code: d.code, title: d.title, type: d.type, difficulty: d.difficulty, url };
+    return { success: true, case_id: d.case_id, code: d.code, title: d.title, type: d.type, difficulty: d.difficulty, url, market };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Could not save the option.' };
   }

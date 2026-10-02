@@ -3,12 +3,20 @@
 import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Users, Send, User, Sparkles, Target } from 'lucide-react';
+import { Mail, Users, Send, User, Sparkles, Target, Globe2, AlertTriangle } from 'lucide-react';
 import { previewRecipients, sendBroadcast, sendToOne, generateDailyDigest, generateBroadcastOptions, materializeBroadcastOption } from './email-actions';
-import { broadcastEmail, practiceCard, baseEmailLayout } from '@/lib/email/templates';
+import { broadcastEmail, practiceCard, baseEmailLayout, emailTagline } from '@/lib/email/templates';
+import type { ContentMarket } from '@/lib/market';
+import { MARKET_LABEL, audienceProblem, type Audience } from '@/lib/broadcast-audience';
 
 type SegmentType = 'all' | 'tier' | 'activity' | 'lifecycle';
 type Mode = 'segment' | 'one';
+const AUDIENCE_LABEL: Record<Audience, string> = { IN: 'India', US: 'US & Europe', all: 'Both' };
+const AUDIENCE_HELP: Record<Audience, string> = {
+  IN: 'India accounts only. The digest and practice links use the India case bank.',
+  US: 'US and Europe accounts only. The digest and practice links use the US case bank, in US English and dollars.',
+  all: 'Every account. Fine for announcements; a digest or practice links need one market, because each market can only open its own cases.',
+};
 
 const VALUE_OPTIONS: Record<SegmentType, { value: string; label: string }[]> = {
   all: [{ value: 'all', label: 'Everyone' }],
@@ -34,7 +42,17 @@ const inputCls =
 const EMPTY_PREVIEW =
   '<!doctype html><html><body style="margin:0;font-family:Inter,Helvetica,Arial,sans-serif;color:#8C8A82;padding:48px 24px;text-align:center;background:#FAF9F6;">Your email preview will appear here as you type. Fill in a message on the left — or hit &ldquo;Generate today’s digest&rdquo;.</body></html>';
 
-type PracticeCardT = { kind: 'case' | 'guesstimate'; title: string; hook: string; url: string; focus?: string };
+type PracticeCardT = { kind: 'case' | 'guesstimate'; title: string; hook: string; url: string; focus?: string; market: ContentMarket };
+
+/** Email card copy per market: the US says "market sizing", India says "guesstimate". */
+function cardCopy(kind: 'case' | 'guesstimate', market: ContentMarket): { label: string; cta: string } {
+  if (kind === 'guesstimate') {
+    return market === 'US'
+      ? { label: 'Practice market sizing', cta: 'Practice market sizing' }
+      : { label: 'Practice guesstimate', cta: 'Practice the guesstimate' };
+  }
+  return { label: 'Practice case', cta: 'Practice this case' };
+}
 
 // Insert practice-card HTML just before </body> in a full custom document; for the
 // simple heading+body path the cards are concatenated onto the body instead.
@@ -58,8 +76,15 @@ export default function BroadcastComposer() {
   const [ctaUrl, setCtaUrl] = useState('');
   const [segmentType, setSegmentType] = useState<SegmentType>('all');
   const [segmentValue, setSegmentValue] = useState('all');
+  // Market audience. Defaults to India: most broadcasts carry India practice,
+  // and a US account cannot open an India case (and vice versa).
+  const [audience, setAudience] = useState<Audience>('IN');
+  // The market whose practice links are baked into the body (digest / built
+  // practice email); null for hand-written mail with no practice links.
+  const [builtFor, setBuiltFor] = useState<ContentMarket | null>(null);
   const [rawHtml, setRawHtml] = useState(false);
   const [count, setCount] = useState<number | null>(null);
+  const [split, setSplit] = useState<Record<ContentMarket, number> | null>(null);
   const [busy, setBusy] = useState<'preview' | 'send' | 'digest' | null>(null);
   const [log, setLog] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -82,16 +107,29 @@ export default function BroadcastComposer() {
       cards
         .map((c) =>
           practiceCard({
-            label: c.kind === 'guesstimate' ? 'Practice guesstimate' : 'Practice case',
+            ...cardCopy(c.kind, c.market),
             title: c.title,
             hook: c.hook || undefined,
             url: c.url,
-            cta: c.kind === 'guesstimate' ? 'Practice the guesstimate' : 'Practice this case',
           }),
         )
         .join(''),
     [cards],
   );
+
+  // Which market can open this email's practice links, and whether it matches
+  // the audience. The server refuses a mismatched send too (email-actions.ts).
+  const practiceMarket: ContentMarket | null = audience === 'all' ? null : audience;
+  const linkMarkets = useMemo(() => {
+    const set = new Set<ContentMarket>(cards.map((c) => c.market));
+    if (builtFor && body.trim()) set.add(builtFor);
+    return Array.from(set);
+  }, [cards, builtFor, body]);
+  const contentMarket: ContentMarket | undefined = linkMarkets.length === 1 ? linkMarkets[0] : undefined;
+  // Segment: the links must match the audience. One person: the server checks
+  // the person's own market; here only a mixed set is caught.
+  const marketProblem: string | null =
+    mode === 'segment' ? audienceProblem(audience, linkMarkets) : linkMarkets.length > 1 ? audienceProblem('all', linkMarkets) : null;
 
   const previewHtml = useMemo(() => {
     const b = (body || '').trim();
@@ -107,33 +145,59 @@ export default function BroadcastComposer() {
       ctaLabel: ctaLabel.trim() || undefined,
       ctaUrl: ctaUrl.trim() || undefined,
       unsubscribeUrl: '#',
+      // Each recipient gets their own market's footer line; preview the audience's.
+      tagline: emailTagline(audience === 'US' ? 'US' : 'IN'),
     });
-  }, [body, rawHtml, heading, subject, ctaLabel, ctaUrl, cardsHtml]);
+  }, [body, rawHtml, heading, subject, ctaLabel, ctaUrl, cardsHtml, audience]);
 
   const onTypeChange = (t: SegmentType) => {
     setSegmentType(t);
     setSegmentValue(VALUE_OPTIONS[t][0].value);
     setCount(null);
+    setSplit(null);
+  };
+
+  const onAudienceChange = (a: Audience) => {
+    if (a === audience) return;
+    setAudience(a);
+    setCount(null);
+    setSplit(null);
+    // Options were written for the previous market; never let one be picked for the new one.
+    setTOptions([]);
+    setTLog(null);
+  };
+
+  const onModeChange = (m: Mode) => {
+    setMode(m);
+    // One person: the toggle picks which bank the practice comes from, so "both" does not apply.
+    if (m === 'one' && audience === 'all') onAudienceChange('IN');
   };
 
   const doPreview = async () => {
     setBusy('preview');
     setLog(null);
-    const r = await previewRecipients(segmentType, segmentValue);
-    if (r.success) setCount(r.count ?? 0);
-    else setLog({ type: 'error', message: r.error || 'Preview failed' });
+    const r = await previewRecipients(segmentType, segmentValue, audience);
+    if (r.success) {
+      setCount(r.count ?? 0);
+      setSplit(r.byMarket ?? null);
+    } else setLog({ type: 'error', message: r.error || 'Preview failed' });
     setBusy(null);
   };
 
   const doGenerateDigest = async () => {
+    if (!practiceMarket) {
+      setLog({ type: 'error', message: 'Pick India or US & Europe first: each market has its own daily pair.' });
+      return;
+    }
     setBusy('digest');
     setLog(null);
-    const r = await generateDailyDigest();
+    const r = await generateDailyDigest(practiceMarket);
     if (r.success && r.html) {
       setRawHtml(true);
       setSubject(r.subject || 'Your daily reps are ready');
       setBody(r.html);
-      setLog({ type: 'success', message: r.note || 'Digest generated — preview it on the right, then send.' });
+      setBuiltFor(r.market ?? practiceMarket);
+      setLog({ type: 'success', message: r.note || `${MARKET_LABEL[practiceMarket]} digest generated — preview it on the right, then send.` });
     } else {
       setLog({ type: 'error', message: r.error || 'Could not generate the digest' });
     }
@@ -141,10 +205,14 @@ export default function BroadcastComposer() {
   };
 
   const doGenerateOptions = async () => {
+    if (!practiceMarket) {
+      setTLog({ type: 'error', message: 'Pick India or US & Europe above: practice is written for one market.' });
+      return;
+    }
     setTBusy(true);
     setTLog(null);
     setTOptions([]);
-    const r = await generateBroadcastOptions({ topic: tTopic, kind: tKind, difficulty: tDiff });
+    const r = await generateBroadcastOptions({ topic: tTopic, kind: tKind, difficulty: tDiff, market: practiceMarket });
     if (r.success && r.options) {
       setTOptions(r.options);
       if (r.options.length === 0) setTLog({ type: 'error', message: 'No options came back — try again.' });
@@ -155,12 +223,13 @@ export default function BroadcastComposer() {
   };
 
   const doUseOption = async (o: any) => {
+    const market: ContentMarket = o?.market === 'US' ? 'US' : 'IN';
     setTBusy(true);
     setTLog(null);
-    const r = await materializeBroadcastOption({ option: o, topic: tTopic });
+    const r = await materializeBroadcastOption({ option: o, topic: tTopic, market });
     if (r.success && r.url) {
       const kind: 'case' | 'guesstimate' = o?.kind === 'guesstimate' ? 'guesstimate' : 'case';
-      setCards((prev) => [...prev, { kind, title: r.title || o.title || 'Practice', hook: o.hook || '', url: r.url!, focus: (o.focus || '').trim() }]);
+      setCards((prev) => [...prev, { kind, title: r.title || o.title || 'Practice', hook: o.hook || '', url: r.url!, focus: (o.focus || '').trim(), market: r.market ?? market }]);
       setTOptions([]);
       setTLog({ type: 'success', message: `Added “${r.title || o.title}” — see it in the preview on the right.` });
     } else {
@@ -178,10 +247,18 @@ export default function BroadcastComposer() {
       setTLog({ type: 'error', message: 'Add a case or guesstimate first.' });
       return;
     }
+    const markets = Array.from(new Set(cards.map((c) => c.market)));
+    if (markets.length > 1) {
+      setTLog({ type: 'error', message: 'These cards mix India and US & Europe practice. Remove one set first.' });
+      return;
+    }
+    const market = markets[0];
+    const us = market === 'US';
     const hasCase = cards.some((c) => c.kind === 'case');
     const hasGuess = cards.some((c) => c.kind === 'guesstimate');
     const both = hasCase && hasGuess;
-    const items = both ? 'a case and a guesstimate' : hasGuess ? 'a guesstimate' : 'a case';
+    const guessWord = us ? 'a market sizing question' : 'a guesstimate';
+    const items = both ? `a case and ${guessWord}` : hasGuess ? guessWord : 'a case';
     // Clean, correctly-spelled label from the generator (e.g. "BlueStone Jewellery") — NEVER the
     // admin's raw seed phrase. Used at most twice (subject + heading) and never inside the body.
     const focus = (cards.find((c) => c.focus && c.focus.trim())?.focus || '').trim();
@@ -189,30 +266,36 @@ export default function BroadcastComposer() {
     const cardsBlock = cards
       .map((c) =>
         practiceCard({
-          label: c.kind === 'guesstimate' ? 'Practice guesstimate' : 'Practice case',
+          ...cardCopy(c.kind, c.market),
           title: c.title,
           hook: c.hook || undefined,
           url: c.url,
-          cta: c.kind === 'guesstimate' ? 'Practice the guesstimate' : 'Practice this case',
         }),
       )
       .join('');
 
-    const introText = `Here’s ${items} to work through. ${both ? 'Take each one' : 'Take it'} as a structured attempt — the MECE interviewer asks follow-ups and scores you at the end (about 10 focused minutes).`;
+    const introText = us
+      ? `Here’s ${items} to work through. ${both ? 'Take each one' : 'Take it'} like a real interview: the MECE interviewer asks follow-up questions and scores you at the end.`
+      : `Here’s ${items} to work through. ${both ? 'Take each one' : 'Take it'} as a structured attempt — the MECE interviewer asks follow-ups and scores you at the end (about 10 focused minutes).`;
     const intro = `<p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#1A2233;">${introText}</p>`;
-    const closing = `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">Give it your best structured attempt — good luck.</p>`;
+    const closing = us
+      ? `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">Give it your best structured attempt. Good luck.</p>`
+      : `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">Give it your best structured attempt — good luck.</p>`;
 
     const itemsCap = items.charAt(0).toUpperCase() + items.slice(1);
     const html = baseEmailLayout({
-      preheader: `${itemsCap} to practise — you’re scored at the end.`,
+      preheader: us ? `${itemsCap} to practice. You’re scored at the end.` : `${itemsCap} to practise — you’re scored at the end.`,
       heading: focus ? `Practice for ${esc(focus)}` : 'Your practice set',
       contentHtml: intro + cardsBlock + closing,
       unsubscribeUrl: '{{UNSUBSCRIBE}}',
+      // India: no tagline → the original footer line, byte-for-byte.
+      ...(us ? { tagline: emailTagline('US') } : {}),
     });
 
     setRawHtml(true);
     setSubject(focus ? `Your practice set for ${focus}` : 'Your practice set');
     setBody(html);
+    setBuiltFor(market);
     setCards([]);
     setTLog({ type: 'success', message: 'Practice email built — preview it on the right, tweak the copy if you like, then send.' });
   };
@@ -220,6 +303,10 @@ export default function BroadcastComposer() {
   const doSend = async () => {
     if (!subject.trim() || (!body.trim() && cards.length === 0)) {
       setLog({ type: 'error', message: 'A subject and a message (or at least one practice card) are required.' });
+      return;
+    }
+    if (marketProblem) {
+      setLog({ type: 'error', message: marketProblem });
       return;
     }
     const looksLikeFullDoc = /^\s*<(?:!doctype|html)\b/i.test(body);
@@ -244,6 +331,7 @@ export default function BroadcastComposer() {
         ctaLabel: useRaw ? undefined : ctaLabel.trim() || undefined,
         ctaUrl: useRaw ? undefined : ctaUrl.trim() || undefined,
         bodyIsFullHtml: useRaw,
+        contentMarket,
       });
       setLog(r.success ? { type: 'success', message: `Sent to ${oneEmail.trim()}.` } : { type: 'error', message: r.error || 'Send failed' });
       setBusy(null);
@@ -252,7 +340,8 @@ export default function BroadcastComposer() {
 
     // ── Segment broadcast ─────────────────────────────────────────────────
     const who = VALUE_OPTIONS[segmentType].find((o) => o.value === segmentValue)?.label || 'recipients';
-    if (!confirm(`Send "${subject}" to ${count ?? 'all matching'} — ${who}? This emails real users.`)) return;
+    const where = audience === 'all' ? 'India + US & Europe' : `${MARKET_LABEL[audience]} only`;
+    if (!confirm(`Send "${subject}" to ${count ?? 'all matching'} — ${who}, ${where}? This emails real users.`)) return;
     setBusy('send');
     setLog(null);
     const r = await sendBroadcast({
@@ -263,6 +352,8 @@ export default function BroadcastComposer() {
       ctaUrl: useRaw ? undefined : ctaUrl.trim() || undefined,
       segmentType,
       segmentValue,
+      audience,
+      contentMarket,
       bodyIsFullHtml: useRaw,
     });
     if (r.success) {
@@ -285,28 +376,66 @@ export default function BroadcastComposer() {
             Send to a segment or one person. Unsubscribed users are skipped and an unsubscribe link is added automatically.
           </p>
         </div>
-        <Button variant="outline" onClick={doGenerateDigest} disabled={busy !== null} className="h-10 gap-2 shrink-0">
+        <Button
+          variant="outline"
+          onClick={doGenerateDigest}
+          disabled={busy !== null || !practiceMarket}
+          title={practiceMarket ? undefined : 'Pick India or US & Europe: each market has its own daily pair'}
+          className="h-10 gap-2 shrink-0"
+        >
           <Sparkles className="h-4 w-4 text-primary" />
-          {busy === 'digest' ? 'Generating…' : "Generate today’s digest"}
+          {busy === 'digest' ? 'Generating…' : practiceMarket ? `Generate today’s ${practiceMarket === 'US' ? 'US' : 'India'} digest` : "Generate today’s digest"}
         </Button>
       </div>
 
-      {/* Send-to mode */}
-      <div className="mb-4 inline-flex rounded-md border border-border p-1 bg-muted/40">
-        <button
-          type="button"
-          onClick={() => setMode('segment')}
-          className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'segment' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <Users className="h-4 w-4" /> A segment
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('one')}
-          className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'one' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <User className="h-4 w-4" /> One person
-        </button>
+      <div className="mb-4 flex flex-wrap items-start gap-x-6 gap-y-3">
+        {/* Send-to mode */}
+        <div>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Send to</p>
+          <div className="inline-flex rounded-md border border-border p-1 bg-muted/40">
+            <button
+              type="button"
+              onClick={() => onModeChange('segment')}
+              className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'segment' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <Users className="h-4 w-4" /> A segment
+            </button>
+            <button
+              type="button"
+              onClick={() => onModeChange('one')}
+              className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'one' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <User className="h-4 w-4" /> One person
+            </button>
+          </div>
+        </div>
+
+        {/* Market audience: who receives it (segment) / which bank the practice comes from (one person). */}
+        <div className="max-w-full">
+          <p id="audience-label" className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {mode === 'segment' ? 'Audience' : 'Practice for'}
+          </p>
+          <div role="radiogroup" aria-labelledby="audience-label" className="inline-flex max-w-full flex-wrap rounded-md border border-border p-1 bg-muted/40">
+            {((mode === 'segment' ? ['IN', 'US', 'all'] : ['IN', 'US']) as Audience[]).map((a) => (
+              <button
+                key={a}
+                type="button"
+                role="radio"
+                aria-checked={audience === a}
+                onClick={() => onAudienceChange(a)}
+                className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${audience === a ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {a === 'all' && <Globe2 className="h-4 w-4" />}
+                {AUDIENCE_LABEL[a]}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 max-w-xl text-xs text-muted-foreground">
+            {mode === 'segment'
+              ? AUDIENCE_HELP[audience]
+              : `Generates ${MARKET_LABEL[audience === 'US' ? 'US' : 'IN']} practice. If this person has an account in the other market, the send is stopped, because they couldn’t open these links.`}
+          </p>
+        </div>
       </div>
 
       {/* Targeted practice generator (optional) */}
@@ -314,29 +443,39 @@ export default function BroadcastComposer() {
         <div className="flex items-center gap-2">
           <Target className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Targeted practice (optional)</h3>
+          {practiceMarket && (
+            <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold text-foreground ring-1 ring-inset ring-border">
+              {MARKET_LABEL[practiceMarket]}
+            </span>
+          )}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Generate a company- or topic-specific case or guesstimate (e.g. a jewellery retailer visiting a campus). Pick
-          one and it&rsquo;s added to the email as a live &ldquo;Practice this&rdquo; card, scored through the normal interview.
+          {practiceMarket === 'US'
+            ? 'Generate a company- or topic-specific case or market sizing question for US & Europe users: US dollars, US companies, US English, saved to the US bank so they can open it. Pick one and it’s added to the email as a live “Practice this” card.'
+            : practiceMarket === 'IN'
+              ? 'Generate a company- or topic-specific case or guesstimate for India users (e.g. a jewellery retailer visiting a campus). Pick one and it’s added to the email as a live “Practice this” card, scored through the normal interview.'
+              : 'Pick India or US & Europe above to generate practice: each market can only open its own cases.'}
         </p>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
           <input
             value={tTopic}
             onChange={(e) => setTTopic(e.target.value)}
-            placeholder="Company / topic — e.g. Titan (jewellery retail)"
-            className={inputCls}
+            placeholder={practiceMarket === 'US' ? 'Company / topic — e.g. a fast-casual restaurant chain' : 'Company / topic — e.g. Titan (jewellery retail)'}
+            aria-label="Company or topic"
+            disabled={!practiceMarket}
+            className={`${inputCls} disabled:opacity-50`}
           />
-          <select value={tKind} onChange={(e) => setTKind(e.target.value as 'case' | 'guesstimate')} className={inputCls}>
+          <select value={tKind} onChange={(e) => setTKind(e.target.value as 'case' | 'guesstimate')} aria-label="Kind" disabled={!practiceMarket} className={`${inputCls} disabled:opacity-50`}>
             <option value="case">Case</option>
-            <option value="guesstimate">Guesstimate</option>
+            <option value="guesstimate">{practiceMarket === 'US' ? 'Market sizing' : 'Guesstimate'}</option>
           </select>
-          <select value={tDiff} onChange={(e) => setTDiff(e.target.value)} className={inputCls}>
+          <select value={tDiff} onChange={(e) => setTDiff(e.target.value)} aria-label="Difficulty" disabled={!practiceMarket} className={`${inputCls} disabled:opacity-50`}>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
           </select>
-          <Button variant="outline" onClick={doGenerateOptions} disabled={tBusy || !tTopic.trim()} className="h-10 gap-2 whitespace-nowrap">
+          <Button variant="outline" onClick={doGenerateOptions} disabled={tBusy || !tTopic.trim() || !practiceMarket} className="h-10 gap-2 whitespace-nowrap">
             <Sparkles className="h-4 w-4 text-primary" />
             {tBusy && tOptions.length === 0 ? 'Generating…' : 'Generate options'}
           </Button>
@@ -356,7 +495,7 @@ export default function BroadcastComposer() {
                       {String(o.scenario || o.prompt || '').length > 200 ? '…' : ''}
                     </p>
                     <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
-                      {o.type} · {o.difficulty}
+                      {o.type === 'guesstimate' && o.market === 'US' ? 'market sizing' : o.type} · {o.difficulty} · {MARKET_LABEL[o.market === 'US' ? 'US' : 'IN']}
                     </p>
                   </div>
                   <Button
@@ -379,7 +518,10 @@ export default function BroadcastComposer() {
               <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2">
                 <div className="min-w-0">
                   <div className="truncate text-xs text-foreground">
-                    <span className="font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">{c.kind}</span> · {c.title}
+                    <span className="font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">
+                      {c.kind === 'guesstimate' && c.market === 'US' ? 'market sizing' : c.kind}
+                    </span>{' '}
+                    · <span className="font-medium">{MARKET_LABEL[c.market]}</span> · {c.title}
                   </div>
                   <a href={c.url} target="_blank" rel="noreferrer" className="block truncate text-[11px] text-primary underline underline-offset-2" title="Open / copy this practice link (share it on WhatsApp)">{c.url}</a>
                 </div>
@@ -488,20 +630,30 @@ export default function BroadcastComposer() {
                 </Button>
                 {count !== null && (
                   <span className="text-sm text-muted-foreground">
-                    {count} recipient{count === 1 ? '' : 's'} match
+                    {count} {audience === 'all' ? '' : `${MARKET_LABEL[audience]} `}recipient{count === 1 ? '' : 's'} match
+                    {audience === 'all' && split && (
+                      <> · India {split.IN} · US &amp; Europe {split.US}</>
+                    )}
                   </span>
                 )}
               </>
             )}
             <Button
               onClick={doSend}
-              disabled={busy !== null || !subject.trim() || (!body.trim() && cards.length === 0) || (mode === 'one' && !oneEmail.trim())}
+              disabled={busy !== null || !!marketProblem || !subject.trim() || (!body.trim() && cards.length === 0) || (mode === 'one' && !oneEmail.trim())}
               className="h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
             >
               <Send className="h-4 w-4" />
               {busy === 'send' ? 'Sending…' : mode === 'one' ? 'Send email' : 'Send broadcast'}
             </Button>
           </div>
+
+          {marketProblem && (
+            <div role="alert" className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{marketProblem}</span>
+            </div>
+          )}
 
           {log && (
             <div

@@ -28,6 +28,18 @@ export interface EmailLayoutOptions {
   cta?: { label: string; url: string };
   footerNote?: string;
   unsubscribeUrl?: string; // present => render an unsubscribe link (promotional)
+  /** Line under "Team MECE" in the footer. Absent → the India line (unchanged output). */
+  tagline?: string;
+}
+
+/** Footer line for India recipients (the line every email has always carried). */
+export const EMAIL_TAGLINE_IN = 'Placement interview prep for Indian MBA students.';
+/** Footer line for US + Europe recipients. */
+export const EMAIL_TAGLINE_INTL = 'Case interview prep for consulting, finance and strategy recruiting.';
+
+/** The footer line for a content market ('IN' | 'US'). */
+export function emailTagline(content: 'IN' | 'US'): string {
+  return content === 'US' ? EMAIL_TAGLINE_INTL : EMAIL_TAGLINE_IN;
 }
 
 /** The shared shell every MECE email renders inside. */
@@ -63,7 +75,7 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
       <tr><td style="padding:24px 28px 8px;background:${OFFWHITE};border-top:1px solid ${BORDER};font-family:Inter,Helvetica,Arial,sans-serif;">
         <img src="${EMAIL_ASSETS}/signature/sig-logo.png" width="128" alt="MECE" style="width:128px;max-width:60%;display:block;border:0;outline:none;text-decoration:none;"/>
         <div style="margin:12px 0 2px;font-size:14px;font-weight:700;color:${NAVY};">Team MECE</div>
-        <div style="margin:0 0 12px;font-size:13px;color:${MUTED};line-height:1.5;">Placement interview prep for Indian MBA students.</div>
+        <div style="margin:0 0 12px;font-size:13px;color:${MUTED};line-height:1.5;">${escapeHtml(o.tagline ?? EMAIL_TAGLINE_IN)}</div>
         <table role="presentation" cellpadding="0" cellspacing="0"><tr>
           <td style="padding-right:14px;"><a href="mailto:team@mece.in"><img src="${EMAIL_ASSETS}/signature/sig-icon-email.png" width="22" height="22" alt="Email" style="display:block;border:0;outline:none;"/></a></td>
           <td style="padding-right:14px;"><a href="https://www.linkedin.com/company/mece-prep/"><img src="${EMAIL_ASSETS}/signature/sig-icon-linkedin.png" width="22" height="22" alt="LinkedIn" style="display:block;border:0;outline:none;"/></a></td>
@@ -200,6 +212,7 @@ function welcomeEmailIntl(firstName: string | null, greeting: string, rawName: s
     contentHtml: content,
     cta: { label: 'Start your first case', url: `${SITE_URL}/dashboard` },
     footerNote: 'Questions or feedback? Just reply to this email — a real person reads it.',
+    tagline: EMAIL_TAGLINE_INTL,
   });
   const text = `${rawName ? `Hi ${rawName.split(' ')[0]},` : 'Hi there,'}
 
@@ -226,6 +239,8 @@ export interface BroadcastData {
   ctaLabel?: string;
   ctaUrl?: string;
   unsubscribeUrl: string;
+  /** Footer line; absent → India (unchanged). See emailTagline(). */
+  tagline?: string;
 }
 
 /** Promotional / announcement broadcast (always carries an unsubscribe link). */
@@ -236,6 +251,7 @@ export function broadcastEmail(d: BroadcastData): string {
     contentHtml: d.bodyHtml,
     cta: d.ctaLabel && d.ctaUrl ? { label: d.ctaLabel, url: d.ctaUrl } : undefined,
     unsubscribeUrl: d.unsubscribeUrl,
+    tagline: d.tagline,
   });
 }
 
