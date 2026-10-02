@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { iiAdmin, IIError, isConfigured, type AiRouting } from '@/lib/interview-intelligence/api';
+import { iiAdmin, IIError, isConfigured, type AiRouting, type GrantType } from '@/lib/interview-intelligence/api';
 import type { AccessGrantRow, AdminOverview } from '@/lib/interview-intelligence/types';
 import { ErrorNote, Spinner } from '../primitives';
 
-type Tab = 'access' | 'settings' | 'routing' | 'overview' | 'sessions' | 'ai' | 'evaluation' | 'audit';
+type Tab = 'access' | 'plans' | 'settings' | 'routing' | 'overview' | 'sessions' | 'ai' | 'evaluation' | 'audit';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'access', label: 'Test users' },
+  { id: 'plans', label: 'Plans' },
   { id: 'settings', label: 'Settings' },
   { id: 'routing', label: 'AI routing' },
   { id: 'overview', label: 'Health' },
@@ -48,6 +49,7 @@ export default function IIAdminClient() {
       </nav>
       <div className="mt-6">
         {tab === 'access' && <AccessTab />}
+        {tab === 'plans' && <PlansTab />}
         {tab === 'settings' && <SettingsTab />}
         {tab === 'routing' && <RoutingTab />}
         {tab === 'overview' && <OverviewTab />}
@@ -76,15 +78,19 @@ function AccessTab() {
   const { data, error, reload, setError } = useLoad(iiAdmin.grants);
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
+  const [grantType, setGrantType] = useState<GrantType>('test');
   const [busy, setBusy] = useState(false);
 
   async function add(e: FormEvent) {
     e.preventDefault();
     if (!email.trim()) return;
     setBusy(true);
-    try { await iiAdmin.addGrant(email.trim(), note.trim()); setEmail(''); setNote(''); await reload(); }
+    try { await iiAdmin.addGrant(email.trim(), note.trim(), grantType); setEmail(''); setNote(''); await reload(); }
     catch (err) { setError((err as IIError).message); }
     finally { setBusy(false); }
+  }
+  async function changeType(g: AccessGrantRow, t: GrantType) {
+    try { await iiAdmin.setGrantType(g.id, t); await reload(); } catch (err) { setError((err as IIError).message); }
   }
   async function act(g: AccessGrantRow, action: 'enable' | 'disable' | 'delete') {
     if (action === 'delete' && !window.confirm(`Delete access for ${g.email}?`)) return;
@@ -101,12 +107,15 @@ function AccessTab() {
         <h2 className="font-semibold">Add a test user</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Grants Interview Intelligence access to this email (matched to a confirmed MECE account email), whatever their plan.
+          Full access = unlimited testing. Free interview = exactly what a new user would get (one short interview), to try the flow — use an account that has never started an interview.
+          Ultra = Ultra, given by you, with its monthly limit.
         </p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-[2fr_2fr_auto]">
+        <div className="mt-4 grid gap-2 sm:grid-cols-[2fr_2fr_auto_auto]">
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com"
             aria-label="Email" className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" aria-label="Note"
             className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+          <GrantTypeSelect value={grantType} onChange={setGrantType} />
           <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />} Add test user</Button>
         </div>
       </form>
@@ -131,6 +140,7 @@ function AccessTab() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <GrantTypeSelect value={(g.grant_type as GrantType) || 'test'} onChange={(t) => changeType(g, t)} />
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${g.active ? 'bg-viz-good/10 text-viz-good' : 'bg-muted text-muted-foreground'}`}>
                     {g.active ? 'Enabled' : 'Disabled'}
                   </span>
@@ -148,6 +158,118 @@ function AccessTab() {
   );
 }
 
+const GRANT_LABELS: Record<GrantType, string> = { test: 'Full access', trial: 'Free interview', ultra: 'Ultra' };
+
+function GrantTypeSelect({ value, onChange }: { value: GrantType; onChange: (t: GrantType) => void }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value as GrantType)} aria-label="Access type"
+      className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+      {(Object.keys(GRANT_LABELS) as GrantType[]).map((t) => <option key={t} value={t}>{GRANT_LABELS[t]}</option>)}
+    </select>
+  );
+}
+
+/* ------------------------------------------------------------------ plans */
+const PLAN_FIELDS: { key: string; label: string; help: string; kind: 'bool' | 'number' | 'enum'; options?: { value: string; label: string }[] }[] = [
+  { key: 'plans.visibility', label: 'Plans page', kind: 'enum', help: 'Who can open /interview-intelligence/plans. Access = only people with Interview Intelligence (and anyone who used a free interview). Off = admins only.',
+    options: [{ value: 'access', label: 'People with access' }, { value: 'off', label: 'Admins only' }] },
+  { key: 'plans.trial_open', label: 'Free interview for everyone', kind: 'bool', help: 'The public launch switch. On = every signed-in account gets one free interview. Off = only accounts you give a "Free interview" grant.' },
+  { key: 'plans.trial_minutes', label: 'Free interview length (minutes)', kind: 'number', help: '5–60. The interview stops at this length plus a little grace.' },
+  { key: 'plans.trial_voice_engine', label: 'Free interview voice', kind: 'enum', help: 'Run free interviews on a cheaper voice engine than everyone else. Same = the main voice setting.',
+    options: [{ value: 'same', label: 'Same' }, { value: 'realtime', label: 'OpenAI live' }, { value: 'gemini', label: 'Gemini live' }, { value: 'standard', label: 'Standard' }] },
+  { key: 'plans.trial_max_prepared', label: 'Free interviews a trial account may prepare', kind: 'number', help: 'Building an interview costs a little AI; this stops endless re-builds before one is started.' },
+  { key: 'plans.ultra_price_inr', label: 'Ultra price (₹ / month)', kind: 'number', help: 'Shown on the plans page only. Nothing is charged until payments are wired.' },
+  { key: 'plans.ultra_monthly_interviews', label: 'Ultra interviews per 30 days', kind: 'number', help: 'Fair use: each live voice interview has a real cost.' },
+];
+
+function PlansTab() {
+  const { data, error, reload, setError } = useLoad(iiAdmin.plans);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+
+  async function save(key: string, value: unknown) {
+    setSaving(key);
+    try { await iiAdmin.setConfig({ [key]: value }); setDrafts((d) => { const n = { ...d }; delete n[key]; return n; }); await reload(); }
+    catch (e) { setError((e as IIError).message); }
+    finally { setSaving(null); }
+  }
+
+  if (!data) return error ? <ErrorNote error={error} onRetry={reload} /> : <Spinner />;
+  const cfg = data.config as unknown as Record<string, unknown>;
+  const valueOf = (key: string) => cfg[key.replace('plans.', '')];
+  return (
+    <div className="space-y-6">
+      <ErrorNote error={error} />
+      <div className="rounded-xl border border-border bg-card p-5 text-sm">
+        <h2 className="font-semibold">Preview, not public</h2>
+        <p className="mt-1 text-muted-foreground">
+          The plans page shows the free interview, Pro and Ultra. Nobody is charged: Ultra’s button records interest.
+          Give someone Ultra with an access grant of type Ultra. <a className="underline underline-offset-2" href="/interview-intelligence/plans">Open the plans page</a>
+        </p>
+        <dl className="mt-4 grid gap-4 sm:grid-cols-4">
+          <Stat label="Asked to be told when Ultra opens" value={data.interest.ultra} />
+          <Stat label="Free interviews started (90 d)" value={`${data.last_90_days.trial.started} of ${data.last_90_days.trial.prepared} prepared`} />
+          <Stat label="Free interviews finished (90 d)" value={data.last_90_days.trial.completed} />
+          <Stat label="Grants: full / free / Ultra" value={`${data.grants.test || 0} / ${data.grants.trial || 0} / ${data.grants.ultra || 0}`} />
+        </dl>
+      </div>
+
+      <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+        {PLAN_FIELDS.map((f) => {
+          const value = valueOf(f.key);
+          return (
+            <li key={f.key} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <p className="text-sm font-medium">{f.label}</p>
+                <p className="text-sm text-muted-foreground">{f.help}</p>
+              </div>
+              <div className="flex items-center gap-2 sm:justify-end">
+                {f.kind === 'enum' ? (
+                  <div role="radiogroup" aria-label={f.label} className="inline-flex rounded-md border border-input p-0.5">
+                    {f.options!.map((o) => (
+                      <button key={o.value} role="radio" aria-checked={value === o.value} disabled={saving === f.key}
+                        onClick={() => value !== o.value && save(f.key, o.value)}
+                        className={`rounded px-3 py-1 text-sm transition-colors ${value === o.value ? 'bg-navy text-white dark:bg-foreground dark:text-background' : 'text-muted-foreground hover:text-foreground'}`}>
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : f.kind === 'bool' ? (
+                  <button role="switch" aria-checked={Boolean(value)} aria-label={f.label} disabled={saving === f.key}
+                    onClick={() => save(f.key, !value)}
+                    className={`relative h-6 w-11 rounded-full transition-colors ${value ? 'bg-navy dark:bg-viz-good' : 'bg-muted-foreground/30'}`}>
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-all ${value ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
+                ) : (
+                  <>
+                    <input value={drafts[f.key] ?? String(value ?? '')} inputMode="numeric" aria-label={f.label}
+                      onChange={(e) => setDrafts({ ...drafts, [f.key]: e.target.value })}
+                      className="h-8 w-28 rounded-md border border-input bg-background px-2 text-sm tabular-nums focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                    <Button size="sm" variant="outline" disabled={drafts[f.key] === undefined || saving === f.key}
+                      onClick={() => save(f.key, Number(drafts[f.key]))}>Save</Button>
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <AdminTable title="Asked to be told when Ultra opens" head={['When', 'Email', 'Access at the time']}
+        rows={data.interest.recent.map((r) => [new Date(r.at).toLocaleString(), r.email, r.via || '—'])} />
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-lg font-semibold tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ settings */
 /** Flags that take one of a few named values. */
 const FLAG_OPTIONS: Record<string, { value: string; label: string }[]> = {
@@ -160,7 +282,7 @@ const FLAG_OPTIONS: Record<string, { value: string; label: string }[]> = {
 
 const FLAG_HELP: Record<string, string> = {
   'ii.enabled': 'Kill switch. Off = nobody but II admins can use it.',
-  'ii.enabled_for_pro': 'Launch flag. Off = private preview (admins + test users only). On = every Pro user.',
+  'ii.enabled_for_pro': 'Launch flag. Off = private preview (admins + test users only). On = every Pro user. (Free interview and Ultra: see the Plans tab.)',
   'admin.test_access': 'Whether the test-user list grants access.',
   'voice.enabled': 'Voice interviews (a spoken call with the interviewer). Off = text only.',
   'voice.engine': 'How the interview call talks. OpenAI live = realtime speech (most natural, fastest replies). Gemini live = the same on Google’s Gemini Live with the Gemini key (free tier has a small number of concurrent calls). Standard = record → transcribe → speak (cheapest, a little slower). Either live engine falls back to standard by itself if it cannot connect. Every call pauses and hangs up after 4 minutes of silence or 2 minutes on another tab, so an abandoned call stops costing money.',
@@ -196,7 +318,7 @@ function SettingsTab() {
     <div className="space-y-4">
       <ErrorNote error={error} />
       <ul className="divide-y divide-border rounded-xl border border-border bg-card">
-        {Object.entries(data.flags).filter(([, value]) => !isObjectFlag(value)).map(([key, value]) => (
+        {Object.entries(data.flags).filter(([key, value]) => !isObjectFlag(value) && !key.startsWith('plans.')).map(([key, value]) => (
           <li key={key} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
             <div>
               <p className="font-mono text-sm">{key}</p>
@@ -382,7 +504,7 @@ function SessionsTab() {
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="text-xs text-muted-foreground"><tr className="border-b border-border">
-              {['Created', 'User', 'Role', 'Mode', 'Status', 'Report', 'Cost', ''].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
+              {['Created', 'User', 'Role', 'Mode', 'Plan', 'Status', 'Report', 'Cost', ''].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
             </tr></thead>
             <tbody className="divide-y divide-border">
               {data.sessions.map((s) => (
@@ -391,6 +513,7 @@ function SessionsTab() {
                   <td className="px-3 py-2">{s.email}</td>
                   <td className="px-3 py-2">{s.role_title || '—'}</td>
                   <td className="px-3 py-2">{s.mode} / {s.difficulty}</td>
+                  <td className="px-3 py-2">{s.plan || '—'}</td>
                   <td className="px-3 py-2">{s.status}</td>
                   <td className="px-3 py-2">{s.assessment_status}</td>
                   <td className="px-3 py-2 tabular-nums">${Number(s.cost_usd).toFixed(3)}</td>
@@ -410,6 +533,14 @@ function SessionsTab() {
             <button className="text-muted-foreground" onClick={() => setDetail(null)}>Close</button>
           </div>
           <p className="mt-1 text-muted-foreground">Versions: {JSON.stringify(detail.session.versions)}</p>
+          {detail.session.plan_summary?.sections && (
+            <p className="mt-1 text-muted-foreground">
+              Plan (admins only; the candidate hears it from the interviewer):{' '}
+              {detail.session.plan_summary.sections.filter((x: any) => x.kind !== 'intro' && x.kind !== 'closing')
+                .map((x: any) => `${x.title} ~${Math.round(x.minutes)} min, ${x.questions} q`).join(' · ')}
+              {detail.session.plan_summary.not_planned?.length ? ` · not planned: ${detail.session.plan_summary.not_planned.join(', ')}` : ''}
+            </p>
+          )}
           <ol className="mt-4 max-h-96 space-y-2 overflow-y-auto">
             {detail.messages.map((m: any) => (
               <li key={m.seq}>

@@ -15,7 +15,8 @@ let cache: { userId: string; result: Promise<boolean> } | null = null;
 
 function check(userId: string): Promise<boolean> {
   if (!cache || cache.userId !== userId) {
-    cache = { userId, result: ii.access().then((a) => a.allowed === true).catch(() => false) };
+    // `nav`: also true for an account whose free interview is used — its report lives in II.
+    cache = { userId, result: ii.access().then((a) => a.allowed === true || a.nav === true).catch(() => false) };
   }
   return cache.result;
 }

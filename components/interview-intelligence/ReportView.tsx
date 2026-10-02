@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ii, IIError } from '@/lib/interview-intelligence/api';
 import { CONFIDENCE_LABEL, STATE, duration, titleCase } from '@/lib/interview-intelligence/format';
 import type {
-  CompetencyAssessment, DevelopmentArea, IIMessage, IIReport, LearnedItem, QuestionReview, ReportResponse,
+  CompetencyAssessment, DevelopmentArea, IIMe, IIMessage, IIReport, LearnedItem, QuestionReview, ReportResponse,
 } from '@/lib/interview-intelligence/types';
 import { waitingProgress } from '@/lib/interview-intelligence/progress';
 import { ConfidenceChip, ErrorNote, Spinner, StateChip } from './primitives';
@@ -118,6 +118,9 @@ function Report({ report: r, partial, sessionId }: { report: IIReport; partial: 
   const [anchor, setAnchor] = useState<string | undefined>();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const tabsRef = useRef<HTMLDivElement | null>(null);
+  // Can this account start another interview? (After a free interview it can't: offer the plans.)
+  const [me, setMe] = useState<IIMe | null>(null);
+  useEffect(() => { ii.me().then(setMe).catch(() => undefined); }, []);
 
   // open the section in the link (#questions, #q-X3 ...) and follow the browser's back/forward
   useEffect(() => {
@@ -309,7 +312,18 @@ function Report({ report: r, partial, sessionId }: { report: IIReport; partial: 
                   )}
                   <div>
                     <h3 className="font-semibold">Re-attempt your weak areas</h3>
-                    <div className="mt-3"><Reattempt report={r} sessionId={sessionId} /></div>
+                    <div className="mt-3">
+                      {me && !me.access.allowed ? (
+                        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
+                          <p>{me.plan?.trial?.used ? 'That was your free interview.' : me.access.reason}</p>
+                          {me.plan?.visible && (
+                            <Link href="/interview-intelligence/plans" className="mt-1 inline-block font-medium underline underline-offset-2">
+                              See plans for another go
+                            </Link>
+                          )}
+                        </div>
+                      ) : <Reattempt report={r} sessionId={sessionId} />}
+                    </div>
                   </div>
                 </div>
               )}

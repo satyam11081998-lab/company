@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ChevronDown, Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ii, IIError, isConfigured } from '@/lib/interview-intelligence/api';
 import { CONFIDENCE_LABEL, STATE } from '@/lib/interview-intelligence/format';
@@ -44,34 +44,13 @@ export function Spinner({ label }: { label?: string }) {
   );
 }
 
-/** A report section that opens on demand (progressive disclosure, spec §80). */
-export function Disclosure({ title, summary, defaultOpen = false, children, id }: {
-  title: string; summary?: ReactNode; defaultOpen?: boolean; children: ReactNode; id?: string;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <section id={id} className="scroll-mt-24 border-t border-border">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-start justify-between gap-4 py-5 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      >
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
-          {summary && <div className="mt-1 text-sm text-muted-foreground">{summary}</div>}
-        </div>
-        <ChevronDown className={`mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && <div className="pb-8">{children}</div>}
-    </section>
-  );
-}
-
 /**
  * Loads /v1/me and renders children only for users the II service lets in. The UI never
- * decides access: it shows what the server decided.
+ * decides access: it shows what the server decided. `history`: also render for someone who may
+ * no longer start interviews but has their own (e.g. a used free interview) — they keep their
+ * reports; the page itself must not offer to start one (me.access.allowed is false).
  */
-export function AccessGate({ children }: { children: (me: IIMe) => ReactNode }) {
+export function AccessGate({ children, history = false }: { children: (me: IIMe) => ReactNode; history?: boolean }) {
   const [me, setMe] = useState<IIMe | null>(null);
   const [err, setErr] = useState<IIError | null>(null);
   const [tick, setTick] = useState(0);
@@ -94,6 +73,17 @@ export function AccessGate({ children }: { children: (me: IIMe) => ReactNode }) 
     return <GateCard title="Interview Intelligence is unavailable" body={err.message} onRetry={() => setTick((t) => t + 1)} />;
   }
   if (!me) return <div className="py-24"><Spinner label="Checking your access…" /></div>;
+  if (!me.access.allowed && history && me.has_history) return <>{children(me)}</>;
+  if (!me.access.allowed && me.plan?.trial?.used) {
+    return (
+      <GateCard
+        title="You've used your free interview"
+        body={me.access.reason || 'Your report stays in Interview Intelligence whenever you want it.'}
+        cta={me.plan.visible ? { href: '/interview-intelligence/plans', label: 'See plans' } : undefined}
+        locked
+      />
+    );
+  }
   if (!me.access.allowed) {
     return (
       <GateCard

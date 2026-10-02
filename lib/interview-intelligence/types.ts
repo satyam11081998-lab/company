@@ -12,14 +12,31 @@ export type EvidenceState = 'strong' | 'moderate' | 'weak' | 'contradictory' | '
 export type Confidence = 'high' | 'moderate' | 'low';
 export type AssessmentConfidence = 'high' | 'moderate' | 'limited';
 
-export interface IIErrorBody {
-  error: { code: string; message: string; [k: string]: unknown };
+/** The caller's plan (access/plans.py). Shown, not charged: no payment is wired yet. */
+export interface IIPlanStatus {
+  via: string | null;
+  /** May this account see the plans page (only people with Interview Intelligence, while in preview). */
+  visible: boolean;
+  trial: { minutes: number; available: boolean; in_progress: boolean; used: boolean; session_id: string | null } | null;
+  ultra: { monthly_interviews: number; started_last_30d: number; left: number } | null;
+}
+
+export interface IIPlans {
+  /** Not public yet: only people with Interview Intelligence can open this page. */
+  preview: boolean;
+  currency: 'INR';
+  trial: { minutes: number; open_to_everyone: boolean };
+  ultra: { price_inr: number; monthly_interviews: number; interested: boolean };
+  you: IIPlanStatus;
 }
 
 export interface IIMe {
   user: { id: string; email: string };
   access: { allowed: boolean; via: string | null; reason: string | null };
   is_admin: boolean;
+  /** Has interviews of their own (a used free interview keeps its history and reports). */
+  has_history?: boolean;
+  plan?: IIPlanStatus;
   limits: {
     max_active_sessions: number;
     active_count: number;
@@ -79,31 +96,26 @@ export interface LiveProgress {
   highlights?: string[];
 }
 
+/** Live interview progress: time only — what is asked next is the interviewer's to reveal. */
 export interface IIProgress {
   status: SessionStatus;
   ended_reason: string | null;
-  section?: string;
-  section_title?: string;
+  section?: 'interview' | 'closing';
   elapsed_s?: number;
   remaining_s?: number;
   duration_s?: number;
-  questions_asked?: number;
-  questions_planned?: number;
+  /** Active seconds after which the interview ends whatever is happening. */
+  hard_stop_s?: number;
 }
 
+/** What a candidate sees before the interview: the role as understood and document warnings.
+ *  The plan itself (sections, question counts, CV claims to test) is admin-only. */
 export interface PreInterviewSummary {
-  competencies_identified: number;
-  strong_in_cv: number;
-  need_validation: number;
-  competencies: { id: string; name: string; importance: string; cv_strength: string }[];
-  role: { title: string; family: string; seniority: string; industry: string };
-  jd_quality: string;
-  jd_warnings: string[];
-  cv_warnings: string[];
-  sections: { kind: string; title: string; minutes: number; questions: number }[];
-  claims_to_investigate: number;
-  company_context: boolean;
-  not_planned?: string[];
+  role?: { title: string; family: string; seniority: string; industry: string };
+  jd_quality?: string;
+  jd_warnings?: string[];
+  cv_warnings?: string[];
+  company_context?: boolean;
 }
 
 export interface IISession {
@@ -129,6 +141,8 @@ export interface IISession {
   cv_document_id?: string;
   jd_document_id?: string;
   pre_interview_summary?: PreInterviewSummary;
+  /** trial | ultra | test_grant | pro | admin — the plan this interview ran on. */
+  plan?: string | null;
   progress?: IIProgress;
   /** While the interview is being built (null until the build job starts). */
   prep_progress?: LiveProgress | null;

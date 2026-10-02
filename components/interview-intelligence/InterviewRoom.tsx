@@ -271,7 +271,7 @@ function ChatRoom({ sessionId, voicePossible, onSwitchToVoice }: {
             {session?.role_title || 'Interview'}{session?.company_name ? `, ${session.company_name}` : ''}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {session?.mode_label} interview{progress?.section_title ? `. ${progress.section_title}` : ''}
+            {session?.mode_label} interview
           </p>
         </div>
         <span className="text-sm tabular-nums text-muted-foreground" aria-label="Elapsed time">{clock(elapsed)}</span>

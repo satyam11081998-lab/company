@@ -1,6 +1,6 @@
 # ANTIGRAVITY_HANDOFF — interview-intelligence (host mode)
 
-**Author:** Claude (cloud session, Project "project"). **Date:** 2026-10-02 (revised the same
+**Author:** Claude (cloud session, Project "project"). **Date:** 2026-10-02, seventh pass 2026-10-03 (revised the same
 day: the separate Render service was dropped at the owner's request — no paid instance, no
 new AI keys).
 **Feature:** MECE Interview Intelligence (II) — CV + JD → adaptive interview → evidence-traced
@@ -281,13 +281,62 @@ Gates (2026-10-02): II suite 303 passed (Postgres 16, backend-pinned venv) / 302
 voice node tests 48/48 and progress 4/4 on the device; device `tsc --noEmit` EXIT 0; `next build` OK
 (copy); browser walk-through of the sectioned report (desktop + phone, deep link to a question).
 
+## Hidden plan, real opening, breadth, plans (seventh pass, 2026-10-03)
+
+```
+touches:  consilio-backend
+            EDIT interview-intelligence/  (access/plans.py NEW; access/policy.py, flags.py; auth/assertion.py
+                 (tier "ultra" accepted); api/routes.py (+/v1/plans, /v1/plans/interest, /me plan fields),
+                 api/admin_routes.py (+/admin/plans, grant_type); interview_engine/{modes,blueprint,
+                 interviewer,orchestrator,policy,sessions,state}.py; question_engine/{generator,selector,
+                 schemas}.py; cv_intelligence/schemas.py; ai/{prompts,simulated}.py; evidence_engine/extractor.py;
+                 voice/routes.py (per-plan voice engine); host.py (optional news provider); data/question_*.json;
+                 versions.py; docs; tests/test_breadth_and_plans.py NEW (+3 tests adjusted))
+            EDIT routes/interview_intelligence.py  (+recent_headlines(): reads news_headlines READ-ONLY,
+                 30-min cache, any failure -> []; passed to mount(..., news=))
+          consilio
+            NEW  app/(app)/interview-intelligence/plans/page.tsx, components/interview-intelligence/Plans.tsx
+            EDIT components/interview-intelligence/{SetupFlow,Hub,ReportView,InterviewRoom,primitives}.tsx,
+                 call/CallRoom.tsx, admin/IIAdminClient.tsx; lib/interview-intelligence/{api,types,useAccess}.ts
+                 (the "Interview Intelligence" menu entry stays for an account whose free interview is
+                 used — GET /ii/v1/access gains `nav`)
+            REMOVED dead code: Disclosure (primitives.tsx), IIErrorBody (types.ts)
+          database: none (grant types and plan settings are values in existing columns/rows)
+breaking: no CONTRACTS.md surface. II's own candidate API drops plan details (documented in
+          docs/C_API_CONTRACT.md "seventh pass"); only II's own frontend consumes it and is updated in
+          the same pass. Reads `news_headlines` (read-only) and `priceFor('pro')` from lib/tier (read-only).
+```
+
+What and why: BUILD_STATUS §0e. In short — the candidate no longer sees the plan (the interviewer
+announces the running order out loud instead, from the real plan); every interview gets breadth (the
+whole CV, the person beyond it, business awareness on a real headline); a hard stop at the planned
+length; and a plans layer that is invisible to the public: one free 15-minute interview per account
+(off for everyone until `plans.trial_open`), Ultra by grant (or a future MECE tier "ultra") with a
+fair-use cap, a plans page only people with access can open, and "Tell me when it opens" interest.
+
+**Decision needed before Ultra can be sold (ask first — CONTRACTS surfaces):** a real Ultra plan means
+C6 `users.subscription_tier` gains `ultra` (+ any DB check constraint), the Payments flow (Razorpay
+order/verify/webhook, `lib/tier.ts` TIER_PRICING, `/upgrade`) gains a tier, and the backend's
+`_effective_tier_from_row` returns it. II needs no change for that day: it already treats tier
+`ultra` as Ultra.
+
+Gates (2026-10-03): II suite 323 passed (Postgres 16) / 322 + 1 skipped (SQLite); compileall clean;
+glue `recent_headlines()` unit-checked against a stub Supabase client (rows mapped, cached, failure -> []);
+voice node tests 48/48, progress 4/4; `tsc --noEmit` EXIT 0; `next build` OK (copy) incl.
+`/interview-intelligence/plans`; browser walk-through: free interview end to end (15 minutes enforced,
+no plan on the ready screen, spoken opening with agenda, report → "That was your free interview",
+hub read-only), plans page desktop + phone (no sideways scroll), interest recorded once, admin Plans,
+Test users with types, Inspect shows the plan.
+
 ## Proposed LEDGER row
-| Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, DORMANT** until `II_DATABASE_URL` is set; offline gates green; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |
+| Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, LIVE for admins + test users**; plans layer (free interview, Ultra by grant, plans page) BUILT and NOT public; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence (incl. plans), app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest); news_headlines read-only; lib/tier priceFor read-only |
 
 ## Superseded
-- The standalone repo `satyam11081998-lab/interview-intelligence` and the folder
-  `D:\dev\mece\consilio-interview-intelligence` are superseded by
-  `consilio-backend/interview-intelligence/` — archive them; do not develop there.
+- The standalone repo `satyam11081998-lab/interview-intelligence` is superseded by
+  `consilio-backend/interview-intelligence/` — archive it on GitHub; do not develop there. Its local
+  clone `D:\dev\mece\consilio-interview-intelligence` was removed on 2026-10-03 (clean, nothing
+  unpushed; its only extra file was the standalone `render.yaml`). If a Render service
+  "mece-interview-intelligence" was ever created from it, delete it (plan: starter = paid).
 - `app/api/interview-intelligence/token/route.ts` and `lib/interview-intelligence/assertion.ts`
   stay in the frontend, unused unless `NEXT_PUBLIC_II_API_URL` is set (standalone mode).
 

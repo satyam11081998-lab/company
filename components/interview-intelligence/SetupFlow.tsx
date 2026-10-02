@@ -257,7 +257,11 @@ function Setup({ me }: { me: IIMe }) {
         {step === 5 && (
           <div>
             <h2 className="text-lg font-semibold">How long?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">A full interview is about 40–45 minutes. You can end early at any point.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {me.access.via === 'trial'
+                ? `Your free interview is ${me.limits.allowed_durations[0] || 15} minutes. You get one, and it counts once you press Start.`
+                : 'A full interview is about 40–45 minutes. You can end early at any point.'}
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {me.limits.allowed_durations.map((m) => (
                 <Pill key={m} selected={cfg.duration_minutes === m} onSelect={() => setCfg({ ...cfg, duration_minutes: m })}>
@@ -270,7 +274,7 @@ function Setup({ me }: { me: IIMe }) {
         {step === 6 && (
           <BuildStep
             session={session} busy={busy === 'build'} canBuild={Boolean(cvReady && jdReady)} onBuild={build}
-            cfg={cfg} activeConflict={activeConflict} seenAt={seenAt.session}
+            cfg={cfg} activeConflict={activeConflict} seenAt={seenAt.session} trial={me.access.via === 'trial'}
           />
         )}
 
@@ -444,7 +448,6 @@ function RoleUnderstanding({ cv, jd, company, setCompany, companyIntel }: {
   const must = (role.requirements || []).filter((r: any) => r.importance === 'must');
   const should = (role.requirements || []).filter((r: any) => r.importance !== 'must');
   const claims = prof.claims || [];
-  const flagged = Object.keys(prof.claim_flags || {}).length;
   const timeline = prof.timeline_issues || [];
   const seniority = role.seniority || {};
   const contradictions = role.quality?.contradictions || [];
@@ -466,7 +469,7 @@ function RoleUnderstanding({ cv, jd, company, setCompany, companyIntel }: {
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div>
-          <p className="text-sm font-medium">Requirements to test</p>
+          <p className="text-sm font-medium">What the role asks for</p>
           <ul className="mt-2 space-y-1.5 text-sm">
             {must.slice(0, 5).map((r: any) => <li key={r.id} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-navy dark:bg-foreground" />{r.text}</li>)}
             {should.slice(0, Math.max(0, 6 - must.length)).map((r: any) => <li key={r.id} className="flex gap-2 text-muted-foreground"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full border border-muted-foreground" />{r.text}</li>)}
@@ -476,7 +479,7 @@ function RoleUnderstanding({ cv, jd, company, setCompany, companyIntel }: {
         <div>
           <p className="text-sm font-medium">From your CV</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {claims.length} claim{claims.length === 1 ? '' : 's'} found{flagged ? `, ${flagged} the interviewer will want to probe closely` : ''}.
+            {claims.length} achievement{claims.length === 1 ? '' : 's'} and claim{claims.length === 1 ? '' : 's'} found, for example:
           </p>
           <ul className="mt-2 space-y-1.5 text-sm">
             {claims.slice(0, 4).map((c: any) => <li key={c.id} className="line-clamp-2">“{c.text}”</li>)}
@@ -520,9 +523,9 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function BuildStep({ session, busy, canBuild, onBuild, cfg, activeConflict, seenAt }: {
+function BuildStep({ session, busy, canBuild, onBuild, cfg, activeConflict, seenAt, trial }: {
   session: IISession | null; busy: boolean; canBuild: boolean; onBuild: () => void; cfg: InterviewConfigInput;
-  activeConflict: { id: string; role_title: string; status: string }[] | null; seenAt: number;
+  activeConflict: { id: string; role_title: string; status: string }[] | null; seenAt: number; trial: boolean;
 }) {
   const mode = MODES.find((m) => m.id === cfg.mode);
   if (!session) {
@@ -531,8 +534,7 @@ function BuildStep({ session, busy, canBuild, onBuild, cfg, activeConflict, seen
         <h2 className="text-lg font-semibold">Build the interview</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {mode?.label} · {titleCase(cfg.difficulty)} · {cfg.duration_minutes === 45 ? '40–45' : cfg.duration_minutes} minutes.
-          We’ll map the role’s competencies, decide what to test and which CV claims to investigate, then check the plan
-          before you start.
+          We’ll prepare an interviewer for this role and your CV.
         </p>
         {activeConflict && activeConflict.length > 0 && (
           <ul className="mt-4 space-y-1 text-sm">
@@ -568,43 +570,27 @@ function BuildStep({ session, busy, canBuild, onBuild, cfg, activeConflict, seen
       </div>
     );
   }
+  // What is in the plan stays with the interviewer, as in a real interview: it opens by saying how
+  // the time will be spent. Only the role as understood and any document warnings are shown here.
   const p = session.pre_interview_summary;
+  const warnings = [...(p?.jd_warnings || []), ...(p?.cv_warnings || [])].slice(0, 3);
   return (
     <div>
       <h2 className="text-lg font-semibold">Your interview is ready</h2>
-      {p && (
-        <>
-          <p className="mt-3 text-base">
-            We identified <strong>{p.competencies_identified}</strong> competencies for this role.{' '}
-            <strong>{p.strong_in_cv}</strong> are strongly represented in your CV;{' '}
-            <strong>{p.need_validation}</strong> need deeper validation in the interview.
-          </p>
-          <ul className="mt-5 divide-y divide-border rounded-lg border border-border text-sm">
-            {p.sections.filter((s) => s.kind !== 'intro' && s.kind !== 'closing').map((s) => (
-              <li key={s.kind} className="flex justify-between px-4 py-2">
-                <span>{s.title}</span>
-                <span className="text-muted-foreground">~{Math.round(s.minutes)} min · {s.questions} planned</span>
-              </li>
-            ))}
-          </ul>
-          {p.claims_to_investigate > 0 && (
-            <p className="mt-3 text-sm text-muted-foreground">{p.claims_to_investigate} CV claims are lined up for verification.</p>
-          )}
-          {p.not_planned && p.not_planned.length > 0 && (
-            <p className="mt-3 text-sm text-muted-foreground">
-              In {session.duration_minutes} minutes there isn’t room to plan a question for: {p.not_planned.join(', ')}.
-              They’ll be reported as not tested, not as weaknesses.
-            </p>
-          )}
-          {(p.jd_warnings.length > 0 || p.cv_warnings.length > 0) && (
-            <ul className="mt-3 space-y-1 text-sm text-viz-warning">
-              {[...p.jd_warnings, ...p.cv_warnings].slice(0, 3).map((w) => <li key={w}>{w}</li>)}
-            </ul>
-          )}
-        </>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {p?.role?.title ? `${p.role.title} · ` : ''}{session.mode_label} · {titleCase(session.difficulty)} · {session.duration_minutes} minutes
+      </p>
+      <p className="mt-4 text-base">
+        Your interviewer will introduce themselves and explain how the time will be spent, then begin.
+      </p>
+      {warnings.length > 0 && (
+        <ul className="mt-3 space-y-1 text-sm text-viz-warning">
+          {warnings.map((w) => <li key={w}>{w}</li>)}
+        </ul>
       )}
       <p className="mt-6 text-sm text-muted-foreground">
         During the interview you won’t see scores or hints. Answer as you would in the real room; you can pause or end at any time.
+        {trial && session.status === 'ready' ? ' This is your free interview: it counts once you press Start.' : ''}
       </p>
       <Button asChild className="mt-4" size="lg">
         <Link href={`/interview-intelligence/session/${session.id}`}>{session.status === 'ready' ? 'Start interview' : 'Return to interview'}</Link>

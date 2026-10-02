@@ -10,7 +10,8 @@ import type { IIDocument, IIMe, IIProgressHistory, IISession } from '@/lib/inter
 import { AccessGate, ConfidenceChip, ErrorNote, Spinner } from './primitives';
 
 export default function Hub() {
-  return <AccessGate>{(me) => <HubInner me={me} />}</AccessGate>;
+  // `history`: an account whose free interview is used still sees its interviews and reports.
+  return <AccessGate history>{(me) => <HubInner me={me} />}</AccessGate>;
 }
 
 function HubInner({ me }: { me: IIMe }) {
@@ -35,6 +36,8 @@ function HubInner({ me }: { me: IIMe }) {
   const active = (sessions || []).filter((s) => ACTIVE_STATES.includes(s.status));
   const past = (sessions || []).filter((s) => !ACTIVE_STATES.includes(s.status));
   const atLimit = me.limits.active_count >= me.limits.max_active_sessions;
+  const canStart = me.access.allowed;
+  const plan = me.plan;
 
   async function abandon(id: string) {
     if (!window.confirm('Abandon this interview? It frees the slot and will not be assessed.')) return;
@@ -55,8 +58,13 @@ function HubInner({ me }: { me: IIMe }) {
             interviewer actually learned about you — every point traced to something you said.
           </p>
         </div>
-        <div className="shrink-0">
-          {atLimit ? (
+        <div className="flex shrink-0 items-center gap-4">
+          {plan?.visible && (
+            <Link href="/interview-intelligence/plans" className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+              Plans
+            </Link>
+          )}
+          {!canStart ? null : atLimit ? (
             <Button disabled title="Finish or end an active interview first"><Plus /> New interview</Button>
           ) : (
             <Button asChild><Link href="/interview-intelligence/new"><Plus /> New interview</Link></Button>
@@ -64,7 +72,9 @@ function HubInner({ me }: { me: IIMe }) {
         </div>
       </header>
 
-      {atLimit && (
+      <PlanNote me={me} />
+
+      {canStart && atLimit && (
         <p className="mt-4 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
           You already have {me.limits.max_active_sessions} active interview sessions. Finish or end one to start another.
         </p>
@@ -154,8 +164,8 @@ function HubInner({ me }: { me: IIMe }) {
           <Repeat2 className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden />
           <p className="mt-3 font-medium">No interviews yet</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Upload your CV and the job description. You’ll see what the role needs and which of your claims the
-            interviewer will want to test before anything starts.
+            Upload your CV and the job description. We’ll check we’ve understood the role, then your interviewer
+            takes it from there, just like the real thing.
           </p>
         </section>
       )}
@@ -194,4 +204,38 @@ function HubInner({ me }: { me: IIMe }) {
       )}
     </div>
   );
+}
+
+/** One line about the caller's plan: the free interview (before / during / after) or Ultra's allowance. */
+function PlanNote({ me }: { me: IIMe }) {
+  const plan = me.plan;
+  const trial = plan?.trial;
+  if (trial?.used) {
+    return (
+      <div className="mt-6 flex flex-col gap-3 rounded-xl border border-border bg-muted/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-medium">That was your free interview</p>
+          <p className="text-sm text-muted-foreground">Your report and transcript stay here. Ultra gives you full-length interviews every month.</p>
+        </div>
+        {plan?.visible && <Button asChild variant="outline"><Link href="/interview-intelligence/plans">See plans</Link></Button>}
+      </div>
+    );
+  }
+  if (trial && me.access.via === 'trial') {
+    return (
+      <p className="mt-6 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
+        {trial.in_progress
+          ? 'Your free interview is in progress. Finish it whenever you are ready.'
+          : `Your free interview: ${trial.minutes} minutes, voice or text, with a full report. You get one, and it counts once you press Start.`}
+      </p>
+    );
+  }
+  if (plan?.ultra) {
+    return (
+      <p className="mt-6 text-sm text-muted-foreground">
+        Ultra · {plan.ultra.left} of {plan.ultra.monthly_interviews} interviews left in the last 30 days
+      </p>
+    );
+  }
+  return null;
 }

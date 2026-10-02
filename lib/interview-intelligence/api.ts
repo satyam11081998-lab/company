@@ -13,7 +13,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import type {
-  AccessGrantRow, AdminOverview, IIDocument, IIMe, IIMessage, IIProgressHistory, IISession,
+  AccessGrantRow, AdminOverview, IIDocument, IIMe, IIMessage, IIPlans, IIProgressHistory, IISession,
   InterviewConfigInput, ReportResponse, TurnResponse,
 } from './types';
 
@@ -123,7 +123,7 @@ async function asError(r: Response): Promise<IIError> {
 export const ii = {
   me: () => call<IIMe>('/v1/me'),
   /** Cheap nav check: may this user open Interview Intelligence? (see useAccess.ts) */
-  access: () => call<{ allowed: boolean; via: string | null; is_admin: boolean }>('/v1/access'),
+  access: () => call<{ allowed: boolean; via: string | null; is_admin: boolean; nav?: boolean }>('/v1/access'),
 
   documents: (kind?: 'cv' | 'jd') => call<{ documents: IIDocument[] }>(`/v1/documents${kind ? `?kind=${kind}` : ''}`),
   document: (id: string) => call<IIDocument>(`/v1/documents/${id}`),
@@ -155,6 +155,10 @@ export const ii = {
   reattempt: (id: string, target_competencies: string[], duration_minutes?: number) =>
     call<IISession>(`/v1/sessions/${id}/reattempt`, { method: 'POST', json: { target_competencies, duration_minutes } }),
   progress: () => call<IIProgressHistory>('/v1/progress'),
+  /** The plans page (404 for anyone without Interview Intelligence — it is not public). */
+  plans: () => call<IIPlans>('/v1/plans'),
+  planInterest: (plan: 'ultra' = 'ultra') =>
+    call<{ ok: boolean; interested: boolean }>('/v1/plans/interest', { method: 'POST', json: { plan } }),
 
   transcribe: (audio: Blob) => {
     const f = new FormData();
@@ -218,11 +222,27 @@ export interface LiveSession {
 }
 
 /* ---------------------------------------------------------------- admin API */
+/** test = full access · trial = the free interview (once) · ultra = Ultra, given by an admin. */
+export type GrantType = 'test' | 'trial' | 'ultra';
+
+export interface AdminPlans {
+  config: { visibility: 'access' | 'off'; trial_open: boolean; trial_minutes: number; trial_max_prepared: number;
+            ultra_price_inr: number; ultra_monthly_interviews: number;
+            trial_voice_engine: 'same' | 'realtime' | 'gemini' | 'standard' };
+  grants: Record<string, number>;
+  last_90_days: Record<'trial' | 'ultra', { prepared: number; started: number; completed: number }>;
+  interest: { ultra: number; recent: { email: string; at: string; via: string | null }[] };
+}
+
 export const iiAdmin = {
   grants: () => call<{ grants: AccessGrantRow[] }>('/v1/admin/access-grants'),
-  addGrant: (email: string, note = '') => call<AccessGrantRow>('/v1/admin/access-grants', { method: 'POST', json: { email, note } }),
+  addGrant: (email: string, note = '', grant_type: GrantType = 'test') =>
+    call<AccessGrantRow>('/v1/admin/access-grants', { method: 'POST', json: { email, note, grant_type } }),
   setGrant: (id: string, status: 'enabled' | 'disabled') =>
     call<AccessGrantRow>(`/v1/admin/access-grants/${id}`, { method: 'PATCH', json: { status } }),
+  setGrantType: (id: string, grant_type: GrantType) =>
+    call<AccessGrantRow>(`/v1/admin/access-grants/${id}`, { method: 'PATCH', json: { grant_type } }),
+  plans: () => call<AdminPlans>('/v1/admin/plans'),
   deleteGrant: (id: string) => call<void>(`/v1/admin/access-grants/${id}`, { method: 'DELETE' }),
   config: () => call<{ flags: Record<string, unknown>; defaults: Record<string, unknown> }>('/v1/admin/config'),
   setConfig: (values: Record<string, unknown>) =>

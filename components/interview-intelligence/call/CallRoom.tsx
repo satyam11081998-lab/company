@@ -551,7 +551,7 @@ export default function CallRoom({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{session.role_title || 'Interview'}{session.company_name ? `, ${session.company_name}` : ''}</p>
           <p className="truncate text-xs text-[#93A1B8]">
-            {session.mode_label} interview{progress?.section_title ? `. ${progress.section_title}` : ''}
+            {session.mode_label} interview
           </p>
         </div>
         {stage === 'live' && (
