@@ -413,8 +413,17 @@ function SessionsTab() {
           <ol className="mt-4 max-h-96 space-y-2 overflow-y-auto">
             {detail.messages.map((m: any) => (
               <li key={m.seq}>
-                <span className="text-xs text-muted-foreground">{m.role}{m.action ? ` · ${m.action}` : ''}</span>
+                <span className="text-xs text-muted-foreground">
+                  {m.role}{m.action ? `, ${m.action}` : ''}
+                  {m.role === 'candidate' && m.meta?.intent && m.meta.intent !== 'answer' ? `, heard as ${String(m.meta.intent).replace(/_/g, ' ')}` : ''}
+                </span>
                 <p>{m.content}</p>
+                {m.role === 'interviewer' && (m.meta?.reasons?.length > 0 || m.meta?.guard) && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Why: {(m.meta.reasons || []).join('; ') || '—'}
+                    {m.meta.guard && <span className="text-viz-warning"> Line replaced: {m.meta.guard}.</span>}
+                  </p>
+                )}
               </li>
             ))}
           </ol>

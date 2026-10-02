@@ -424,7 +424,9 @@ export class Conductor {
     this.t?.setListening(false);
     this.setPhase('thinking');
     this.hooks.onCandidateTurn(text, kind);
-    if (kind === 'voice' && this.opts.ackMinWords > 0 && wordCount(text) >= this.opts.ackMinWords && this.t) {
+    // No "Okay." after a question back to the interviewer ("Do you mean my current role?"): it gets an answer.
+    if (kind === 'voice' && this.opts.ackMinWords > 0 && wordCount(text) >= this.opts.ackMinWords && this.t
+      && !/\?\s*$/.test(text)) {
       const ack = pickAck(this.lastAck);
       this.lastAck = ack;
       this.t.say(ack, 'ack');

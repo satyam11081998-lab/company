@@ -252,6 +252,35 @@ Gates (2026-10-02): II suite 292 passed (Postgres 16, backend-pinned venv) / 291
 `next build` OK (copy); browser walk-through with simulated models slowed to realistic times
 (setup → build → interview → report, desktop + phone), no console errors.
 
+## Interviewer grounding + sectioned report (sixth pass, 2026-10-02)
+
+Tester reports: a follow-up about "the segment" nobody mentioned; a clarifying question met with "okay"
+and a new question; the same question asked twice in other words. Owner also asked for the report as
+left-hand sections instead of one long page.
+
+```
+touches:  consilio-backend/interview-intelligence
+            NEW  interview_intelligence/interview_engine/grounding.py  (never-said / same-question checks)
+            EDIT interview_engine/{interviewer,orchestrator,policy,intents}.py, evidence_engine/extractor.py,
+                 ai/prompts.py (interviewer@2, turn_analyzer@3, question_generator@2), versions.py (iv-2, pol-2, qe-2)
+            NEW  tests/test_interviewer_grounding.py; EDIT tests/test_ai_runner.py; docs/BUILD_STATUS.md §0d
+          consilio
+            EDIT components/interview-intelligence/ReportView.tsx (left-hand sections, deep links, phone tabs)
+            EDIT components/interview-intelligence/admin/IIAdminClient.tsx (how each line was heard / why said)
+            EDIT lib/interview-intelligence/voice/conductor.ts (+ test): no "Okay." after a question
+breaking: no. No API, schema or CONTRACTS.md change; report JSON unchanged.
+```
+
+Causes and fixes are in BUILD_STATUS §0d. Every interviewer line is now checked before it is spoken:
+anything presented as already said must appear in the question, the candidate's own words or the CV
+claim under discussion; a repeat of an earlier question is replaced. Clarifying questions are answered
+(about the last line, usually the follow-up) and never scored. Admin → Interviews → Inspect shows the
+reason for every line.
+
+Gates (2026-10-02): II suite 303 passed (Postgres 16, backend-pinned venv) / 302 + 1 skipped (SQLite);
+voice node tests 48/48 and progress 4/4 on the device; device `tsc --noEmit` EXIT 0; `next build` OK
+(copy); browser walk-through of the sectioned report (desktop + phone, deep link to a question).
+
 ## Proposed LEDGER row
 | Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, DORMANT** until `II_DATABASE_URL` is set; offline gates green; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence, app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest) |
 

@@ -416,3 +416,13 @@ test('unmuting (or coming back to the tab) restarts the silence clock', async ()
   h.clock.advance(1000);
   assert.equal(h.said.filter((s) => s.kind === 'nudge').length, 1);
 });
+
+test('a question back to the interviewer gets no "Okay." (it gets an answer)', async () => {
+  const h = harness();
+  h.c.begin(['Q?']); h.t.finishSpeaking();
+  h.ev.onSpeechStart(); h.ev.onSpeechStop();
+  h.ev.onFinal('Sorry, do you mean the project at my last company or the current one?', { durationMs: 3000 });
+  h.clock.advance(1000);
+  assert.equal(h.submits.length, 1);
+  assert.equal(h.said.filter((s) => s.kind === 'ack').length, 0);
+});

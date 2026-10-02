@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDownRight, ArrowUpRight, ChevronRight, Loader2, Minus } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight, Loader2, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ii, IIError } from '@/lib/interview-intelligence/api';
 import { CONFIDENCE_LABEL, STATE, duration, titleCase } from '@/lib/interview-intelligence/format';
@@ -11,7 +11,7 @@ import type {
   CompetencyAssessment, DevelopmentArea, IIMessage, IIReport, LearnedItem, QuestionReview, ReportResponse,
 } from '@/lib/interview-intelligence/types';
 import { waitingProgress } from '@/lib/interview-intelligence/progress';
-import { ConfidenceChip, Disclosure, ErrorNote, Spinner, StateChip } from './primitives';
+import { ConfidenceChip, ErrorNote, Spinner, StateChip } from './primitives';
 import ProgressCard from './ProgressCard';
 
 export default function ReportView({ sessionId }: { sessionId: string }) {
@@ -61,32 +61,304 @@ export default function ReportView({ sessionId }: { sessionId: string }) {
 
 /* ====================================================================================== */
 
+/** The report's parts, shown one at a time from a menu on the left (a strip of tabs on a phone). */
+type SectionId = 'overview' | 'feedback' | 'competencies' | 'fit' | 'questions' | 'notes' | 'claims' | 'communication'
+  | 'coverage' | 'plan' | 'transcript';
+interface SectionDef { id: SectionId; label: string; count?: string; countTitle?: string; title: string; summary?: string }
+
+const ReportNav = createContext<(section: SectionId, anchor?: string) => void>(() => undefined);
+
+function sectionsFor(r: IIReport): SectionDef[] {
+  const probed = r.cv_claims.filter((c) => c.status !== 'not_probed').length;
+  const tested = r.competencies.filter((c) => c.evidence_state !== 'not_sufficiently_tested').length;
+  const list: (SectionDef | null)[] = [
+    { id: 'overview', label: 'Overview', title: 'Overview' },
+    { id: 'feedback', label: 'Strengths and gaps', title: 'Strengths and gaps',
+      summary: 'What you demonstrated, and what to work on first.' },
+    { id: 'competencies', label: 'Competencies', count: `${tested} of ${r.competencies.length}`,
+      countTitle: `${tested} of ${r.competencies.length} sufficiently tested`, title: 'Competency map',
+      summary: 'How each competency the role needs was evidenced. Hollow means it was not sufficiently tested — that is not a weakness.' },
+    { id: 'fit', label: 'Role fit', title: 'Role alignment',
+      summary: 'Each job requirement traced from your CV to the interview to the assessment.' },
+    { id: 'questions', label: 'Question by question', count: String(r.questions.length),
+      countTitle: `${r.questions.length} questions`, title: 'Question by question',
+      summary: 'Why each question was asked, what worked, what was missing and where a stronger answer would go.' },
+    { id: 'notes', label: 'Interviewer’s notes', title: 'What the interviewer took away',
+      summary: 'Signals, unproven claims, the moments that shaped the assessment, and what they would ask next.' },
+    r.cv_claims.length > 0
+      ? { id: 'claims', label: 'CV claims', count: `${probed} of ${r.cv_claims.length}`,
+          countTitle: `${probed} of ${r.cv_claims.length} probed`, title: 'CV claims investigated',
+          summary: `${probed} of ${r.cv_claims.length} claims were probed.` }
+      : null,
+    { id: 'communication', label: 'Communication', title: 'Communication',
+      summary: 'Measured from your answers. Accent, grammar and phrasing are never assessed.' },
+    { id: 'coverage', label: 'Coverage', title: 'Interview coverage', summary: 'What the interview actually assessed, section by section.' },
+    { id: 'plan', label: 'Practice plan', title: 'Your preparation plan',
+      summary: r.preparation_plan.headline || 'Built from this interview — practise these before the next one.' },
+    { id: 'transcript', label: 'Transcript', title: 'Full transcript', summary: 'Supporting material — the assessment is the product.' },
+  ];
+  return list.filter(Boolean) as SectionDef[];
+}
+
+function sectionFromHash(sections: SectionDef[]): { section: SectionId; anchor?: string } {
+  if (typeof window === 'undefined') return { section: 'overview' };
+  const h = window.location.hash.replace('#', '');
+  if (h.startsWith('q-')) return { section: 'questions', anchor: h };
+  if (h.startsWith('ev-')) return { section: 'competencies', anchor: h };
+  return { section: (sections.find((s) => s.id === h)?.id || 'overview') };
+}
+
 function Report({ report: r, partial, sessionId }: { report: IIReport; partial: boolean; sessionId: string }) {
   const byId = useMemo(() => Object.fromEntries(r.competencies.map((c) => [c.competency_id, c])), [r.competencies]);
   const nameOf = (id: string) => byId[id]?.name || titleCase(id);
   const learned = r.interviewer_learned || {};
   const h = r.header;
+  const sections = useMemo(() => sectionsFor(r), [r]);
+  const [section, setSection] = useState<SectionId>('overview');
+  const [anchor, setAnchor] = useState<string | undefined>();
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+
+  // open the section in the link (#questions, #q-X3 ...) and follow the browser's back/forward
+  useEffect(() => {
+    const sync = () => { const t = sectionFromHash(sections); setSection(t.section); setAnchor(t.anchor); };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, [sections]);
+
+  const go = useCallback((next: SectionId, target?: string) => {
+    setSection(next);
+    setAnchor(target);
+    try { window.history.replaceState(null, '', `#${target || next}`); } catch { /* sandboxed */ }
+    const panel = panelRef.current;
+    if (!target && panel && panel.getBoundingClientRect().top < 0) panel.scrollIntoView({ block: 'start' });
+  }, []);
+
+  // after switching, bring a linked question / piece of evidence into view
+  useEffect(() => {
+    if (!anchor) return;
+    const t = setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ block: 'center' }), 60);
+    return () => clearTimeout(t);
+  }, [anchor, section]);
+
+  // keep the active tab visible in the phone tab strip
+  useEffect(() => {
+    tabsRef.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [section]);
+
+  const idx = Math.max(0, sections.findIndex((s) => s.id === section));
+  const cur = sections[idx];
+  const prev = sections[idx - 1];
+  const next = sections[idx + 1];
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-24 pt-10">
-      {/* ---------------- layer 1: header + executive assessment */}
-      <header>
-        <Link href="/interview-intelligence" className="text-sm text-muted-foreground hover:text-foreground">Interview Intelligence</Link>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{h.role_title || 'Interview report'}</h1>
-        <p className="mt-2 text-muted-foreground">
-          {[h.company, h.role_family, titleCase(h.mode), titleCase(h.difficulty), duration(h.duration_actual_s),
-            new Date(h.date).toLocaleDateString()].filter(Boolean).join(' · ')}
-        </p>
-      </header>
+    <ReportNav.Provider value={go}>
+      <div className="mx-auto max-w-6xl px-4 pb-24 pt-10">
+        <header>
+          <Link href="/interview-intelligence" className="text-sm text-muted-foreground hover:text-foreground">Interview Intelligence</Link>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{h.role_title || 'Interview report'}</h1>
+          <p className="mt-2 text-muted-foreground">
+            {[h.company, h.role_family, titleCase(h.mode), titleCase(h.difficulty), duration(h.duration_actual_s),
+              new Date(h.date).toLocaleDateString()].filter(Boolean).join(' · ')}
+          </p>
+        </header>
 
+        <div className="mt-8 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-10">
+          {/* phone / tablet: a strip of tabs */}
+          <div ref={tabsRef} className="sticky top-0 z-10 -mx-4 mb-6 overflow-x-auto border-b border-border bg-background/95 px-4 backdrop-blur lg:hidden">
+            <nav aria-label="Report sections" className="flex gap-1 py-2">
+              {sections.map((s) => (
+                <button key={s.id} type="button" onClick={() => go(s.id)} aria-current={s.id === section ? 'page' : undefined}
+                        className={`shrink-0 rounded-full px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                          s.id === section ? 'bg-navy text-navy-foreground dark:bg-foreground dark:text-background' : 'text-muted-foreground hover:text-foreground'}`}>
+                  {s.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* desktop: the menu on the left */}
+          <aside className="hidden lg:block">
+            <nav aria-label="Report sections" className="sticky top-6">
+              <ol className="space-y-0.5 border-l border-border">
+                {sections.map((s) => {
+                  const on = s.id === section;
+                  return (
+                    <li key={s.id}>
+                      <button type="button" onClick={() => go(s.id)} aria-current={on ? 'page' : undefined}
+                              className={`-ml-px flex w-full items-center justify-between gap-3 border-l-2 py-2 pl-4 pr-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                                on ? 'border-navy font-semibold text-foreground dark:border-foreground' : 'border-transparent text-muted-foreground hover:border-border-strong hover:text-foreground'}`}>
+                        <span>{s.label}</span>
+                        {s.count && (
+                          <span className="text-xs font-normal tabular-nums text-muted-foreground" title={s.countTitle}>
+                            {s.count}<span className="sr-only">: {s.countTitle}</span>
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+          </aside>
+
+          <div ref={panelRef} className="min-w-0 scroll-mt-16">
+            <section aria-labelledby="report-section-title" key={section}
+                     className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300">
+              {section !== 'overview' && (
+                <div className="mb-6">
+                  <h2 id="report-section-title" className="text-xl font-semibold tracking-tight">{cur.title}</h2>
+                  {cur.summary && <p className="mt-1 max-w-[70ch] text-sm text-muted-foreground">{cur.summary}</p>}
+                </div>
+              )}
+
+              {section === 'overview' && (
+                <Overview report={r} partial={partial} />
+              )}
+
+              {section === 'feedback' && (
+                <div className="grid gap-10 md:grid-cols-[2fr_3fr]">
+                  <div>
+                    <h3 className="font-semibold">What you demonstrated</h3>
+                    {r.strengths.length === 0 ? (
+                      <p className="mt-3 text-sm text-muted-foreground">No strength was backed by enough evidence to state it with confidence.</p>
+                    ) : (
+                      <ul className="mt-4 space-y-4">
+                        {r.strengths.map((s) => (
+                          <li key={s.title} className="border-l-2 border-viz-good pl-4">
+                            <p className="font-medium">{s.title}</p>
+                            {s.why_it_matters && <p className="mt-1 text-sm text-muted-foreground">{s.why_it_matters}</p>}
+                            <Refs refs={s.evidence_refs} />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">What to work on</h3>
+                    {r.development_areas.length === 0 ? (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        No development area met the evidence bar.{r.not_tested.length ? ' Several competencies were not tested — see Competencies.' : ''}
+                      </p>
+                    ) : (
+                      <ol className="mt-4 space-y-6">
+                        {r.development_areas.map((d, i) => <DevArea key={`${d.title}-${i}`} d={d} />)}
+                      </ol>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {section === 'competencies' && <CompetencyMap report={r} focus={anchor} />}
+
+              {section === 'fit' && <AlignmentTable rows={r.role_alignment} nameOf={nameOf} />}
+
+              {section === 'questions' && <Questions items={r.questions} focus={anchor} />}
+
+              {section === 'notes' && (
+                <div className="space-y-12">
+                  <div className="grid gap-8 sm:grid-cols-2">
+                    <LearnedList title="Strong signals" items={learned.strong_signals} tone="good" />
+                    <LearnedList title="Weak signals" items={learned.weak_signals} tone="warn" />
+                    <LearnedList title="Claims that stayed unproven" items={learned.unproven_claims} />
+                    <LearnedList title="Evidence that never appeared" items={learned.missing_evidence} />
+                    <LearnedList title="What an interviewer might worry about" items={learned.potential_concerns} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Moments that shaped the assessment</h3>
+                    <div className="mt-4"><Moments report={r} nameOf={nameOf} /></div>
+                  </div>
+                  {r.next_questions.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold">What the interviewer would ask next</h3>
+                      <ol className="mt-4 space-y-4">
+                        {r.next_questions.map((q, i) => (
+                          <li key={i} className="grid grid-cols-[1.5rem_1fr] gap-2">
+                            <span className="text-sm text-muted-foreground">{i + 1}.</span>
+                            <div>
+                              <p className="font-medium">{q.question}</p>
+                              <p className="mt-1 text-sm text-muted-foreground">Because: {q.gap}</p>
+                              <Refs refs={q.refs} />
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {section === 'claims' && <ClaimList claims={r.cv_claims} />}
+
+              {section === 'communication' && <Communication report={r} />}
+
+              {section === 'coverage' && <Coverage rows={r.coverage_map} />}
+
+              {section === 'plan' && (
+                <div className="space-y-12">
+                  <PrepPlan report={r} nameOf={nameOf} />
+                  {r.progress && (r.progress.deltas.length > 0 || r.progress.recurring.length > 0) && (
+                    <div>
+                      <h3 className="font-semibold">Compared with your previous interviews</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Only comparable assessments are compared: the same competency, scored with at least moderate confidence.
+                      </p>
+                      <div className="mt-4"><ProgressBlock report={r} /></div>
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-semibold">Re-attempt your weak areas</h3>
+                    <div className="mt-3"><Reattempt report={r} sessionId={sessionId} /></div>
+                  </div>
+                </div>
+              )}
+
+              {section === 'transcript' && <Transcript sessionId={sessionId} />}
+            </section>
+
+            <nav aria-label="Previous and next section" className="mt-12 flex items-center justify-between gap-4 border-t border-border pt-5 text-sm">
+              {prev ? (
+                <button type="button" onClick={() => go(prev.id)} className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                  <ChevronLeft className="h-4 w-4" aria-hidden /> {prev.label}
+                </button>
+              ) : <span />}
+              {next && (
+                <button type="button" onClick={() => go(next.id)} className="inline-flex items-center gap-1.5 font-medium text-foreground hover:underline">
+                  {next.label} <ChevronRight className="h-4 w-4" aria-hidden />
+                </button>
+              )}
+            </nav>
+
+            <footer className="mt-10 text-xs text-muted-foreground">
+              <p>{r.transparency.note}</p>
+              <p className="mt-2">
+                Engine versions: {Object.entries(r.transparency.versions || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.
+              </p>
+              <p className="mt-2">This is preparation feedback, not a hiring decision or a prediction of one.</p>
+            </footer>
+          </div>
+        </div>
+      </div>
+    </ReportNav.Provider>
+  );
+}
+
+/** The first thing you see: the verdict in numbers and words, and where to look next. */
+function Overview({ report: r, partial }: { report: IIReport; partial: boolean }) {
+  const go = useContext(ReportNav);
+  const topGap = r.development_areas[0];
+  const topStrength = r.strengths[0];
+  return (
+    <div>
+      <h2 id="report-section-title" className="sr-only">Overview</h2>
       {partial && r.partial_sections.length > 0 && (
-        <div className="mt-6 rounded-lg border border-viz-warning/40 bg-viz-warning/5 px-4 py-3 text-sm">
+        <div className="mb-6 rounded-lg border border-viz-warning/40 bg-viz-warning/5 px-4 py-3 text-sm">
           <p className="font-medium">Some sections are incomplete</p>
           <ul className="mt-1 list-disc pl-5 text-muted-foreground">{r.partial_sections.map((p) => <li key={p}>{p}</li>)}</ul>
         </div>
       )}
-
-      <section className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4" aria-label="Headline">
         <Fact label="Role alignment" value={r.headline.role_alignment} />
         <Fact label="Evidence coverage" value={`${r.headline.coverage.tested} of ${r.headline.coverage.total}`}
               note="competencies sufficiently tested" />
@@ -99,136 +371,24 @@ function Report({ report: r, partial, sessionId }: { report: IIReport; partial: 
         <p className="mt-8 max-w-[68ch] text-lg leading-relaxed text-foreground">{r.executive_assessment}</p>
       )}
 
-      {/* ---------------- layer 2: strengths and development areas */}
-      <section className="mt-12 grid gap-10 md:grid-cols-[2fr_3fr]">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">What you demonstrated</h2>
-          {r.strengths.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">No strength was backed by enough evidence to state it with confidence.</p>
-          ) : (
-            <ul className="mt-4 space-y-4">
-              {r.strengths.map((s) => (
-                <li key={s.title} className="border-l-2 border-viz-good pl-4">
-                  <p className="font-medium">{s.title}</p>
-                  {s.why_it_matters && <p className="mt-1 text-sm text-muted-foreground">{s.why_it_matters}</p>}
-                  <Refs refs={s.evidence_refs} />
-                </li>
-              ))}
-            </ul>
+      {(topGap || topStrength) && (
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          {topStrength && (
+            <button type="button" onClick={() => go('feedback')}
+                    className="rounded-lg border border-border p-4 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+              <span className="block text-xs text-muted-foreground">Your clearest strength</span>
+              <span className="mt-1 block font-medium">{topStrength.title}</span>
+            </button>
+          )}
+          {topGap && (
+            <button type="button" onClick={() => go('feedback')}
+                    className="rounded-lg border border-border p-4 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+              <span className="block text-xs text-muted-foreground">Work on this first</span>
+              <span className="mt-1 block font-medium">{topGap.title}</span>
+            </button>
           )}
         </div>
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">What to work on</h2>
-          {r.development_areas.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              No development area met the evidence bar.{r.not_tested.length ? ' Several competencies were not tested — see the competency map.' : ''}
-            </p>
-          ) : (
-            <ol className="mt-4 space-y-6">
-              {r.development_areas.map((d, i) => <DevArea key={`${d.title}-${i}`} d={d} />)}
-            </ol>
-          )}
-        </div>
-      </section>
-
-      {/* ---------------- layer 3: competencies */}
-      <div className="mt-14">
-        <Disclosure id="competencies" defaultOpen title="Competency map"
-          summary="How each competency the role needs was evidenced. Hollow means it was not sufficiently tested — that is not a weakness.">
-          <CompetencyMap report={r} />
-        </Disclosure>
-
-        <Disclosure id="alignment" title="Role alignment"
-          summary="Each job requirement traced from your CV to the interview to the assessment.">
-          <AlignmentTable rows={r.role_alignment} nameOf={nameOf} />
-        </Disclosure>
-
-        <Disclosure id="learned" title="What the interviewer learned about you"
-          summary="Every item is grounded in something you said, or in what was missing.">
-          <div className="grid gap-8 sm:grid-cols-2">
-            <LearnedList title="Strong signals" items={learned.strong_signals} tone="good" />
-            <LearnedList title="Weak signals" items={learned.weak_signals} tone="warn" />
-            <LearnedList title="Claims that stayed unproven" items={learned.unproven_claims} />
-            <LearnedList title="Evidence that never appeared" items={learned.missing_evidence} />
-            <LearnedList title="What an interviewer might worry about" items={learned.potential_concerns} />
-          </div>
-        </Disclosure>
-
-        {/* ---------------- layer 4: evidence */}
-        <Disclosure id="moments" title="Critical moments"
-          summary={`${r.critical_moments.length} moments that shaped the assessment.`}>
-          <Moments report={r} nameOf={nameOf} />
-        </Disclosure>
-
-        {r.cv_claims.length > 0 && (
-          <Disclosure id="claims" title="CV claims investigated"
-            summary={`${r.cv_claims.filter((c) => c.status !== 'not_probed').length} of ${r.cv_claims.length} claims were probed.`}>
-            <ClaimList claims={r.cv_claims} />
-          </Disclosure>
-        )}
-
-        <Disclosure id="communication" title="Communication"
-          summary="Measured from your answers. Accent, grammar and phrasing are never assessed.">
-          <Communication report={r} />
-        </Disclosure>
-
-        <Disclosure id="coverage" title="Interview coverage" summary="What the interview actually assessed, section by section.">
-          <Coverage rows={r.coverage_map} />
-        </Disclosure>
-
-        {/* ---------------- layer 5: question level */}
-        <Disclosure id="questions" title="Question by question"
-          summary="Why each question was asked, what worked, what was missing and where a stronger answer would go.">
-          <Questions items={r.questions} />
-        </Disclosure>
-
-        {/* ---------------- layer 6: next */}
-        {r.next_questions.length > 0 && (
-          <Disclosure id="next" title="What the interviewer would ask next"
-            summary="If this were a real interview, these are the follow-ups your answers invite.">
-            <ol className="space-y-4">
-              {r.next_questions.map((q, i) => (
-                <li key={i} className="grid grid-cols-[1.5rem_1fr] gap-2">
-                  <span className="text-sm text-muted-foreground">{i + 1}.</span>
-                  <div>
-                    <p className="font-medium">{q.question}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Because: {q.gap}</p>
-                    <Refs refs={q.refs} />
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Disclosure>
-        )}
-
-        <Disclosure id="plan" defaultOpen title="Your preparation plan"
-          summary={r.preparation_plan.headline || 'Built from this interview — practise these before the next one.'}>
-          <PrepPlan report={r} nameOf={nameOf} />
-        </Disclosure>
-
-        {r.progress && (r.progress.deltas.length > 0 || r.progress.recurring.length > 0) && (
-          <Disclosure id="progress" title="Compared with your previous interviews"
-            summary="Only comparable assessments are compared: the same competency, scored with at least moderate confidence.">
-            <ProgressBlock report={r} />
-          </Disclosure>
-        )}
-
-        <Disclosure id="reattempt" title="Re-attempt your weak areas" summary="A shorter interview that targets only what you choose.">
-          <Reattempt report={r} sessionId={sessionId} />
-        </Disclosure>
-
-        <Disclosure id="transcript" title="Full transcript" summary="Supporting material — the assessment above is the product.">
-          <Transcript sessionId={sessionId} />
-        </Disclosure>
-      </div>
-
-      <footer className="mt-12 border-t border-border pt-6 text-xs text-muted-foreground">
-        <p>{r.transparency.note}</p>
-        <p className="mt-2">
-          Engine versions: {Object.entries(r.transparency.versions || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.
-        </p>
-        <p className="mt-2">This is preparation feedback, not a hiring decision or a prediction of one.</p>
-      </footer>
+      )}
     </div>
   );
 }
@@ -246,14 +406,20 @@ function Fact({ label, value, note }: { label: string; value: string; note?: str
 }
 
 function Refs({ refs }: { refs?: string[] }) {
+  const go = useContext(ReportNav);
   if (!refs || refs.length === 0) return null;
   return (
     <p className="mt-1.5 text-xs text-muted-foreground">
-      Evidence: {refs.map((x, i) => (
-        <a key={x} href={`#${x.startsWith('X') ? `q-${x}` : `ev-${x}`}`} className="underline-offset-2 hover:underline">
-          {x}{i < refs.length - 1 ? ', ' : ''}
-        </a>
-      ))}
+      Evidence: {refs.map((x, i) => {
+        // X# = a question, E# = a quote under a competency: open that section at that spot
+        const anchor = x.startsWith('X') ? `q-${x}` : `ev-${x}`;
+        return (
+          <a key={x} href={`#${anchor}`} className="underline-offset-2 hover:underline"
+             onClick={(e) => { e.preventDefault(); go(x.startsWith('X') ? 'questions' : 'competencies', anchor); }}>
+            {x}{i < refs.length - 1 ? ', ' : ''}
+          </a>
+        );
+      })}
     </p>
   );
 }
@@ -272,8 +438,11 @@ function DevArea({ d }: { d: DevelopmentArea }) {
   );
 }
 
-function CompetencyMap({ report }: { report: IIReport }) {
-  const [open, setOpen] = useState<string | null>(null);
+function CompetencyMap({ report, focus }: { report: IIReport; focus?: string }) {
+  const [open, setOpen] = useState<string | null>(() => {
+    const ref = focus?.startsWith('ev-') ? focus.slice(3) : null;
+    return ref ? report.competencies.find((c) => c.evidence.some((e) => e.ref === ref))?.competency_id || null : null;
+  });
   const byId = Object.fromEntries(report.competencies.map((c) => [c.competency_id, c]));
   const groups = report.health.length
     ? report.health.map((g) => ({ title: g.category, assessment: g.assessment, items: g.competency_ids.map((id) => byId[id]).filter(Boolean) }))
@@ -527,8 +696,11 @@ function Coverage({ rows }: { rows: IIReport['coverage_map'] }) {
   );
 }
 
-function Questions({ items }: { items: QuestionReview[] }) {
-  const [open, setOpen] = useState<string | null>(items.find((q) => q.importance === 'high')?.exchange_id || null);
+function Questions({ items, focus }: { items: QuestionReview[]; focus?: string }) {
+  const [open, setOpen] = useState<string | null>(() => {
+    const ref = focus?.startsWith('q-') ? focus.slice(2) : null;
+    return items.find((q) => q.ref === ref)?.exchange_id || items.find((q) => q.importance === 'high')?.exchange_id || null;
+  });
   return (
     <ol className="divide-y divide-border">
       {items.map((q) => (
