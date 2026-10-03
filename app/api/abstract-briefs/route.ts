@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single();
   if (effectiveTier(profile) === 'free') {
     return NextResponse.json(
-      { error: 'Viewing GD briefs is a Lite/Pro feature' },
+      { error: 'Viewing GD briefs is a Pro feature' },
       { status: 403 },
     );
   }

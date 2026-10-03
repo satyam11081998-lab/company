@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Script from "next/script";
-import { Check, Star, Zap, ShieldCheck, Sparkles, Minus, Ticket, X } from "lucide-react";
+import { Check, Star, ShieldCheck, Sparkles, Minus, Ticket, X } from "lucide-react";
 import { useUser } from "@/components/user-context";
 import TeamsContactBanner from "@/components/teams-contact-banner";
 import { toast } from "sonner";
@@ -227,6 +227,11 @@ export default function UpgradePage() {
             </p>
           </div>
         )}
+        {current === "lite" && (
+          <p className="-mt-6 text-center text-xs text-muted-foreground">
+            Lite is no longer sold. You keep everything in it until your plan ends; Pro includes all of it and more.
+          </p>
+        )}
 
         {/* Billing period toggle */}
         <div className="flex justify-center -mt-4">
@@ -258,8 +263,10 @@ export default function UpgradePage() {
         {/* Coupon code (Deck Vault Rewards & co.) */}
         <CouponBox coupon={coupon} onChange={setCoupon} />
 
-        {/* Pricing Cards — Free / Lite / Pro */}
-        <div className="grid md:grid-cols-3 gap-5 items-stretch">
+        {/* Pricing Cards — Free / Pro. Lite (₹299) is no longer sold (owner decision 2026-10-04):
+            existing Lite subscribers keep it until their plan ends (the tier still exists in
+            lib/tier and the payment routes), and the banner above tells them so. */}
+        <div className="grid md:grid-cols-2 gap-5 items-stretch max-w-4xl mx-auto">
           {/* Free */}
           <div className="ui-card flex flex-col h-full animate-slide-up" style={{ animationDelay: "60ms" }}>
             <div className="p-6 border-b border-border flex flex-col">
@@ -297,48 +304,6 @@ export default function UpgradePage() {
             </div>
           </div>
 
-          {/* Lite */}
-          <div className="ui-card flex flex-col h-full animate-slide-up" style={{ animationDelay: "120ms" }}>
-            <div className="p-6 border-b border-border flex flex-col">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-4 w-4 text-amber-500" />
-                <h2 className="text-lg font-bold text-foreground tracking-tight">Lite</h2>
-                {isCurrentPlan("lite") && <CurrentTag />}
-              </div>
-              <p className="text-xs text-muted-foreground">Practise beyond the daily pair.</p>
-              <PriceBlock tier="lite" period={period} coupon={coupon} />
-            </div>
-            <div className="p-6 flex-1 flex flex-col justify-between gap-8">
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2.5">
-                  <ShieldCheck className="h-4 w-4 text-foreground/70 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm font-semibold text-foreground leading-tight">Everything in Free</span>
-                </li>
-                <FeatureItem text="2 extra cases & guesstimates / day" />
-                <FeatureItem text="Unlimited re-attempts" />
-                <FeatureItem text="GD Briefs unlocked" />
-                <FeatureItem text="12 interviewer hints per case" />
-                <FeatureItem muted text="No bookmarks or cheat-sheet" cross />
-                <FeatureItem muted text="No worked case figures" cross />
-              </ul>
-              <button
-                onClick={() => handleUpgrade("lite")}
-                disabled={loading !== null || current === "pro" || isCurrentPlan("lite")}
-                className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50 mt-auto"
-              >
-                {current === "pro"
-                  ? "Included in Pro"
-                  : isCurrentPlan("lite")
-                  ? "Current Plan"
-                  : loading === "lite"
-                  ? "Processing..."
-                  : current === "lite"
-                  ? `Switch to ${BILLING_PERIOD_LABELS[period]}`
-                  : "Get Lite"}
-              </button>
-            </div>
-          </div>
-
           {/* Pro */}
           <div className="ui-card flex flex-col h-full animate-slide-up relative border-primary shadow-[0_0_15px_rgba(200,16,46,0.1)]" style={{ animationDelay: "180ms" }}>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -359,12 +324,14 @@ export default function UpgradePage() {
               <ul className="space-y-3">
                 <li className="flex items-start gap-2.5">
                   <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
+                  <span className="text-sm font-semibold text-foreground leading-tight">Everything in Free</span>
                 </li>
                 <FeatureItem text="Worked case figures — the profit bridge, the 2×2 and the driver tree behind every case you solve, drawn from its own numbers" />
                 <FeatureItem text="Prep Copilot — agentic AI coach: finds your weak spots, generates made-for-you cases, and builds a weekly plan" />
                 <FeatureItem text="CV Pointer Lab — strict-fit resume bullet writer (free)" />
                 <FeatureItem text="Unlimited practice bank" />
+                <FeatureItem text="Unlimited re-attempts" />
+                <FeatureItem text="Unlimited GD briefs" />
                 <FeatureItem text="20 interviewer hints per case & model Q&A" />
                 <FeatureItem text="Bookmarks & personal cheat-sheet" />
                 <FeatureItem text="Interviewer simulator" />

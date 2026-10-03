@@ -58,8 +58,8 @@ export function AddToCheatSheetButton({
     return (
       <Link
         href="/upgrade"
-        title="Saving to your cheat sheet is a Lite/Pro feature"
-        aria-label="Saving to your cheat sheet is a Lite/Pro feature"
+        title="Saving to your cheat sheet is a Pro feature"
+        aria-label="Saving to your cheat sheet is a Pro feature"
         className="shrink-0 text-muted-foreground/50 transition-colors hover:text-muted-foreground"
       >
         <Lock className="h-4 w-4" />
