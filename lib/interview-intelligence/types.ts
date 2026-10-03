@@ -12,13 +12,20 @@ export type EvidenceState = 'strong' | 'moderate' | 'weak' | 'contradictory' | '
 export type Confidence = 'high' | 'moderate' | 'low';
 export type AssessmentConfidence = 'high' | 'moderate' | 'limited';
 
+export type IIPlanLevel = 'free' | 'pro' | 'ultra';
+
 /** The caller's plan (access/plans.py). Shown, not charged: no payment is wired yet. */
 export interface IIPlanStatus {
   via: string | null;
+  /** Whose limits apply: free (the one free interview) | pro | ultra (also test users and admins). */
+  level?: IIPlanLevel | null;
   /** May this account see the plans page (only people with Interview Intelligence, while in preview). */
   visible: boolean;
   trial: { minutes: number; available: boolean; in_progress: boolean; used: boolean; session_id: string | null } | null;
+  pro?: { minutes: number; monthly_interviews: number; started_last_30d: number; left: number } | null;
   ultra: { monthly_interviews: number; started_last_30d: number; left: number } | null;
+  /** Interview types this account can't use, with the plan that includes each. The server enforces it. */
+  locked_modes?: Record<string, IIPlanLevel>;
 }
 
 export interface IIPlans {
@@ -26,7 +33,13 @@ export interface IIPlans {
   preview: boolean;
   currency: 'INR';
   trial: { minutes: number; open_to_everyone: boolean };
-  ultra: { price_inr: number; monthly_interviews: number; interested: boolean };
+  /** open = Interview Intelligence is switched on for Pro (until then Pro interviews are a preview). */
+  pro?: { minutes: number; monthly_interviews: number; open?: boolean };
+  ultra: { price_inr: number; monthly_interviews: number; durations?: number[]; interested: boolean };
+  /** The voice engine each plan's calls use (they differ only if the admin set a cheaper one for Free/Pro). */
+  voice?: Record<IIPlanLevel, 'realtime' | 'gemini' | 'standard'>;
+  /** Every interview type with the plan that first includes it. */
+  modes?: { id: string; label: string; plan: IIPlanLevel }[];
   you: IIPlanStatus;
 }
 

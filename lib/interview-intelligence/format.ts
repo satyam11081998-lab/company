@@ -18,6 +18,9 @@ export const MODES: { id: string; label: string; blurb: string; group: 'core' | 
   { id: 'grill', label: 'Grill', blurb: 'High scrutiny, low tolerance for vague answers. Never hostile.', group: 'pressure' },
 ];
 
+/** Plan names as the candidate sees them (Free = the one free interview). */
+export const PLAN_NAME: Record<'free' | 'pro' | 'ultra', string> = { free: 'Free', pro: 'Pro', ultra: 'Ultra' };
+
 export const DIFFICULTIES = [
   { id: 'easy', label: 'Easy', blurb: 'More guidance, gentler follow-ups.' },
   { id: 'medium', label: 'Medium', blurb: 'A normal interview.' },

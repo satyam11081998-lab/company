@@ -228,9 +228,12 @@ export type GrantType = 'test' | 'trial' | 'ultra';
 export interface AdminPlans {
   config: { visibility: 'access' | 'off'; trial_open: boolean; trial_minutes: number; trial_max_prepared: number;
             ultra_price_inr: number; ultra_monthly_interviews: number;
-            trial_voice_engine: 'same' | 'realtime' | 'gemini' | 'standard' };
+            trial_voice_engine: 'same' | 'realtime' | 'gemini' | 'standard';
+            pro_limits?: boolean; pro_interview_minutes?: number; pro_monthly_interviews?: number;
+            pro_voice_engine?: 'same' | 'realtime' | 'gemini' | 'standard' };
   grants: Record<string, number>;
-  last_90_days: Record<'trial' | 'ultra', { prepared: number; started: number; completed: number }>;
+  last_90_days: Record<'trial' | 'ultra', { prepared: number; started: number; completed: number }>
+    & { pro?: { prepared: number; started: number; completed: number } };
   interest: { ultra: number; recent: { email: string; at: string; via: string | null }[] };
 }
 

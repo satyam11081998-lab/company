@@ -206,7 +206,7 @@ function HubInner({ me }: { me: IIMe }) {
   );
 }
 
-/** One line about the caller's plan: the free interview (before / during / after) or Ultra's allowance. */
+/** One line about the caller's plan: the free interview (before / during / after), Pro's or Ultra's allowance. */
 function PlanNote({ me }: { me: IIMe }) {
   const plan = me.plan;
   const trial = plan?.trial;
@@ -215,7 +215,7 @@ function PlanNote({ me }: { me: IIMe }) {
       <div className="mt-6 flex flex-col gap-3 rounded-xl border border-border bg-muted/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-medium">That was your free interview</p>
-          <p className="text-sm text-muted-foreground">Your report and transcript stay here. Ultra gives you full-length interviews every month.</p>
+          <p className="text-sm text-muted-foreground">Your report and transcript stay here. Pro has 20-minute interviews every month; Ultra has full-length ones.</p>
         </div>
         {plan?.visible && <Button asChild variant="outline"><Link href="/interview-intelligence/plans">See plans</Link></Button>}
       </div>
@@ -227,6 +227,14 @@ function PlanNote({ me }: { me: IIMe }) {
         {trial.in_progress
           ? 'Your free interview is in progress. Finish it whenever you are ready.'
           : `Your free interview: ${trial.minutes} minutes, voice or text, with a full report. You get one, and it counts once you press Start.`}
+      </p>
+    );
+  }
+  if (plan?.pro) {
+    return (
+      <p className="mt-6 text-sm text-muted-foreground">
+        Pro · {plan.pro.left} of {plan.pro.monthly_interviews} interviews left in the last 30 days · {plan.pro.minutes} minutes each
+        {plan.visible && <> · <Link href="/interview-intelligence/plans" className="underline underline-offset-2">Compare plans</Link></>}
       </p>
     );
   }

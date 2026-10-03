@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check, FileUp, Loader2, AlertTriangle } from 'lucide-react';
+import { Check, FileUp, Loader2, AlertTriangle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ii, IIError } from '@/lib/interview-intelligence/api';
-import { DEPTHS, DIFFICULTIES, MODES, titleCase } from '@/lib/interview-intelligence/format';
+import { DEPTHS, DIFFICULTIES, MODES, PLAN_NAME, titleCase } from '@/lib/interview-intelligence/format';
 import { estimatePct, keywordCoverage, waitingProgress } from '@/lib/interview-intelligence/progress';
-import type { IIDocument, IIMe, IISession, InterviewConfigInput } from '@/lib/interview-intelligence/types';
+import type { IIDocument, IIMe, IIPlanLevel, IISession, InterviewConfigInput } from '@/lib/interview-intelligence/types';
 import { AccessGate, ErrorNote, Spinner } from './primitives';
 import ProgressCard from './ProgressCard';
 
@@ -57,6 +57,8 @@ function Setup({ me }: { me: IIMe }) {
   });
   const [company, setCompany] = useState({ name: '', notes: '' });
   const [session, setSession] = useState<IISession | null>(null);
+  // Interview types outside this account's plan (the server refuses them too).
+  const locked: Record<string, IIPlanLevel> = me.plan?.locked_modes || {};
   const building = useRef(false);
 
   useEffect(() => {
@@ -220,16 +222,25 @@ function Setup({ me }: { me: IIMe }) {
           <div>
             <h2 className="text-lg font-semibold">What kind of interview?</h2>
             <p className="mt-1 text-sm text-muted-foreground">Each type changes the interview plan, not just the wording.</p>
+            {Object.keys(locked).length > 0 && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Types marked Pro or Ultra aren’t in your plan yet.{' '}
+                {me.plan?.visible && <Link href="/interview-intelligence/plans" className="font-medium text-foreground underline underline-offset-2">Compare plans</Link>}
+              </p>
+            )}
             {(['core', 'focus', 'pressure'] as const).map((g) => (
               <fieldset key={g} className="mt-5">
                 <legend className="text-sm font-medium text-muted-foreground">
                   {g === 'core' ? 'Full interviews' : g === 'focus' ? 'Focused' : 'High scrutiny'}
                 </legend>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {MODES.filter((m) => m.group === g && (m.id !== 'technical_deep_dive' || me.flags.advanced_technical)).map((m) => (
-                    <Choice key={m.id} selected={cfg.mode === m.id} onSelect={() => setCfg({ ...cfg, mode: m.id })}
-                      title={m.label} body={m.blurb} />
-                  ))}
+                  {MODES.filter((m) => m.group === g && (m.id !== 'technical_deep_dive' || me.flags.advanced_technical))
+                    // the types in your plan first; the rest show which plan has them
+                    .sort((a, b) => Number(Boolean(locked[a.id])) - Number(Boolean(locked[b.id])))
+                    .map((m) => (
+                      <Choice key={m.id} selected={cfg.mode === m.id} onSelect={() => setCfg({ ...cfg, mode: m.id })}
+                        title={m.label} body={m.blurb} locked={locked[m.id]} />
+                    ))}
                 </div>
               </fieldset>
             ))}
@@ -259,8 +270,10 @@ function Setup({ me }: { me: IIMe }) {
             <h2 className="text-lg font-semibold">How long?</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {me.access.via === 'trial'
-                ? `Your free interview is ${me.limits.allowed_durations[0] || 15} minutes. You get one, and it counts once you press Start.`
-                : 'A full interview is about 40–45 minutes. You can end early at any point.'}
+                ? `Your free interview is ${me.limits.allowed_durations[0] || 10} minutes. You get one, and it counts once you press Start.`
+                : me.plan?.pro
+                  ? `Pro interviews are ${me.plan.pro.minutes} minutes. You have ${me.plan.pro.left} of ${me.plan.pro.monthly_interviews} left in the last 30 days; one counts once you press Start.`
+                  : 'A full interview is about 40–45 minutes. You can end early at any point.'}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {me.limits.allowed_durations.map((m) => (
@@ -295,7 +308,23 @@ function Setup({ me }: { me: IIMe }) {
   );
 }
 
-function Choice({ selected, onSelect, title, body }: { selected: boolean; onSelect: () => void; title: string; body: string }) {
+function Choice({ selected, onSelect, title, body, locked }: {
+  selected: boolean; onSelect: () => void; title: string; body: string; locked?: IIPlanLevel;
+}) {
+  if (locked) {
+    return (
+      <div aria-disabled className="rounded-lg border border-dashed border-border px-4 py-3 text-left">
+        <span className="flex items-center justify-between gap-2">
+          <span className="font-medium text-muted-foreground">{title}</span>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Lock className="h-3 w-3" aria-hidden /> {PLAN_NAME[locked]}
+          </span>
+        </span>
+        <span className="mt-0.5 block text-sm text-muted-foreground/80">{body}</span>
+        <span className="sr-only">Not in your plan: part of {PLAN_NAME[locked]}.</span>
+      </div>
+    );
+  }
   return (
     <button
       type="button" onClick={onSelect} aria-pressed={selected}

@@ -175,9 +175,14 @@ const PLAN_FIELDS: { key: string; label: string; help: string; kind: 'bool' | 'n
     options: [{ value: 'access', label: 'People with access' }, { value: 'off', label: 'Admins only' }] },
   { key: 'plans.trial_open', label: 'Free interview for everyone', kind: 'bool', help: 'The public launch switch. On = every signed-in account gets one free interview. Off = only accounts you give a "Free interview" grant.' },
   { key: 'plans.trial_minutes', label: 'Free interview length (minutes)', kind: 'number', help: '5–60. The interview stops at this length plus a little grace.' },
-  { key: 'plans.trial_voice_engine', label: 'Free interview voice', kind: 'enum', help: 'Run free interviews on a cheaper voice engine than everyone else. Same = the main voice setting.',
+  { key: 'plans.trial_voice_engine', label: 'Free interview voice', kind: 'enum', help: 'Run free interviews on a cheaper voice engine than Ultra. Same = the main voice setting. The plans page says so when they differ.',
     options: [{ value: 'same', label: 'Same' }, { value: 'realtime', label: 'OpenAI live' }, { value: 'gemini', label: 'Gemini live' }, { value: 'standard', label: 'Standard' }] },
   { key: 'plans.trial_max_prepared', label: 'Free interviews a trial account may prepare', kind: 'number', help: 'Building an interview costs a little AI; this stops endless re-builds before one is started.' },
+  { key: 'plans.pro_limits', label: 'Pro plan limits', kind: 'bool', help: 'On = Pro gets its plan: interviews of the length below, the number below every 30 days, the everyday and role-specific interview types. Off = Pro gets every type and length (only matters once Interview Intelligence is on for Pro).' },
+  { key: 'plans.pro_interview_minutes', label: 'Pro interview length (minutes)', kind: 'number', help: '5–60. Every Pro interview is this long.' },
+  { key: 'plans.pro_monthly_interviews', label: 'Pro interviews per 30 days', kind: 'number', help: '1–100. Counted when an interview starts.' },
+  { key: 'plans.pro_voice_engine', label: 'Pro interview voice', kind: 'enum', help: 'Run Pro interviews on a cheaper voice engine than Ultra. Same = the main voice setting. The plans page says so when they differ.',
+    options: [{ value: 'same', label: 'Same' }, { value: 'realtime', label: 'OpenAI live' }, { value: 'gemini', label: 'Gemini live' }, { value: 'standard', label: 'Standard' }] },
   { key: 'plans.ultra_price_inr', label: 'Ultra price (₹ / month)', kind: 'number', help: 'Shown on the plans page only. Nothing is charged until payments are wired.' },
   { key: 'plans.ultra_monthly_interviews', label: 'Ultra interviews per 30 days', kind: 'number', help: 'Fair use: each live voice interview has a real cost.' },
 ];
@@ -203,13 +208,15 @@ function PlansTab() {
       <div className="rounded-xl border border-border bg-card p-5 text-sm">
         <h2 className="font-semibold">Preview, not public</h2>
         <p className="mt-1 text-muted-foreground">
-          The plans page shows the free interview, Pro and Ultra. Nobody is charged: Ultra’s button records interest.
-          Give someone Ultra with an access grant of type Ultra. <a className="underline underline-offset-2" href="/interview-intelligence/plans">Open the plans page</a>
+          The plans page shows Free (one interview), Pro and Ultra. Nobody is charged: Ultra’s button records interest.
+          Give someone Ultra with an access grant of type Ultra. Which interview types each plan has is fixed in the
+          server (access/plans.py) and enforced there. <a className="underline underline-offset-2" href="/interview-intelligence/plans">Open the plans page</a>
         </p>
-        <dl className="mt-4 grid gap-4 sm:grid-cols-4">
+        <dl className="mt-4 grid gap-4 sm:grid-cols-5">
           <Stat label="Asked to be told when Ultra opens" value={data.interest.ultra} />
           <Stat label="Free interviews started (90 d)" value={`${data.last_90_days.trial.started} of ${data.last_90_days.trial.prepared} prepared`} />
           <Stat label="Free interviews finished (90 d)" value={data.last_90_days.trial.completed} />
+          <Stat label="Pro interviews started (90 d)" value={data.last_90_days.pro?.started ?? 0} />
           <Stat label="Grants: full / free / Ultra" value={`${data.grants.test || 0} / ${data.grants.trial || 0} / ${data.grants.ultra || 0}`} />
         </dl>
       </div>

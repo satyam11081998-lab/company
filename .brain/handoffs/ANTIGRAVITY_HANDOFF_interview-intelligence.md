@@ -1,6 +1,6 @@
 # ANTIGRAVITY_HANDOFF — interview-intelligence (host mode)
 
-**Author:** Claude (cloud session, Project "project"). **Date:** 2026-10-02, seventh pass 2026-10-03 (revised the same
+**Author:** Claude (cloud session, Project "project"). **Date:** 2026-10-02, seventh pass 2026-10-03, eighth pass 2026-10-04 (revised the same
 day: the separate Render service was dropped at the owner's request — no paid instance, no
 new AI keys).
 **Feature:** MECE Interview Intelligence (II) — CV + JD → adaptive interview → evidence-traced
@@ -332,8 +332,54 @@ no plan on the ready screen, spoken opening with agenda, report → "That was yo
 hub read-only), plans page desktop + phone (no sideways scroll), interest recorded once, admin Plans,
 Test users with types, Inspect shows the plan.
 
+## Plan limits: Free 10 min, Pro 20 min, Ultra everything (eighth pass, 2026-10-04)
+
+```
+touches:  consilio-backend
+            EDIT interview-intelligence/interview_intelligence/access/{plans,flags}.py   (MODE_PLAN, plan_level,
+                 required_plan, locked_modes, durations_for, engines_by_plan; flags plans.trial_minutes 15->10,
+                 NEW plans.pro_limits / pro_interview_minutes / pro_monthly_interviews / pro_voice_engine)
+            EDIT interview-intelligence/interview_intelligence/interview_engine/sessions.py  (mode + length per
+                 plan on prepare AND on start; Pro allowance; re-pressing Start is not a new interview)
+            EDIT interview-intelligence/interview_intelligence/api/{routes,admin_routes}.py  (/me durations per
+                 plan; /reattempt is Ultra; /admin/plans Pro stats)
+            EDIT interview-intelligence/{tests/conftest.py, tests/test_breadth_and_plans.py (+9 tests),
+                 qa/simulate_interview.py, docs/BUILD_STATUS.md §0f, docs/J_ADMIN_ACCESS.md, docs/C_API_CONTRACT.md}
+          consilio
+            EDIT components/interview-intelligence/{Plans,SetupFlow,Hub,ReportView}.tsx, admin/IIAdminClient.tsx;
+                 lib/interview-intelligence/{types,format,api}.ts
+          database: none (new settings are rows in II's system_config, defaults in code)
+breaking: no CONTRACTS.md surface. II's own API: /me gains plan.level, plan.pro, plan.locked_modes;
+          /plans gains pro, modes, voice, ultra.durations; new error codes plan_mode_locked (403),
+          plan_duration_locked (403), pro_monthly_limit (429). Only II's own frontend reads them.
+```
+
+Owner decision (2026-10-04): Free = one 10-minute interview, Pro = 20-minute interviews, Ultra = full
+interviews; the plans table must read as a staircase and be transparent. What landed:
+* Interview types per plan (server-enforced, `access/plans.py MODE_PLAN`): every plan — Mixed, CV + JD,
+  HR/behavioural, Case; Pro adds Functional, Technical, Situational, CV deep dive, Company + role; Ultra
+  adds Hiring manager, Final round, Technical deep dive, CV defence, Pressure, Grill and the re-attempt.
+* Pro: 20 minutes, 2 started per 30 days (both in Admin → Plans), only while `ii.enabled_for_pro` is on.
+  `plans.pro_limits` off = Pro gets everything (the old behaviour). Test grants and admins: no limits.
+* Plans page: cards (Free 10 min · Pro 2 a month of 20 min · Ultra 10 a month, full length) and one table
+  grouped In every plan → Added in Pro → Added in Ultra; a tick carries its limit underneath ("2 a month",
+  "20 min"), a cross means not in that plan. No Lite column. Interview rows come from `/v1/plans` (the
+  values the server enforces), case rows from `TIER_LIMITS`.
+* Setup shows types outside the plan with a lock and the plan's name; the length step says "Pro
+  interviews are 20 minutes. You have N of M left"; the hub shows Pro's allowance; the report's
+  re-attempt says it is part of Ultra.
+
+Check after deploy: Admin → Plans → "Free interview length" should read 10. If an admin ever saved 15,
+that saved value wins over the new default — set it to 10 there.
+
+Gates (2026-10-04): II suite 331 passed (Postgres 16) / 330 + 1 skipped (SQLite); `tsc --noEmit` EXIT 0;
+`next build` OK (copy); browser walk-through: Free hub "10 minutes", setup with locked types, Pro hub
+allowance, Pro setup + "Pro interviews are 20 minutes", plans page desktop + phone (no sideways scroll,
+no "Lite"), a finished Pro interview's report says the re-attempt is Ultra, Admin → Plans with the Pro
+settings.
+
 ## Proposed LEDGER row
-| Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, LIVE for admins + test users**; plans layer (free interview, Ultra by grant, plans page) BUILT and NOT public; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence (incl. plans), app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest); news_headlines read-only; lib/tier priceFor read-only |
+| Interview Intelligence | Cloud (this session) | main (both repos) | **BUILT, LIVE for admins + test users**; plans layer (Free 10-min interview, Pro 20-min with a monthly allowance, Ultra by grant, staircase plans page) BUILT and NOT public; real-model quality gate pending (Phase 5) | consilio-backend: interview-intelligence/, routes/interview_intelligence.py, main.py (mount), requirements.txt; consilio: app/(app)/interview-intelligence (incl. plans), app/(app)/admin/interview-intelligence, components/interview-intelligence, lib/interview-intelligence, app/api/interview-intelligence (dormant) | C6 read-only (users.subscription_tier, subscription_expires_at, is_admin, is_guest); news_headlines read-only; lib/tier priceFor read-only |
 
 ## Superseded
 - The standalone repo `satyam11081998-lab/interview-intelligence` is superseded by

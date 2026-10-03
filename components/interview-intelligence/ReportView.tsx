@@ -322,6 +322,15 @@ function Report({ report: r, partial, sessionId }: { report: IIReport; partial: 
                             </Link>
                           )}
                         </div>
+                      ) : me?.plan?.locked_modes?.weakness_targeting ? (
+                        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
+                          <p>A follow-up interview built from this report’s weak areas is part of Ultra.</p>
+                          {me.plan.visible && (
+                            <Link href="/interview-intelligence/plans" className="mt-1 inline-block font-medium underline underline-offset-2">
+                              Compare plans
+                            </Link>
+                          )}
+                        </div>
                       ) : <Reattempt report={r} sessionId={sessionId} />}
                     </div>
                   </div>
