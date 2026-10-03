@@ -153,6 +153,10 @@ export const PUBLIC_ROUTES: string[] = [
   // exactly that. Social proof; nothing on the page is user-specific.
   '/testimonials',
   '/glossary',
+  // Growth Agent articles (/insights, /insights/<slug>), 2026-10-04. In the sitemap since the
+  // agent shipped but missing here, so every logged-out reader and crawler got a 307 to /login and
+  // no article could be indexed. Public by design: published rows only (RLS + status filter).
+  '/insights',
   '/learn',
   // Shared cheat sheets: mece.in/s/<id>. The entire point is that a stranger
   // with the link can open the PDF, so this must resolve logged-out.
