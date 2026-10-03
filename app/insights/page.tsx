@@ -6,9 +6,9 @@ import { getPublishedSeoPages } from '@/lib/seo-pages';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Insights — case & GD breakdowns of live business news — MECE',
+  title: 'Insights — business stories for MBA interviews and GDs — MECE',
   description:
-    'Fresh business stories turned into case-interview and group-discussion practice: how to structure them, size them in Rs, and lead with the answer.',
+    'A business story a day, with sourced facts and figures, turned into case-interview and group-discussion practice for MBA placements.',
   alternates: { canonical: `${SITE_URL}/insights` },
 };
 
@@ -24,8 +24,8 @@ export default async function InsightsIndex() {
 
       <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Insights</h1>
       <p className="mt-2 text-body text-muted-foreground">
-        Real business stories, turned into case-interview and group-discussion practice — how to structure
-        them, size them, and lead with the answer.
+        A business story a day, with sourced facts and figures, turned into case-interview and group-discussion
+        practice: what happened, why it matters, and how it can come up in your interview.
       </p>
 
       {pages.length === 0 ? (
@@ -40,7 +40,12 @@ export default async function InsightsIndex() {
                 href={`/insights/${p.slug}`}
                 className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
               >
-                <p className="text-strong font-semibold text-foreground">{p.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(p.published_at ?? p.created_at).toLocaleDateString('en-IN', {
+                    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata',
+                  })}
+                </p>
+                <p className="mt-0.5 text-strong font-semibold text-foreground">{p.title}</p>
                 {p.dek && <p className="mt-1 text-small text-muted-foreground">{p.dek}</p>}
               </Link>
             </li>

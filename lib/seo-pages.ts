@@ -20,6 +20,23 @@ export interface SeoContent {
   sections?: SeoSection[];
   takeaways?: string[];
   practice_prompt?: string;
+  // ---- the daily post (kind 'daily', format 'daily-1'; services/growth/daily_blog.py). Every
+  // factual sentence carries [n] markers that point at `sources` (numbered, resolved web pages).
+  format?: string;
+  summary?: string;
+  numbers?: { figure: string; what: string; sources?: number[] }[];
+  interview_angle?: { case?: string; gd?: string; questions?: string[] };
+  faq?: { q: string; a: string }[];
+  sources?: { n: number; label: string; url: string }[];
+  related?: { case?: SeoRelated; guesstimate?: SeoRelated };
+  words?: number;
+}
+
+/** A case or guesstimate in MECE's bank, matched to the article by the writer pipeline. */
+export interface SeoRelated {
+  id: string;
+  title: string;
+  type: 'case' | 'guesstimate';
 }
 
 export interface SeoSourceRef {
