@@ -63,6 +63,21 @@ Result: "no topic had at least 3 sourced facts" every time.
 - The workflow runs every 30 minutes from 07:00 to 11:30 IST; each run starts further down the list; once today's
   post exists every run is a no-op. From 11:00 a failed run says so on Telegram. The reviewer can reply `another`.
 
+## v2.1 (2026-10-06, after the first live run)
+The first live run (Admin → Growth) skipped every topic: **both research models are retired on this key**
+(`gemini-2.5-flash` → 404 "no longer available to new users", `gemini-2.0-flash` → 404 "no longer available").
+`GEMINI_MODEL` isn't set on Render, so the list never reached the model the rest of the backend uses.
+- Research models now: `DAILY_BLOG_RESEARCH_MODEL` → `GEMINI_MODEL` → the backend's own default
+  (`services/ai_providers._GEMINI_LLM`, gemini-3.6-flash, the one GD briefs run on) → `gemini-flash-latest`
+  → whatever the API lists for this key (`client.models.list()`, newest flash first, cached 1 h).
+- A model that answers "not found / no longer available" is skipped for 6 hours (one failed call, not one per topic).
+- If no Gemini model can search, **OpenAI's web search** (Responses API, `web_search` tool; `gpt-4.1` → `gpt-4o` →
+  `gpt-4.1-mini`, or `DAILY_BLOG_OPENAI_SEARCH_MODEL`) does the research; its citations link the facts.
+- Errors in the trace are short ("gemini-2.5-flash: not available on this key"); each topic shows the engine used.
+- Checked on real google-genai and OpenAI SDK response objects; tests 49/49.
+- Note: Prep Copilot's research (`services/copilot/research.py`) also defaults to gemini-2.5-flash; set
+  `COPILOT_RESEARCH_MODEL` (or `GEMINI_MODEL`) before Copilot launches.
+
 ## Telegram review (services/growth/telegram_review.py)
 - Each draft is sent in full to the admin chat (header with score, word count, sources, checks, why this topic;
   then the article; then "Reply publish …").
