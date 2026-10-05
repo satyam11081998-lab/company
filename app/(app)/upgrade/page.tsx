@@ -362,7 +362,6 @@ export default function UpgradePage() {
                   <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
                 </li>
                 <FeatureItem text="Worked case figures — the profit bridge, the 2×2 and the driver tree behind every case you solve, drawn from its own numbers" />
-                <FeatureItem text="Prep Copilot — agentic AI coach: finds your weak spots, generates made-for-you cases, and builds a weekly plan" />
                 <FeatureItem text="CV Pointer Lab — strict-fit resume bullet writer (free)" />
                 <FeatureItem text="Unlimited practice bank" />
                 <FeatureItem text="20 interviewer hints per case & model Q&A" />

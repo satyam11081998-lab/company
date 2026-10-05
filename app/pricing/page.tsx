@@ -15,6 +15,7 @@ import TeamsContactBanner from '@/components/teams-contact-banner';
 import AuthCTA from '@/components/auth-cta';
 import { VOICE_INTERVIEW_ENABLED } from '@/lib/constants';
 import TrackPageAction from '@/components/analytics/track-page-action';
+import { priceFor } from '@/lib/tier';
 import {
   pricingProductJsonLd,
   faqPageJsonLd,
@@ -27,7 +28,8 @@ import {
 export const metadata: Metadata = {
   title: 'Pricing',
   description:
-    'MECE pricing plans — Free, Lite (₹199/mo), and Pro (₹499/mo). Start practicing MBA placement interviews for free, upgrade when ready.',
+    // Prices from lib/tier (what Razorpay charges): this line said ₹199 / ₹499 long after the prices moved.
+    `MECE pricing plans — Free, Lite (₹${priceFor('lite', 'monthly')}/mo), and Pro (₹${priceFor('pro', 'monthly')}/mo). Start practicing MBA placement interviews for free, upgrade when ready.`,
   // hreflang (2026-09-25): India pricing here, international at /us/pricing.
   alternates: { canonical: '/pricing', languages: { ...HREFLANG_PRICING } },
 };
@@ -58,7 +60,7 @@ const FAQS = [
   {
     question: 'Is there a student discount?',
     answer:
-      'Our pricing is already built for MBA students on a budget. At ₹199–₹499/month, MECE is a fraction of what traditional prep coaching costs. We don\'t offer additional discounts at this time.',
+      `Our pricing is already built for MBA students on a budget. At ₹${priceFor('lite', 'monthly')}–₹${priceFor('pro', 'monthly')}/month, MECE is a fraction of what traditional prep coaching costs. We don't offer additional discounts at this time.`,
   },
   {
     question: 'What happens when my subscription expires?',
@@ -114,7 +116,6 @@ const FEATURES = [
   { name: 'Bookmarks', free: false, lite: false, pro: true },
   { name: 'Personal cheat-sheet', free: false, lite: false, pro: true },
   { name: 'Interviewer simulator', free: false, lite: false, pro: true },
-  { name: 'Prep Copilot (agentic AI coach)', free: false, lite: false, pro: true },
   // Voice interview: only listed when the feature actually ships. Spreading an
   // empty array is how a row disappears without leaving a hole in the table.
   ...(VOICE_INTERVIEW_ENABLED
@@ -127,8 +128,8 @@ const FEATURES = [
 
 const productJsonLd = pricingProductJsonLd([
   { name: 'Free', description: 'Full Casebook library, daily case & guesstimate, leaderboard & badges.', price: 0 },
-  { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 12 interviewer hints per case.', price: 199 },
-  { name: 'Pro', description: 'Everything in Lite plus Prep Copilot (an agentic AI coach that diagnoses your weak spots and builds a weekly plan), the worked figures behind every case you solve \u2014 profit bridge, 2\u00d72 and driver tree \u2014 unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
+  { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 12 interviewer hints per case.', price: priceFor('lite', 'monthly') },
+  { name: 'Pro', description: 'Everything in Lite plus the worked figures behind every case you solve \u2014 profit bridge, 2\u00d72 and driver tree \u2014 unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: priceFor('pro', 'monthly') },
 ]);
 
 const faqJsonLd = faqPageJsonLd(FAQS);

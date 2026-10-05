@@ -84,7 +84,6 @@ function featureRows(p: IIPlans): Row[] {
       pro: count(pro.maxReattempts) }),
     cases({ label: 'Worked figures for every case', note: 'Profit bridge, 2×2, driver tree', free: free.caseFigures,
       pro: pro.caseFigures }),
-    cases({ label: 'Prep Copilot', note: 'Finds your weak spots, makes cases for you, plans your week', free: false, pro: true }),
     cases({ label: 'Interviewer simulator', free: false, pro: true }),
     cases({ label: 'Deck Vault', free: false, pro: 'Lifetime' }),
   ];
@@ -194,7 +193,7 @@ function PlansInner({ me }: { me: IIMe }) {
         />
         <PlanCard
           name="Pro" price={prices.pro} period="/month"
-          lead={`Unlimited case practice, the worked figures and Prep Copilot, plus ${proIv.monthly_interviews} AI interviews a month of ${proIv.minutes} minutes.`}
+          lead={`Unlimited case practice and the worked figures behind every case, plus ${proIv.monthly_interviews} AI interviews a month of ${proIv.minutes} minutes.`}
           cta={me.access.via === 'pro'
             ? <Button variant="outline" className="w-full" disabled>Your plan</Button>
             : <Button asChild variant="outline" className="w-full"><Link href="/upgrade">See Pro</Link></Button>}

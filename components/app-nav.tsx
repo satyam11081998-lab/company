@@ -20,6 +20,9 @@ import Logo from '@/components/logo';
 import { CASEBOOK_TREE } from '@/lib/casebook/tree';
 import { useIIAccess } from '@/lib/interview-intelligence/useAccess';
 
+/** Prep Copilot is in development: keep it out of the Pro menu until it launches. */
+const PREP_COPILOT_IN_NAV = false;
+
 /**
  * The 27 Industry Primers, DERIVED from the casebook tree rather than
  * hand-listed, so adding or renaming one updates the nav automatically. A
@@ -145,7 +148,9 @@ export default function AppNav() {
     { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') && !isActive('/learn/casebook/industry-primers') },
     // Prep Copilot — the per-user agentic coach. Pro-only (the backend /coach
     // routes are the authoritative gate; this just hides the entry point).
-    ...(tier === 'pro' ? [{ href: '/coach', label: 'Prep Copilot' }] as NavLink[] : []),
+    // Hidden while it is in development (owner, 2026-10-06): not sold in Pro, not in the menu.
+    // /coach still opens by URL for testing. Flip PREP_COPILOT_IN_NAV when it launches.
+    ...(PREP_COPILOT_IN_NAV && tier === 'pro' ? [{ href: '/coach', label: 'Prep Copilot' }] as NavLink[] : []),
     ...II_LINKS,
     { href: '/resume', label: 'CV Pointer Lab' },
     { href: '/leaderboard', label: 'Leaderboard' },
