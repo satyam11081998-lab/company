@@ -19,7 +19,8 @@ export default function MobileDesktopBanner() {
     // The US / Europe experience (2026-09-26 redesign) is designed for phones
     // on purpose, so it never asks people to switch device: skip the /us pages
     // and any browser the middleware placed in the US or Europe.
-    if (pathname === '/us' || pathname.startsWith('/us/')) {
+    // MECE Insights articles are built for reading on a phone (most readers arrive from a shared link).
+    if (pathname === '/us' || pathname.startsWith('/us/') || pathname === '/insights' || pathname.startsWith('/insights/')) {
       setVisible(false);
       return;
     }

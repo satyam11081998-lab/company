@@ -10,6 +10,7 @@ const KIND_LABEL: Record<string, string> = {
   framework: 'Framework',
   toolkit: 'Toolkit',
   primer: 'Industry Primer',
+  insight: 'MECE Insights',
 };
 
 /**

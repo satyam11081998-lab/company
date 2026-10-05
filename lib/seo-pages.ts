@@ -37,7 +37,23 @@ export interface SeoContent {
   faq?: { q: string; a: string }[];
   sources?: { n: number; label: string; url: string }[];
   related?: { case?: SeoRelated; guesstimate?: SeoRelated };
+  // Pictures generated with Gemini for this article (services/growth/images.py), stored in the public
+  // Supabase bucket `insights`. `og_url` is a JPEG for link previews.
+  hero?: SeoImage;
+  images?: (SeoImage & { after_section?: number })[];
+  topic_label?: string;
+  pull_quote?: string;
   words?: number;
+}
+
+export interface SeoImage {
+  url: string;
+  og_url?: string;
+  width?: number;
+  height?: number;
+  alt?: string;
+  caption?: string;
+  credit?: string;
 }
 
 /** A case or guesstimate in MECE's bank, matched to the article by the writer pipeline. */

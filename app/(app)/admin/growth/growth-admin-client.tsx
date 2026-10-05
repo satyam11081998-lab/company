@@ -290,7 +290,7 @@ function DailyPanel({ authHeader, onCreated }: {
 }) {
   const [st, setSt] = useState<DailyStatus | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState<'preview' | 'draft' | 'telegram' | null>(null);
+  const [busy, setBusy] = useState<'preview' | 'draft' | 'telegram' | 'images' | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [run, setRun] = useState<DailyRun | null>(null);
 
@@ -349,6 +349,23 @@ function DailyPanel({ authHeader, onCreated }: {
     }
   }
 
+  // Gemini pictures for a post (services/growth/images.py): for posts written before pictures existed,
+  // or a retry when generation failed. Takes about a minute.
+  async function addPictures(id: string) {
+    setBusy('images'); setErr(null); setNote(null);
+    try {
+      const r = await call(`/seo/daily/images/${id}`, {}) as { ok: boolean; images?: number; errors?: string[]; reason?: string };
+      setNote(r.ok
+        ? `Pictures added (${r.images ?? 0} inline${r.errors?.length ? `; ${r.errors.join('; ')}` : ''}). A published page shows them within 10 minutes.`
+        : `No pictures: ${r.reason || (r.errors || []).join('; ') || 'Gemini returned none'}`);
+      load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Pictures failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const on = (b: boolean | undefined) => (b ? 'On' : 'Off');
   return (
     <div className="rounded-xl border border-border bg-card p-4">
@@ -374,7 +391,8 @@ function DailyPanel({ authHeader, onCreated }: {
           </button>
         </div>
       </div>
-      {busy && <p className="mt-2 text-xs text-muted-foreground">Researching and writing — this takes a minute or two.</p>}
+      {(busy === 'preview' || busy === 'draft') && <p className="mt-2 text-xs text-muted-foreground">Researching and writing — this takes a minute or two.</p>}
+      {busy === 'images' && <p className="mt-2 text-xs text-muted-foreground">Gemini is making the pictures — about a minute.</p>}
       {err && <p className="mt-2 flex items-center gap-1.5 text-xs text-red-600"><AlertTriangle className="h-3.5 w-3.5" />{err}</p>}
 
       {st && (
@@ -412,7 +430,11 @@ function DailyPanel({ authHeader, onCreated }: {
       {st?.today && (
         <p className="mt-3 text-xs">
           <span className="text-muted-foreground">Today:</span> <span className="font-medium">{st.today.title}</span>{' '}
-          <span className="text-muted-foreground">({st.today.status}, QA {st.today.quality_score ?? '—'})</span>
+          <span className="text-muted-foreground">({st.today.status}, QA {st.today.quality_score ?? '—'})</span>{' '}
+          <button onClick={() => addPictures(st.today!.id)} disabled={busy !== null}
+            className="ml-1 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 font-medium text-foreground hover:bg-muted/40 disabled:opacity-50">
+            {busy === 'images' ? <Loader2 className="h-3 w-3 animate-spin" /> : null} Add or redo pictures (Gemini)
+          </button>
         </p>
       )}
       {st && (
@@ -438,6 +460,10 @@ function DailyPanel({ authHeader, onCreated }: {
           <p><span className="font-semibold">{run.status}</span> <span className="text-muted-foreground">· {run.reason}</span></p>
           {run.page && (
             <div className="mt-2 space-y-1">
+              {run.page.content?.hero?.url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={run.page.content.hero.url} alt={run.page.content.hero.alt || ''} className="mb-2 aspect-[16/9] w-full max-w-sm rounded-md object-cover" />
+              )}
               <p className="text-sm font-semibold text-foreground">{run.page.title}</p>
               {run.page.content?.summary && <p className="text-muted-foreground">{run.page.content.summary}</p>}
               <p className="text-muted-foreground">QA {run.page.quality_score ?? '—'} · {run.page.content?.words ?? '?'} words ·{' '}

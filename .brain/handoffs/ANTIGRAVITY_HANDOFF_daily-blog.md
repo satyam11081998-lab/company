@@ -1,6 +1,6 @@
 # ANTIGRAVITY_HANDOFF — daily-blog (Growth Agent: one sourced article a day on /insights)
 
-**Author:** Claude (cloud session, Project "project"). **Dates:** 2026-10-04 (v1), 2026-10-06 (v2: fix + Telegram review).
+**Author:** Claude (cloud session, Project "project"). **Dates:** 2026-10-04 (v1), 2026-10-06 (v2: fix + Telegram review; v3: essay-magazine design + Gemini pictures).
 **Owner asks:**
 - 2026-10-04: a daily morning post on a trending, non-controversial business topic for the MBA audience, with
   facts and figures, not machine-sounding, with practice that brings readers to MECE.
@@ -107,6 +107,79 @@ py_compile; `tsc --noEmit` EXIT 0; `next build` OK (copy); browser: a 'daily-2' 
 (Article + FAQPage JSON-LD, citations link to sources, aspirant section).
 **Not verified here: a run against the live models and Telegram** (no network to them from the build sessions).
 First run after deploy: Admin → Growth → Daily post → "Write today's post as a draft" — it should arrive on Telegram.
+
+## v3 (2026-10-06): essay-magazine design + Gemini pictures
+**Owner ask:** "make it like Aeon essays visually … equal or better. Add photos and all, everything." and
+"if image generation is needed, use Gemini only".
+
+```
+touches:  consilio-backend
+            NEW  services/growth/images.py          Gemini-only image generation (no other provider), Pillow -> WebP
+                                                     + 1200 px JPEG link preview, public Supabase Storage bucket `insights`
+            EDIT services/growth/daily_blog.py      writer also returns topic, pull_quote and art direction (hero + 2 inline);
+                                                     pictures made before the draft is saved; add_images() for older posts
+            EDIT services/growth/telegram_review.py the draft arrives on Telegram with its hero picture first
+            EDIT routes/seo.py                       + POST /seo/daily/images/{id} (admin, rate-limited, budget-checked)
+            EDIT tests/test_daily_blog.py            59 checks
+          consilio
+            NEW  components/insights/parts.tsx, components/insights/ReadingChrome.tsx
+            EDIT app/insights/[slug]/page.tsx, app/insights/page.tsx   the new reading experience (below)
+            EDIT lib/seo-pages.ts                    SeoContent + hero, images, topic_label, pull_quote (all optional)
+            EDIT app/og/route.tsx                    + kind=insight badge ("MECE Insights") for posts without a picture
+            EDIT components/mobile-desktop-banner.tsx  not shown on /insights (articles are read on phones)
+            EDIT app/(app)/admin/growth/growth-admin-client.tsx  "Add or redo pictures (Gemini)", hero thumbnail on a run
+          database: none. Storage: bucket `insights` (public), created by the backend on first use.
+breaking: no. C4 (routes) additive: one admin route. Content JSON additive; 'daily-1', 'daily-2' without pictures and
+          the older news_case pages all still render.
+```
+
+### The design (after studying aeon.co essays)
+Aeon: black stage with a large picture and caption, a big serif title and standfirst, one serif reading column,
+pull quotes in the topic colour, word count and share row, related essays with pictures. MECE Insights now has all of
+that, plus what an MBA reader needs that Aeon doesn't have:
+- **Stage:** picture (16:9, capped at 62% of the screen so the title shows on a laptop), caption + "Image generated with
+  Gemini" credit, topic label in its colour, Newsreader title, standfirst, byline. No picture → a typographic stage
+  with a glow in the topic colour.
+- **Meta bar:** date, word count, reading time; share to WhatsApp, LinkedIn, X, copy link. Reading-progress hairline.
+- **Column (680 px, Newsreader ~20 px):** "In brief" (numbered key points), drop cap, section heads, pictures that
+  break wider than the text (after the section the writer chose), pull quote, stat strip ("By the numbers"), the
+  consulting lens as a numbered sidebar, What to watch, a tinted **For MBA aspirants** panel (GD topic, for/against,
+  PI questions, WAT prompt, the case), a black "Could you crack this in an interview?" practise block with the related
+  case, FAQ, numbered notes (citations are superscripts that jump to them), an author box, "More from MECE Insights"
+  (same topic first).
+- **Index:** masthead, lead essay large, "Sourced / Explained / Practised" strip, a 3-column grid of the latest nine,
+  an archive list, a practise band. Topic colours: Strategy, Marketing, Finance, Operations, Technology, Economy,
+  Careers. Posts without a picture get a cover in their topic colour with the MECE mark.
+- **Dark mode** throughout (topic colours lifted for contrast). No horizontal scroll on a 390 px phone.
+- **SEO:** title no longer doubles up ("X — MECE · MECE" from the root template; now "X | MECE Insights"); og:image is
+  the hero's 1200 px JPEG (or a generated /og card); Article (+ image, section, word count), BreadcrumbList and
+  FAQPage JSON-LD; CollectionPage + ItemList on the index. Article ISR 10 min (was 1 h) so added pictures show soon.
+
+### Pictures (services/growth/images.py)
+- The writer (same call, no extra model call) returns art direction: a hero and two inline scenes, each with alt
+  text and a caption. One house style for every picture: documentary editorial photography, India, natural light,
+  **no text, logos, brands or recognisable real people**.
+- Model: `DAILY_BLOG_IMAGE_MODEL` if set, else the newest `gemini-*image*` model this key lists, else
+  `gemini-2.5-flash-image`. Retired models are skipped for 6 h. Three pictures are made in parallel.
+- Stored in Supabase Storage, bucket `insights`, public, `{slug}/hero-0-xxxx.webp`, `{slug}/og-xxxx.jpg`,
+  `{slug}/inline-n-xxxx.webp` (cache one year; new names when regenerated).
+- Never blocks a post: no key, no model or a failed upload means an article without that picture (the errors are kept
+  in `agent_meta.image_errors` and shown on the admin run).
+- Older posts: Admin → Growth → Daily post → "Add or redo pictures (Gemini)" (plans the art from the article if it
+  has none, and fills in the topic label).
+- The notes say the pictures are generated and illustrative.
+- **Cost:** image calls are not counted in the daily AI budget (`assert_daily_budget` gates the route, but the
+  image tokens aren't logged). Three images a day; watch the Gemini bill the first week.
+
+### Gates (v3)
+`python -m tests.test_daily_blog` 59/59 (adds: art direction kept out of the page, pictures attached, a dry run
+makes none, house style + aspect ratios, WebP + 1200 px OG JPEG, a failed picture never breaks the article,
+add_images on an older post + topic label); py_compile; `tsc --noEmit` EXIT 0; `next build` OK (copy); browser
+(Playwright, sample data with placeholder pictures): article + index, desktop 1440 and phone 390, light and dark, no
+horizontal overflow, og:image 1200×675, JSON-LD Article/BreadcrumbList/FAQPage.
+**Not verified here:** a live Gemini image call and the Storage upload (no network to them from the build sessions).
+First check after deploy: Admin → Growth → "Write today's post as a draft" → the Telegram draft should start with
+the picture; or "Add or redo pictures" on today's post.
 
 ## After merging
 `git push` in both repos, then `node .brain\sync.mjs` in consilio.
