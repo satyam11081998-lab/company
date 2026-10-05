@@ -16,14 +16,22 @@ export interface SeoSection {
 export interface SeoContent {
   intro?: string;
   why_it_matters?: string;
-  framework?: { heading?: string; steps?: string[] };
+  framework?: { heading?: string; steps?: string[]; name?: string };
   sections?: SeoSection[];
   takeaways?: string[];
   practice_prompt?: string;
-  // ---- the daily post (kind 'daily', format 'daily-1'; services/growth/daily_blog.py). Every
-  // factual sentence carries [n] markers that point at `sources` (numbered, resolved web pages).
+  // ---- the daily post (kind 'daily', format 'daily-1' or 'daily-2'; services/growth/daily_blog.py).
+  // Every factual sentence carries [n] markers that point at `sources` (numbered web pages; an
+  // entry without a url is a named source the search returned but could not link).
   format?: string;
   summary?: string;
+  key_points?: string[];
+  lede?: string;
+  what_to_watch?: string[];
+  aspirants?: {
+    gd_topic?: string; for?: string[]; against?: string[]; pi_questions?: string[];
+    wat_prompt?: string; case_question?: string;
+  };
   numbers?: { figure: string; what: string; sources?: number[] }[];
   interview_angle?: { case?: string; gd?: string; questions?: string[] };
   faq?: { q: string; a: string }[];

@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { SITE_URL } from '@/lib/seo';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
 
-export const revalidate = 3600;
+// A post published from Telegram should show up here within minutes, not an hour.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Insights — business stories for MBA interviews and GDs — MECE',

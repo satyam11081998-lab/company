@@ -186,7 +186,7 @@ export function GrowthAdminClient({ initialPages }: { initialPages: SeoPage[] })
               <details className="mt-2">
                 <summary className="cursor-pointer text-xs font-medium text-navy">Preview content</summary>
                 <div className="mt-2 space-y-2 border-l-2 border-border pl-3 text-small text-muted-foreground">
-                  {c.summary && <p className="text-foreground">{c.summary}</p>}
+                  {(c.summary || c.lede) && <p className="text-foreground">{c.summary || c.lede}</p>}
                   {c.intro && <p>{c.intro}</p>}
                   {c.framework?.steps?.length ? (
                     <div>
@@ -270,6 +270,7 @@ export function GrowthAdminClient({ initialPages }: { initialPages: SeoPage[] })
 /* ------------------------------------------------------------------ the daily blog */
 interface DailyStatus {
   config: { enabled: boolean; autopublish: boolean; min_score: number; research_available: boolean };
+  telegram?: { configured: boolean; webhook_url?: string; webhook_set?: boolean; last_error?: string | null };
   today: { id: string; slug: string; title: string; status: string; quality_score: number | null } | null;
   candidates: { title: string; score: number; reasons: string[]; domain: string }[];
 }
@@ -277,7 +278,7 @@ interface DailyRun {
   status: 'published' | 'draft' | 'exists' | 'skipped' | 'preview';
   reason: string;
   page?: SeoPage & { quality_notes?: string };
-  trace?: { first_draft_problems?: string[]; research?: { angle: string; facts: number; error?: string }[] };
+  trace?: { first_draft_problems?: string[]; research?: { angle: string; facts: number; linked?: number; errors?: string[] }[] };
 }
 
 /**
@@ -289,7 +290,8 @@ function DailyPanel({ authHeader, onCreated }: {
 }) {
   const [st, setSt] = useState<DailyStatus | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState<'preview' | 'draft' | null>(null);
+  const [busy, setBusy] = useState<'preview' | 'draft' | 'telegram' | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const [run, setRun] = useState<DailyRun | null>(null);
 
   const call = useCallback(async (path: string, body?: unknown) => {
@@ -322,6 +324,31 @@ function DailyPanel({ authHeader, onCreated }: {
     }
   }
 
+  async function setupTelegram() {
+    setBusy('telegram'); setErr(null); setNote(null);
+    try {
+      const r = await call('/seo/telegram/setup', {}) as { ok: boolean; url?: string; reason?: string };
+      setNote(r.ok ? `Telegram connected: replies go to ${r.url}` : `Telegram not connected: ${r.reason}`);
+      load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Setup failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function resend(id: string) {
+    setBusy('telegram'); setErr(null); setNote(null);
+    try {
+      const r = await call(`/seo/daily/send/${id}`, {}) as { sent: boolean };
+      setNote(r.sent ? 'Sent to Telegram. Reply publish there to post it.' : 'Telegram did not accept the message.');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Send failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const on = (b: boolean | undefined) => (b ? 'On' : 'Off');
   return (
     <div className="rounded-xl border border-border bg-card p-4">
@@ -329,9 +356,10 @@ function DailyPanel({ authHeader, onCreated }: {
         <div>
           <p className="flex items-center gap-1.5 font-semibold text-foreground"><CalendarClock className="h-4 w-4" /> Daily post</p>
           <p className="mt-0.5 max-w-2xl text-xs text-muted-foreground">
-            Every day at 07:00 IST: picks a non-political business story (or an evergreen topic), researches sourced
-            facts, writes about 900 words with an interview angle and a related case, checks every number against
-            its sources, and scores it. Live by 08:00 when it publishes.
+            From 07:00 IST: picks a non-political business story (or an evergreen topic), researches sourced facts,
+            writes 1,000–1,400 words with a GD / PI / WAT section and a related case, checks every number against its
+            sources, scores it and sends it to your Telegram. Reply publish there to post it. If no topic works it
+            tries again every 30 minutes until 11:30.
           </p>
         </div>
         <div className="flex gap-2">
@@ -357,6 +385,30 @@ function DailyPanel({ authHeader, onCreated }: {
           <div><dt className="text-muted-foreground">Web research</dt><dd className="font-medium">{st.config.research_available ? 'Ready' : 'Missing GEMINI_API_KEY'}</dd></div>
         </dl>
       )}
+      {st && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Telegram review:</span>
+          <span className="font-medium">
+            {!st.telegram?.configured ? 'Not set up (TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID on Render)'
+              : st.telegram.webhook_set ? 'Connected: reply publish to a draft to post it'
+              : 'Bot found, replies not connected yet'}
+          </span>
+          {st.telegram?.configured && (
+            <button onClick={setupTelegram} disabled={busy !== null}
+              className="rounded-md border border-border px-2 py-0.5 font-medium text-foreground hover:bg-muted/40 disabled:opacity-50">
+              {st.telegram.webhook_set ? 'Reconnect' : 'Connect replies'}
+            </button>
+          )}
+          {st.today && st.today.status === 'draft' && st.telegram?.configured && (
+            <button onClick={() => resend(st.today!.id)} disabled={busy !== null}
+              className="rounded-md border border-border px-2 py-0.5 font-medium text-foreground hover:bg-muted/40 disabled:opacity-50">
+              Send today’s draft to Telegram again
+            </button>
+          )}
+          {st.telegram?.last_error && <span className="text-red-600">Last Telegram error: {st.telegram.last_error}</span>}
+        </div>
+      )}
+      {note && <p className="mt-2 text-xs text-muted-foreground">{note}</p>}
       {st?.today && (
         <p className="mt-3 text-xs">
           <span className="text-muted-foreground">Today:</span> <span className="font-medium">{st.today.title}</span>{' '}
@@ -394,7 +446,7 @@ function DailyPanel({ authHeader, onCreated }: {
             </div>
           )}
           {run.trace?.research?.length ? (
-            <p className="mt-2 text-muted-foreground">Research: {run.trace.research.map((r) => `${r.angle} (${r.facts} sourced facts${r.error ? `, ${r.error}` : ''})`).join(' → ')}</p>
+            <p className="mt-2 text-muted-foreground">Research: {run.trace.research.map((r) => `${r.angle} (${r.linked ?? r.facts} linked of ${r.facts} facts${r.errors?.length ? `; ${r.errors.join(', ')}` : ''})`).join(' → ')}</p>
           ) : null}
         </div>
       )}

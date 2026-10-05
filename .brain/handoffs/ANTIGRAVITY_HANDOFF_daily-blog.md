@@ -1,107 +1,97 @@
 # ANTIGRAVITY_HANDOFF — daily-blog (Growth Agent: one sourced article a day on /insights)
 
-**Author:** Claude (cloud session, Project "project"). **Date:** 2026-10-04.
-**Owner ask (2026-10-04):** a blog post every morning (6 or 8 a.m.) on a trending, non-controversial
-business topic for MBA aspirants — broad, not too niche; real facts and figures; not machine-sounding;
-not too long, not too short; with case/interview practice that brings readers to MECE.
-**Branch:** `main` in both repos. **Ships dormant**: nothing runs until the env switches below are set.
+**Author:** Claude (cloud session, Project "project"). **Dates:** 2026-10-04 (v1), 2026-10-06 (v2: fix + Telegram review).
+**Owner asks:**
+- 2026-10-04: a daily morning post on a trending, non-controversial business topic for the MBA audience, with
+  facts and figures, not machine-sounding, with practice that brings readers to MECE.
+- 2026-10-06: "it is not publishing — it says three sources can't be verified. Fix it properly; I want quality
+  people refer to, like a Times of India or McKinsey article, useful to MBA aspirants too. If it can't find a good
+  article, keep running until it does. Send it to me on Telegram for review; when I reply publish there, publish it."
+**Branch:** `main` in both repos. Still OFF until `DAILY_BLOG_ENABLED` is set on Render.
 
 ```
 touches:  consilio-backend
-            NEW  services/growth/daily_blog.py      topic -> research -> write -> checks -> critic -> save
-            EDIT routes/cron.py                     + POST /cron/daily-blog (x-cron-secret; no-op unless
-                                                      DAILY_BLOG_ENABLED; budget kill switch respected)
-            EDIT routes/seo.py                      + GET /seo/daily/status, POST /seo/daily/run (admin)
-            NEW  .github/workflows/daily-blog.yml   01:30 UTC = 07:00 IST, after the 06:00 news fetch
-            NEW  tests/test_daily_blog.py           32 checks, stdlib only (python -m tests.test_daily_blog)
+            EDIT services/growth/daily_blog.py      v2: research rebuilt, writer v2 (format 'daily-2'), keeps trying
+            NEW  services/growth/telegram_review.py  draft to Telegram; publish / another / reject replies
+            EDIT routes/cron.py                      /cron/daily-blog: rotates topics per run, late runs report failure
+            EDIT routes/seo.py                       + POST /seo/telegram/webhook (Telegram, secret token),
+                                                      + POST /seo/telegram/setup, + POST /seo/daily/send/{id} (admin)
+            EDIT .github/workflows/daily-blog.yml    every 30 min 07:00–11:30 IST (no-op once today's post exists)
+            EDIT tests/test_daily_blog.py            46 checks, stdlib only
           consilio
-            EDIT lib/seo-pages.ts                   SeoContent gains the daily fields (additive)
-            EDIT app/insights/[slug]/page.tsx       renders the daily format (summary, cited paragraphs,
-                                                      By the numbers, interview angle, related case, FAQ +
-                                                      FAQPage JSON-LD, numbered sources, byline/date/read
-                                                      time); older 'news_case' pages render as before
-            EDIT app/insights/page.tsx              dates on the list; copy
-            EDIT app/(app)/admin/growth/growth-admin-client.tsx   "Daily post" panel (switches, topics it
-                                                      would pick now, Preview, Write as draft)
-            EDIT lib/constants.ts                   '/insights' added to PUBLIC_ROUTES  <-- see below
-          database: none. Uses the existing seo_pages table (kind = 'daily'); reads news_headlines and
-                    cases (read-only).
-breaking: no. C4 (routes) — additive: three new backend routes, one public path. No table, column or
-          existing route changes. Reuses the existing `seo_writer` / `seo_critique` AI features, so the
-          admin's provider toggles apply and every call is logged to ai_usage_log.
+            EDIT lib/seo-pages.ts, app/insights/[slug]/page.tsx   renders 'daily-2' (key points, lede, what to watch,
+                                                      "For MBA aspirants: GD, PI and WAT"); 'daily-1' and older pages unchanged
+            EDIT app/insights/page.tsx               revalidate 3600 -> 300 (a post published from Telegram shows within minutes)
+            EDIT app/(app)/admin/growth/growth-admin-client.tsx  Telegram status, "Connect replies", "Send today's
+                                                      draft to Telegram again"
+          database: none (seo_pages rows, kind='daily'; review state in agent_meta)
+breaking: no. C4 (routes) additive: three new backend routes. No table or column changes.
 ```
 
-## IMPORTANT: /insights was not public (fixed here, please confirm)
-`/insights/**` has been in the sitemap since the Growth Agent shipped, but it was missing from
-`PUBLIC_ROUTES`, so every logged-out reader and every crawler got a 307 to /login — no article could
-ever be indexed, and the sitemap advertised redirects (the same bug the comment in lib/constants.ts
-describes for /testimonials). Fixed by adding `'/insights'` (published rows only reach the page: RLS +
-status filter). It is a one-line, separate commit so it is easy to review or revert.
+## Why it never published (v1) — root cause
+No live model access from the build sessions, so diagnosed from the code and the google-genai SDK types:
+1. Facts were read only from lines that literally started with `FACT:`. Gemini usually writes `* **FACT:** …`,
+   `1. FACT: …` or `- FACT - …`, so most or all facts were thrown away.
+2. A fact was kept only if a Google grounding "support" segment matched its exact text. Segments often cover part
+   of a sentence, so even correctly formatted facts were dropped.
+3. No fallback when `GEMINI_MODEL` names a model that doesn't support Google Search grounding.
+Result: "no topic had at least 3 sourced facts" every time.
 
-## How it works (services/growth/daily_blog.py)
-1. **Topic.** news_headlines from the last 72 h in business / macro / micro / tech / jobs / policy.
-   Never: political, tragic, criminal or divisive terms (blocklist with word boundaries: "price war"
-   is fine, "trade war" is not; "Hindustan Unilever" and "RBI Governor" are fine), stories already
-   written, or titles too close to the last 45 days of posts. Ranked by the classifier's
-   GD-worthiness + MBA relevance (strategy, marketing, finance, operations, tech/product, economy,
-   careers) + freshness, minus one-stock noise, minus a domain used two of the last three days. A cheap
-   "editor" call (`seo_critique` feature) picks the broadest of the top five and frames the angle one
-   level up ("Why food delivery apps keep raising fees", not the headline). Nothing qualifies → an
-   evergreen topic (24 in the list), rotated.
-2. **Research.** Gemini with Google Search grounding (`GEMINI_API_KEY`, the key GD briefs and news classification already use) asks
-   for 8–12 dated facts with numbers. A fact survives only if the grounding metadata ties it to a web
-   page; Google's redirect links are resolved to the real URL. Fewer than 3 sourced facts → next topic;
-   none → no post that day (and a Telegram note).
-3. **Write.** `seo_writer` (gpt-4o by default) from those facts only, citing each [F#], 800–1,100
-   words, question-shaped headings, answer-first summary, house style that bans the usual machine tells
-   (delve, landscape, crucial, em dashes, exclamation marks …).
-4. **Checks (deterministic).** Length 650–1,300 words; every number traceable to a fact (practice prompt
-   and interview questions may use estimation numbers); citations valid; ≥ 3 facts cited; banned phrases;
-   ≤ 3 em dashes; no blocked terms; title ≤ 70, meta ≤ 160; required parts present. One repair round
-   with the exact problems; still failing → draft with the problems in quality_notes.
-5. **Critic.** `seo_critique` scores 0–100 (usefulness, grounding, human voice, fit, structure).
-6. **Save.** seo_pages kind='daily', with numbered sources, the closest case + guesstimate from the India
-   bank (word overlap, US bank never), and agent_meta (date, domain, reasons, checks, critic). Published
-   only when DAILY_BLOG_AUTOPUBLISH is on AND no check failed AND score ≥ DAILY_BLOG_MIN_SCORE (75);
-   otherwise a draft in /admin/growth. One post per IST day (a retry or second run is a no-op); a
-   Telegram ping either way (if TELEGRAM_* is set).
+## v2 research (services/growth/daily_blog.py)
+- Facts parsed however the model formats them; each carries the publisher it names.
+- A fact is **linked** to a real page by any of: the grounding supports (normalised text match), the publisher it
+  names matched to a search result's domain/title (Economic Times → economictimes.indiatimes.com, RBI → rbi.org.in),
+  or its figures found in the text of a page the search read. The news article itself is a linked fact.
+- Facts the search returned but that can't be linked are kept as **attributed** (named source, no link), never more
+  of them than linked ones; the writer must name the source in the sentence.
+- Two searches (facts, then context: players, history, regulators) when the first is thin; research models fall back
+  `DAILY_BLOG_RESEARCH_MODEL → GEMINI_MODEL → gemini-2.5-flash → gemini-2.0-flash`. A topic needs ≥ 3 linked facts.
+- Checked against real `google-genai` response objects (the SDK's own types), not just fakes.
 
-## Switches (Render env; all default OFF)
+## v2 writing (the quality bar)
+- Brief: stand next to Mint / ET Prime / The Ken explainers and McKinsey/BCG insight pieces. 1,000–1,400 words:
+  key points, a news lede, 4–5 analytical sections (how the business works, who wins and loses, the debate), by the
+  numbers, a named consulting lens applied to the story, what to watch, **For MBA aspirants: GD topic with both
+  sides, PI questions, a WAT prompt, the case angle**, FAQ, numbered sources.
+- Every number must come from a fact (only PI/WAT/case prompts may use estimation numbers); citations inline.
+- Up to two repair rounds with the exact failed checks; anything still failing is shown to the reviewer.
+- Writer: `DAILY_BLOG_WRITER_MODEL` (any OpenAI model name, e.g. a newer GPT) if set, else `seo_writer` (gpt-4o).
+
+## "Keep going until there is an article"
+- One run tries up to 8 topics (editor-ordered news first, then evergreen) within 8 minutes
+  (`DAILY_BLOG_MAX_TOPICS`, `DAILY_BLOG_TIME_BUDGET_S`); a writer failure also moves on.
+- The workflow runs every 30 minutes from 07:00 to 11:30 IST; each run starts further down the list; once today's
+  post exists every run is a no-op. From 11:00 a failed run says so on Telegram. The reviewer can reply `another`.
+
+## Telegram review (services/growth/telegram_review.py)
+- Each draft is sent in full to the admin chat (header with score, word count, sources, checks, why this topic;
+  then the article; then "Reply publish …").
+- Replies: `publish` (or /publish, approve, post it) → published at once and the live link comes back;
+  `another` → draft dropped, a new one on a different topic arrives in 3–5 minutes; `reject` → dropped;
+  `status`, `help`. A bare "ok" does NOT publish (it gets the help text). Replying to a draft's message acts on that
+  draft; otherwise the newest draft waiting for review.
+- Only the admin chat is obeyed. The webhook checks a secret token derived from the bot token; it registers itself
+  the first time a draft is sent, at `RENDER_EXTERNAL_URL` (Render sets this) or `DAILY_BLOG_PUBLIC_API_URL`.
+- If the admin chat is a group with bot privacy mode on, use `/publish` or reply to the draft message.
+
+## Switches (Render env)
 | Env | Effect |
 |---|---|
-| `DAILY_BLOG_ENABLED=1` | the 07:00 IST cron writes a post (otherwise /cron/daily-blog returns "skipped") |
-| `DAILY_BLOG_AUTOPUBLISH=1` | a post that passes every check and scores ≥ the minimum publishes itself |
-| `DAILY_BLOG_MIN_SCORE` | default 75 |
-| `DAILY_BLOG_RESEARCH_MODEL` | optional; default GEMINI_MODEL / gemini-2.5-flash |
+| `DAILY_BLOG_ENABLED=1` | the morning runs write a post (otherwise /cron/daily-blog returns "skipped") |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID` | review on Telegram (same vars the Deck Vault alerts use) |
+| `DAILY_BLOG_AUTOPUBLISH=1` | optional: publish without review when every check passes and the score ≥ min |
+| `DAILY_BLOG_MIN_SCORE` | default 80 (only for auto-publish) |
+| `DAILY_BLOG_WRITER_MODEL` | optional OpenAI model for writing |
+| `DAILY_BLOG_RESEARCH_MODEL` | optional Gemini model for research |
 
-Suggested rollout: week 1 — ENABLED on, AUTOPUBLISH off: read each morning's draft in /admin/growth and
-publish by hand. Week 2 — if the drafts are consistently good, AUTOPUBLISH on. Admin → Growth → Daily
-post → "Preview (not saved)" runs the whole pipeline without saving, any time.
-
-## Timing
-News fetch 06:00 IST → blog 07:00 IST → pages revalidate hourly (ISR), so a published post is live by
-08:00 IST. GitHub's scheduled runs can start up to ~15 minutes late; still before 08:00.
-
-## Cost (per day, estimate)
-Research (Gemini flash, grounded) ≈ free tier / a few cents; writer gpt-4o ≈ 4–8k tokens ≈ $0.03–0.06
-(×2 if repaired); editor + critic on Groq ≈ ~0. Well under $0.20/day; counted by the daily budget.
-
-## Risks and how they are handled
-- **Google "scaled content abuse"**: one post a day, each built on sourced facts with visible
-  citations, an interview angle no news site has, and a human publish gate until trust is earned.
-- **Invented facts**: number check + citation check + critic; anything failing stays a draft.
-- **AI disclosure**: each article ends with "Researched and drafted with AI, then checked against the
-  sources above." Remove the sentence in app/insights/[slug]/page.tsx if the owner prefers.
-
-## Gates (2026-10-04)
-`python -m tests.test_daily_blog` 32/32; py_compile of routes/cron.py, routes/seo.py, daily_blog.py;
-other backend suites unchanged (test_interviewer_mode / test_session_signals fail identically on the
-untouched tree — pre-existing); `tsc --noEmit` EXIT 0; `next build` OK (copy); browser: a sample daily
-post at /insights/<slug> on desktop + phone (no sideways scroll, Article + FAQPage JSON-LD, citations
-link to sources), /insights reachable logged-out (200, was 307). **Not verified: a run with the real
-models** (no keys in the build session) — use Preview in Admin → Growth after deploy.
+## Gates (2026-10-06)
+`python -m tests.test_daily_blog` 46/46 (topics, research parsing/linking/fallback, checks, repair, keep-going,
+idempotency, Telegram publish/another/reject/duplicate/stranger chat); grounding extraction checked on real
+`google-genai` response objects; webhook route checked with FastAPI's test client (no/bad secret → 403);
+py_compile; `tsc --noEmit` EXIT 0; `next build` OK (copy); browser: a 'daily-2' sample article on desktop + phone
+(Article + FAQPage JSON-LD, citations link to sources, aspirant section).
+**Not verified here: a run against the live models and Telegram** (no network to them from the build sessions).
+First run after deploy: Admin → Growth → Daily post → "Write today's post as a draft" — it should arrive on Telegram.
 
 ## After merging
-Set the env vars on Render when ready (nothing happens before). `git push` in both repos, then
-`node .brain\sync.mjs` in consilio. The workflow needs the existing `API_BASE_URL` and `CRON_SECRET`
-GitHub secrets (already used by daily-news.yml).
+`git push` in both repos, then `node .brain\sync.mjs` in consilio.

@@ -63,7 +63,7 @@ export default async function InsightPage({ params }: { params: { slug: string }
   if (!page) notFound();
 
   const c = page.content || {};
-  const daily = c.format === 'daily-1';
+  const daily = c.format === 'daily-1' || c.format === 'daily-2';
   const url = `${SITE_URL}/insights/${page.slug}`;
   const published = page.published_at ?? page.created_at;
   const minutes = Math.max(2, Math.round((c.words || 0) / 200));
@@ -113,7 +113,25 @@ export default async function InsightPage({ params }: { params: { slug: string }
           </p>
         )}
 
-        {daily && c.summary && (
+        {daily && c.key_points?.length ? (
+          <div className="mt-6 rounded-xl border border-border bg-card p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key points</p>
+            <ul className="mt-2 space-y-1.5">
+              {c.key_points.map((k, i) => (
+                <li key={i} className="flex gap-2 leading-relaxed text-foreground">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span><Cited text={k} /></span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {daily && c.lede && (
+          <p className="mt-6 text-[1.05rem] leading-relaxed text-foreground"><Cited text={c.lede} /></p>
+        )}
+
+        {daily && c.summary && !c.key_points?.length && (
           <div className="mt-6 rounded-xl border border-border bg-card p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">In short</p>
             <p className="mt-1.5 leading-relaxed text-foreground"><Cited text={c.summary} /></p>
@@ -169,6 +187,63 @@ export default async function InsightPage({ params }: { params: { slug: string }
         ) : null}
 
         {daily && <Framework c={c} />}
+
+        {daily && c.what_to_watch?.length ? (
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-foreground">What to watch</h2>
+            <ul className="mt-2 space-y-1.5">
+              {c.what_to_watch.map((w, i) => (
+                <li key={i} className="flex gap-2 text-muted-foreground">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-navy" />
+                  <span className="leading-relaxed"><Cited text={w} /></span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {daily && c.aspirants && (c.aspirants.gd_topic || c.aspirants.pi_questions?.length) ? (
+          <section className="mt-8 rounded-xl border border-border bg-card p-5" aria-labelledby="aspirants-title">
+            <h2 id="aspirants-title" className="text-lg font-semibold text-foreground">For MBA aspirants: GD, PI and WAT</h2>
+            {c.aspirants.gd_topic && (
+              <p className="mt-2 text-muted-foreground">
+                <span className="font-medium text-foreground">GD topic: </span>{c.aspirants.gd_topic}
+              </p>
+            )}
+            {(c.aspirants.for?.length || c.aspirants.against?.length) ? (
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                {([['For', c.aspirants.for], ['Against', c.aspirants.against]] as const).map(([label, pts]) => (
+                  pts?.length ? (
+                    <div key={label}>
+                      <p className="text-sm font-medium text-foreground">{label}</p>
+                      <ul className="mt-1 space-y-1 text-sm text-muted-foreground">
+                        {pts.map((x, i) => <li key={i} className="leading-relaxed">• <Cited text={x} /></li>)}
+                      </ul>
+                    </div>
+                  ) : null
+                ))}
+              </div>
+            ) : null}
+            {c.aspirants.pi_questions?.length ? (
+              <>
+                <p className="mt-4 text-sm font-medium text-foreground">Questions an interviewer could ask</p>
+                <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+                  {c.aspirants.pi_questions.map((q, i) => <li key={i} className="leading-relaxed">{q}</li>)}
+                </ol>
+              </>
+            ) : null}
+            {c.aspirants.wat_prompt && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">WAT prompt: </span>{c.aspirants.wat_prompt}
+              </p>
+            )}
+            {c.aspirants.case_question && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">As a case: </span>{c.aspirants.case_question}
+              </p>
+            )}
+          </section>
+        ) : null}
 
         {daily && c.interview_angle && (c.interview_angle.case || c.interview_angle.questions?.length) ? (
           <div className="mt-8">
@@ -270,7 +345,7 @@ export default async function InsightPage({ params }: { params: { slug: string }
             </ol>
             <p className="mt-3 text-xs text-muted-foreground">
               Figures are as published by these sources on or before {fmtDate(published)}. Researched and drafted with
-              AI, then checked against the sources above.
+              AI, checked against the sources above and reviewed by the MECE team before publishing.
             </p>
           </div>
         ) : page.source_refs?.length ? (
@@ -296,6 +371,7 @@ function Framework({ c }: { c: SeoContent }) {
       <h2 className="text-lg font-semibold text-foreground">
         {c.framework.heading || 'How to structure this in an interview'}
       </h2>
+      {c.framework.name && <p className="mt-0.5 text-sm text-muted-foreground">Lens: {c.framework.name}</p>}
       <ol className="mt-3 space-y-2">
         {c.framework.steps.map((s, i) => (
           <li key={i} className="flex gap-3 text-body text-foreground">
