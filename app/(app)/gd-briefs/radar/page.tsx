@@ -97,7 +97,7 @@ export default function TopicRadarPage() {
               <p className="text-small text-muted-foreground">
                 The radar is free to browse — you can always see what is coming up and why.{' '}
                 <span className="font-medium text-foreground">Full briefs</span>, with the month of updates,
-                the numbers and what to say, are included with Pro.
+                the numbers and what to say, are included with Lite and Pro.
               </p>
             </div>
             <Link

@@ -138,7 +138,7 @@ export default function BriefDetailPage() {
             <p className="mt-2 text-body text-muted-foreground max-w-md mx-auto">
               Free includes ONE full brief of your choice — yours is saved under GD Briefs.
               Unlimited briefs — smart angles, likely questions, opening &amp; closing lines —
-              are included with Pro.
+              are included with Lite and Pro.
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/upgrade" className="inline-flex items-center gap-1.5 bg-primary text-white text-body font-semibold px-5 py-2.5 rounded-md hover:bg-primary-hover transition-colors">

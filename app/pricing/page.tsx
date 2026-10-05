@@ -15,7 +15,6 @@ import TeamsContactBanner from '@/components/teams-contact-banner';
 import AuthCTA from '@/components/auth-cta';
 import { VOICE_INTERVIEW_ENABLED } from '@/lib/constants';
 import TrackPageAction from '@/components/analytics/track-page-action';
-import { priceFor, TIER_LIMITS } from '@/lib/tier';
 import {
   pricingProductJsonLd,
   faqPageJsonLd,
@@ -27,10 +26,8 @@ import {
 
 export const metadata: Metadata = {
   title: 'Pricing',
-  // Prices from lib/tier (the list Razorpay charges), so this line cannot go stale again —
-  // it said Lite ₹199 / Pro ₹499 long after the prices moved. Lite is no longer sold (2026-10-04).
   description:
-    `MECE pricing plans — Free and Pro (₹${priceFor('pro', 'monthly')}/mo). Start practising MBA placement interviews for free, upgrade when ready.`,
+    'MECE pricing plans — Free, Lite (₹199/mo), and Pro (₹499/mo). Start practicing MBA placement interviews for free, upgrade when ready.',
   // hreflang (2026-09-25): India pricing here, international at /us/pricing.
   alternates: { canonical: '/pricing', languages: { ...HREFLANG_PRICING } },
 };
@@ -56,17 +53,12 @@ const FAQS = [
   {
     question: 'Can I upgrade or downgrade my plan?',
     answer:
-      'Absolutely. You can upgrade at any time and the new features activate instantly. To downgrade, simply let your current plan expire and you move back to Free.',
-  },
-  {
-    question: 'What happened to the Lite plan?',
-    answer:
-      'Lite is no longer sold. If you already have it, nothing changes: you keep every Lite feature until your plan ends. Pro includes everything Lite had, and more.',
+      'Absolutely. You can upgrade at any time and the new features activate instantly. To downgrade, simply let your current plan expire and switch to the lower tier.',
   },
   {
     question: 'Is there a student discount?',
     answer:
-      `Our pricing is already built for MBA students on a budget. At ₹${priceFor('pro', 'monthly')}/month (less on the 3-month plan), MECE is a fraction of what traditional prep coaching costs. We don't offer additional discounts at this time.`,
+      'Our pricing is already built for MBA students on a budget. At ₹199–₹499/month, MECE is a fraction of what traditional prep coaching costs. We don\'t offer additional discounts at this time.',
   },
   {
     question: 'What happens when my subscription expires?',
@@ -100,46 +92,43 @@ const FAQS = [
   },
 ];
 
-// Free and Pro only (Lite is no longer sold). Limits read lib/tier TIER_LIMITS, so a row cannot
-// drift from what each plan actually gets — several rows here had (free GD brief, cheat sheet,
-// daily cases) before this rewrite.
-const FREE = TIER_LIMITS.free;
-const PRO = TIER_LIMITS.pro;
-const FEATURES: { name: string; free: boolean | string; pro: boolean | string }[] = [
-  { name: 'Daily case & guesstimate', free: true, pro: true },
-  { name: 'Practice bank (extra cases & guesstimates)', free: `${FREE.lifetimeExtraCases} + ${FREE.lifetimeExtraGuesstimates}, one-time`, pro: 'Unlimited' },
+const FEATURES = [
+  { name: 'Daily cases & guesstimates', free: '1/day', lite: '3/day', pro: 'Unlimited' },
+  { name: 'Practice bank access', free: false, lite: true, pro: true },
   // Everything about the user's OWN attempt is free and stays free. These two
   // rows exist to make that visible on the comparison table rather than only
   // in the Pro column — a table that lists only what is paid reads as though
   // the free tier gets nothing, which is not true here.
-  { name: 'Scored feedback & scorecard', free: true, pro: true },
-  { name: 'Your conversation history', free: true, pro: true },
+  { name: 'Scored feedback & scorecard', free: true, lite: true, pro: true },
+  { name: 'Your conversation history', free: true, lite: true, pro: true },
   // The one paid half of the new solution view. Must stay in step with
   // TIER_LIMITS.caseFigures in lib/tier.ts.
-  { name: "Worked case figures (profit bridge, 2\u00d72, driver tree)", free: FREE.caseFigures, pro: PRO.caseFigures },
-  { name: 'Unlimited re-attempts', free: false, pro: true },
-  { name: 'GD Briefs', free: `${FREE.gdBriefsLifetime} brief`, pro: 'Unlimited' },
-  // C9: user-facing copy for CLARIFICATION_QUOTA — must match the backend constant and
-  // TIER_LIMITS.maxHintQuestions (it reads them now).
-  { name: 'Interviewer Hints', free: `${FREE.maxHintQuestions} per case`, pro: `${PRO.maxHintQuestions} per case` },
-  { name: 'Bookmarks', free: false, pro: true },
-  { name: 'Personal cheat-sheet', free: 'From your free brief', pro: true },
-  { name: 'CV Pointer Lab', free: `${FREE.cvLabTrialUses} tries`, pro: 'Unlimited' },
-  { name: 'Interviewer simulator', free: false, pro: true },
-  { name: 'Prep Copilot (agentic AI coach)', free: false, pro: true },
+  { name: "Worked case figures (profit bridge, 2\u00d72, driver tree)", free: false, lite: false, pro: true },
+  { name: 'Unlimited re-attempts', free: false, lite: true, pro: true },
+  { name: 'GD Briefs', free: false, lite: true, pro: true },
+  // C9: this row is user-facing copy for CLARIFICATION_QUOTA and must match the
+  // backend constant + TIER_LIMITS.maxHintQuestions. It said "free: none /
+  // lite: 5 per case / pro: Unlimited" long after the 2026-08-01 ladder landed —
+  // exactly the three-way drift C9 exists to stop.
+  { name: 'Interviewer Hints', free: '7 per case', lite: '12 per case', pro: '20 per case' },
+  { name: 'Bookmarks', free: false, lite: false, pro: true },
+  { name: 'Personal cheat-sheet', free: false, lite: false, pro: true },
+  { name: 'Interviewer simulator', free: false, lite: false, pro: true },
+  { name: 'Prep Copilot (agentic AI coach)', free: false, lite: false, pro: true },
   // Voice interview: only listed when the feature actually ships. Spreading an
   // empty array is how a row disappears without leaving a hole in the table.
   ...(VOICE_INTERVIEW_ENABLED
-    ? [{ name: 'Voice interview (talk mode)', free: false, pro: true }]
+    ? [{ name: 'Voice interview (talk mode)', free: false, lite: false, pro: true }]
     : []),
-  { name: 'Deck Vault (lifetime)', free: false, pro: true },
+  { name: 'Deck Vault (lifetime)', free: false, lite: false, pro: true },
 ];
 
 /* ── JSON-LD ───────────────────────────────────────────────────────── */
 
 const productJsonLd = pricingProductJsonLd([
-  { name: 'Free', description: 'Full Casebook library, daily case & guesstimate, scored feedback, one GD brief, leaderboard & badges.', price: 0 },
-  { name: 'Pro', description: 'Everything in Free plus Prep Copilot (an agentic AI coach that diagnoses your weak spots and builds a weekly plan), the worked figures behind every case you solve \u2014 profit bridge, 2\u00d72 and driver tree \u2014 unlimited practice bank and re-attempts, unlimited GD briefs, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: priceFor('pro', 'monthly') },
+  { name: 'Free', description: 'Full Casebook library, daily case & guesstimate, leaderboard & badges.', price: 0 },
+  { name: 'Lite', description: 'Everything in Free plus 2 extra daily cases, unlimited re-attempts, GD Briefs, and 12 interviewer hints per case.', price: 199 },
+  { name: 'Pro', description: 'Everything in Lite plus Prep Copilot (an agentic AI coach that diagnoses your weak spots and builds a weekly plan), the worked figures behind every case you solve \u2014 profit bridge, 2\u00d72 and driver tree \u2014 unlimited practice bank, 20 interviewer hints per case, bookmarks, cheat-sheet, the interviewer simulator, and Deck Vault lifetime access.', price: 499 },
 ]);
 
 const faqJsonLd = faqPageJsonLd(FAQS);
@@ -194,7 +183,7 @@ export default function PricingPage() {
             MECE Pricing — Plans for Every MBA Aspirant
           </h1>
           <p className="mt-5 text-[15px] text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            MECE has two plans — Free and Pro — so you can start practising
+            MECE offers three tiers — Free, Lite, and Pro — so you can start practising
             MBA placement interviews at zero cost and upgrade when you need the full practice
             bank, GD briefs, interviewer hints, and unlimited re-attempts. Pick the plan that fits
             your prep stage.
@@ -227,6 +216,9 @@ export default function PricingPage() {
                     <th className="text-center p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
                       Free
                     </th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Lite
+                    </th>
                     <th className="text-center p-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider bg-primary/[0.03]">
                       Pro
                     </th>
@@ -243,6 +235,9 @@ export default function PricingPage() {
                       <td className="p-4 font-medium text-foreground">{feature.name}</td>
                       <td className="p-4 text-center">
                         <CellValue value={feature.free} />
+                      </td>
+                      <td className="p-4 text-center">
+                        <CellValue value={feature.lite} />
                       </td>
                       <td className="p-4 text-center bg-primary/[0.02]">
                         <CellValue value={feature.pro} />

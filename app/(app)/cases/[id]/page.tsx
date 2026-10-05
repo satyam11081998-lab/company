@@ -145,12 +145,10 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
   let lockedOverlay = null;
 
   if (!access.allowed) {
-    // Upsells point to Pro: Lite is no longer sold (2026-10-04). 'lite-quota' still exists for
-    // subscribers who kept Lite until their plan ends.
     const bucketWord = access.bucket === 'guesstimate' ? 'guesstimate' : 'case';
     const lockTitle =
       access.reason === 'free-non-daily'
-        ? 'This case is for Pro'
+        ? 'This case is for Lite & Pro'
         : access.reason === 'free-extra-used'
         ? `You've used your free bank ${bucketWord}`
         : access.reason === 'lite-quota'
@@ -158,15 +156,15 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
         : "You've already attempted this case";
     const lockBody =
       access.reason === 'free-non-daily'
-        ? "Free covers today's daily case and guesstimate. Upgrade to Pro to practise the full bank — every case and guesstimate, as many as you like."
+        ? "Free covers today's daily case and guesstimate. Upgrade to Lite to practise the full bank — plus 2 extra cases and 2 extra guesstimates every day."
         : access.reason === 'free-extra-used'
-        ? `Free includes the dailies plus a taste of the bank — and you've used your free ${bucketWord} unlocks. Upgrade to Pro for the full bank, as many as you like.`
+        ? `Free includes the dailies plus a taste of the bank — and you've used your free ${bucketWord} unlocks. Upgrade to Lite for 2 extra cases and 2 extra guesstimates every day.`
         : access.reason === 'lite-quota'
         ? `Lite includes 2 extra ${access.bucket === 'guesstimate' ? 'guesstimates' : 'cases'} per day beyond the daily ones. Upgrade to Pro for unlimited practice.`
-        : 'Free tier allows one attempt per case. Upgrade to Pro for unlimited re-attempts.';
+        : 'Free tier allows one attempt per case. Upgrade to Lite or Pro for unlimited re-attempts.';
     const lockCta =
       access.reason === 'free-non-daily' || access.reason === 'free-extra-used'
-        ? 'Upgrade to Pro'
+        ? 'Upgrade to Lite'
         : access.reason === 'lite-quota'
         ? 'Upgrade to Pro'
         : 'Upgrade for re-attempts';

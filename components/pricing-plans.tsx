@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Minus, Star, Sparkles, ShieldCheck } from "lucide-react";
+import { Check, Minus, Star, Zap, Sparkles, ShieldCheck } from "lucide-react";
 import { VOICE_INTERVIEW_ENABLED } from "@/lib/constants";
 import {
   BILLING_PERIODS,
@@ -55,8 +55,7 @@ export default function PricingPlans() {
         </div>
       </div>
 
-      {/* Free / Pro. Lite (₹299) is no longer sold (owner decision 2026-10-04). */}
-      <div className="grid md:grid-cols-2 gap-5 items-stretch max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-5 items-stretch">
         {/* Free */}
         <div className="ui-card flex flex-col h-full">
           <div className="p-6 border-b border-border flex flex-col">
@@ -89,6 +88,36 @@ export default function PricingPlans() {
           </div>
         </div>
 
+        {/* Lite */}
+        <div className="ui-card flex flex-col h-full">
+          <div className="p-6 border-b border-border flex flex-col">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="h-4 w-4 text-amber-500" />
+              <h2 className="text-lg font-bold text-foreground tracking-tight">Lite</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">Practise beyond the daily pair.</p>
+            <PriceBlock tier="lite" period={period} />
+          </div>
+          <div className="p-6 flex-1 flex flex-col justify-between gap-8">
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2.5">
+                <ShieldCheck className="h-4 w-4 text-foreground/70 mt-0.5 flex-shrink-0" />
+                <span className="text-sm font-semibold text-foreground leading-tight">Everything in Free</span>
+              </li>
+              <PlanFeature text="2 extra cases & guesstimates / day" />
+              <PlanFeature text="Unlimited re-attempts" />
+              <PlanFeature text="2 GD briefs / day + source links" />
+              <PlanFeature text="Full cheat sheet (save & download)" />
+              <PlanFeature text="12 interviewer hints per case" />
+            </ul>
+            <Link href="/signup" className="mt-auto">
+              <button className="w-full h-10 text-sm font-semibold rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors">
+                Get Lite
+              </button>
+            </Link>
+          </div>
+        </div>
+
         {/* Pro */}
         <div className="ui-card flex flex-col h-full relative border-primary shadow-[0_0_15px_rgba(200,16,46,0.1)]">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -108,13 +137,10 @@ export default function PricingPlans() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2.5">
                 <ShieldCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm font-semibold text-foreground leading-tight">Everything in Free</span>
+                <span className="text-sm font-semibold text-foreground leading-tight">Everything in Lite</span>
               </li>
               <PlanFeature text="Prep Copilot — AI coach: weak-spot diagnosis + a weekly plan" />
               <PlanFeature text="Unlimited practice bank" />
-              <PlanFeature text="Unlimited re-attempts" />
-              <PlanFeature text="Unlimited GD briefs + source links" />
-              <PlanFeature text="Full cheat sheet (save & download)" />
               <PlanFeature text="20 interviewer hints per case & model Q&A" />
               <PlanFeature text="CV Pointer Lab — unlimited" />
               <PlanFeature text="Interviewer simulator" />

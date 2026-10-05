@@ -103,8 +103,8 @@ export default function GdBriefsPage() {
           <p className="mt-1 text-muted-foreground">
             Today&apos;s most debate-worthy stories. {locked
               ? (freeCredit
-                  ? 'Pick any ONE headline for your free GD brief — unlimited briefs on Pro.'
-                  : 'Browse the news free; unlimited GD briefs on Pro.')
+                  ? 'Pick any ONE headline for your free GD brief — unlimited briefs on Lite/Pro.'
+                  : 'Browse the news free; unlimited GD briefs on Lite/Pro.')
               : 'Click any headline to generate a full GD brief.'}
           </p>
           {/* Two ways on from the daily headlines: the tracked topics a panel is
@@ -133,11 +133,11 @@ export default function GdBriefsPage() {
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <p className="text-small text-muted-foreground">
                 {freeCredit ? (
-                  <>You can browse today&apos;s GD-worthy news for free, and <span className="font-medium text-foreground">unlock ONE full GD brief</span> — angles, likely questions, opening &amp; closing lines, cheat-sheet included. Unlimited briefs and source links are on Pro.</>
+                  <>You can browse today&apos;s GD-worthy news for free, and <span className="font-medium text-foreground">unlock ONE full GD brief</span> — angles, likely questions, opening &amp; closing lines, cheat-sheet included. Unlimited briefs and source links are Lite/Pro.</>
                 ) : unlockedId ? (
-                  <>You&apos;ve used your free brief — it stays yours below. <span className="font-medium text-foreground">Unlimited briefs and source links</span> are a Pro feature.</>
+                  <>You&apos;ve used your free brief — it stays yours below. <span className="font-medium text-foreground">Unlimited briefs and source links</span> are a Lite/Pro feature.</>
                 ) : (
-                  <>You can browse today&apos;s GD-worthy news for free. <span className="font-medium text-foreground">Generating a GD brief</span> — angles, likely questions, opening &amp; closing lines — is a Pro feature.</>
+                  <>You can browse today&apos;s GD-worthy news for free. <span className="font-medium text-foreground">Generating a GD brief</span> — angles, likely questions, opening &amp; closing lines — is a Lite/Pro feature.</>
                 )}
               </p>
             </div>
@@ -265,9 +265,9 @@ function StarHeadlineCard(props: CardProps) {
             <span>{formatRelativeTime(headline.published_at)}</span>
           </div>
           {locked ? (
-            // Free tier: headline visible, source click-through is Lite/Pro (Lite no longer sold; existing subscribers keep it).
+            // Free tier: headline visible, source click-through is Lite/Pro.
             <span
-              title="Reading the source article is a Pro feature"
+              title="Reading the source article is a Lite/Pro feature"
               className="mt-2 text-xl font-bold leading-tight text-foreground cursor-default"
             >
               {headline.title}
@@ -390,7 +390,7 @@ function HeadlineCard(props: CardProps) {
         </div>
         {locked ? (
           <span
-            title="Reading the source article is a Pro feature"
+            title="Reading the source article is a Lite/Pro feature"
             className="mt-1.5 line-clamp-3 text-sm font-semibold leading-snug text-foreground cursor-default"
           >
             {headline.title}
@@ -450,7 +450,7 @@ function HeadlineCard(props: CardProps) {
               className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
             >
               <Lock className="h-3.5 w-3.5" />
-              Unlock with Pro
+              Unlock with Lite
             </Link>
           ) : headline.has_brief ? (
             <Link

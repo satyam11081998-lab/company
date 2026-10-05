@@ -161,7 +161,7 @@ export default function AbstractGdPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground sm:text-base">
             Practice GD on Abstract prompts and every domain — HR, business, tech, economy, society.
-            {locked && ' Browse the method and library free; viewing or generating a brief is Pro.'}
+            {locked && ' Browse the method and library free; viewing or generating a brief is Lite/Pro.'}
           </p>
         </div>
 

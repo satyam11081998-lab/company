@@ -161,7 +161,7 @@ function UpgradeWall() {
   return (
     <Card className="p-10 text-center">
       <Lock className="mx-auto h-10 w-10 text-muted-foreground/60" />
-      <h3 className="mt-4 text-h3 text-foreground">The rest of this brief is on Pro</h3>
+      <h3 className="mt-4 text-h3 text-foreground">The rest of this brief is on Lite and Pro</h3>
       <p className="mx-auto mt-2 max-w-md text-body text-muted-foreground">
         The month of updates, every number with where it came from, both sides argued at full strength, and the
         lines to open with. The sixty-second read stays free on every topic.
