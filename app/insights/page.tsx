@@ -61,18 +61,19 @@ export default async function InsightsIndex() {
       </div>
 
       {/* ---------- masthead ---------- */}
-      <header className="mx-auto max-w-[1200px] px-5 pb-10 pt-8 text-center sm:px-6 sm:pb-14 sm:pt-10">
+      {/* Compact: the title, one wide standfirst (two lines on a laptop), then straight into the lead essay. */}
+      <header className="mx-auto max-w-[1200px] px-5 pb-6 pt-4 text-center sm:px-6 sm:pb-8 sm:pt-6">
         <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
           A business story a day · Sourced · Free
         </p>
-        <h1 className="mt-4 font-editorial text-[clamp(3.2rem,11vw,7rem)] font-semibold leading-[0.95] tracking-[-0.03em]">
+        <h1 className="mt-2 font-editorial text-[clamp(2.8rem,8vw,5.25rem)] font-semibold leading-[0.95] tracking-[-0.03em]">
           Insights
         </h1>
-        <p className="mx-auto mt-5 max-w-[36rem] text-balance font-editorial text-[1.2rem] leading-snug text-neutral-600 sm:text-[1.35rem] dark:text-neutral-400">
+        <p className="mx-auto mt-3 max-w-[54rem] text-balance font-editorial text-[1.12rem] leading-snug text-neutral-600 sm:text-[1.25rem] dark:text-neutral-400">
           The business underneath the headline, explained with facts you can check, and turned into practice for
           your GD, WAT and interviews.
         </p>
-        <div className={`mx-auto mt-10 h-[3px] max-w-[1200px] border-y ${rule}`} aria-hidden />
+        <div className={`mx-auto mt-6 h-[3px] max-w-[1200px] border-y sm:mt-8 ${rule}`} aria-hidden />
       </header>
 
       {pages.length === 0 ? (
