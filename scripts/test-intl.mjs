@@ -30,6 +30,10 @@ for (const f of ['tier.js', 'pricing-intl.js', 'payments-region.js', 'intl-plans
   writeFileSync(fp, readFileSync(fp, 'utf8').replace(/require\("@\/lib\/([a-z-]+)"\)/g, 'require("./$1")'));
 }
 const require = createRequire(import.meta.url);
+// These checks are the international site's rules, so they run with it ON.
+// Since 2026-10-07 production builds have it OFF (lib/market.ts
+// INTL_MARKET_ACTIVE); market.js reads the flag when it is required, below.
+process.env.NEXT_PUBLIC_INTL_MARKET = 'on';
 const m = require(join(out, 'market.js'));
 const t = require(join(out, 'tier.js'));
 const pr = require(join(out, 'payments-region.js'));

@@ -10,6 +10,7 @@ import {
 import { meceFrameworkMarkdown } from '@/lib/mece-framework';
 import { usLlmsSection } from '@/lib/us-market/llms';
 import { learnLlmsFullSection } from '@/lib/us-learn/markdown';
+import { INTL_MARKET_ACTIVE } from '@/lib/market';
 
 export const dynamic = 'force-static';
 
@@ -35,11 +36,11 @@ export async function GET() {
     '',
     '---',
     '',
-    ...usLlmsSection(SITE_URL, true),
-    '---',
-    '',
+    // International site + US Learn library: included only while the
+    // international site is on (lib/market.ts INTL_MARKET_ACTIVE).
+    ...(INTL_MARKET_ACTIVE ? [...usLlmsSection(SITE_URL, true), '---', ''] : []),
     // US Learn library (2026-09-27): every /us/learn guide in full.
-    ...learnLlmsFullSection(SITE_URL),
+    ...(INTL_MARKET_ACTIVE ? learnLlmsFullSection(SITE_URL) : []),
   ];
 
   for (const slug of ALL_PAGE_SLUGS) {

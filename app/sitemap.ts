@@ -7,6 +7,7 @@ import { getIndexableDecks } from '@/lib/decks';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
 import { LEARN_BASE, LEARN_HUB, LEARN_PAGES, learnPath } from '@/lib/us-learn';
 import { learnLanguages } from '@/lib/us-learn/seo';
+import { INTL_MARKET_ACTIVE } from '@/lib/market';
 
 /**
  * Public, indexable routes only.
@@ -49,7 +50,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       : {}),
   });
   const mecePage = LEARN_PAGES.find((p) => p.indiaTwin === '/learn/mece-framework');
-  const meceLanguages = mecePage ? learnLanguages(mecePage) : undefined;
+  // Only paired with its US edition while the international site is on.
+  const meceLanguages = INTL_MARKET_ACTIVE && mecePage ? learnLanguages(mecePage) : undefined;
 
   const core = [
     withAlt('', 1, HREFLANG_HOME),
@@ -131,7 +133,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   /* International (US + Europe) site — 2026-09-25. hreflang alternates are
      declared both here and in each page's metadata, so crawlers see the
      India ⇄ US pairing from either direction. */
-  const intlEntries: MetadataRoute.Sitemap = [
+  // Switched off 2026-10-07 (lib/market.ts INTL_MARKET_ACTIVE): /us/* redirects,
+  // so neither /us nor the US Learn library is listed while it is off.
+  const intlEntries: MetadataRoute.Sitemap = !INTL_MARKET_ACTIVE ? [] : [
     withAlt('/us', 0.9, HREFLANG_HOME),
     withAlt('/us/pricing', 0.7, HREFLANG_PRICING),
     withAlt('/us/case-interview-examples', 0.8),
@@ -141,7 +145,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   /* US Learn library — 2026-09-27. Real publish/modified dates (not the build
      time), so lastmod stays a signal crawlers can trust. The one page with an
      India twin (what-is-mece ⇄ /learn/mece-framework) carries hreflang. */
-  const learnEntries: MetadataRoute.Sitemap = [
+  const learnEntries: MetadataRoute.Sitemap = !INTL_MARKET_ACTIVE ? [] : [
     entry(LEARN_BASE, 0.8, 'weekly', new Date(`${LEARN_HUB.modified}T00:00:00Z`)),
     ...LEARN_PAGES.map((p) => {
       const languages = learnLanguages(p);

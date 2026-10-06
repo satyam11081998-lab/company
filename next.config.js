@@ -1,3 +1,10 @@
+// Public international site switch (2026-10-07). Reads the SAME variable as
+// INTL_MARKET_ACTIVE in lib/market.ts, so the /us redirects below and the
+// middleware's routing always agree. OFF unless NEXT_PUBLIC_INTL_MARKET=on at
+// build time. While off, /us/* is a 307 answered by Vercel's router: no
+// middleware and no function run for it.
+const INTL_MARKET_ACTIVE = process.env.NEXT_PUBLIC_INTL_MARKET === 'on';
+
 const nextConfig = {
   output: 'standalone',
   transpilePackages: ['@react-pdf/renderer'],
@@ -94,6 +101,16 @@ const nextConfig = {
         destination: '/learn/mece-framework',
         permanent: true,
       },
+      // International site switched off (see INTL_MARKET_ACTIVE above).
+      // Temporary (307), so turning it back on is just a redeploy: browsers
+      // and crawlers do not cache a 307 the way they cache a 308.
+      // '/us/:path*' also matches '/us' itself. First match wins.
+      ...(INTL_MARKET_ACTIVE
+        ? []
+        : [
+            { source: '/us/pricing', destination: '/pricing', permanent: false },
+            { source: '/us/:path*', destination: '/', permanent: false },
+          ]),
     ];
   },
 };

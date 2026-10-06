@@ -1,5 +1,6 @@
 import type { Block, NavNode, Page } from '@/lib/casebook/types';
 import { CASEBOOK_TREE } from '@/lib/casebook/tree';
+import { INTL_MARKET_ACTIVE } from '@/lib/market';
 
 /**
  * Central SEO module — single source of truth for site identity, canonical
@@ -612,7 +613,7 @@ export const US_SITE_DESC =
  * stays on India's `/` (the primary market) — Google falls back to it only for
  * locales we have not listed. Europe is served English at /us (en-GB, en-IE).
  */
-export const HREFLANG_HOME = {
+const HREFLANG_HOME_INTL = {
   'en-IN': '/',
   'en-US': '/us',
   'en-GB': '/us',
@@ -620,13 +621,24 @@ export const HREFLANG_HOME = {
   'x-default': '/',
 } as const;
 
-export const HREFLANG_PRICING = {
+const HREFLANG_PRICING_INTL = {
   'en-IN': '/pricing',
   'en-US': '/us/pricing',
   'en-GB': '/us/pricing',
   'en-IE': '/us/pricing',
   'x-default': '/pricing',
 } as const;
+
+// International site switched off (2026-10-07, lib/market.ts
+// INTL_MARKET_ACTIVE): /us redirects, so it must not be declared as an
+// alternate. India alone is left, self-referencing.
+export const HREFLANG_HOME = INTL_MARKET_ACTIVE
+  ? HREFLANG_HOME_INTL
+  : ({ 'en-IN': '/', 'x-default': '/' } as const);
+
+export const HREFLANG_PRICING = INTL_MARKET_ACTIVE
+  ? HREFLANG_PRICING_INTL
+  : ({ 'en-IN': '/pricing', 'x-default': '/pricing' } as const);
 
 /** SoftwareApplication for the international site: USD offers, US audience. */
 export function usSoftwareApplicationJsonLd() {

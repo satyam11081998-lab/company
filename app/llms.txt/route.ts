@@ -4,6 +4,7 @@ import { getPage } from '@/lib/casebook/content';
 import { SITE_URL, SITE_DESC, extractPageDescription, cleanNavTitle } from '@/lib/seo';
 import { usLlmsSection } from '@/lib/us-market/llms';
 import { learnLlmsSection } from '@/lib/us-learn/markdown';
+import { INTL_MARKET_ACTIVE } from '@/lib/market';
 
 export const dynamic = 'force-static';
 
@@ -28,9 +29,11 @@ export async function GET() {
     `- [About](${SITE_URL}/about): the team behind MECE`,
     `- [Sign up](${SITE_URL}/signup): free account`,
     '',
-    ...usLlmsSection(SITE_URL, false),
+    // International site + US Learn library: listed only while the
+    // international site is on (lib/market.ts INTL_MARKET_ACTIVE).
+    ...(INTL_MARKET_ACTIVE ? usLlmsSection(SITE_URL, false) : []),
     // US Learn library (2026-09-27): one line per /us/learn guide.
-    ...learnLlmsSection(SITE_URL),
+    ...(INTL_MARKET_ACTIVE ? learnLlmsSection(SITE_URL) : []),
   ];
 
   const walk = (nodes: NavNode[], sectionTitle: string | null) => {

@@ -33,6 +33,32 @@
  *   is granted and the payment is refunded. See lib/payments-region.ts.
  */
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * Master switch for the PUBLIC international site (2026-10-07)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/**
+ * OFF unless the build has NEXT_PUBLIC_INTL_MARKET=on.
+ *
+ * Switched off 2026-10-07 to save Vercel Fluid Active CPU (the account was at
+ * 3h57m of the Hobby plan's 4h, and the /us landing was the 5th most
+ * expensive route). While OFF:
+ *   - every visitor is placed in India (detectRegion), so nobody is geo-routed
+ *     to /us and new accounts are stamped India;
+ *   - /us and everything under it answers with a 307 from next.config.js, so
+ *     no function runs for it at all;
+ *   - the sitemap, hreflang and llms.txt stop advertising /us;
+ *   - accounts ALREADY stamped US/EU keep their own experience inside the app
+ *     (US case bank, US daily, USD checkout at /upgrade). They are still
+ *     routed away from India-only pages, but never to a /us page
+ *     (intlDestination below), so nothing they use breaks and nothing loops.
+ *
+ * Turning it back on: set NEXT_PUBLIC_INTL_MARKET=on in Vercel and redeploy
+ * (NEXT_PUBLIC_ values are baked in at build time). next.config.js reads the
+ * SAME variable, so the /us redirects and this routing can never disagree.
+ */
+export const INTL_MARKET_ACTIVE = process.env.NEXT_PUBLIC_INTL_MARKET === 'on';
+
 export type Market = 'IN' | 'US' | 'EU';
 export type ContentMarket = 'IN' | 'US';
 export type Currency = 'INR' | 'USD' | 'EUR';
@@ -204,6 +230,9 @@ export interface RegionDecision {
 }
 
 export function detectRegion(signals: RegionSignals): RegionDecision {
+  // Public international site switched off (INTL_MARKET_ACTIVE): every visitor
+  // is India. Basis 'default' (not 'ip') so <RegionProbe/> never reloads.
+  if (!INTL_MARKET_ACTIVE) return { market: 'IN', basis: 'default' };
   const ip = marketForCountry(signals.ipCountry);
   const tz = marketForTimeZone(signals.timeZone);
 
@@ -364,6 +393,19 @@ export const INTL_LEARN_TWIN: Readonly<Record<string, string>> = {
  * guest-mode '/' dashboard rewrite for signed-in users is handled by the caller.
  */
 export function intlDestination(pathname: string, signedIn: boolean): string | null {
+  if (!INTL_MARKET_ACTIVE) {
+    // Public international site is off: never send anyone to /us/* (it would
+    // bounce straight back via the next.config.js redirect). Only accounts
+    // already stamped US/EU get here — logged-out visitors are all India now.
+    // They keep their in-app experience: '/' is their dashboard, their price
+    // list is /upgrade (the middleware serves /upgrade/intl there), and the
+    // India-only surfaces, learning included, send them to Practice.
+    if (!signedIn) return null;
+    if (pathname === '/') return '/dashboard';
+    if (pathname === '/pricing') return '/upgrade';
+    if (isIndiaOnlyPath(pathname)) return '/practice';
+    return null;
+  }
   const twin = INTL_TWIN[pathname];
   if (twin) return twin;
   if (isIndiaLearnPath(pathname)) return INTL_LEARN_TWIN[pathname] ?? US_LEARN_HUB;
