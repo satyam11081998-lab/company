@@ -26,8 +26,29 @@ export const TOPIC_COLORS: Record<string, string> = {
   Business: '#4A4A4A',
 };
 
-export function topicOf(page: Pick<SeoPage, 'content' | 'kind'>): { label: string; color: string } {
-  const label = page.content?.topic_label || (page.kind === 'news_case' ? 'Case & GD' : 'Business');
+/** For posts written before topic labels existed: the subject from the title and keywords. */
+const TOPIC_WORDS: [string, RegExp][] = [
+  ['Finance', /\b(upi|banks?|banking|rbi|loans?|credit|fintech|mutual funds?|stocks?|shares|ipos?|investors?|investment|insurance|nbfcs?|sebi|mdr|payments?|wealth|markets?)\b/gi],
+  ['Economy', /\b(gdp|inflation|econom\w*|oil|crude|pipelines?|exports?|imports?|tariffs?|rupee|fiscal|budget|repo|monsoon|saudi|opec)\b/gi],
+  ['Technology', /\b(ai|artificial intelligence|tech\w*|software|saas|semiconductors?|chips?|data cent(?:er|re)s?|cloud|ott|digital)\b/gi],
+  ['Marketing', /\b(brands?|fmcg|consumers?|retail|advertis\w*|marketing|d2c|premium|rural)\b/gi],
+  ['Operations', /\b(supply chains?|logistics|manufactur\w*|plants?|factor(?:y|ies)|airlines?|railways?|evs?|quick commerce|delivery|warehouses?|ports?)\b/gi],
+  ['Careers', /\b(jobs?|hiring|campus|placements?|salar\w*|gccs?|talent|layoffs?)\b/gi],
+  ['Strategy', /\b(mergers?|acquisitions?|strateg\w*|conglomerates?|group|competition|market share|ownership|tata|reliance|adani)\b/gi],
+];
+
+function inferTopic(page: Pick<SeoPage, 'title'> & { keywords?: string[] | null; topic?: string | null }): string {
+  const text = [page.title, page.topic, ...(page.keywords || [])].filter(Boolean).join(' ');
+  let best = 'Business', most = 0;
+  for (const [label, re] of TOPIC_WORDS) {
+    const n = (text.match(re) || []).length;
+    if (n > most) { best = label; most = n; }
+  }
+  return best;
+}
+
+export function topicOf(page: Pick<SeoPage, 'content' | 'kind' | 'title'> & { keywords?: string[] | null; topic?: string | null }): { label: string; color: string } {
+  const label = page.content?.topic_label || inferTopic(page);
   return { label, color: TOPIC_COLORS[label] || TOPIC_COLORS.Business };
 }
 
@@ -67,7 +88,30 @@ export function Cited({ text }: { text: string }): ReactNode {
   );
 }
 
-/** A picture generated for the article, with caption and credit. `wide` breaks out of the text column. */
+/**
+ * The credit line under a picture. A photo names its creator and links the page it came from and its licence (as
+ * CC BY / BY-SA require); a generated picture says so.
+ */
+export function Credit({ image, onDark = false }: { image: SeoImage; onDark?: boolean }) {
+  if (!image.credit) return null;
+  const quiet = onDark ? 'text-white/40' : 'text-neutral-400 dark:text-neutral-500';
+  const a = 'underline decoration-dotted underline-offset-2 hover:decoration-solid';
+  if (image.source === 'photo' && (image.site || image.license)) {
+    return (
+      <span className={quiet}>
+        Photo: {image.creator || 'unknown photographer'} /{' '}
+        {image.credit_url ? <a href={image.credit_url} target="_blank" rel="nofollow noopener" className={a}>{image.site || 'source'}</a> : image.site}
+        {image.license ? ', ' : ''}
+        {image.license && (image.license_url
+          ? <a href={image.license_url} target="_blank" rel="license nofollow noopener" className={a}>{image.license}</a>
+          : image.license)}.
+      </span>
+    );
+  }
+  return <span className={quiet}>{image.credit}.</span>;
+}
+
+/** A picture for the article, with caption and credit. `wide` breaks out of the text column. */
 export function Picture({ image, wide = false, priority = false, className = '' }: {
   image: SeoImage; wide?: boolean; priority?: boolean; className?: string;
 }) {
@@ -87,7 +131,7 @@ export function Picture({ image, wide = false, priority = false, className = '' 
         <figcaption className="mx-auto mt-3 max-w-[680px] px-4 font-sans text-[0.8rem] leading-relaxed text-neutral-500 sm:px-0 dark:text-neutral-400">
           {image.caption}
           {image.caption && image.credit ? ' ' : ''}
-          {image.credit && <span className="text-neutral-400 dark:text-neutral-500">{image.credit}.</span>}
+          <Credit image={image} />
         </figcaption>
       )}
     </figure>

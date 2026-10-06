@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { homeSerif } from '@/components/home/fonts';
 import {
-  ACCENT_DARK, Cited, Crumbs, InsightCard, InsightsBar, InsightsFooter, Kicker, PAPER, Picture, TopicLabel,
+  ACCENT_DARK, Cited, Credit, Crumbs, InsightCard, InsightsBar, InsightsFooter, Kicker, PAPER, Picture, TopicLabel,
   accentStyle, fmtDate, lighten, readingMinutes, topicOf,
 } from '@/components/insights/parts';
 import { ReadingProgress, ShareRow } from '@/components/insights/ReadingChrome';
@@ -80,6 +80,7 @@ export default async function InsightPage({ params }: { params: { slug: string }
     : -1;
   const firstPara: 'lede' | 'intro' | 'section' = c.lede ? 'lede' : c.intro ? 'intro' : 'section';
   const related = pickRelated(recent, page, t.label);
+  const pics = [...(hero ? [hero] : []), ...(c.images || [])];
   const rel = c.related || {};
 
   const jsonLd = {
@@ -153,7 +154,7 @@ export default async function InsightPage({ params }: { params: { slug: string }
             {(hero.caption || hero.credit) && (
               <figcaption className="mx-auto mt-3 max-w-[1200px] px-5 font-sans text-[0.78rem] leading-relaxed text-white/50 sm:px-0">
                 {hero.caption}{hero.caption && hero.credit ? ' ' : ''}
-                {hero.credit && <span className="text-white/35">{hero.credit}.</span>}
+                <Credit image={hero} onDark />
               </figcaption>
             )}
           </figure>
@@ -384,7 +385,8 @@ export default async function InsightPage({ params }: { params: { slug: string }
             <p className="mt-5 font-sans text-[0.8rem] leading-relaxed text-neutral-500">
               Figures are as published by these sources on or before {fmtDate(published, true)}. Researched and drafted
               with AI, checked against the sources above and reviewed by the MECE team before publishing.
-              {hero ? ' Pictures are generated with Gemini and are illustrative, not photographs of the companies or people in the story.' : ''}
+              {pics.some((x) => x.source === 'photo') ? ' Photographs are used under their open licences; the photographer and licence are credited under each one.' : ''}
+              {pics.some((x) => x.source !== 'photo') ? ' Pictures marked as generated were made with Gemini and are illustrative, not photographs of the companies or people in the story.' : ''}
             </p>
           </section>
         ) : page.source_refs?.length ? (

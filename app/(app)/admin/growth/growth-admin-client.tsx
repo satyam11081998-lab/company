@@ -8,6 +8,7 @@ import type { SeoPage } from '@/lib/seo-pages';
 import { setSeoStatus } from './actions';
 import {
   Rocket, Loader2, CheckCircle2, XCircle, ExternalLink, RotateCcw, Send, AlertTriangle, CalendarClock, Eye,
+  ImageIcon, PenLine,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -44,6 +45,28 @@ export function GrowthAdminClient({ initialPages }: { initialPages: SeoPage[] })
     const token = data.session?.access_token;
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, []);
+
+  // A refresh (after a rewrite or new pictures) re-reads the list on the server.
+  useEffect(() => { setPages(initialPages); }, [initialPages]);
+
+  // Per-post actions on the backend: rewrite as a full essay, pictures, apply or drop a waiting rewrite.
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const postAction = useCallback(async (p: SeoPage, path: string, done: (r: Record<string, unknown>) => string) => {
+    setBusyId(p.id); setNotes((n) => ({ ...n, [p.id]: '' }));
+    try {
+      const headers = { 'Content-Type': 'application/json', ...(await authHeader()) };
+      const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers, body: '{}' });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((typeof j.detail === 'string' && j.detail) || res.statusText || `Failed (${res.status})`);
+      setNotes((n) => ({ ...n, [p.id]: done(j as Record<string, unknown>) }));
+      router.refresh();
+    } catch (e) {
+      setNotes((n) => ({ ...n, [p.id]: e instanceof Error ? e.message : 'Failed' }));
+    } finally {
+      setBusyId(null);
+    }
+  }, [authHeader, router]);
 
   const generate = useCallback(async () => {
     setGenerating(true); setGenError(null);
@@ -112,11 +135,13 @@ export function GrowthAdminClient({ initialPages }: { initialPages: SeoPage[] })
             className="inline-flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-            {generating ? 'Writing…' : 'Generate a draft'}
+            {generating ? 'Researching and writing…' : 'Write an essay'}
           </button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Each run makes one grounded draft and self-scores it. It never publishes — you approve below.
+          Writes one full essay on the topic (or the freshest GD-worthy news) the same way as the daily post: web
+          research with sources, writing, a line edit for voice, number checks, photos. Takes 3–6 minutes, arrives on
+          Telegram, and never publishes on its own.
         </p>
         {genError && (
           <p className="mt-2 flex items-center gap-1.5 text-xs text-red-600"><AlertTriangle className="h-3.5 w-3.5" />{genError}</p>
@@ -181,6 +206,34 @@ export function GrowthAdminClient({ initialPages }: { initialPages: SeoPage[] })
 
               {p.quality_notes && (
                 <p className="mt-1.5 text-xs text-muted-foreground"><span className="font-medium text-foreground">QA note:</span> {p.quality_notes}</p>
+              )}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Pictures: {c.hero?.url ? `${1 + (c.images?.length ?? 0)} (${[c.hero, ...(c.images || [])].map((x) => x?.source === 'photo' ? 'photo' : 'generated').join(', ')})` : 'none'}
+                {p.agent_meta?.image_errors?.length ? ` · last attempt: ${p.agent_meta.image_errors.slice(0, 2).join('; ')}` : ''}
+              </p>
+
+              {p.agent_meta?.pending_rewrite && (
+                <div className="mt-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs">
+                  <p className="font-semibold text-foreground">A rewrite is waiting (the live version stays until you put it live)</p>
+                  <p className="mt-0.5 text-foreground">{p.agent_meta.pending_rewrite.title}</p>
+                  {p.agent_meta.pending_rewrite.dek && <p className="text-muted-foreground">{p.agent_meta.pending_rewrite.dek}</p>}
+                  <p className="mt-0.5 text-muted-foreground">
+                    QA {p.agent_meta.pending_rewrite.quality_score ?? '—'} · {p.agent_meta.pending_rewrite.content?.words ?? '?'} words ·{' '}
+                    {p.agent_meta.pending_rewrite.content?.sources?.length ?? 0} sources
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button onClick={() => postAction(p, `/seo/daily/apply/${p.id}`, () => 'The rewrite is live (same link, same date). The page refreshes within 10 minutes.')}
+                      disabled={busyId !== null}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-3 py-1.5 font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                      <Send className="h-3.5 w-3.5" /> Put the rewrite live
+                    </button>
+                    <button onClick={() => postAction(p, `/seo/daily/drop-rewrite/${p.id}`, () => 'Rewrite dropped.')}
+                      disabled={busyId !== null}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 font-medium text-muted-foreground hover:text-foreground disabled:opacity-50">
+                      <XCircle className="h-3.5 w-3.5" /> Drop it
+                    </button>
+                  </div>
+                </div>
               )}
 
               <details className="mt-2">
@@ -256,8 +309,35 @@ export function GrowthAdminClient({ initialPages }: { initialPages: SeoPage[] })
                     <RotateCcw className="h-3.5 w-3.5" /> Restore
                   </button>
                 )}
+                {p.status !== 'rejected' && (
+                  <>
+                    <button
+                      onClick={() => postAction(p, `/seo/daily/rewrite/${p.id}`, (r) => r.ok
+                        ? `${String(r.reason)}: “${String(r.title)}”, ${String(r.words ?? '?')} words, ${String(r.sources ?? 0)} sources, QA ${String(r.score ?? '—')}, ${String(r.pictures ?? 0)} picture(s).`
+                        : `Not rewritten: ${String(r.reason)}`)}
+                      disabled={busyId !== null}
+                      title="Re-research and rewrite as a full essay with photos. A live post keeps its current version until you approve the rewrite."
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/40 disabled:opacity-50"
+                    >
+                      {busyId === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PenLine className="h-3.5 w-3.5" />} Rewrite as a full essay
+                    </button>
+                    <button
+                      onClick={() => postAction(p, `/seo/daily/images/${p.id}`, (r) => r.ok
+                        ? `Pictures added (${(r.sources as string[] | undefined)?.join(', ') || 'done'}).`
+                        : `No pictures: ${String(r.reason || (r.errors as string[] | undefined)?.join('; ') || 'none found')}`)}
+                      disabled={busyId !== null}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/40 disabled:opacity-50"
+                    >
+                      <ImageIcon className="h-3.5 w-3.5" /> {c.hero?.url ? 'Redo pictures' : 'Add pictures'}
+                    </button>
+                  </>
+                )}
                 {p.status === 'published' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
               </div>
+              {busyId === p.id && (
+                <p className="mt-2 text-xs text-muted-foreground">Working… a rewrite takes 3–6 minutes (research, writing, line edit, photos).</p>
+              )}
+              {notes[p.id] && <p className="mt-2 text-xs text-foreground">{notes[p.id]}</p>}
             </div>
           );
         })}
@@ -281,6 +361,15 @@ interface DailyRun {
   trace?: { first_draft_problems?: string[]; research?: { angle: string; facts: number; linked?: number; errors?: string[] }[] };
 }
 
+interface PicReport {
+  order: string[];
+  gemini_key: boolean;
+  image_models?: string[];
+  photo_search?: { ok: boolean; found?: number; errors?: string[]; example?: { title: string; source: string; license: string; page_url: string } | null };
+  generation?: { ok: boolean; model?: string; error?: string };
+  storage?: { ok: boolean; bucket: string; url?: string; error?: string };
+}
+
 /**
  * The daily post (services/growth/daily_blog.py): what it is set to do, what it would write
  * about right now, and a way to try it before it runs on its own at 07:00 IST.
@@ -290,7 +379,8 @@ function DailyPanel({ authHeader, onCreated }: {
 }) {
   const [st, setSt] = useState<DailyStatus | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState<'preview' | 'draft' | 'telegram' | 'images' | null>(null);
+  const [busy, setBusy] = useState<'preview' | 'draft' | 'telegram' | 'images' | 'test' | 'backfill' | null>(null);
+  const [picReport, setPicReport] = useState<PicReport | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [run, setRun] = useState<DailyRun | null>(null);
 
@@ -366,6 +456,32 @@ function DailyPanel({ authHeader, onCreated }: {
     }
   }
 
+  async function testPictures() {
+    setBusy('test'); setErr(null); setPicReport(null);
+    try {
+      setPicReport(await call('/seo/daily/images/test', {}) as PicReport);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Test failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function backfill() {
+    setBusy('backfill'); setErr(null); setNote(null);
+    try {
+      const r = await call('/seo/daily/images/backfill', {}) as { done: { title: string; ok: boolean; errors: string[]; sources?: string[] }[]; remaining: number | null };
+      const ok = r.done.filter((d) => d.ok).length;
+      setNote(r.done.length === 0 ? 'Every published post already has pictures.'
+        : `Pictures added to ${ok} of ${r.done.length} post(s)` + (r.remaining ? `; ${r.remaining} still without — click again.` : '.')
+          + (r.done.some((d) => !d.ok) ? ` Failed: ${r.done.filter((d) => !d.ok).map((d) => `${d.title} (${d.errors.join('; ') || 'no picture found'})`).join(' · ')}` : ''));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Backfill failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const on = (b: boolean | undefined) => (b ? 'On' : 'Off');
   return (
     <div className="rounded-xl border border-border bg-card p-4">
@@ -373,10 +489,11 @@ function DailyPanel({ authHeader, onCreated }: {
         <div>
           <p className="flex items-center gap-1.5 font-semibold text-foreground"><CalendarClock className="h-4 w-4" /> Daily post</p>
           <p className="mt-0.5 max-w-2xl text-xs text-muted-foreground">
-            From 07:00 IST: picks a non-political business story (or an evergreen topic), researches sourced facts,
-            writes 1,000–1,400 words with a GD / PI / WAT section and a related case, checks every number against its
-            sources, scores it and sends it to your Telegram. Reply publish there to post it. If no topic works it
-            tries again every 30 minutes until 11:30.
+            From 07:00 IST: picks a non-political business story (or an evergreen topic), researches 15–30 sourced
+            facts, writes a 1,600–2,000 word essay with a GD / PI / WAT section and a related case, line-edits it for a
+            human voice, checks every number against its sources, adds open-licensed photos (Gemini makes a picture
+            only when no real photo fits), scores it and sends it to your Telegram. Reply publish there to post it. If
+            no topic works it tries again every 30 minutes until 11:30.
           </p>
         </div>
         <div className="flex gap-2">
@@ -392,7 +509,37 @@ function DailyPanel({ authHeader, onCreated }: {
         </div>
       </div>
       {(busy === 'preview' || busy === 'draft') && <p className="mt-2 text-xs text-muted-foreground">Researching and writing — this takes a minute or two.</p>}
-      {busy === 'images' && <p className="mt-2 text-xs text-muted-foreground">Gemini is making the pictures — about a minute.</p>}
+      {busy === 'images' && <p className="mt-2 text-xs text-muted-foreground">Finding photos (or making them with Gemini) — about a minute.</p>}
+      {busy === 'backfill' && <p className="mt-2 text-xs text-muted-foreground">Adding pictures to up to three older posts — a minute or two.</p>}
+      {busy === 'test' && <p className="mt-2 text-xs text-muted-foreground">Testing photo search, Gemini and storage…</p>}
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Pictures:</span>
+        <button onClick={testPictures} disabled={busy !== null}
+          className="rounded-md border border-border px-2 py-0.5 font-medium text-foreground hover:bg-muted/40 disabled:opacity-50">
+          Test pictures
+        </button>
+        <button onClick={backfill} disabled={busy !== null}
+          className="rounded-md border border-border px-2 py-0.5 font-medium text-foreground hover:bg-muted/40 disabled:opacity-50">
+          Add pictures to older posts
+        </button>
+      </div>
+      {picReport && (
+        <div className="mt-2 rounded-lg border border-border bg-background p-3 text-xs">
+          <p><span className="font-semibold">Order:</span> {picReport.order.join(' → ')} <span className="text-muted-foreground">(DAILY_BLOG_PICTURES)</span></p>
+          <p className="mt-1"><span className="font-semibold">Open-licensed photo search:</span>{' '}
+            {picReport.photo_search?.ok ? `works (${picReport.photo_search.found} found for a test query${picReport.photo_search.example ? `, e.g. “${picReport.photo_search.example.title}”, ${picReport.photo_search.example.license}` : ''})`
+              : `not working: ${(picReport.photo_search?.errors || []).join('; ') || 'nothing found'}`}</p>
+          <p className="mt-1"><span className="font-semibold">Gemini key:</span> {picReport.gemini_key ? 'set' : 'missing (GEMINI_API_KEY)'}
+            {picReport.image_models?.length ? ` · image models: ${picReport.image_models.join(', ')}` : ''}</p>
+          {picReport.generation && (
+            <p className="mt-1"><span className="font-semibold">Gemini test picture:</span>{' '}
+              {picReport.generation.ok ? `made with ${picReport.generation.model}` : <span className="text-red-600">{picReport.generation.error}</span>}</p>
+          )}
+          <p className="mt-1"><span className="font-semibold">Storage (bucket “{picReport.storage?.bucket}”):</span>{' '}
+            {picReport.storage?.ok ? 'works' : <span className="text-red-600">{picReport.storage?.error || 'not working'}</span>}</p>
+        </div>
+      )}
       {err && <p className="mt-2 flex items-center gap-1.5 text-xs text-red-600"><AlertTriangle className="h-3.5 w-3.5" />{err}</p>}
 
       {st && (

@@ -54,6 +54,14 @@ export interface SeoImage {
   alt?: string;
   caption?: string;
   credit?: string;
+  // 'photo' = an openly licensed photograph (Wikimedia Commons / Openverse), credited with its creator, the page it
+  // came from and its licence; 'gemini' = generated with Gemini (services/growth/images.py)
+  source?: 'photo' | 'gemini';
+  creator?: string;
+  site?: string;
+  credit_url?: string;
+  license?: string;
+  license_url?: string;
 }
 
 /** A case or guesstimate in MECE's bank, matched to the article by the writer pipeline. */
@@ -86,6 +94,13 @@ export interface SeoPage {
   published_at: string | null;
   updated_at: string;
   created_at: string;
+  // admin only (never selected by the public read functions below)
+  agent_meta?: {
+    review?: string;
+    image_errors?: string[];
+    pending_rewrite?: { title?: string; dek?: string; quality_score?: number | null; quality_notes?: string; content?: SeoContent };
+    previous_version?: { title?: string; replaced_at?: string };
+  } | null;
 }
 
 const COLS =

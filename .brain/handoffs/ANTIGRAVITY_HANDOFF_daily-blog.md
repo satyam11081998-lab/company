@@ -1,6 +1,6 @@
 # ANTIGRAVITY_HANDOFF — daily-blog (Growth Agent: one sourced article a day on /insights)
 
-**Author:** Claude (cloud session, Project "project"). **Dates:** 2026-10-04 (v1), 2026-10-06 (v2: fix + Telegram review; v3: essay-magazine design + Gemini pictures).
+**Author:** Claude (cloud session, Project "project"). **Dates:** 2026-10-04 (v1), 2026-10-06 (v2: fix + Telegram review; v3: essay-magazine design + Gemini pictures; v4: real photos, deeper essays, rewriting old posts).
 **Owner asks:**
 - 2026-10-04: a daily morning post on a trending, non-controversial business topic for the MBA audience, with
   facts and figures, not machine-sounding, with practice that brings readers to MECE.
@@ -199,6 +199,82 @@ Gates: `tsc --noEmit` EXIT 0; `next build` OK (copy); browser: breadcrumbs on ar
 (title truncates on a phone, no horizontal overflow). The logged-in nav wasn't rendered in the build copy (it needs a
 signed-in user); the change is two list entries in the existing render code.
 Not changed: the landing page header (`components/home/home-header.tsx`, logged-out visitors) has no Insights link yet.
+
+## v4 (2026-10-06): real photos, deeper essays, rewriting the old posts
+**Owner ask (after the v3 deploy):** "no photos are being generated, and the insights are very shallow, not much
+information, looking AI. Make it better" and "or take open source photos strictly related to the topic".
+What the live site showed: every post had the grey fallback cover (all were written before v3, and the old
+"Generate a draft" path never made pictures), and most posts were the old one-shot `news_case` breakdowns
+(headline-only, ~600 words, colon titles, "Learn to analyze…" deks).
+
+```
+touches:  consilio-backend
+            EDIT services/growth/images.py          + real photos: Wikimedia Commons + Openverse search (CC0, public
+                                                     domain, CC BY, CC BY-SA only; no logos/maps/small files), a Gemini
+                                                     vision judge (strict: must show the subject), credit + licence links;
+                                                     Gemini generation only for slots no photo fits; + diagnose()
+            EDIT services/growth/daily_blog.py      research: 3rd pass (trend, financials, unit economics, comparison,
+                                                     attributed statements), up to 24 linked facts, needs 6 to write;
+                                                     writer v3 (thesis-led essay, 1,600-2,000 words, title/dek/heading
+                                                     rules, before/after voice examples); + line-edit pass; stricter checks
+                                                     (colon titles, "Learn to" deks, label headings, thin sections, adverb
+                                                     openers, more stock phrases, cite >= 10 facts); writer = newest Gemini
+                                                     Pro on the key (DAILY_BLOG_WRITER_MODEL overrides; gpt-4o last);
+                                                     critic on Gemini; + compose/illustrate, write_on, rewrite_page,
+                                                     drop_rewrite, backfill_images; publish_page applies a pending rewrite
+            EDIT services/growth/telegram_review.py rewrites of live posts are reviewed like drafts ('reject' drops only
+                                                     the rewrite); old never-sent drafts are no longer 'publish' targets
+            EDIT routes/seo.py                       /seo/generate now runs the essay pipeline (def, not async);
+                                                     + POST /seo/daily/images/test, /seo/daily/images/backfill,
+                                                     /seo/daily/rewrite/{id}, /seo/daily/apply/{id}, /seo/daily/drop-rewrite/{id}
+            EDIT .github/workflows/daily-blog.yml    curl --max-time 1500, job timeout 30 min (essays take longer)
+            EDIT tests/test_daily_blog.py            89 checks
+          consilio
+            EDIT lib/seo-pages.ts                    SeoImage: source, creator, site, credit_url, license, license_url;
+                                                     SeoPage.agent_meta (admin only, never in the public select)
+            EDIT components/insights/parts.tsx       + Credit (photographer, source link, licence link); topic inferred
+                                                     from title/keywords for posts without a label (colour covers)
+            EDIT app/insights/[slug]/page.tsx        credits under pictures; notes say which pictures are photos/generated
+            EDIT app/(app)/admin/growth/page.tsx, growth-admin-client.tsx
+                                                     per post: "Rewrite as a full essay", "Add/Redo pictures", a waiting
+                                                     rewrite with "Put the rewrite live" / "Drop it"; Daily panel: "Test
+                                                     pictures" (photo search, Gemini models, a test image, storage) and
+                                                     "Add pictures to older posts" (3 per click); copy updated
+          database: none (agent_meta keys: pending_rewrite, previous_version, rewritten_at, edited)
+breaking: no. C4 (routes) additive; /seo/generate keeps its request and response shape (returns the saved page) but
+          takes minutes now and writes the essay format.
+```
+
+### Pictures, in order (DAILY_BLOG_PICTURES, default `photos,gemini`)
+1. **Real photo**: the writer names the subject and 2-3 Wikimedia Commons queries per slot (proper names: "Bombay
+   House Mumbai"). Candidates from Commons (`filetype:bitmap`) and Openverse (`license_type=commercial,modification`,
+   photographs). A Gemini vision model sees up to 8 thumbnails with the article title and the subject and picks one
+   only if it shows that subject (logos, maps, charts, screenshots, text, close-up portraits rejected; "none" is a
+   valid answer). Downloaded, resized, re-hosted in the `insights` bucket. Credit: "Photo: creator / site, licence"
+   with links to the file page and the licence. Two slots never share a photo.
+2. **Gemini** for any slot still empty (house style, credited as generated). Tries `["IMAGE"]`, then `["TEXT","IMAGE"]`
+   modalities. Errors per model are kept in `agent_meta.image_errors` and shown in Admin.
+- Older posts: Admin → Growth → "Add pictures to older posts" (3 per click) or per post "Add pictures". Plans the
+  photo search from the article if the post has none.
+- **Not verified from the build sessions:** live calls to Commons, Openverse, Gemini image/vision models and Storage
+  (no network to them). Admin → Growth → "Test pictures" reports each one in a click — run it first after deploy.
+
+### Rewriting the old posts
+- Per post "Rewrite as a full essay": re-researches the post's own topic/headline, writes the essay, line-edits,
+  checks, adds photos. Same slug (links keep working).
+- A **live** post keeps its current version; the rewrite waits in `agent_meta.pending_rewrite`, goes to Telegram
+  ("rewrite of a live post"), and goes live on `publish` there or "Put the rewrite live" in Admin. The date stays; the
+  old version is kept in `agent_meta.previous_version` for rollback. `reject`/`another` on a rewrite drops only the rewrite.
+- A **draft** is rewritten in place and sent for review.
+- If the research finds fewer than 6 linked facts the post is left exactly as it was.
+
+### Gates (v4)
+`python -m tests.test_daily_blog` 89/89 (adds: title/dek/heading/thin-section/adverb checks, whole-word stock-phrase
+matching, the line edit kept or thrown away, writer model order, Commons + Openverse parsing and licence filter, the
+strict photo judge with Gemini fallback, no duplicate photos, rewrite of live/draft posts, apply keeps link and date,
+nothing changes without facts, "Generate a draft" through the pipeline, picture backfill, Telegram rewrite review);
+py_compile; route order checked (`/daily/images/test` before `/daily/images/{id}`); `tsc --noEmit` EXIT 0;
+`next build` OK (copy); browser: photo credit with links, notes wording, topic colours on unlabelled posts.
 
 ## After merging
 `git push` in both repos, then `node .brain\sync.mjs` in consilio.
