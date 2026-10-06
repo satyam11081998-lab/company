@@ -1,15 +1,31 @@
-# CHANGELOG â€” newest first, one entry per landed change
+# CHANGELOG — newest first, one entry per landed change
 
 Format (Antigravity appends on each merge):
 ```
-## <date> â€” <feature> â€” <commit short sha>
+## <date> — <feature> — <commit short sha>
 <one line: what changed>
 touches: <files/areas>
-breaking: <no | yes â€” which CONTRACTS.md surface>   affects: <features that must re-sync>
+breaking: <no | yes — which CONTRACTS.md surface>   affects: <features that must re-sync>
 ```
 A brain reading this at session start only needs the top ~15 lines.
 
 ---
+
+## 2026-10-06 - brain-rewrite + reconstructed log 2026-09-12..2026-10-05 - frontend 1dcc819 / backend 9f71870
+No entry had been written since 2026-09-12 while about 200 commits landed (97 frontend, 100 backend). This entry is RECONSTRUCTED from `git log` of both repos (2026-10-06, Claude session) so that a brain reading only the top of this file is not three weeks behind. PROJECT_BRAIN.md was rewritten from scratch (v3), LEDGER.md rebuilt, and the stale hand section of STATE.md replaced. Landed on `main`, oldest first:
+- 09-12..09-15 analytics from source-of-truth tables + public /feedback; legacy-peer-deps; email deliverability (Team MECE signature, unsubscribe, image-free test then logos restored); /api/track moved to Edge with batched beacons; final-recommendation textarea removed from solve.
+- 09-13 Voice trial UI + Prep Copilot curated tools + /insights SEO pages with admin review gate + sitemap (frontend a8a8a39, 311ccb5, 1b3390e, e2c108d).
+- 09-16..09-17 broadcast targeted-practice composer, unlisted cases (migration 0065), short mece.in/p links; adaptive interviewer Phase 1 (session_state, teaching policy, skill profile: 0066, 0067); voice latency instrumentation.
+- 09-20 results "solution presentation" (7 slides), guest claim, Pro case figures (0069, `case_figures` server-only) (efcf45f).
+- 09-22..09-24 tier expiry read at 4 sites fixed (fbbd1b1); GD Topic Radar (d514a60) + GD on Gemini; admin verified revenue + analytics ranges (bcae17c, acaed85); upgrade current-plan fix; Prep Copilot v2 isolated UI (5a6dc9e) with owner-preview gating (1866e90); India Data Atlas rebuilt as 12 slides; middleware matcher excludes /api + static (87df11b).
+- 09-25..09-27 US & Europe launch: USD/EUR pricing, region lock, US case bank, per-market daily (c71c7f2, migration 0070, backend markets.py + daily-cases-us.yml); premium US landing/dashboard/app shell; US Learn library + AEO/GEO; US MCQ tile.
+- 09-27..09-30 voice: V11 decisions spoken by realtime/Gemini, VAD 750 ms; editorial India landing (e554abd, ed5890e); India dashboard top section (39b670f).
+- 10-01 backend V12 response functions (0d20787) and several direct GitHub-web edits to interview_engine / interviewer_decision / session_signals / interviewer_mode; model-led realtime voice; Gemini Live speech-to-speech; Easy/Medium/Hard; resume on reopen. Branch feat/unified-interviewer-brain opened in both repos (default off, unmerged).
+- 10-02 Interview Intelligence mounted inside the backend at /ii (728bb80 ...), live voice calls, Gemini Live engine, per-step AI routing, progress UI, report sections, "why was this asked", plans page (preview); nav entry only for admitted accounts.
+- 10-03 broadcasts by market (India / US & Europe / both) + digests; free voice trial on Gemini Live (14 min, 7 per case) (e31c94b, 05f451e); guest voice sign-in prompt; II plan limits (Free 10 min, Pro 20 min x2/month, Ultra) (a8de9bd, 75a105a); /insights made public (8f02807); daily post format + admin panel (5f8d8fd); daily blog autopilot, dormant until DAILY_BLOG_ENABLED (bbac83c); Lite retired in India (7c20bf5).
+- 10-05 Lite restored (cda08a1, revert of 7c20bf5); Prep Copilot removed from Pro and nav while in development (e2f1113); /pricing meta/FAQ/JSON-LD read real prices; daily blog research + Telegram review fixes (8a564b6, 9f71870, 3aa7943).
+touches: (reconstruction) .brain/PROJECT_BRAIN.md, .brain/LEDGER.md, .brain/STATE.md (hand section), .brain/CHANGELOG.md
+breaking: no new contract changes recorded in CONTRACTS.md during this window, but several ADDITIVE surfaces were never written there: `feedback_json.approaches`, `cases.market`/`cases.unlisted`, `submissions.attempt_id`, `case_figures`, `/ii/*`, `/seo/telegram/*`, `/cron/daily-blog`, `/realtime-gemini/*`. Update CONTRACTS.md (C1, C2, C4) when next touched.   affects: every brain (re-read PROJECT_BRAIN.md §16-§17)
 
 ## 2026-09-12 - interviewer-persona + holistic-scoring + 3-approach-feedback + exemplar-bank - 895fef8 (backend) + 79b754a, dfdec49 (frontend) + guesstimate/plain-text (recent)
 Grounded in a real Supabase pull of ~90 live sessions that showed two failures the owner reported: (a) the interviewer breaking character - "This information isn't provided in the prompt", "That detail isn't specified" across 11 sessions - and (b) the scorer ZEROING genuine conversations whose final-recommendation field was junk ("Not solved. Provide me with the approach", gibberish) - the exact e8a5e1af and 870e52a1 attempts. Five changes shipped together:
@@ -285,129 +301,129 @@ touches: components/cheat-sheet/category-rail.tsx, components/cheat-sheet/cheat-
 breaking: no   affects: none
 Notes: Client-side presentational layout shift only.
 
-## 2026-06-14 â€” logo-swap â€” f1e00a6
-feat(brand): new MECE logo across app â€” theme-aware, compact-in-nav / full-in-footer+auth. Overwrote legacy placeholders with modern mark + lockup variants.
+## 2026-06-14 — logo-swap — f1e00a6
+feat(brand): new MECE logo across app — theme-aware, compact-in-nav / full-in-footer+auth. Overwrote legacy placeholders with modern mark + lockup variants.
 touches: public/logo*, components/logo.tsx, components/footer.tsx, app/login/page.tsx, app/signup/page.tsx
 breaking: no   affects: none
-## 2026-06-14 â€” news-freshness â€” 2e4a9ee
+## 2026-06-14 — news-freshness — 2e4a9ee
 GD briefs: /news/headlines now newest-first (last 3 days, star pinned, score tiebreak) + self-heal (auto-refetch if newest >24h old, retry once, 15-min throttle). Fetch logic extracted to services/news_pipeline.py; /cron/fetch-news delegates to it. New GitHub Actions daily 06:00 IST scheduler (fetch-news + schedule-daily + cleanup).
 touches: consilio-backend/services/news_pipeline.py, consilio-backend/routes/news.py, consilio-backend/routes/cron.py, consilio/.github/workflows/daily-news.yml
 breaking: no (behavioural; response shapes unchanged)   affects: News pipeline, Daily content
-## 2026-06-14 â€” guesstimate-modules â€” 853905e
-casebook: Guesstimates Pages 2-4 â€” Four Approaches, Ideal Flow, Pressure-Testing & Traps.
+## 2026-06-14 — guesstimate-modules — 853905e
+casebook: Guesstimates Pages 2-4 — Four Approaches, Ideal Flow, Pressure-Testing & Traps.
 Inserted in Section B after Pain & Promise; +3 routes. P5 (cheat sheet) + P6 (worked solve) not wired.
 touches: lib/casebook/content/guesstimates/{four-approaches,ideal-flow,pressure-testing}.ts, lib/casebook/tree.ts, lib/casebook/content/index.ts
 breaking: no   affects: none
 
-## 2026-06-13 â€” seo-entity-hardening â€” 9dcc745
+## 2026-06-13 — seo-entity-hardening — 9dcc745
 seo-entity-hardening: entity disambiguation schema, reframed /about, detailed /methodology, homepage FAQ schema + scroll motion, mobile nav drawers, .gitattributes
 touches: lib/seo.ts, components/casebook/eeat-signals.tsx, app/page.tsx, app/about/page.tsx, app/methodology/page.tsx, components/scroll-animations.tsx, app/globals.css, .gitattributes, components/landing-mobile-nav.tsx, components/app-nav.tsx
 breaking: no   affects: none
 
-## 2026-06-12 â€” industry-primers-ott â€” (pending)
+## 2026-06-12 — industry-primers-ott — (pending)
 industry-primers: add "20 Â· OTT" static bundle and wire up casebook registry
 touches: public/primers/ott/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-12 â€” industry-primers-oil-gas â€” 817d216
+## 2026-06-12 — industry-primers-oil-gas — 817d216
 industry-primers: add "19 Â· Oil & Gas" static bundle and wire up casebook registry
 touches: public/primers/oil-gas/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-12 â€” industry-primers-logistics â€” d3f0ed9
+## 2026-06-12 — industry-primers-logistics — d3f0ed9
 industry-primers: add "18 Â· Logistics" static bundle and wire up casebook registry
 touches: public/primers/logistics/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-12 â€” industry-primers-it-ites â€” 2237f73
+## 2026-06-12 — industry-primers-it-ites — 2237f73
 industry-primers: add "17 Â· IT & ITeS" static bundle and wire up casebook registry
 touches: public/primers/it-ites/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-11 â€” industry-primers-iron-steel â€” 65971b7
+## 2026-06-11 — industry-primers-iron-steel — 65971b7
 industry-primers: add "16 Â· Iron & Steel" static bundle and wire up casebook registry
 touches: public/primers/iron-steel/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-11 â€” industry-primers-insurance â€” 254de4c
+## 2026-06-11 — industry-primers-insurance — 254de4c
 industry-primers: add "15 Â· Insurance" static bundle and wire up casebook registry
 touches: public/primers/insurance/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-11 â€” industry-primers-hospitality â€” f174214
+## 2026-06-11 — industry-primers-hospitality — f174214
 industry-primers: add "14 Â· Hospitality" static bundle and wire up casebook registry
 touches: public/primers/hospitality/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-11 â€” industry-primers-cement â€” 39e4f21
+## 2026-06-11 — industry-primers-cement — 39e4f21
 industry-primers: add "13 Â· Cement" static bundle and wire up casebook registry
 touches: public/primers/cement/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-11 â€” industry-primers-automobile â€” de3573e
+## 2026-06-11 — industry-primers-automobile — de3573e
 industry-primers: add "12 Â· Automobile" static bundle and wire up casebook registry
 touches: public/primers/automobile/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-11 â€” industry-primers-healthcare â€” c5d70b9
+## 2026-06-11 — industry-primers-healthcare — c5d70b9
 industry-primers: add "11 Â· Healthcare" static bundle and wire up casebook registry
 touches: public/primers/healthcare/index.html, lib/primers/index.ts, lib/casebook/tree.ts
 breaking: no   affects: none
 
-## 2026-06-11 â€” deck-vault-drm-and-pro-pivot â€” ce11ebf
+## 2026-06-11 — deck-vault-drm-and-pro-pivot — ce11ebf
 vault: heavy canvas PDF viewer (react-pdf), sticky blur blackout, hostile keyboard screenshot blockers, forensic identity watermarking (MECE - Email - UserID).
 touches: components/pdf-viewer.tsx, app/(app)/skeletons/view/[id]/page.tsx, components/skeleton-library.tsx, app/(app)/skeletons/page.tsx, app/api/skeletons/file/[deckId]/route.ts
-breaking: yes â€” file proxy streams PDF to canvas, native browser downloads and right-clicks are totally disabled. Vault access now requires the 'pro' subscription_tier instead of standalone purchase.   affects: Vault, Payments
+breaking: yes — file proxy streams PDF to canvas, native browser downloads and right-clicks are totally disabled. Vault access now requires the 'pro' subscription_tier instead of standalone purchase.   affects: Vault, Payments
 
-## 2026-06-09 â€” news-daily-fix â€” Vercel Cron backup for /cron/fetch-news + /cron/schedule-daily (daily brief refresh no longer depends on GitHub Actions), news fetch timeouts + "waking up" hint so GD Briefs never spins forever
+## 2026-06-09 — news-daily-fix — Vercel Cron backup for /cron/fetch-news + /cron/schedule-daily (daily brief refresh no longer depends on GitHub Actions), news fetch timeouts + "waking up" hint so GD Briefs never spins forever
 breaking: no
 
-## 2026-06-09 â€” dashboard-polish â€” real constellation locks (no attempt on locked nodes), removed decorative PRO ghost strip, Recent card real-only (no mock), proof rail shows first names, constellation contrast boost
+## 2026-06-09 — dashboard-polish — real constellation locks (no attempt on locked nodes), removed decorative PRO ghost strip, Recent card real-only (no mock), proof rail shows first names, constellation contrast boost
 breaking: no
 
-## 2026-06-09 â€” onboarding-503-fix â€” move onboarding gate from (app) layout (fragile headers() path read -> redirect loop -> 503) into middleware (reliable pathname)
+## 2026-06-09 — onboarding-503-fix — move onboarding gate from (app) layout (fragile headers() path read -> redirect loop -> 503) into middleware (reliable pathname)
 breaking: no
 
-## 2026-06-09 â€” leaderboard-rebuild â€” 3 live views (All-India / Daily / Cohort) + FOMO standing card + LinkedIn share
+## 2026-06-09 — leaderboard-rebuild — 3 live views (All-India / Daily / Cohort) + FOMO standing card + LinkedIn share
 touches: lib/dashboard/leaderboards.ts (new), leaderboard page + client
 breaking: no
 
-## 2026-06-09 â€” dashboard-fomo-real â€” peer-proximity / proof-rail / guesstimate-card now use live data, honest empty states
+## 2026-06-09 — dashboard-fomo-real — peer-proximity / proof-rail / guesstimate-card now use live data, honest empty states
 breaking: no
 
-## 2026-06-09 â€” qa-loggedin-phase1 â€” users RLS + service-role leaderboard/dashboard reads
+## 2026-06-09 — qa-loggedin-phase1 — users RLS + service-role leaderboard/dashboard reads
 touches: 0006_rls.sql, leaderboard, dashboard
-breaking: data-access policy (announce); deploy code before SQL â€” affects: leaderboard/dashboard
+breaking: data-access policy (announce); deploy code before SQL — affects: leaderboard/dashboard
 
-## 2026-06-09 â€” qa-loggedin-phase2 â€” GD-brief/headlines Lite+ gate + results IDOR filter
+## 2026-06-09 — qa-loggedin-phase2 — GD-brief/headlines Lite+ gate + results IDOR filter
 touches: routes/news.py, lib/api.ts, gd-briefs pages, results/[id]
 breaking: news GET now needs Lite JWT (frontend updated)
 
-## 2026-06-09 â€” qa-loggedin-phase3 â€” onboarding x-pathname-on-request, free clarifications=0, college-email throttle+domain, lite bookmarks=0, API_URL guard
+## 2026-06-09 — qa-loggedin-phase3 — onboarding x-pathname-on-request, free clarifications=0, college-email throttle+domain, lite bookmarks=0, API_URL guard
 breaking: no
 
-## 2026-06-09 â€” qa-loggedin-phase4 â€” block inactive cases, useEffect page-reset, eslintrc
+## 2026-06-09 — qa-loggedin-phase4 — block inactive cases, useEffect page-reset, eslintrc
 breaking: no
 
-## 2026-06-09 â€” industry-primers â€” FMCG primer added (No. 23)
+## 2026-06-09 — industry-primers — FMCG primer added (No. 23)
 Third Industry Primer "FMCG" (No. 23) shipped as a fact-checked static page at /primers/fmcg,
 registered in lib/primers/index.ts. Data verified & restated (FY2030 size $1,288Bâ†’~$643B;
 CAGR ~28%â†’~17%; internet users 780Mâ†’~1.0Bn; GDP ~3.5%â†’~3%; urban share 65%â†’~62%; "81% domestic /
-1.3% global" flagged as unverified). Additive â€” registry entry + static asset only; no
+1.3% global" flagged as unverified). Additive — registry entry + static asset only; no
 route/nav/contract change.
 touches: public/primers/fmcg/**, lib/primers/index.ts
 breaking: no   affects: none
 
-## 2026-06-09 â€” industry-primers â€” Cement primer added (No. 22)
+## 2026-06-09 — industry-primers — Cement primer added (No. 22)
 Second Industry Primer "Cement" (No. 22) shipped as a fact-checked static page at
 /primers/cement, registered in lib/primers/index.ts. Data verified & restated
 (industry size $143Bâ†’~$27B; GST 28%â†’18% now law (Sep 2025); top-5 share ~60%; global
 capacity >8%; India Cements/Kesoram now under UltraTech; "Top-4 75%"â†’Top-20 ~70% output).
-Additive â€” registry entry + static asset only; no route/nav/contract change.
+Additive — registry entry + static asset only; no route/nav/contract change.
 touches: public/primers/cement/**, lib/primers/index.ts
 breaking: no   affects: none
 
-## 2026-06-08 â€” industry-primers â€” (in tree, build-gate pending)
+## 2026-06-08 — industry-primers — (in tree, build-gate pending)
 New Learn â†’ Industry Primers section; first primer "Aviation" (No. 21) shipped as a
 self-contained, fact-checked static page embedded via /primers/aviation. Data verified
 & restated (SAF 1% by 2027/intl-first, Indian-carrier intl share ~45%, order book ~1,600,
@@ -416,7 +432,7 @@ Adhiniyam 2024). New routes + static asset only; no contract change.
 touches: public/primers/**, app/(app)/learn/industry-primers/**, lib/primers/*
 breaking: no   affects: none
 
-## 2026-06-08 â€” dashboard-mobile-darkmode + onboarding-profile â€” 8cbdb69
+## 2026-06-08 — dashboard-mobile-darkmode + onboarding-profile — 8cbdb69
 Dashboard: mobile-responsive (useIsMobile hook + stacked grids in
 dashboard-client/hero/constellation/command-panel/consistency-card/news-card),
 dark-mode parity (--card-hex / --map-center / --hero-grad-*, --cluster-*
@@ -435,10 +451,10 @@ app/(app)/layout.tsx, lib/supabase/middleware.ts, lib/types.ts,
 lib/types-onboarding.ts, app/api/onboarding/complete/route.ts,
 app/api/college-email/{send,verify}/route.ts,
 supabase/migrations/0005_user_onboarding.sql
-breaking: yes â€” C6 users schema (new). Additive only; existing readers unaffected.
+breaking: yes — C6 users schema (new). Additive only; existing readers unaffected.
 affects: Dashboard, Profile, future GD-cohort feature
 
-## 2026-06-08 â€” dashboard-wire â€” 3304ecf
+## 2026-06-08 — dashboard-wire — 3304ecf
 Constellation wired to live data (per-node mastery, real recent attempts,
 data-driven dots + halo, cluster routing, backfilled cases, 11 seed cases for
 empty clusters). Hero/News/Guesstimate buttons functional. Career ladder
@@ -451,72 +467,72 @@ components/dashboard/*, components/dashboard-client.tsx,
 components/practice-hub.tsx, app/globals.css,
 supabase/migrations/0004_dashboard_skills.sql,
 supabase/seed-skill-graph.sql, supabase/seed-cases-constellation.sql
-breaking: yes â€” C1 cases (v3 â†’ v4)   affects: Dashboard, Guesstimate, Daily-content, Casebook
+breaking: yes — C1 cases (v3 â†’ v4)   affects: Dashboard, Guesstimate, Daily-content, Casebook
 
-## 2026-06-07 â€” dashboard-focusplus â€” 7b8a2a7
+## 2026-06-07 — dashboard-focusplus — 7b8a2a7
 Focus+ redesign ported to live data: FocusHero, SkillConstellation (9 real nodes, oval-fixed HTML halo), recomposed dashboard-client; social proof dropped; Â§G3 guesstimate exclusion preserved. Route count 143->142 (main branch baseline was 142, no routes added or dropped).
 touches: components/dashboard/*, dashboard-client.tsx, dashboard/page.tsx, globals.css
 breaking: no   affects: none
 
-## 2026-06-06 â€” gd-cheatsheet â€” d61c7c0
+## 2026-06-06 — gd-cheatsheet — d61c7c0
 Pro-only Cheat Sheet: "Add to cheat sheet" on GD-brief data points captures them to new per-user `cheat_sheets`/`cheat_sheet_items` (RLS, pro-gated at UI + /api/cheatsheet + INSERT policy); new /cheat-sheet page groups saved points by topic with per-item notes/delete. Frontend + Supabase only; wires the previously-unused TierGate.
 touches: supabase/migrations/0003_cheat_sheet.sql, lib/types.ts, lib/cheatsheet.ts, app/api/cheatsheet/{route,[itemId]/route}.ts, app/(app)/cheat-sheet/page.tsx, components/cheat-sheet/*, app/(app)/gd-briefs/[id]/page.tsx, components/app-nav.tsx
 breaking: no   affects: none
 
-## 2026-06-06 â€” reconciliation-audit â€” Phase 1 verification
+## 2026-06-06 — reconciliation-audit — Phase 1 verification
 Verified file presence and wiring for Guesstimate end-to-end (G1-G4), AI evaluation v2, Dashboard tiles, and Casebook misc frameworks. All confirmed present and flipped to BUILT.
 touches: .brain/LEDGER.md
 breaking: no   affects: none
 
-## 2026-06-06 â€” reconciliation-audit â€” doc-vs-code sweep
-Verified file presence + wiring against the latest upload. Flipped a whole cluster from "pending/not-built" to **BUILT & LIVE**: Â§9.31 daily-content+admin+keep-alive, Â§9.32 news pipeline, Â§9.33 dashboard daily tiles, Â§9.28 interviewer+conversational solve, plus structured items â€” payments audit trail (Razorpay verify+webhook write `payments`), voice input (Whisper/transcribe), image input (vision/extract-text), rate limiting (attempts.py), analytics (@vercel/analytics), privacy+terms pages, and badge_awarder (wired, graceful â€” not a crash). Still genuinely open: `vercel.json` (region pin), refund-policy page, `users.streak_count` column write. See PROJECT_BRAIN_MERGED.md "2026-06-06 FULL RECONCILIATION AUDIT".
-touches: (status reconciliation only â€” no code change)
+## 2026-06-06 — reconciliation-audit — doc-vs-code sweep
+Verified file presence + wiring against the latest upload. Flipped a whole cluster from "pending/not-built" to **BUILT & LIVE**: Â§9.31 daily-content+admin+keep-alive, Â§9.32 news pipeline, Â§9.33 dashboard daily tiles, Â§9.28 interviewer+conversational solve, plus structured items — payments audit trail (Razorpay verify+webhook write `payments`), voice input (Whisper/transcribe), image input (vision/extract-text), rate limiting (attempts.py), analytics (@vercel/analytics), privacy+terms pages, and badge_awarder (wired, graceful — not a crash). Still genuinely open: `vercel.json` (region pin), refund-policy page, `users.streak_count` column write. See PROJECT_BRAIN_MERGED.md "2026-06-06 FULL RECONCILIATION AUDIT".
+touches: (status reconciliation only — no code change)
 breaking: no   affects: none
 
-## 2026-06-06 â€” casebook-guesstimates â€” (in tree, build-gate pending)
+## 2026-06-06 — casebook-guesstimates — (in tree, build-gate pending)
 Guesstimates promoted from last section to **B** (`defaultOpen`); new 239-line "The Pain & The Promise" overview page (names the 30/25/20/15/10 rubric); 9 dead placeholder nav nodes removed; sections re-lettered C..F. See brain Â§9.38.
 touches: lib/casebook/tree.ts, lib/casebook/content/index.ts, lib/casebook/content/guesstimates/pain-and-promise.ts
-breaking: no â€” Casebook-Page-schema (C3) consumer only; route count changes on build (+1 real, âˆ’9 dead)   affects: Casebook
+breaking: no — Casebook-Page-schema (C3) consumer only; route count changes on build (+1 real, âˆ’9 dead)   affects: Casebook
 
-## 2026-06-06 â€” case-solve-unified â€” (in tree, build-gate pending)
+## 2026-06-06 — case-solve-unified — (in tree, build-gate pending)
 `ConversationalSolve` now takes `initialCase` (server-passed, no re-fetch) / `historyPanel` / `lockedOverlay`; lock renders as an overlay (not a separate page); history+rating render inside the workspace. See brain Â§9.39.
 touches: app/(app)/cases/[id]/page.tsx, components/solve/ConversationalSolve.tsx
-breaking: no â€” reads existing cases shape (C1 reader only)   affects: none
+breaking: no — reads existing cases shape (C1 reader only)   affects: none
 
-## 2026-06-06 â€” nav+history-persistence â€” (in tree, build-gate pending)
+## 2026-06-06 — nav+history-persistence — (in tree, build-gate pending)
 Casebook nav-tree and attempt-history expand/collapse state now persist to `sessionStorage` with an `isMounted` hydration guard; nav defaults open only for "Getting Started"; attempt accordion defaults collapsed. See brain Â§9.40â€“9.41.
 touches: components/casebook/nav-tree.tsx, components/case-attempt-history.tsx
 breaking: no   affects: none
 
-## 2026-06-06 â€” practice-hub-polish â€” (in tree, build-gate pending)
+## 2026-06-06 — practice-hub-polish — (in tree, build-gate pending)
 "Attempted" badge restyled to a success pill and relocated next to the difficulty chip; long attempt answers scroll-capped at 35vh. See brain Â§9.41.
 touches: components/practice-hub.tsx, components/case-attempt-history.tsx
 breaking: no   affects: none
 
-## 2026-06-02 â€” backstop-fix â€” **BUILT & LIVE** (verified in code 2026-06-06)
+## 2026-06-02 — backstop-fix — **BUILT & LIVE** (verified in code 2026-06-06)
 Rewrote guesstimate arithmetic backstop: base/literal steps use stated value (never 0), only derived steps with all-finite inputs are flagged, `percent_of` handles %/ref/commas without crashing; if nothing verifiable, defer to LLM arithmetic. Fixed live false "all-zero" (e-rickshaw scored 71â†’77). `guesstimate_backstop.py` carries the "2026-06-02 hardening" docstring.
 touches: services/guesstimate_backstop.py, prompts/guesstimate_scoring_prompt.py
-breaking: no â€” return keys unchanged (total/dimensions/arithmeticOverridden/rawTotal + backstop.findings/summary/notChecked/totalCapFactor)   affects: none
+breaking: no — return keys unchanged (total/dimensions/arithmeticOverridden/rawTotal + backstop.findings/summary/notChecked/totalCapFactor)   affects: none
 
-## 2026-06-02 â€” guesstimate-G4 â€” **BUILT & LIVE** (verified in code 2026-06-06)
+## 2026-06-02 — guesstimate-G4 — **BUILT & LIVE** (verified in code 2026-06-06)
 69 static guesstimates are attemptable `cases` rows; `code` column + FULL `cases_code_unique` index folded into `0001_baseline_schema.sql`; practice-hub Guesstimates tab is DB-driven (`cases` where `type='guesstimate'`); answer hidden pre-attempt. The standalone `add-code-column.sql`/`seed-guesstimates.sql` files were merged into baseline and no longer exist separately. **Guesstimate answerable end-to-end (G1â€“G4): DONE.**
 touches: components/practice-hub.tsx, lib/types.ts, supabase/migrations/0001_baseline_schema.sql
-breaking: yes â€” DB:`cases` gained `code text` (additive, now in baseline)   affects: Daily-content, Dashboard (no read change)
+breaking: yes — DB:`cases` gained `code text` (additive, now in baseline)   affects: Daily-content, Dashboard (no read change)
 
-## 2026-06-02 â€” daily-content/admin/keep-alive â€” Â§9.31
+## 2026-06-02 — daily-content/admin/keep-alive — Â§9.31
 Daily case/guesstimate generator rewritten to the REAL `cases` schema (was inserting nonexistent columns â†’ 500s); admin 401/500 fixed; self-contained GitHub-Actions keep-alive + cold-start pre-warm.
 touches: services/content_generator.py, routes/daily.py, routes/cron.py, app/(app)/admin/*, .github/workflows/*
 breaking: no   affects: none
 
-## 2026-06-02 â€” dashboard â€” Â§9.23â€“9.26
+## 2026-06-02 — dashboard — Â§9.23â€“9.26
 Dashboard rebuilt: Readiness Score v1, radarâ†’bullet charts, next-action engine, monetization surface; /home merged into /dashboard; entry choreography + ambient motion (reduced-motion gated); Supabase getSessionâ†’getUser auth fix. 143 static pages.
 touches: components/dashboard/*, lib/readiness.ts, lib/next-action.ts, app/(app)/dashboard/page.tsx
 breaking: no   affects: none
 
-## 2026-06-01 â€” casebook â€” Â§9.18â€“9.21
+## 2026-06-01 — casebook — Â§9.18â€“9.21
 Casebook Core-Frameworks 9/9 + Toolkit 9/9 complete (10 cards across 9 nav slots); Miscellaneous Frameworks node authored as M&A-style hybrid.
 touches: lib/casebook/content/**, components/casebook/*
-breaking: yes (historical) â€” Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
+breaking: yes (historical) — Casebook-Page-schema: NO `subtitleEmphasize`; `kind:"toolkit"` added   affects: any future Casebook page
 
 
 

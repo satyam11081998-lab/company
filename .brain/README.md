@@ -13,7 +13,7 @@ whole folder at the root of your `company-main` repo, commit, push — done.
 |---|---|---|---|
 | `README.md` | this page — the map + setup + loop | you (rarely) | once |
 | `OPERATING_GUIDE.md` | the full runbook (setup detail, merge flow, worker prompt, error table) | you (rarely) | when stuck |
-| `PROJECT_BRAIN.md` | the **durable architecture** doc (the big one — stack, schema, all history) | brains, via handoff | read-only reference |
+| `PROJECT_BRAIN.md` | the **durable truth** about the product (v3, rewritten 2026-10-06): snapshot, architecture, AI, data, status register, known issues, risks, roadmap, gotchas | any brain, kept current | read §0 every session |
 | `SESSION_PREAMBLE.md` | the block you paste at the start of **every** brain chat | you (rarely) | every session (paste it) |
 | `CONTRACTS.md` | the shared surfaces that break things when they drift (DB, scoring, casebook, API) | brains, via handoff | when a contract changes |
 | `LEDGER.md` | who owns which feature + what it depends on | worker (status) | to assign lanes |
@@ -47,6 +47,12 @@ merges, pushes**, and is the *only* thing that touches git or writes `STATE`/`CH
 5. Hand to Antigravity -> it branches, gates, merges, runs `sync.mjs`, pushes.
 6. Other brains see it next session (step 1).
 
-## The one rule
+## The one rule (as designed)
 **Brains propose, the worker disposes.** Only Antigravity touches git or writes
 shared state. Never let a brain push.
+
+## How it actually runs (2026-10-06)
+Since July, brain sessions author and commit to `main` together with the owner; handoffs remain the design record.
+What keeps that safe: pull first, one profile at a time, `node .brain/sync.mjs` after every push, a CHANGELOG
+entry per landed change, and PROJECT_BRAIN.md §16 updated whenever a feature's status changes. Shells that cannot
+delete files (remote/Cowork bridges) must not run git write commands; use `git --no-optional-locks` for reads.

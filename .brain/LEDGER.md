@@ -1,82 +1,50 @@
-# LEDGER — who owns what, and what it depends on
+# LEDGER — features, owners, and what they depend on
 
-One row per feature. `depends_on` is the whole point: if a feature you depend on
-gets a `BREAKING` change in CHANGELOG, re-sync before you touch yours.
-Antigravity updates the **Status** column when it lands a handoff. Brains may
-propose a new row via handoff but do not edit others' rows.
+One row per feature. `depends_on` is the point: if a feature you depend on gets a `BREAKING` change in
+CHANGELOG, re-read the contract before you touch yours. `sync.mjs` mirrors the first four columns into STATE.md.
 
-*(2026-07-17 housekeeping, Cowork brain: the Brain-C block was listed twice — once
-with broken `pp/(app)` paths — and several rows had drifted below the collision-watch
-section. Deduplicated and consolidated into the single table below; no row deleted.)*
+*(2026-10-06 rewrite: the table had not been updated since 2026-09-12 and was missing the US launch, Interview
+Intelligence, Prep Copilot v2, broadcasts, guest mode, voice, daily blog and more. Statuses below are verified against
+`main` @ 1dcc819 / 9f71870 and the live site. Owner letters A/B/C/Cowork are historical; any brain may now work any
+lane, one profile at a time. Full detail lives in PROJECT_BRAIN.md §16.)*
 
 | Feature | Owner brain | Branch | Status | Owns (files/areas) | depends_on |
 |---|---|---|---|---|---|
-| **Dashboard** | A | feat/dashboard | **Wired to live data + perf + mobile + dark-mode BUILT & LIVE (2026-06-08)** | `components/dashboard/*`, `lib/readiness.ts`, `lib/next-action.ts`, `lib/personal-stats.ts`, `components/dashboard-client.tsx` | DB:`cases`/`attempts`, Scoring-contract (reads `total`/`dimensions`) |
-| **Casebook** | C | feat/casebook | Core+Toolkit BUILT; Misc BUILT; **Guesstimates section real + promoted to B, Pain&Promise page (§9.38), method modules (P2-4) BUILT; P5 cheat sheet + P6 worked solve pending; clarifying-question dropdowns on all 52 worked examples BUILT; MECE page added as first Core Framework (2026-06-20)** | `lib/casebook/*`, `components/casebook/*`, `lib/casebook/content/**` | Casebook-Page-schema (C3) |
-| **Case solve UX** | A | feat/solve | **BUILT; free-tier clarification-counter fix 2026-06-20; practice-hub domains + read-only deep-links removed 2026-06-21; clarification-quota dead-end fixed 2026-08-01 (free 7 / lite 12 / pro 20, interviewer never goes silent, migration 0043); dictation continuous transcription and token refresh 2026-09-01** (unified workspace §9.39–9.41) | `app/(app)/cases/[id]/page.tsx`, `components/solve/*`, `lib/interview-api.ts`, `components/case-attempt-history.tsx`, `components/practice-hub.tsx`, `components/casebook/nav-tree.tsx` | DB:`cases` (reader), Scoring-contract (reader), **clarification-quota tier surface (proposed C9)** |
-| **Guesstimate end-to-end** | B | feat/guesstimate | **BUILT & LIVE** (verified 2026-06-06) | `components/practice-hub.tsx`, `supabase/migrations/0001_baseline_schema.sql`, `lib/types.ts` | DB:`cases`, Scoring-contract |
-| **Scoring backstop** | B | feat/guesstimate | **BUILT & LIVE** (verified 2026-06-06) | `services/guesstimate_backstop.py`, `prompts/guesstimate_scoring_prompt.py` | Scoring-contract (must keep return keys) |
-| **Daily content + admin + keep-alive** | B | feat/daily | **BUILT** (daily scheduler live) | `services/content_generator.py`, `services/daily_scheduler.py`, `routes/daily.py`, `routes/cron.py`, `.github/workflows/*`, `app/(app)/admin/*` | DB:`cases`, API-contract (C4) |
-| **News pipeline** | B | feat/daily | **BUILT** (self-heal live) | `services/news_fetcher.py`, `services/headline_classifier.py`, `routes/news.py` | API-contract (C4) |
-| **Voice + image input** | B | feat/io | **BUILT** | `routes/transcribe.py`, `routes/vision.py`, `components/{dictation,camera}-button.tsx` | API-contract (C4) |
-| **Voice interview (talk mode)** | Cowork | feat/voice-interview | **BUILT 2026-08-13, NOT YET MERGED** — gates green (tsc EXIT 0, py_compile EXIT 0, 14/14 unit cases); needs a real-browser QA pass + the env-var raise before unflagging | frontend `components/solve/VoiceInterview.tsx`, `lib/voice/{vad,tts-queue,markdown-strip}.ts`; backend `routes/speak.py`, TTS metering in `services/ai_usage.py` | **C4** (additive `/speak`), **C9 v2** (defines the voice counting rule), Case solve UX (`send()`, `ConversationalSolve`), Voice + image input (`/transcribe`), Payments (Pro gate + pricing copy) |
-| **Payments (Razorpay + audit trail)** | B | feat/payments | **BUILT; annual dropped 2026-06-20 (2901f0b); optional server-validated coupon path added 2026-07-17 (C7)** | `app/api/razorpay/{order,verify,webhook}/route.ts`, `lib/tier.ts` (pricing + `discountedPaise`) | DB:`payments`/`users`, **C7 coupons** |
-| **Rate limiting** | B | feat/backend | **BUILT** | `services/rate_limit.py`, `routes/attempts.py` | — |
-| **AI evaluation v2** | B | feat/eval | **BUILT + LIVE (2026-09-12): in-character interviewer (owns facts, identity lock, no praise, plain text) + HOLISTIC scoring (junk/empty recommendation can rescue but never zero a genuine conversation) + 3-approach feedback (flow + named frameworks) + silent exemplar bank (migration-gated, approved-only). Eval 50x2: cases 100%, interviewer 100%; guesstimate approaches fix + numeric harness done, re-run pending.** | `services/ai_scorer.py`, `services/interview_engine.py`, `services/exemplar_bank.py`, `prompts/interview_prompts.py`, `prompts/guesstimate_scoring_prompt.py`, `routes/attempts.py`, `migrations/2026-09-12_case_exemplars.sql`, `tools/eval_interview_scoring.py` | Scoring-contract (this feature DEFINES it; feedback_json gains additive optional `approaches`) |
-| **Deck Vault & DRM (library)** | A | feat/deck-vault | **BUILT & SECURED** (react-pdf + blackout + watermark); **now also receives auto-published rows from Deck Vault Rewards approvals (2026-07-17)** | `app/(app)/skeletons/*`, `components/pdf-viewer.tsx`, `components/skeleton-library.tsx`, `lib/google-drive.ts`, `app/api/skeletons/*` | Payments-contract ('pro' tier), **C8 storage paths** |
-| **Deck Vault Rewards** | Cowork | (landed direct-to-main) | **BUILT & LANDED 2026-07-17** (849a0dc, 47764c2, 1f49694 + backend 41a5f50, 6a7f496; one pending commit: Drive file_type fix). **Deploy blocked — see STATE blockers** | backend `routes/deck_vault.py`, `services/{gdrive,telegram_notify}.py`; frontend `app/(app)/deck-vault/*`, `app/(app)/admin/deck-vault/*`, `app/api/coupons/*`, `app/api/admin/deck-vault/*`, `components/deck-vault/*`, `lib/deck-vault-api.ts`, `supabase/migrations/0041_deck_vault_rewards.sql` | **C7** (defines), **C8** (co-defines), Payments, DB:`users` (tier), Telegram + Google Drive env |
-| **GD Cheat Sheet (Pro)** | B | feat/cheatsheet | **BUILT** | `app/(app)/cheat-sheet/*`, `components/cheat-sheet/*`, `lib/cheatsheet.ts`, `app/api/cheatsheet/*`, `supabase/migrations/0003_cheat_sheet.sql` | DB:`users` (tier read), GD-briefs `data_points` shape (reader), Tier infra |
-| **Onboarding & Profile** | A | feat/onboarding | **BUILT & LIVE (2026-06-08)** | `app/(app)/onboarding/*`, `app/(app)/profile/*`, `components/onboarding/*`, `components/profile/*`, `app/api/onboarding/*`, `app/api/college-email/*`, `lib/types-onboarding.ts`, `supabase/migrations/0005_user_onboarding.sql` | C6 users-schema, DB:`colleges`/`college_email_verifications`, Storage `avatars`, Supabase Auth SMTP |
-| **Industry Primers** | A | feat/industry-primers | **BUILT (20 primers); full-screen overlay + native fullscreen + collapsible nav (2026-06-20)** | `public/primers/**`, `app/(app)/learn/industry-primers/**`, `lib/primers/*` | Casebook-tree |
-| **Auth** | C | feat/auth | **BUILT (LinkedIn OIDC added)** | `components/auth-form.tsx` | — |
-| **Onboarding (LinkedIn prefill)** | C | feat/auth | **BUILT (LinkedIn prefill + connected hint)** | `app/(app)/onboarding/page.tsx`, `components/onboarding/onboarding-form.tsx` | Auth |
-| **Admin** | C | feat/admin | **BUILT (Status page, Delete User; Deck Rewards section added 2026-07-17)** | `app/(app)/admin/*`, `components/admin/*` | DB:`users`, API |
-| **Certificates** | Cowork | (landed direct-to-main) | **BUILT & COMMITTED 2026-08-11** (464f806, 4120ca4, 5019501, e5174da + backend edafb57). Migration 0046 NOT yet run; `npm run build` NOT yet run | `supabase/migrations/0046_certificates.sql`, `lib/certificates.ts`, `components/certificates/*`, `app/(app)/admin/certificates/*`, `app/api/admin/certificates/*`, `app/verify/[certId]/*`, `public/fonts/*`, `public/certificates/*`; backend `services/certificate_ai.py`, `routes/certificates.py` | **C4** (additive note), DB:`users` (is_admin read, created_by FK), `ai_usage_log` (drafting cost), Admin nav |
-| **GD Briefs** | C | feat/gd | **BUILT (Abstract GD track + shared library, domains added)** | `app/(app)/gd-briefs/*`, `lib/abstract-gd.ts`, `app/api/abstract-briefs/*` | News pipeline |
-| **Leaderboard** | C | feat/leaderboard | **BUILT (college + LinkedIn opt-out, logo updated)** | `components/leaderboard/*`, `lib/dashboard/leaderboards.ts` | DB:`users` |
-| **Endorsements** | C | feat/endorsements | **BUILT** | `supabase/migrations/0019_endorsements.sql`, `app/(app)/admin/endorsements/*`, `components/endorsements-section.tsx` | — |
-| **Colleges** | C | feat/db | **BUILT (0020 refreshed tiers)** | `supabase/migrations/0020_colleges_refresh.sql` | — |
-| **Resume Lab / CV Pointer Lab** | C | feat/resume | **BUILT (v1 Builder, AI rebuild/refine/generate/fit, strict char-band, print-to-PDF); prompt policy fix 2026-07-17 (7adc9d2): placeholders-not-questions, impact-first** | `app/(app)/resume/*`, `components/resume/*`, `lib/resume/*`, backend `services/resume_ai.py`, `routes/resume.py`, `supabase/migrations/0023_resumes.sql` | DB:`resumes`, API, feature_trials (free-tier gate) |
-| **Feedback & flagging** | C | feat/feedback | landed | `app/api/feedback/*`, `components/feedback/*`, `app/(app)/admin/feedback/*`, `lib/feedback.ts`, `supabase/migrations/0011_feedback.sql` | C4 API-contract (additive), DB:`users` (FK, read) |
-| **Testimonials + Admin** | C | feat/testimonials-admin | **BUILT** | `components/testimonials-carousel.tsx`, `app/(app)/admin/testimonials/*`, `app/api/admin/testimonials/*` | — |
-| **Engaging Loading** | C | feat/engaging-loading | landed | `lib/loading-content.ts`, `components/engaging-loader.tsx`, `components/solve/ConversationalSolve.tsx` | UI-only |
-| **UI Batch 2** | C | feat/ui-batch-2 | landed | `components/draggable-fab.tsx`, `components/solve/ConversationalSolve.tsx`, `components/testimonials-carousel.tsx` | UI-only |
-| **Mobile Polish** | C | feat/mobile-polish | landed | `components/pricing-plans.tsx`, `components/mobile-bottom-nav.tsx`, `app/globals.css` | UI-only |
-| **Legal/static pages** | (shared) | feat/legal-refund | Refund contrast fix + policy update (privacy/terms live). **Deck Vault Rewards T&C awaits legal review (2026-07-17)** | `app/privacy`, `app/terms`, `app/refund`, `/deck-vault` T&C constant | — |
-| **Input size limits** | B | feat/input-limits | BUILT (answer/question/recommendation max 20k) | `lib/limits.ts`, `services/limits.py`, `routes/submit.py`, `submission-form.tsx`, `routes/attempts.py`, `ConversationalSolve.tsx` | C4 |
-| **Dynamic domains (case_tags)** | B | feat/dynamic-domains | DB BUILT (migration verified); UI pending | `supabase/migrations/0013_case_tags.sql`, `lib/types.ts`, `lib/limits.ts` | DB:`users`/`cases` (FK, read-only) |
-| **Landing (hero demo + vignettes + ISR)** | C | feat/landing | **BUILT (2026-07-10/14)** | `components/hero-interview-demo.tsx`, `components/landing-vignettes.tsx`, `app/page.tsx` | UI-only |
-| **Free-tier rework** | C+B | feat/free-tier | **BUILT frontend (c96e952) + backend (f254eba)**; LinkedIn-follow perk (0040) live | `lib/{tier,access}.ts`, `services/access_guard.py`, `supabase/migrations/{0038,0040}*.sql` | TIER surface (cross-repo) |
+| **Case interviewer (text, V12)** | any | main | **LIVE** — V12 response functions; interviewer on gpt-4o-mini via admin override (2026-10-01) | backend `services/{interview_engine,interviewer_decision,session_signals,interviewer_mode,clarification_counter}.py`, `prompts/interview_prompts_v2.py`, `routes/attempts.py`; frontend `components/solve/ConversationalSolve.tsx`, `lib/interview-api.ts` | C9, C2, AI provider router |
+| **Unified interviewer brain** | any | feat/unified-interviewer-brain | **IN PROGRESS** — both repos, behind `INTERVIEWER_BRAIN` (default off), last commit 2026-10-01, not merged | branch only | Case interviewer, Voice |
+| **Scoring (holistic + backstop + figures + exemplars)** | any | main | **LIVE**; exemplar bank DORMANT until `migrations/2026-09-12_case_exemplars.sql` runs and entries are approved | `services/{ai_scorer,answer_validity,guesstimate_backstop,case_figures,exemplar_bank}.py`, `prompts/{scoring_prompt,guesstimate_scoring_prompt}.py`, `lib/scoring/*`, `app/(app)/results/[id]` | C2 (defines), DB `submissions`/`case_figures` |
+| **Learning model / skill profile** | any | main | **BETA** — data written; coached UI controls flag-gated (migrations 0066–0068) | `services/learning_model.py`, `user_skill_profile` | Scoring |
+| **Voice (dictation + live voice)** | any | main | **LIVE** — Gemini Live / OpenAI Realtime / pipeline; free trial 14 min (7 per case) since 2026-10-03; `lib/constants.ts` "voice OFF" comment is stale | backend `routes/{transcribe,speak,realtime,realtime_gemini,voice_coach}.py`, `services/{ai_usage,realtime_credits,voice_coach}.py`, `prompts/voice_*`; frontend `components/solve/Voice*.tsx`, `lib/voice/*` | Case interviewer, C9, Payments (credits) |
+| **Dashboard** | A | main | **LIVE** — India top section (2026-09-30), US v3 dashboard (2026-09-27), constellation, ladder, heatmap | `components/dashboard/*`, `lib/dashboard/*`, `lib/readiness.ts`, `lib/next-action.ts` | DB `cases`/`submissions`, C2 |
+| **Practice hub + daily pair** | B | main | **LIVE** — ~420 India items; loads all rows client-side (perf issue) | `app/(app)/practice/page.tsx`, `components/practice-hub.tsx`, `services/{content_generator,daily_scheduler,access_guard}.py`, `routes/{daily,cron}.py` | C1, Markets |
+| **Leaderboards** | C | main | **LIVE, ISSUE** — 17 restored rows with estimated solves; copy bug | `lib/dashboard/leaderboards.ts`, `components/leaderboard/*`, `SEED_LEADERBOARD.sql` | DB `users` |
+| **Casebook / primers / competitions / Data Atlas / glossary** | C | main | **LIVE** — 110 content files, 27 primers, 10 competition chapters, 75 terms | `lib/casebook/*`, `lib/primers`, `lib/glossary`, `app/(app)/learn/*` | C3, C5 |
+| **GD (news briefs, Topic Radar, Abstract GD)** | C | main | **LIVE, ISSUE** — feed irregular and status probe says Down; Radar hand-curated with hard-coded "today"; Abstract library empty | `routes/news.py`, `services/{news_fetcher,news_pipeline,headline_classifier,brief_generator,abstract_gd_generator}.py`, `lib/gd-topics.ts`, `lib/abstract-gd.ts`, `app/(app)/gd-briefs/*` | AI router (Gemini) |
+| **US & Europe market** | any | main | **LIVE** since 2026-09-25 — USD/EUR, region lock, US bank 57+57, per-market daily, US learn/SEO | `lib/market*.ts`, `lib/pricing-intl.ts`, `lib/us-market/*`, `lib/us-learn/*`, `app/us/*`, `services/markets.py`, migration 0070 | Payments, Practice |
+| **Payments (Razorpay) + coupons** | B | main | **LIVE** — Free/Lite ₹299/Pro ₹599 (Lite restored 2026-10-05); quarter plans; coupons C7 v2; INR-with-foreign-card refund | `app/api/razorpay/*`, `lib/{tier,billing,coupons,payments-region,revenue}.ts`, `app/(app)/upgrade/*`, `app/pricing` | C7, C9 copy, DB `payments`/`users` |
+| **Auth, onboarding, guest mode, session lock** | C | main | **LIVE** — email/Google/LinkedIn, anonymous guests + Turnstile, single active session | `lib/supabase/*`, `lib/{guest,turnstile,sessions}.ts`, `app/(app)/onboarding/*`, `app/api/guest/claim` | C6 |
+| **CV Pointer Lab** | C | main | **LIVE** (Pro; 2 free tries) | `routes/resume.py`, `services/resume_ai.py`, `app/(app)/resume/*` | AI router |
+| **Deck Vault (library + public pages + purchases)** | A | main | **LIVE** — 82 decks, 25% free pages, 2 sales | `app/(app)/skeletons/*`, `app/decks/[slug]`, `app/api/decks/*`, `routes/{decks,deck_ingestion}.py`, `services/deck_*`, `lib/google-drive.ts` | C8 |
+| **Deck Vault Rewards** | Cowork | main | **OFF** — disconnected; admin page redirects | `routes/deck_vault.py`, `app/(app)/deck-vault/*` | C7, C8 |
+| **Cheat sheet + share PDF** | B | main | **LIVE** (Lite+) | `app/(app)/cheat-sheet/*`, `app/s/[id]`, `app/api/cheat-sheet/share` | GD briefs |
+| **Prep Copilot v2** | any | main | **IN DEVELOPMENT** — removed from Pro and nav 2026-10-05 (`PREP_COPILOT_IN_NAV=false`); `/coach` opens by URL | `routes/copilot.py`, `services/copilot/*`, `components/copilot/*`, `lib/copilot/*` | AI router |
+| **Interview Intelligence** | any | main | **BETA** — mounted at `/ii`; admins + 2 test users; plans hidden (Free 10 min, Pro 20 min ×2/month, Ultra) | `consilio-backend/interview-intelligence/**`, `routes/interview_intelligence.py`, `app/(app)/interview-intelligence/*`, `components/interview-intelligence/*`, `lib/interview-intelligence/*` | C10 (proposed), II schema |
+| **Agentic orchestrator / coach v1 (admin demos)** | any | main | **BETA (admin)** — simulation default, live mode available | `services/{agentic,coach}/*`, `routes/{agentic,coach}.py`, `app/(app)/admin/{agentic,prep-copilot}` | AI router |
+| **AI provider router + usage + budget** | any | main | **LIVE** — live toggles, fallback to OpenAI, $10/day kill switch, Telegram alert; Gemini Live mis-filed as "Other" in the report | `services/{ai_providers,ai_usage}.py`, `routes/{ai_providers,usage}.py`, `app/(app)/admin/{ai-providers,ai-usage}` | — |
+| **Email broadcasts + digests** | any | main | **LIVE** — Resend, segments, India/US audiences, targeted practice (unlisted cases, 0065) | `app/(app)/admin/broadcast/*`, `lib/email/*`, `lib/broadcast-audience.ts`, `routes/broadcast.py`, `services/broadcast_gen.py` | Practice (unlisted) |
+| **Growth: insights + daily blog** | any | main | **LIVE (thin) / DORMANT** — `/insights` public 2026-10-03; daily blog built, off until `DAILY_BLOG_ENABLED`, Telegram review | `routes/seo.py`, `services/growth/*`, `app/insights/*`, `lib/seo-pages.ts`, `.github/workflows/daily-blog.yml` | C4 (additive) |
+| **Admin console** | C | main | **LIVE** — 20 sections; Status page contradicts itself; analytics windows mixed | `app/(app)/admin/*`, `components/admin/*` | most features |
+| **Certificates + offer letters** | Cowork | main | **LIVE** — 5 certificates; offer_letters migration run status unknown | `lib/certificates.ts`, `app/verify/[certId]`, `app/offers/[offerId]`, `routes/certificates.py` | — |
+| **Testimonials, endorsements, team** | C | main | **LIVE, ISSUE** — 17 testimonials incl. the founder's own | `app/(app)/admin/{testimonials,endorsements,team}` | — |
+| **Landing pages (India + US)** | C | main | **LIVE** — editorial India landing (2026-09-29), premium US landing with MCQ warm-up | `app/page.tsx`, `components/home/*`, `app/us/*`, `components/us/*` | Markets |
+| **Analytics (page events, funnel)** | any | main | **LIVE, ISSUE** — ~4 days of session history; funnel windows mixed | `app/api/track`, `lib/analytics.ts`, `app/(app)/admin/journeys` | — |
 
-## Collision watch (features that touch the same surface)
-- **Talk mode rides the EXISTING turn loop.** `VoiceInterview` owns no attempt state — it
-  calls `ConversationalSolve`'s `send('voice', text)` and subscribes to the same SSE token
-  stream the on-screen draft renders from. Anyone changing `send()`, `postMessageStream`
-  or the SSE event names must check the overlay still gets its tokens. The moment talk
-  mode forks the send path, scoring parity is gone.
-- **Two meters, one session.** Talk mode burns BOTH `/transcribe` minutes (candidate in)
-  and `/speak` minutes (interviewer out). They are separate `ai_usage_log` endpoints on
-  purpose so dictation and talk mode do not eat each other's allowance — but a single
-  spoken case consumes 20-40 min of the Whisper meter, so `AI_VOICE_MIN_PRO` and
-  `AI_TTS_MIN_PRO` must be raised together.
-- **Clarification quota** is THREE constants that must agree: backend
-  `routes/attempts.py CLARIFICATION_QUOTA`, frontend `lib/tier.ts
-  TIER_LIMITS.maxHintQuestions`, and the pricing copy (`components/pricing-plans.tsx`,
-  `app/(app)/upgrade/page.tsx`, `app/pricing/page.tsx`). They silently disagreed for
-  weeks (frontend said Pro = Infinity, backend capped at 15; frontend + pricing said
-  free = 0 hints while the solve UI still invited free users to ask) and that drift is
-  exactly what produced the 2026-08-01 P0. Change one → change all three, same commit,
-  plus a backfill migration for in-flight attempts. Now formalised as contract **C9**
-  in CONTRACTS.md (v1, 2026-08-01).
-- **DB:`cases`** is touched by Dashboard, Guesstimate, and Daily-content → any
-  column add is a contract event; announce in CHANGELOG with `affects:` all three.
-- **Scoring-contract** is DEFINED by AI-evaluation-v2 and CONSUMED by Dashboard,
-  Guesstimate, Backstop → eval-v2 changing return keys = `BREAKING`, affects all.
-- **Razorpay routes** are owned by Payments (B) but now carry the C7 coupon path
-  co-owned by Deck Vault Rewards (Cowork) → any change to order/verify/webhook must
-  keep `discountedPaise()` agreement and the coupon redemption semantics.
-- **`gdrive:` storage convention (C8)** is shared by Deck Vault library (A) and
-  Deck Vault Rewards (Cowork), in BOTH repos (`lib/google-drive.ts` ↔
-  `services/gdrive.py`) → change one, change both, same commit train.
-- **`deck_skeletons`** is written by the admin uploader AND by Rewards
-  auto-publish → schema/enum changes affect both.
+## Collision watch (surfaces several features share)
+- **`send()` / SSE turn loop** is shared by text, dictation and pipeline voice. Anyone changing `send()`, `postMessageStream` or SSE event names must check voice still receives tokens; forking the send path breaks scoring parity.
+- **Clarification quota (C9)** = backend `CLARIFICATION_QUOTA` + frontend `TIER_LIMITS.maxHintQuestions` + pricing copy, changed together with a backfill migration.
+- **Prices** = `lib/tier.ts TIER_PRICING` + `lib/pricing-intl.ts` + Razorpay order/verify/webhook + every pricing surface (`/pricing`, `/upgrade`, pricing cards, JSON-LD, II plans page).
+- **`cases` table (C1)** is read/written by practice, daily generators (India + US), broadcast (unlisted), news → case, dashboard; any column add is a contract event.
+- **Scoring return (C2)** is defined by the scorer and consumed by results, dashboard, backstop, exemplar bank.
+- **AI provider router** is used by almost every AI feature; a provider outage or rename (Gemini) hits many features at once.
+- **`gdrive:` storage (C8)** in both repos (`lib/google-drive.ts` ↔ `services/gdrive.py`).
+- **Voice minutes** are metered in three places (`/transcribe`, `/speak`, realtime/Gemini credits) with separate quotas.
