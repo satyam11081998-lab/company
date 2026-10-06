@@ -181,5 +181,24 @@ horizontal overflow, og:image 1200×675, JSON-LD Article/BreadcrumbList/FAQPage.
 First check after deploy: Admin → Growth → "Write today's post as a draft" → the Telegram draft should start with
 the picture; or "Add or redo pictures" on today's post.
 
+## v3.1 (2026-10-06): a way in — nav link and breadcrumbs
+**Owner ask:** Insights had no way in from the site. "Move Case Competitions to More, and add an Insights button on
+the navigation bar at the top instead."
+
+```
+touches:  consilio
+            EDIT components/app-nav.tsx          bar: Dashboard | Practice▾ | GD Briefs▾ | Industry Primers▾ | Insights | More▾
+                                                  (Case Competitions now leads the More menu; India accounts only, as before)
+            EDIT components/mobile-bottom-nav.tsx More sheet: Insights first, then Case Competitions
+            EDIT components/insights/parts.tsx    + Crumbs (visible breadcrumb)
+            EDIT app/insights/[slug]/page.tsx     MECE › Insights › title on the stage (matches the BreadcrumbList JSON-LD)
+            EDIT app/insights/page.tsx            MECE › Insights, + BreadcrumbList JSON-LD
+breaking: no. No CONTRACTS surface (the nav isn't in CONTRACTS.md).
+```
+Gates: `tsc --noEmit` EXIT 0; `next build` OK (copy); browser: breadcrumbs on article and index, desktop and phone
+(title truncates on a phone, no horizontal overflow). The logged-in nav wasn't rendered in the build copy (it needs a
+signed-in user); the change is two list entries in the existing render code.
+Not changed: the landing page header (`components/home/home-header.tsx`, logged-out visitors) has no Insights link yet.
+
 ## After merging
 `git push` in both repos, then `node .brain\sync.mjs` in consilio.

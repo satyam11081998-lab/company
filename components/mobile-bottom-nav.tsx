@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   X,
   ClipboardCheck,
+  Newspaper,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -37,8 +38,8 @@ import { useIIAccess } from '@/lib/interview-intelligence/useAccess';
 
 // Mirrors app-nav's primary row (2026-08-16): Industry Primers is promoted over
 // the generic "Learn" entry, which moves into More. Four tabs is the ceiling
-// here, so Case Competitions sits at the top of the More sheet rather than in
-// the bar — on desktop, where there is room, it IS primary.
+// here, so Insights (primary on desktop since 2026-10-06) sits at the top of the
+// More sheet, followed by Case Competitions (which moved into More on desktop).
 const PRIMARY = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/practice', icon: Brain, label: 'Practice' },
@@ -103,6 +104,7 @@ export default function MobileBottomNav() {
     ...iiLinks,
     { href: '/profile', icon: User, label: 'Profile' },
   ] : [
+    { href: '/insights', icon: Newspaper, label: 'Insights' },
     { href: '/learn/casebook/case-competitions/why-they-matter', icon: Medal, label: 'Case Competitions' },
     { href: '/learn/casebook', icon: FileText, label: 'Learn' },
     ...iiLinks,

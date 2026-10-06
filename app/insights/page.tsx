@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { homeSerif } from '@/components/home/fonts';
 import {
-  ACCENT_DARK, InsightCard, InsightsBar, InsightsFooter, PAPER, TopicLabel, accentStyle, fmtDate, topicOf,
+  ACCENT_DARK, Crumbs, InsightCard, InsightsBar, InsightsFooter, PAPER, TopicLabel, accentStyle, fmtDate, topicOf,
 } from '@/components/insights/parts';
 import { SITE_URL } from '@/lib/seo';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
@@ -42,14 +42,26 @@ export default async function InsightsIndex() {
       itemListElement: pages.slice(0, 20).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${SITE_URL}/insights/${p.slug}`, name: p.title })),
     },
   } : null;
+  const crumbsLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'MECE', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Insights', item: `${SITE_URL}/insights` },
+    ],
+  };
 
   return (
     <div className={`${homeSerif.variable} ${PAPER} ${ACCENT_DARK}`} style={accentStyle('#9D120D')}>
       {listLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listLd) }} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsLd) }} />
       <InsightsBar />
+      <div className="mx-auto max-w-[1200px] px-5 pt-4 sm:px-6">
+        <Crumbs items={[{ label: 'MECE', href: '/' }, { label: 'Insights' }]} />
+      </div>
 
       {/* ---------- masthead ---------- */}
-      <header className="mx-auto max-w-[1200px] px-5 pb-10 pt-12 text-center sm:px-6 sm:pb-14 sm:pt-16">
+      <header className="mx-auto max-w-[1200px] px-5 pb-10 pt-8 text-center sm:px-6 sm:pb-14 sm:pt-10">
         <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
           A business story a day · Sourced · Free
         </p>

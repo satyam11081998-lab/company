@@ -196,6 +196,32 @@ export function InsightsBar({ onDark = false }: { onDark?: boolean }) {
   );
 }
 
+/**
+ * Visible breadcrumb (MECE › Insights › this essay). Matches the BreadcrumbList JSON-LD on the page; the last
+ * item is the current page and truncates on a phone rather than wrapping.
+ */
+export function Crumbs({ items, onDark = false }: { items: { label: string; href?: string }[]; onDark?: boolean }) {
+  const link = onDark ? 'text-white/60 hover:text-white' : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white';
+  const here = onDark ? 'text-white/40' : 'text-neutral-400 dark:text-neutral-500';
+  return (
+    <nav aria-label="Breadcrumb" className="min-w-0">
+      <ol className="flex min-w-0 items-center gap-2 font-sans text-[0.78rem]">
+        {items.map((it, i) => {
+          const last = i === items.length - 1;
+          return (
+            <li key={i} className={`flex items-center gap-2 ${last ? 'min-w-0' : 'shrink-0'}`}>
+              {i > 0 && <span aria-hidden className={here}>›</span>}
+              {it.href && !last
+                ? <Link href={it.href} className={`underline-offset-4 hover:underline ${link}`}>{it.label}</Link>
+                : <span aria-current={last ? 'page' : undefined} className={`truncate ${here}`}>{it.label}</span>}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
 export function InsightsFooter() {
   return (
     <footer className="border-t border-black/10 dark:border-white/10">

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { homeSerif } from '@/components/home/fonts';
 import {
-  ACCENT_DARK, Cited, InsightCard, InsightsBar, InsightsFooter, Kicker, PAPER, Picture, TopicLabel,
+  ACCENT_DARK, Cited, Crumbs, InsightCard, InsightsBar, InsightsFooter, Kicker, PAPER, Picture, TopicLabel,
   accentStyle, fmtDate, lighten, readingMinutes, topicOf,
 } from '@/components/insights/parts';
 import { ReadingProgress, ShareRow } from '@/components/insights/ReadingChrome';
@@ -134,8 +134,11 @@ export default async function InsightPage({ params }: { params: { slug: string }
         style={hero ? undefined : { backgroundImage: `radial-gradient(90% 70% at 50% 0%, ${t.color}66 0%, transparent 70%)` }}
       >
         <InsightsBar onDark />
+        <div className="mx-auto max-w-[1200px] px-5 pt-3 sm:px-6 sm:pt-4">
+          <Crumbs onDark items={[{ label: 'MECE', href: '/' }, { label: 'Insights', href: '/insights' }, { label: page.title }]} />
+        </div>
         {hero && (
-          <figure className="mx-auto max-w-[1200px] sm:px-6 sm:pt-6">
+          <figure className="mx-auto max-w-[1200px] pt-3 sm:px-6 sm:pt-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={hero.url}

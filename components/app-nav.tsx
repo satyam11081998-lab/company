@@ -95,9 +95,10 @@ export default function AppNav() {
   // link to their FIRST leaf, which is the pattern Case Competitions already
   // used. The casebook sidebar then opens on that cluster.
   // Bar order: Dashboard | Practice▾ | GD Briefs▾ | Industry Primers▾ |
-  // Case Competitions | More▾. PRIMARY renders before the dropdown groups and
-  // TRAILING after, which is the only way to get Case Competitions to sit on
-  // the far side of them.
+  // Insights | More▾. PRIMARY renders before the dropdown groups and TRAILING
+  // after, which is the only way to get a link to sit on the far side of them.
+  // 2026-10-06 (owner): Insights, the daily business essay, takes the slot Case
+  // Competitions had; Case Competitions moves to the top of More.
   const PRIMARY_LINKS: NavLink[] = [
     { href: '/dashboard', label: 'Dashboard' },
   ];
@@ -106,7 +107,7 @@ export default function AppNav() {
   // GD, CV lab, deck vault, cheat sheet, copilot) are also refused by the
   // middleware, so hiding them here is presentation, not the gate.
   const TRAILING_LINKS: NavLink[] = isIntl ? [] : [
-    { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
+    { href: '/insights', label: 'Insights' },
   ];
 
   // Dropdown groups. Each has a HEAD link (clicking the label still navigates,
@@ -141,10 +142,11 @@ export default function AppNav() {
     { href: '/leaderboard', label: 'Leaderboard' },
     { href: '/profile', label: 'Profile' },
   ] : [
-    // "Learn" owns the casebook EXCEPT the two tracks promoted above — without
-    // both exclusions it would light up as active while the user is plainly in
-    // Industry Primers or Case Competitions, and two nav items would look
-    // selected at once.
+    // Case Competitions sat in the bar until 2026-10-06; it leads the More menu now.
+    { href: '/learn/casebook/case-competitions/why-they-matter', label: 'Case Competitions', active: isActive('/learn/casebook/case-competitions') },
+    // "Learn" owns the casebook EXCEPT Industry Primers and Case Competitions —
+    // without both exclusions it would light up as active while the user is
+    // plainly in one of those, and two items would look selected at once.
     { href: '/learn/casebook', label: 'Learn', active: isActive('/learn/casebook') && !isActive('/learn/casebook/case-competitions') && !isActive('/learn/casebook/industry-primers') },
     // Prep Copilot — the per-user agentic coach. Pro-only (the backend /coach
     // routes are the authoritative gate; this just hides the entry point).
@@ -160,8 +162,8 @@ export default function AppNav() {
   ];
   const moreActive = MORE_LINKS.some(({ href, active }) => active ?? isActive(href));
 
-  // Render order of the bar: Dashboard, then these three groups, then Case
-  // Competitions, then More. `head` is where the trigger label itself goes.
+  // Render order of the bar: Dashboard, then these three groups, then
+  // Insights, then More. `head` is where the trigger label itself goes.
   const NAV_GROUPS = isIntl ? [
     { label: 'Practice', head: '/practice', links: PRACTICE_LINKS.slice(1), isOpen: isActive('/practice'), scroll: false },
   ] : [
