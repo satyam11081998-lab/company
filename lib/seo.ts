@@ -9,7 +9,12 @@ import { INTL_MARKET_ACTIVE } from '@/lib/market';
  * entity graph.
  */
 
-export const SITE_URL = 'https://mece.in';
+// The site is served at www.mece.in — Vercel 308-redirects the bare mece.in
+// there. Canonicals, the sitemap, hreflang, JSON-LD and llms.txt must name the
+// address that actually answers, not one that redirects (2026-10-08: they all
+// said https://mece.in, so every canonical pointed at a redirect, and Bing —
+// the index behind ChatGPT search — flags sitemap URLs that redirect).
+export const SITE_URL = 'https://www.mece.in';
 export const SITE_NAME = 'MECE';
 export const SITE_TITLE = 'Practice real cases & guesstimates for MBA placements | MECE';
 export const SITE_DESC =

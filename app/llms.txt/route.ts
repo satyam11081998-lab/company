@@ -20,6 +20,11 @@ export async function GET() {
     `> ${SITE_DESC}`,
     '',
     'MECE (mece.in) is a placement-interview preparation platform for MBA/PGDM students. The MECE Casebook below is free to read without an account. Practice scoring, leaderboards, and GD briefs require a free account.',
+    // Who the international site is for, said up front so an answer engine
+    // asked about US / European consulting prep finds it in the summary.
+    ...(INTL_MARKET_ACTIVE
+      ? ['', `For candidates in the United States and Europe recruiting for consulting (McKinsey, BCG, Bain and other strategy firms), finance and strategy roles, MECE's international site is ${SITE_URL}/us: AI case interview and market sizing practice set in US markets, priced in US dollars and euros, with free guides at ${SITE_URL}/us/learn.`]
+      : []),
     '',
     '## Core pages',
     '',

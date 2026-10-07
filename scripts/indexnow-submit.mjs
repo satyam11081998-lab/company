@@ -18,7 +18,7 @@
  * Needs Node 18+ (global fetch). No dependencies.
  */
 
-const HOST = 'mece.in';
+const HOST = 'www.mece.in'; // the served host (mece.in redirects here) — lib/seo.ts SITE_URL
 const SITE = `https://${HOST}`;
 const KEY = '32253abc39d938d2742a313856778bbf';
 const KEY_LOCATION = `${SITE}/${KEY}.txt`;
