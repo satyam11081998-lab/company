@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { toPublicPathname } from '@/lib/public-pathname';
 import { ChevronDown, Compass, Layers, Wrench, Briefcase, Calculator, Building2, Shapes, Trophy } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { NavTreeItem } from './nav-tree-item';
@@ -61,7 +62,7 @@ function NavTreeSection({ node, searchQuery, defaultCollapsed = false }: NavTree
   // of where you were in the casebook, and no sibling primers to move between.
   // Beats both `defaultOpen` and the sessionStorage restore, because "where the
   // user actually is" outranks "where they last left this section".
-  const pathname = usePathname();
+  const pathname = toPublicPathname(usePathname());
   const containsActivePage = React.useMemo(() => {
     if (!pathname) return false;
     const hasActive = (nodes: NavNode[] | undefined): boolean =>

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { toPublicPathname } from '@/lib/public-pathname';
 import { Lock, FileText, CheckCircle2, ChevronRight } from 'lucide-react';
 import type { NavNode } from '@/lib/casebook/types';
 
@@ -12,7 +13,7 @@ interface NavTreeItemProps {
 }
 
 export function NavTreeItem({ node, level }: NavTreeItemProps) {
-  const pathname = usePathname();
+  const pathname = toPublicPathname(usePathname());
   
   if (node.kind === 'group') {
     return (

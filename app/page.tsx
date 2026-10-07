@@ -57,7 +57,15 @@ const TARGET_FIRMS = ['McKinsey', 'BCG', 'Bain', 'Goldman Sachs', 'JPMorgan', 'H
  * ISR, not force-dynamic: the landing page is the highest-traffic SEO surface
  * and everything on it is public. Testimonials come from a cookie-less anon
  * client (RLS = logged-out visitor); auth-dependent CTAs resolve client-side
- * in <AuthCTA/>. Fresh social proof within 5 minutes.
+ * in <AuthCTA/>.
+ *
+ * FRESHNESS (2026-10-07): re-rendered ON DEMAND, not every 5 minutes. The two
+ * things on this page that change are refreshed the moment they change:
+ *   - today's daily pair → the backend calls /api/revalidate/home right after
+ *     writing the daily_schedule row (and the daily cron does too);
+ *   - testimonials → app/(app)/admin/testimonials/actions.ts revalidatePath('/').
+ * The 1-hour revalidate below is only the fallback. At 300s this page was
+ * re-rendered ~37 times per 12h at ~0.4s of Vercel Active CPU each.
  *
  * REDESIGN (2026-09-30, branch feat/india-landing-redesign): the page follows
  * the approved editorial mockup — Newsreader headlines, margin notes in a pen
@@ -65,7 +73,7 @@ const TARGET_FIRMS = ['McKinsey', 'BCG', 'Bain', 'Goldman Sachs', 'JPMorgan', 'H
  * front of the hero photo, and success stories (testimonials) near the close
  * in place of the endorsement wall. Components live in components/home/.
  */
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export default async function LandingPage() {
   const supabase = createStaticClient();

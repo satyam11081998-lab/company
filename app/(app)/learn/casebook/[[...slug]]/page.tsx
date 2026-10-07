@@ -44,9 +44,9 @@ export function generateMetadata({ params }: PageProps): Metadata {
 
   const description = extractPageDescription(page);
   const canonical = casebookCanonicalPath(page.slug);
-  const ogImage = `/og?title=${encodeURIComponent(page.title)}${
-    page.subtitle ? `&subtitle=${encodeURIComponent(page.subtitle)}` : ''
-  }&kind=${encodeURIComponent(page.kind)}`;
+  // Prerendered share card (app/og/casebook/[...slug]); same image the
+  // /og?title=…&subtitle=…&kind=… URL produced, without a render per crawl.
+  const ogImage = `/og/casebook/${page.slug}`;
 
   return {
     title: page.title,

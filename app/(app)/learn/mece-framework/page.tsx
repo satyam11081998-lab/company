@@ -84,9 +84,8 @@ export const metadata: Metadata = {
     modifiedTime: MECE_PAGE_MODIFIED,
     images: [
       {
-        url: `/og?title=${encodeURIComponent('The MECE Framework')}&subtitle=${encodeURIComponent(
-          'Mutually Exclusive, Collectively Exhaustive'
-        )}&kind=framework`,
+        // Prerendered share card (app/og/mece-framework); same image as before.
+        url: '/og/mece-framework',
         width: 1200,
         height: 630,
         alt: 'The MECE framework explained',

@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -98,6 +99,14 @@ export async function GET(req: Request) {
   const results = await Promise.all([
     kick(api, secret, market === 'US' ? '/cron/schedule-daily-us' : '/cron/schedule-daily'),
   ]);
+
+  // The home page ("/") shows today's India pair and is re-rendered on demand
+  // (2026-10-07). When the kick came back OK, today's row exists: refresh "/"
+  // now. (If it timed out, the backend refreshes "/" itself once it has
+  // written the row — services/daily_scheduler.py.)
+  if (market !== 'US' && results[0] && 'ok' in results[0] && results[0].ok) {
+    revalidatePath('/');
+  }
 
   // Always 200: the kick was delivered. Completion is guaranteed by the
   // backend's idempotency + the GitHub Actions long-timeout runner.

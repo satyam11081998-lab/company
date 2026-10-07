@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
 
-// Runs on the EDGE runtime, not Node. `createServiceClient` is a plain
-// fetch-based @supabase/supabase-js client with no Node built-ins, so it runs
-// fine on Edge — and analytics ingestion (by far the highest-frequency route on
-// the site: a beacon per page view + leave for every visitor) therefore stays
-// OFF the Fluid/Node Active-CPU budget entirely and rides the much-higher Edge
-// tier instead. Pinned to bom1 to sit next to the primary/Supabase region.
-// `force-dynamic` keeps the endpoint from ever being cached.
+// Runs on the EDGE runtime, pinned to bom1 next to Supabase. `force-dynamic`
+// keeps the endpoint from ever being cached.
+//
+// 2026-10-07: the inserts are two plain PostgREST POSTs instead of a
+// @supabase/supabase-js service client. Vercel now bills this route on Fluid
+// Active CPU (14s per 12h, ~80ms a call), and most of that was the client:
+// loading the library on a cold start, then building auth + realtime clients
+// and reading a (non-existent) session on every insert. The requests are the
+// ones supabase-js sent for `.from(t).insert(rows)` — same URL and `columns`
+// list, same service-role apikey/Authorization headers, same Content-Profile —
+// so the rows written are identical. Failures are still swallowed and the
+// response is still `{ ok: true }`, exactly as before.
 export const runtime = 'edge';
 export const preferredRegion = 'bom1';
 export const dynamic = 'force-dynamic';
@@ -52,6 +56,40 @@ interface CleanActionEvent {
 
 const s = (v: unknown, max: number): string | null =>
   typeof v === 'string' && v.length ? v.slice(0, max) : null;
+
+/**
+ * The request supabase-js makes for `.from(table).insert(rows)` with a
+ * service-role client: POST /rest/v1/<table>?columns="a","b",… with the key as
+ * both apikey and Bearer token. Errors are swallowed, as supabase-js did (it
+ * returned `{ error }` instead of throwing), so one failed table never stops
+ * the other or changes the response.
+ */
+async function insertRows(
+  supabaseUrl: string,
+  serviceKey: string,
+  table: 'page_events' | 'user_actions',
+  rows: object[],
+): Promise<void> {
+  try {
+    const endpoint = new URL(`rest/v1/${table}`, supabaseUrl.endsWith('/') ? supabaseUrl : `${supabaseUrl}/`);
+    const columns = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
+    if (columns.length) endpoint.searchParams.set('columns', columns.map((c) => `"${c}"`).join(','));
+    const res = await fetch(endpoint.toString(), {
+      method: 'POST',
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        'Content-Profile': 'public',
+      },
+      body: JSON.stringify(rows),
+    });
+    // Drain the (empty) body so the connection is released.
+    await res.text().catch(() => '');
+  } catch {
+    // Best-effort, like before.
+  }
+}
 
 /**
  * Best-effort ingest for PageTracker and useTrackAction.
@@ -111,17 +149,17 @@ export async function POST(req: Request): Promise<Response> {
       }
     }
 
-    const svc = createServiceClient();
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    // supabase-js threw here when either was missing → the catch below.
+    if (!url || !key) return NextResponse.json({ ok: false });
 
-    // Insert page events (view/leave)
-    if (pageEvents.length) {
-      await svc.from('page_events').insert(pageEvents);
-    }
-
-    // Insert action events
-    if (actionEvents.length) {
-      await svc.from('user_actions').insert(actionEvents);
-    }
+    // Insert page events (view/leave) and action events. Independent tables,
+    // so the two writes run side by side.
+    await Promise.all([
+      pageEvents.length ? insertRows(url, key, 'page_events', pageEvents) : null,
+      actionEvents.length ? insertRows(url, key, 'user_actions', actionEvents) : null,
+    ]);
 
     return NextResponse.json({ ok: true });
   } catch {

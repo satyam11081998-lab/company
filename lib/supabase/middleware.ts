@@ -49,6 +49,23 @@ function setRegionCookie(res: NextResponse, value: string) {
   });
 }
 
+/* ── Static logged-out copy of the learning pages (2026-10-07) ────────────
+ * app/learn-static prerenders the Casebook pages and the MECE framework guide
+ * at build time with the logged-out chrome. Requests WITHOUT a session cookie
+ * are rewritten there (see the public early-exit below), so crawlers and
+ * logged-out readers cost no server render. The bare /learn/casebook (a
+ * redirect to the first page) is not mirrored and stays live.
+ */
+const STATIC_LEARN_PREFIX = '/learn-static';
+
+function staticLearnPath(pathname: string): string | null {
+  if (pathname === '/learn/mece-framework') return `${STATIC_LEARN_PREFIX}/mece-framework`;
+  if (pathname.startsWith('/learn/casebook/') && pathname.length > '/learn/casebook/'.length) {
+    return STATIC_LEARN_PREFIX + pathname.slice('/learn'.length);
+  }
+  return null;
+}
+
 /** Redirect that keeps any auth cookies the session refresh just rotated. */
 function redirectKeepingCookies(url: URL, from: NextResponse | null): NextResponse {
   const res = NextResponse.redirect(url);
@@ -66,6 +83,16 @@ export async function updateSession(request: NextRequest) {
   // onboarding gate. It MUST live on the request — a response header is NOT
   // visible to RSC `headers()`, which is why the gate was previously fragile.
   const pathname = request.nextUrl.pathname;
+
+  // The static copy lives at /learn-static/... but is only ever served under
+  // its real /learn/... URL (rewrite below). A direct request for it is sent
+  // to the real URL, so the copy never exists as a second, indexable address.
+  if (pathname === STATIC_LEARN_PREFIX || pathname.startsWith(STATIC_LEARN_PREFIX + '/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/learn' + pathname.slice(STATIC_LEARN_PREFIX.length);
+    return NextResponse.redirect(url, 308);
+  }
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
 
@@ -97,6 +124,19 @@ export async function updateSession(request: NextRequest) {
         setRegionCookie(res, `${visitor.market}.${visitor.basis}`);
         return res;
       }
+    }
+    // Static logged-out copy of the learning pages (2026-10-07). No session
+    // cookie = nothing personal to render, so serve the page prerendered at
+    // build time (app/learn-static) instead of a fresh server render. Only for
+    // visitors placed in India: that is the chrome the copy carries, and the
+    // only placement there is while the international site is off.
+    const staticPath = visitor.market === 'IN' ? staticLearnPath(pathname) : null;
+    if (staticPath) {
+      const url = request.nextUrl.clone();
+      url.pathname = staticPath;
+      const rewritten = NextResponse.rewrite(url);
+      if (!bot) setRegionCookie(rewritten, `${visitor.market}.${visitor.basis}`);
+      return rewritten;
     }
     const response = NextResponse.next({ request: { headers: requestHeaders } });
     response.headers.set('x-pathname', pathname);
