@@ -105,7 +105,7 @@ export async function GET(req: Request) {
   // now. (If it timed out, the backend refreshes "/" itself once it has
   // written the row — services/daily_scheduler.py.)
   if (market !== 'US' && results[0] && 'ok' in results[0] && results[0].ok) {
-    revalidatePath('/');
+    revalidatePath('/', 'page');
   }
 
   // Always 200: the kick was delivered. Completion is guaranteed by the

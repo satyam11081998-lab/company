@@ -29,7 +29,7 @@ type Result = { success: boolean; error?: string; id?: string };
 
 function revalidate() {
   revalidatePath('/admin/endorsements');
-  revalidatePath('/'); // landing endorsements section
+  revalidatePath('/', 'page'); // landing only; a bare '/' appeared to clear every cached page on Vercel (2026-10-07)
 }
 
 export async function createEndorsement(input: EndorsementInput): Promise<Result> {

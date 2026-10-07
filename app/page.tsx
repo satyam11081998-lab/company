@@ -63,7 +63,7 @@ const TARGET_FIRMS = ['McKinsey', 'BCG', 'Bain', 'Goldman Sachs', 'JPMorgan', 'H
  * things on this page that change are refreshed the moment they change:
  *   - today's daily pair → the backend calls /api/revalidate/home right after
  *     writing the daily_schedule row (and the daily cron does too);
- *   - testimonials → app/(app)/admin/testimonials/actions.ts revalidatePath('/').
+ *   - testimonials → app/(app)/admin/testimonials/actions.ts revalidatePath('/', 'page').
  * The 1-hour revalidate below is only the fallback. At 300s this page was
  * re-rendered ~37 times per 12h at ~0.4s of Vercel Active CPU each.
  *

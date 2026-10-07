@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import type { CaseRow } from '@/lib/types';
+import type { PracticeCase } from '@/lib/practice-cases';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,7 @@ import {
 import { Search, Shuffle, Activity, Calculator, Briefcase, Check, CheckCircle2, Filter } from 'lucide-react';
 
 interface PracticeHubProps {
-  cases: CaseRow[]; // From database (Scored Cases)
+  cases: PracticeCase[]; // From database (Scored Cases)
   attemptedCaseIds?: string[];
   initialTab?: string;
   /** 'us' (2026-09-26): US vocabulary + the US app's tighter radii. India omits it → unchanged. */
@@ -198,7 +198,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {paginatedItems.map((item) => {
           if (item._itemType === 'scored') {
-            const c = item as CaseRow;
+            const c = item as PracticeCase;
             return (
               <Card key={`scored-${c.id}`} className={`ui-card flex flex-col p-5 group hover:border-primary/50 transition-colors ${L.card}`}>
                 <div className="flex justify-between items-start mb-3">
@@ -230,7 +230,7 @@ export default function PracticeHub({ cases, attemptedCaseIds = [], initialTab =
             );
           }
           if (item._itemType === 'guesstimate') {
-            const g = item as CaseRow;
+            const g = item as PracticeCase;
             const attempted = attemptedSet.has(g.id);
             return (
               <Card key={`guesstimate-${g.id}`} className={`ui-card flex flex-col p-5 group hover:border-navy/50 transition-colors ${L.card}`}>

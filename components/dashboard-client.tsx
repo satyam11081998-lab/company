@@ -36,7 +36,8 @@ export interface DashboardClientProps {
   quota: FreeQuota;
   benchmark?: Partial<Record<ScoreDimension, number>>;
   trajectory: number[];
-  submissions: ReadinessSubmission[];
+  /** Score + case type per submission, oldest first — all this component reads. */
+  submissions: Pick<ReadinessSubmission, 'score' | 'case_type'>[];
   rankNum: number;
   totalUsers: number;
   percentile: number | null;

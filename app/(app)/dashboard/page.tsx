@@ -182,7 +182,11 @@ export default async function DashboardPage() {
   const [rawSubsRes, attemptsRes, benchmarkRes, heatmap, growthDeltas, activityFeed, peerProximity, cohortActivity, proofRail, skillGraph] = await Promise.all([
     supabase
       .from('submissions')
-      .select('id, user_id, case_id, answer_text, score, feedback_json, created_at, cases(type, difficulty)')
+      // Only what this page reads (2026-10-07). The full answer text and the
+      // full feedback record of EVERY submission used to be fetched and parsed
+      // on each dashboard view; the readiness model, the guesstimate chart and
+      // the quota read only the score breakdown, taken here as a JSON path.
+      .select('id, user_id, case_id, score, created_at, breakdown:feedback_json->breakdown, cases(type, difficulty)')
       .eq('user_id', authUser.id)
       .order('created_at', { ascending: true }),
     supabase
@@ -193,9 +197,11 @@ export default async function DashboardPage() {
       // Cohort benchmark — the per-dimension averages every user is compared
       // against on the radar. Demo submissions are excluded so a seeded
       // account cannot move the bar for real users.
+      // Two fields of each record (JSON paths), not 100 whole feedback records
+      // per dashboard view (2026-10-07). Same rows, same filter.
       const q = svc
         .from('submissions')
-        .select('feedback_json')
+        .select('rubric:feedback_json->>rubric, breakdown:feedback_json->breakdown')
         .not('feedback_json', 'is', null)
         .limit(100);
       return exclDemo ? q.not('user_id', 'in', exclDemo) : q;
@@ -227,9 +233,11 @@ export default async function DashboardPage() {
     id: s.id,
     user_id: s.user_id,
     case_id: s.case_id,
-    answer_text: s.answer_text,
+    answer_text: '', // not fetched; nothing on this page reads it
     score: s.score,
-    feedback_json: s.feedback_json,
+    // Rebuilt from the selected breakdown: every reader on this page uses
+    // feedback_json?.breakdown and nothing else.
+    feedback_json: s.breakdown != null ? { breakdown: s.breakdown } : null,
     created_at: s.created_at,
     case_type: s.cases?.type ?? null,
     case_difficulty: s.cases?.difficulty ?? null,
@@ -287,8 +295,8 @@ export default async function DashboardPage() {
   (benchmarkRes.data || []).forEach((sub) => {
     // Guesstimates use a different 5-dim rubric (1..5) — keep them out of the 6-dim
     // case benchmark so their `structure` (1..5) doesn't pollute case `structure` (0..25).
-    if ((sub.feedback_json as { rubric?: string })?.rubric === 'guesstimate') return;
-    const breakdown = (sub.feedback_json as { breakdown?: Record<string, number> })?.breakdown;
+    if ((sub as { rubric?: string | null }).rubric === 'guesstimate') return;
+    const breakdown = (sub as { breakdown?: Record<string, number> | null }).breakdown;
     if (breakdown) {
       Object.entries(breakdown).forEach(([dim, val]) => {
         if (typeof val === 'number') {
@@ -403,7 +411,9 @@ export default async function DashboardPage() {
         quota={quota}
         benchmark={benchmark}
         trajectory={trajectory}
-        submissions={submissions}
+        // The client reads only score + case type, in order (2026-10-07);
+        // sending whole rows put every answer and feedback blob in the page.
+        submissions={submissions.map((s) => ({ score: s.score, case_type: s.case_type }))}
         rankNum={rankNum}
         totalUsers={totalUsers}
         percentile={percentile}

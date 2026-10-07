@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * re-rendered when the pair actually changes:
  *   - the backend calls this right after it writes today's daily_schedule row
  *     (consilio-backend services/daily_scheduler.py, _refresh_frontend_home);
- *   - the daily Vercel cron calls revalidatePath('/') itself when its kick
+ *   - the daily Vercel cron calls revalidatePath('/', 'page') itself when its kick
  *     completes (app/api/cron/refresh).
  * Testimonial edits already refresh "/" from their admin action. The page's
  * own `revalidate` (1 hour) remains as the fallback.
@@ -28,6 +28,10 @@ export async function POST(req: Request) {
   if (!authorized) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
-  revalidatePath('/');
+  // 'page' = the home page only (tag "_N_T_/page", which no other page has).
+  // A bare revalidatePath('/') targets "_N_T_/", and on Vercel that appeared to
+  // clear every other cached page too: after the first call on 2026-10-07 even
+  // /llms.txt, which nothing else refreshes, came back REVALIDATED.
+  revalidatePath('/', 'page');
   return NextResponse.json({ ok: true, revalidated: '/' });
 }

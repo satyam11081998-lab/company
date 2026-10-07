@@ -27,7 +27,7 @@ type Result = { success: boolean; error?: string; id?: string };
 
 function revalidate() {
   revalidatePath('/admin/testimonials');
-  revalidatePath('/'); // landing carousel
+  revalidatePath('/', 'page'); // landing only; a bare '/' appeared to clear every cached page on Vercel (2026-10-07)
   revalidatePath('/about');
 }
 

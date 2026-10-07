@@ -34,7 +34,8 @@ export async function getGrowthDeltas(supabase: SupabaseClient, userId: string):
 
     const { data: subs } = await supabase
       .from('submissions')
-      .select('created_at, feedback_json')
+      // Only the score breakdown (JSON path), not each whole feedback record.
+      .select('created_at, breakdown:feedback_json->breakdown')
       .eq('user_id', userId)
       .gte('created_at', d60.toISOString());
 
@@ -44,10 +45,10 @@ export async function getGrowthDeltas(supabase: SupabaseClient, userId: string):
     if (subs && subs.length > 0) {
       hasData = true;
       for (const sub of subs) {
-        if (!sub.feedback_json?.breakdown) continue;
+        if (!sub.breakdown) continue;
         
         const date = new Date(sub.created_at);
-        const breakdown = sub.feedback_json.breakdown as Record<string, number>;
+        const breakdown = sub.breakdown as Record<string, number>;
         const target = date >= d30 ? currentScores : pastScores;
 
         for (const [dim, score] of Object.entries(breakdown)) {

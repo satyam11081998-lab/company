@@ -7,9 +7,9 @@ import { viewerContentMarket } from '@/lib/market-page';
 import { marketScoped } from '@/lib/market-db';
 
 import PracticeHub from '@/components/practice-hub';
+import { PRACTICE_CASE_COLUMNS, type PracticeCase } from '@/lib/practice-cases';
 import LoginToContinueOverlay from '@/components/guest/login-to-continue-overlay';
 import { Eyebrow } from '@/components/us/ui';
-import type { CaseRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,17 +35,22 @@ export default async function PracticePage({
   // account's locked market; logged-out → the region the middleware detected.
   const userRow = user ? await getCachedUserRow(user.id) : null;
   const content = viewerContentMarket(userRow, !!user);
+  // Only the columns the practice cards read (lib/practice-cases.ts).
+  // `select('*')` shipped every case's full solution, hints, MCQs and
+  // interviewer notes to the browser on each visit (~600 KB of page data,
+  // readable in the page source) for a list that shows a title, tags and a
+  // two-line preview. 2026-10-07.
   const casesRes = await marketScoped(
     content,
     () => supabase
       .from('cases')
-      .select('*')
+      .select(PRACTICE_CASE_COLUMNS)
       .eq('is_active', true)
       .eq('market', content)
       .order('created_at', { ascending: false }),
     () => supabase
       .from('cases')
-      .select('*')
+      .select(PRACTICE_CASE_COLUMNS)
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
   );
@@ -60,7 +65,10 @@ export default async function PracticePage({
     attemptedCaseIds = Array.from(new Set((attemptsRes.data || []).map((a) => a.case_id)));
   }
 
-  const cases = (casesRes.data as CaseRow[] | null) || [];
+  // A guesstimate card shows no preview, so its text is not sent at all.
+  const cases: PracticeCase[] = ((casesRes.data as PracticeCase[] | null) || []).map((c) =>
+    c.type === 'guesstimate' ? { ...c, content: '' } : c,
+  );
 
   let initialTab = (searchParams.tab || searchParams.type || 'all') as string;
   if (initialTab === 'guesstimate') initialTab = 'guesstimates';
