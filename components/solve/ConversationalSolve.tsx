@@ -73,6 +73,8 @@ const COMPOSER_MAX_PX = 240;
 import EngagingLoader from '@/components/engaging-loader';
 import GuestSaveWall from '@/components/guest/guest-save-wall';
 import { createClient } from '@/lib/supabase/client';
+import { AFTER_ONBOARDING_KEY } from '@/lib/after-onboarding';
+import { clearPendingSubmitFor, pendingRecSessionKey, readPendingSubmit, savePendingSubmit } from '@/lib/guest-pending-submit';
 import { CASE_TYPE_LABELS, DIFFICULTY_LABELS, VOICE_INTERVIEW_ENABLED } from '@/lib/constants';
 import {
   startAttempt,
@@ -111,7 +113,32 @@ interface DraftAssistant {
  * Where a guest's finished recommendation is parked across an OAuth redirect.
  * Per-case so two open tabs cannot clobber each other.
  */
-const PENDING_REC_KEY = (caseId: string) => `mece:pending-rec:${caseId}`;
+const PENDING_REC_KEY = pendingRecSessionKey;
+
+/** The backend's 400 for a submit against an attempt that is no longer active. */
+function isAlreadySubmitted(e: unknown): boolean {
+  return e instanceof Error && /already submitted/i.test(e.message);
+}
+
+/**
+ * The submission an attempt produced, read under the caller's own session
+ * ("attempts: owner read" RLS — only their own attempts are visible). Used when
+ * the answer was already scored elsewhere (the email-confirmation tab beat this
+ * one to it), so the user still lands on their results, not on an error.
+ */
+async function submissionForAttempt(attemptId: string): Promise<string | null> {
+  try {
+    const { data } = await createClient()
+      .from('attempts')
+      .select('submission_id')
+      .eq('id', attemptId)
+      .maybeSingle();
+    const id = (data as { submission_id?: string | null } | null)?.submission_id;
+    return typeof id === 'string' && id ? id : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function ConversationalSolve({ caseId, initialCase, historyPanel, lockedOverlay }: Props) {
   // The voice allowance resets at 00:00 IST; international users are told
@@ -184,6 +211,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // Set when we come back from an OAuth conversion with a parked answer; the
   // effect below submits it once the attempt has finished loading.
   const [resumeRec, setResumeRec] = useState<string | null>(null);
+  // The attempt a resumed answer belongs to, when known (the localStorage copy
+  // records it). The resume only submits against THAT attempt.
+  const resumeAttemptRef = useRef<string | null>(null);
+  // Auth user id of the live session (the guest's id survives conversion).
+  const userIdRef = useRef<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const threadRef = useRef<HTMLDivElement>(null);
@@ -231,6 +263,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       // a mid-session conversion is picked up without a remount.
       const anon = session.user?.is_anonymous === true;
       setIsGuest(anon);
+      userIdRef.current = session.user?.id ?? null;
 
       // Returning from a Google / LinkedIn conversion: the account is now
       // permanent and a parked recommendation is waiting. They already pressed
@@ -243,14 +276,20 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         } catch {
           /* storage unavailable */
         }
-        if (parked && parked.trim()) {
+        // Email-confirmation route (2026-10-07): the link opens a NEW tab, so
+        // the per-tab copy above is empty there. The localStorage copy is
+        // shared across tabs and bound to this user + case + attempt.
+        const stored = session.user?.id ? readPendingSubmit(caseId, session.user.id) : null;
+        const rec = parked && parked.trim() ? parked : stored?.rec ?? null;
+        if (rec) {
           try {
             sessionStorage.removeItem(PENDING_REC_KEY(caseId));
           } catch {
             /* ignore */
           }
+          resumeAttemptRef.current = stored?.attemptId ?? null;
           // Defer so the attempt below is loaded before we submit against it.
-          setResumeRec(parked);
+          setResumeRec(rec);
         }
       }
       try {
@@ -391,6 +430,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       created_at: new Date().toISOString(),
     };
     setMessages((m) => [...m, optimisticUser]);
+    // A guest who closed the save wall and kept working has moved past the
+    // answer parked for scoring. Drop it, so signing up later never auto-scores
+    // a stale version — they press Submit again on the one they finish.
+    if (isGuest) discardParkedAnswer();
     trackAction('send_message', 'case', kind === 'voice' ? 'Voice message' : 'Text message', { case_id: caseId, attempt_id: attempt?.attempt_id ?? null });
     setComposer('');
     composerVoiceRef.current = false; // draft is spent — next draft starts fresh
@@ -781,24 +824,73 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   useEffect(() => {
     if (!resumeRec || !attempt || !token || isGuest || submitting) return;
     const rec = resumeRec;
+    const forAttempt = resumeAttemptRef.current;
     setResumeRec(null);
+    resumeAttemptRef.current = null;
     void (async () => {
       setSubmitting(true);
+      // The answer's attempt is no longer the active one: it was scored in
+      // another tab. Never submit it against this (different, fresh) attempt —
+      // go to the score it already has.
+      if (forAttempt && forAttempt !== attempt.attempt_id) {
+        clearPendingSubmitFor(caseId);
+        const sid = await submissionForAttempt(forAttempt);
+        if (sid) {
+          goToResults(sid);
+          return;
+        }
+        setSubmitting(false);
+        return;
+      }
       try {
         const res = await submitAttempt(attempt.attempt_id, token, rec);
-        const resultsPath = `/results/${res.submission_id}`;
-        try {
-          sessionStorage.setItem('mece:after-onboarding', resultsPath);
-        } catch {
-          /* ignore */
-        }
-        router.push(resultsPath);
+        clearPendingSubmitFor(caseId);
+        goToResults(res.submission_id);
       } catch (e) {
+        if (isAlreadySubmitted(e)) {
+          clearPendingSubmitFor(caseId);
+          const sid = await submissionForAttempt(attempt.attempt_id);
+          if (sid) {
+            goToResults(sid);
+            return;
+          }
+        }
         toast.error(e instanceof Error ? e.message : 'Submit failed');
         setSubmitting(false);
       }
     })();
   }, [resumeRec, attempt, token, isGuest, submitting, router]);
+
+  /** Forget a guest's answer parked for scoring (all three copies). */
+  function discardParkedAnswer() {
+    setPendingRec('');
+    clearPendingSubmitFor(caseId);
+    try {
+      sessionStorage.removeItem(PENDING_REC_KEY(caseId));
+      if (sessionStorage.getItem(AFTER_ONBOARDING_KEY) === `/cases/${caseId}`) {
+        sessionStorage.removeItem(AFTER_ONBOARDING_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /**
+   * To the results page. The path is parked first: a just-converted guest has
+   * not onboarded yet, so the onboarding gate intercepts this navigation, and
+   * the onboarding form reads the parked path (and the gate's ?next=) to bring
+   * them back here when they finish.
+   */
+  function goToResults(submissionId: string) {
+    const resultsPath = `/results/${submissionId}`;
+    try {
+      sessionStorage.setItem(AFTER_ONBOARDING_KEY, resultsPath);
+      sessionStorage.removeItem(PENDING_REC_KEY(caseId));
+    } catch {
+      /* private mode / storage disabled — the gate's ?next= still carries it */
+    }
+    router.push(resultsPath);
+  }
 
   async function handleSubmit() {
     if (!attempt || !token || submitting) return;
@@ -845,9 +937,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         // The email path never needs this (it converts in-page, no redirect),
         // and it is overwritten with the real /results/<id> path the moment a
         // submit succeeds.
-        sessionStorage.setItem('mece:after-onboarding', `/cases/${caseId}`);
+        sessionStorage.setItem(AFTER_ONBOARDING_KEY, `/cases/${caseId}`);
       } catch {
         /* private mode — the email path still works from React state */
+      }
+      // And a copy every tab can read: the email-confirmation link opens a NEW
+      // tab, where sessionStorage is empty. See lib/guest-pending-submit.ts.
+      if (userIdRef.current) {
+        savePendingSubmit({ caseId, attemptId: attempt.attempt_id, userId: userIdRef.current, rec });
       }
       setSaveWallOpen(true);
       return;
@@ -886,21 +983,23 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     setSubmitting(true);
     try {
       const res = await submitAttempt(attempt.attempt_id, convertedTok, rec);
-      const resultsPath = `/results/${res.submission_id}`;
+      clearPendingSubmitFor(caseId);
       // A just-converted guest has no onboarding row, so middleware will bounce
-      // them from the results page straight to /onboarding — and the gate
-      // strips query params, so `?next=` cannot survive it. Park the
-      // destination here and let the onboarding form pick it up, otherwise
-      // they finish onboarding on the dashboard and their analysis — the whole
-      // reason they signed up — is left behind a link they were never shown.
-      try {
-        sessionStorage.setItem('mece:after-onboarding', resultsPath);
-      } catch {
-        /* private mode / storage disabled — they land on the dashboard, which
-           still lists the submission. Never let this break the redirect. */
-      }
-      router.push(resultsPath);
+      // them from the results page to /onboarding. goToResults parks the
+      // destination and the gate now carries it as ?next=, so the onboarding
+      // form returns them to this score — the whole reason they signed up.
+      goToResults(res.submission_id);
     } catch (e) {
+      // Already scored — the email-confirmation tab got there first. Take them
+      // to that score instead of showing an error.
+      if (isAlreadySubmitted(e)) {
+        clearPendingSubmitFor(caseId);
+        const sid = await submissionForAttempt(attempt.attempt_id);
+        if (sid) {
+          goToResults(sid);
+          return;
+        }
+      }
       toast.error(e instanceof Error ? e.message : 'Submit failed');
       setSubmitting(false);
     }
@@ -1460,6 +1559,25 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           onClose={() => setSubmitOpen(false)}
           onConfirm={handleSubmit}
         />
+      )}
+
+      {/* Scoring a just-converted guest's answer (OAuth return, or the email-
+          confirmation tab): no dialog is open, so say what is happening rather
+          than leave a still screen for the seconds scoring takes. */}
+      {submitting && !submitOpen && !saveWallOpen && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-sm rounded-xl border border-primary/20 bg-card p-6 text-center shadow-xl">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+            <h2 className="mt-3 text-lg font-bold text-foreground">Scoring your answer…</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+              Your account is ready. We&apos;re taking you straight to your results.
+            </p>
+          </div>
+        </div>
       )}
 
       {/* GUEST MODE (0045): the single conversion moment. Deliberately NOT

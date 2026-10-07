@@ -57,10 +57,17 @@ export default function GuestSaveWall({
     // `emailRedirectTo` — Supabase's CAPTCHA protection covers sign-up,
     // sign-in and password reset, not authenticated profile updates. Passing
     // one is a type error, which is how this was caught.
-    const { error: updErr } = await supabase.auth.updateUser({
-      email: email.trim(),
-      password,
-    });
+    //
+    // emailRedirectTo (2026-10-07): without it the confirmation link went to
+    // the project's Site URL — the home page, in a new tab — and the guest's
+    // answer was never scored. Now it returns through /auth/callback (which
+    // signs that tab in) to `next`, the case whose answer is waiting; the
+    // onboarding gate carries that through onboarding, and the solve screen
+    // scores the answer from its cross-tab copy (lib/guest-pending-submit.ts).
+    const { error: updErr } = await supabase.auth.updateUser(
+      { email: email.trim(), password },
+      { emailRedirectTo: `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}` },
+    );
 
     if (!updErr) {
       // If the project does not require email confirmation, the session is
@@ -146,8 +153,8 @@ export default function GuestSaveWall({
       <div className="mx-auto w-full max-w-sm rounded-xl border border-primary/20 bg-card p-6 text-center shadow-xl">
         <h2 className="text-lg font-bold text-foreground">Confirm your email</h2>
         <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-          We sent a link to <span className="font-medium text-foreground">{email}</span>. Open it, then come back
-          here — your answer is saved and will be scored the moment you do.
+          We sent a link to <span className="font-medium text-foreground">{email}</span>. Open it on this device —
+          after one quick profile step it takes you straight to your results. Your answer is saved.
         </p>
         <button
           onClick={async () => {

@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTrackAction } from '@/hooks/use-track-action';
+import { AFTER_ONBOARDING_KEY, isReturnDestination } from '@/lib/after-onboarding';
+import { pendingRecSessionKey, readPendingSubmit } from '@/lib/guest-pending-submit';
 import {
   EMPTY_ONBOARDING_FORM,
   PLACEMENT_FOCUS_OPTIONS,
@@ -25,6 +27,15 @@ interface Props {
    * email-confirmation round trip (so email-signup guests still land on their score).
    */
   fallbackResultsId?: string | null;
+  /**
+   * Where the onboarding gate found the user heading (?next=, validated by the
+   * page): /results/<id> or /cases/<id>. Wins over everything else, because it
+   * comes from this very request — it survives a new tab or device, where
+   * sessionStorage does not. (2026-10-07)
+   */
+  returnTo?: string | null;
+  /** Auth user id — to recognise this account's own answer waiting to be scored. */
+  userId?: string | null;
   /**
    * International account (0070, US + Europe). The college list is India's
    * campuses, so the school is typed instead, and the recruiting vocabulary
@@ -51,7 +62,42 @@ const INTL_FOCUS_OPTIONS: typeof PLACEMENT_FOCUS_OPTIONS = [
  *   - Submit button gates on validation; failed fields scroll into view
  *   - Branded styling — cream cards, var(--red) accents, no third-party UI
  */
-export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false, fallbackResultsId = null, intl = false }: Props) {
+export default function OnboardingForm({ colleges, prefill = {}, linkedinConnected = false, fallbackResultsId = null, returnTo = null, userId = null, intl = false }: Props) {
+  // Where to go when they finish, decided up front so the screen can SAY so.
+  // Order: the gate's ?next= (this request) → the path the solve screen parked
+  // in this tab → the account's latest submission → the dashboard.
+  const [destination, setDestination] = useState<string | null>(
+    returnTo ?? (fallbackResultsId ? `/results/${fallbackResultsId}` : null),
+  );
+  // True when the destination is a case whose finished answer is waiting to be
+  // scored (this tab's copy, or the cross-tab copy for THIS account). A
+  // /cases/<id> destination without one is just a case link they opened before
+  // onboarding: they go back to it, but nothing is promised about a score.
+  const [answerWaiting, setAnswerWaiting] = useState(false);
+  useEffect(() => {
+    let dest = returnTo;
+    if (!dest) {
+      try {
+        const parked = sessionStorage.getItem(AFTER_ONBOARDING_KEY);
+        if (isReturnDestination(parked)) dest = parked;
+      } catch {
+        /* storage unavailable — keep the server-side choice */
+      }
+      if (dest) setDestination(dest);
+    }
+    const caseId = dest?.startsWith('/cases/') ? dest.slice('/cases/'.length) : null;
+    if (!caseId) return;
+    let waiting = false;
+    try {
+      waiting = !!sessionStorage.getItem(pendingRecSessionKey(caseId))?.trim();
+    } catch {
+      /* ignore */
+    }
+    if (!waiting && userId) waiting = readPendingSubmit(caseId, userId) !== null;
+    setAnswerWaiting(waiting);
+  }, [returnTo, userId]);
+  const headingToScore =
+    !!destination && (destination.startsWith('/results/') || (destination.startsWith('/cases/') && answerWaiting));
   const router = useRouter();
   const trackAction = useTrackAction();
   const [form, setForm] = useState<OnboardingFormData>({
@@ -113,27 +159,13 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       // sent here by the onboarding gate mid-way to their results. Their score
       // is the only reason they created an account, so return them to it
       // rather than to a dashboard they have no context for yet. Anyone who
-      // arrived the ordinary way has no key set and still lands on /dashboard.
-      let after = '/dashboard';
-      let parkedFound = false;
+      // arrived the ordinary way has no destination and lands on /dashboard.
+      // (Resolved above as `destination`; see the order there.)
+      const after = destination ?? '/dashboard';
       try {
-        const parked = sessionStorage.getItem('mece:after-onboarding');
-        // Only ever an internal path — never trust this to build an external
-        // redirect, even though we are the only writer.
-        if (parked && parked.startsWith('/')) {
-          after = parked;
-          parkedFound = true;
-          sessionStorage.removeItem('mece:after-onboarding');
-        }
+        sessionStorage.removeItem(AFTER_ONBOARDING_KEY);
       } catch {
-        /* storage unavailable — fall through to the fallback below */
-      }
-      // Robust fallback: an email-confirmation link opens a fresh context where
-      // sessionStorage is empty, so a guest who solved a case would otherwise land
-      // on a contextless dashboard. If nothing was parked and we know their
-      // just-scored submission, take them straight to that feedback page.
-      if (!parkedFound && fallbackResultsId) {
-        after = `/results/${fallbackResultsId}`;
+        /* ignore */
       }
       // Three destinations, three honest messages. A guest returning via OAuth
       // goes back to /cases/<id> to finish the submit that the onboarding gate
@@ -144,8 +176,10 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
       toast.success(
         after.startsWith('/results/')
           ? "You're in. Here's your analysis."
-          : after.startsWith('/cases/')
+          : after.startsWith('/cases/') && answerWaiting
           ? "You're in. Scoring your answer now…"
+          : after.startsWith('/cases/')
+          ? "You're in. Back to your case."
           : "You're in. Let's get to the dashboard.",
       );
       router.push(after);
@@ -175,8 +209,29 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
           className="serif"
           style={{ fontSize: 'clamp(28px, 3vw, 36px)', lineHeight: 1.15, margin: 0 }}
         >
-          One quick set-up, then you&apos;re in.
+          {headingToScore ? 'One quick step, then your score.' : <>One quick set-up, then you&apos;re in.</>}
         </h1>
+        {headingToScore && (
+          <p
+            role="status"
+            style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              borderRadius: 10,
+              border: '1px solid var(--line)',
+              borderLeft: '3px solid var(--red)',
+              background: 'var(--paper, transparent)',
+              fontSize: 14,
+              lineHeight: 1.5,
+              color: 'var(--ink)',
+              maxWidth: 540,
+            }}
+          >
+            {destination!.startsWith('/results/')
+              ? 'Your score is ready. Fill this in and we’ll take you straight to your results.'
+              : 'Your answer is saved. Fill this in and we’ll score it and take you straight to your results.'}
+          </p>
+        )}
         <p style={{ marginTop: 8, fontSize: 14, color: 'var(--ink-3)', maxWidth: 540 }}>
           {intl
             ? 'We use this to personalize your practice and your leaderboard. It takes about 30 seconds.'
@@ -447,7 +502,9 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
             cursor: submitting ? 'not-allowed' : 'pointer',
           }}
         >
-          {submitting ? 'Setting up your dashboard…' : "Let's go →"}
+          {submitting
+            ? headingToScore ? 'Opening your results…' : 'Setting up your dashboard…'
+            : headingToScore ? 'See my results →' : "Let's go →"}
         </button>
         <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>
           You can update any of this later on your profile.

@@ -22,6 +22,10 @@ export async function GET(request: Request) {
     }
   }
 
-  // Auth failed — send back to login with an error flag
-  return NextResponse.redirect(`${url.origin}/login?error=auth_callback`);
+  // Auth failed — send back to login with an error flag. Keep an explicit
+  // destination (e.g. a guest's case, from the email-confirmation link) so
+  // logging in still lands them where they were going.
+  const rawNext = url.searchParams.get('next');
+  const keepNext = rawNext ? `&next=${encodeURIComponent(next)}` : '';
+  return NextResponse.redirect(`${url.origin}/login?error=auth_callback${keepNext}`);
 }

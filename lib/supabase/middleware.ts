@@ -17,6 +17,7 @@ import {
 } from '@/lib/market';
 import { ensureUserMarket } from '@/lib/market-server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { isReturnDestination } from '@/lib/after-onboarding';
 
 /* ── International markets (2026-09-25) ─────────────────────────────────────
  * Every page request is placed in a market BEFORE anything renders:
@@ -289,6 +290,11 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = '/onboarding';
       url.search = '';
+      // A guest who just signed up to see their score is on their way to
+      // /results/<id> (or /cases/<id>, where the answer waits to be scored).
+      // Carry that through onboarding instead of dropping it: the form sends
+      // them there when they finish. See lib/after-onboarding.ts.
+      if (isReturnDestination(pathname)) url.searchParams.set('next', pathname);
       return NextResponse.redirect(url);
     }
     if (onboarded && onOnboarding) {

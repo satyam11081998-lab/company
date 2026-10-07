@@ -4,10 +4,21 @@ import { getCachedAuthUser, getCachedUserRow } from '@/lib/supabase/auth-cached'
 import type { CollegeRow } from '@/lib/types-onboarding';
 import OnboardingForm from '@/components/onboarding/onboarding-form';
 import { isIntlMarket } from '@/lib/market';
+import { isReturnDestination } from '@/lib/after-onboarding';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams?: { next?: string | string[] };
+}) {
+  // Where the onboarding gate found them heading (lib/supabase/middleware.ts):
+  // the score a guest just signed up to see, or the case whose answer is
+  // waiting to be scored. Validated again here — it arrives in the URL.
+  const rawNext = typeof searchParams?.next === 'string' ? searchParams.next : null;
+  const returnTo = isReturnDestination(rawNext) ? rawNext : null;
+
   // The (app) layout already runs auth; this is belt-and-suspenders in case
   // the layout's redirect chain changes later.
   const authUser = await getCachedAuthUser();
@@ -63,6 +74,8 @@ export default async function OnboardingPage() {
       <OnboardingForm
         colleges={colleges}
         fallbackResultsId={fallbackResultsId}
+        returnTo={returnTo}
+        userId={authUser.id}
         prefill={{
           full_name:
             userRow?.full_name ??
