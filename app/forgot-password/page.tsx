@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Logo from '@/components/logo';
 import { createClient } from '@/lib/supabase/client';
 import { getCaptchaToken } from '@/lib/turnstile';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,10 @@ export default function ForgotPasswordPage() {
     <main className="flex min-h-screen items-center justify-center bg-muted px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-foreground">MECE</Link>
+          {/* Same full logo as Login / Sign up (was the plain word "MECE"). */}
+          <Link href="/" className="inline-flex justify-center" aria-label="MECE home">
+            <Logo full variant="auto" />
+          </Link>
           <h1 className="mt-6 text-2xl font-semibold text-foreground">Reset your password</h1>
           <p className="mt-2 text-base text-muted-foreground">Enter the email tied to your account and we&apos;ll send you a reset link.</p>
         </div>

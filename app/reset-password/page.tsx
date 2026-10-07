@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/logo';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +58,10 @@ export default function ResetPasswordPage() {
     <main className="flex min-h-screen items-center justify-center bg-muted px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-foreground">MECE</Link>
+          {/* Same full logo as Login / Sign up (was the plain word "MECE"). */}
+          <Link href="/" className="inline-flex justify-center" aria-label="MECE home">
+            <Logo full variant="auto" />
+          </Link>
           <h1 className="mt-6 text-2xl font-semibold text-foreground">Set a new password</h1>
           <p className="mt-2 text-base text-muted-foreground">Pick something strong. Minimum 8 characters.</p>
         </div>
