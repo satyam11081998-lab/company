@@ -114,7 +114,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Toaster />
           {/* <PwaProvider /> — hidden for now */}
-          <Analytics />
+          {/* Vercel Web Analytics only exists on Vercel. On Cloud Run its script
+              URL (/_vercel/insights/script.js) is a 404 on every page view. */}
+          {process.env.VERCEL ? <Analytics /> : null}
           <PageTracker />
           {/* Carries anonymous practice onto a real account when a guest
               logs in to one they already had. Root-level on purpose: the

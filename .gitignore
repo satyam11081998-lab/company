@@ -56,3 +56,7 @@ tests/
 .cache/
 node_modules/@next/swc-linux-arm64-gnu/next-swc.linux-arm64-gnu.node
 node_modules/@next/swc-linux-arm64-musl/next-swc.linux-arm64-musl.node
+
+# Cloud Run settings file made by scripts/cloudrun/dotenv-to-json.cjs — holds every secret; never commit
+*.env.json
+frontend-env.json

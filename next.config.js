@@ -45,6 +45,14 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Google Cloud Run's own address (*.run.app — the test copy before the
+        // domain moves, docs/cloud-run.md) must never be indexed as a
+        // duplicate of mece.in. mece.in itself is unaffected.
+        source: "/(.*)",
+        has: [{ type: "host", value: ".*\\.run\\.app" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         source: "/(.*)",
         headers: [
           { key: "X-Frame-Options", value: "SAMEORIGIN" },

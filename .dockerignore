@@ -1,0 +1,16 @@
+# Cloud Run image build context (Dockerfile). Keeps secrets and local build
+# output out of the image; Cloud Build only uploads tracked files anyway.
+node_modules
+.next
+.git
+.vercel
+.env
+.env.*
+*.env.json
+.brain
+tsconfig.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+Dockerfile
+.dockerignore
+cloudbuild.yaml
