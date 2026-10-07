@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { isReturnDestination } from '@/lib/after-onboarding';
 import { useUser } from '@/components/user-context';
 import ThemeToggle from '@/components/theme-toggle';
 import TierBadge from '@/components/tier-badge';
@@ -51,6 +52,12 @@ const INDUSTRY_PRIMERS = CASEBOOK_TREE.flatMap((section) => section.children ?? 
 export default function AppNav() {
   const { user, tier, isFree, isIntl } = useUser();
   const pathname = usePathname();
+  // Logged-out header on a case page: come back to THIS case after login /
+  // sign-up (and through onboarding). See lib/after-onboarding.ts.
+  const caseNextQuery =
+    pathname && isReturnDestination(pathname) && pathname.startsWith('/cases/')
+      ? `?next=${encodeURIComponent(pathname)}`
+      : '';
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   // Interview Intelligence: shown only to accounts II lets in (admins, test users added in
@@ -364,12 +371,12 @@ export default function AppNav() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/login">
+              <Link href={`/login${caseNextQuery}`}>
                 <Button variant="ghost" size="sm" className="hidden sm:inline-flex text-navy-foreground/60 hover:text-navy-foreground hover:bg-navy-mid h-8 text-base">
                   Login
                 </Button>
               </Link>
-              <Link href="/signup">
+              <Link href={`/signup${caseNextQuery}`}>
                 <Button size="sm" className="bg-primary text-white hover:bg-primary-hover h-8 text-sm md:text-base rounded-sm font-semibold">
                   Sign up
                 </Button>

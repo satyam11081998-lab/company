@@ -4,6 +4,7 @@ import Logo from '@/components/logo';
 import ThemeToggle from '@/components/theme-toggle';
 import FeedbackLauncher from '@/components/feedback/feedback-launcher';
 import GuestPreviewNav from '@/components/guest/guest-preview-nav';
+import GuestAuthLinks from '@/components/guest/guest-auth-links';
 
 /**
  * Lightweight chrome for logged-out readers of public learn content AND the
@@ -37,16 +38,7 @@ export default function GuestChrome({
           </Link>
           <div className="flex items-center gap-1.5 md:gap-4 shrink-0">
             <ThemeToggle />
-            <Link href="/login" className="hidden sm:block">
-              <button className="text-[15px] font-medium text-muted-foreground hover:text-foreground px-4 py-2 transition-colors">
-                Log in
-              </button>
-            </Link>
-            <Link href="/signup">
-              <button className="btn-primary text-sm md:text-[15px] py-1.5 px-4 md:py-2 md:px-6 whitespace-nowrap shadow-sm">
-                Get started
-              </button>
-            </Link>
+            <GuestAuthLinks />
           </div>
         </div>
         {showPreviewNav && <GuestPreviewNav intl={intl} />}

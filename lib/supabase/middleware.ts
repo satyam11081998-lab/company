@@ -298,8 +298,11 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     if (onboarded && onOnboarding) {
+      // Already onboarded (a second tab, Back, a refresh just after finishing):
+      // still honour where they were going rather than the dashboard.
+      const next = request.nextUrl.searchParams.get('next');
       const url = request.nextUrl.clone();
-      url.pathname = '/dashboard';
+      url.pathname = isReturnDestination(next) ? next : '/dashboard';
       url.search = '';
       return NextResponse.redirect(url);
     }

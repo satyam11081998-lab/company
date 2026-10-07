@@ -182,11 +182,21 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
           ? "You're in. Back to your case."
           : "You're in. Let's get to the dashboard.",
       );
+      if (isReturnDestination(after)) {
+        // Back to the score / case: a full load. The client router may hold a
+        // cached copy of this URL from when the onboarding gate redirected it
+        // here (the solve screen pushed /results/<id> a moment ago), and
+        // replaying that kept the address bar on /onboarding. A fresh request
+        // goes through the gate again, now onboarded, and lands for real.
+        // Analytics events still flush on unload (lib/analytics.ts).
+        window.location.assign(after);
+        return; // keep the button in its busy state while the page changes
+      }
       router.push(after);
       router.refresh();
+      setSubmitting(false);
     } catch (err: any) {
       toast.error(err?.message ?? 'Something went wrong. Try again?');
-    } finally {
       setSubmitting(false);
     }
   };

@@ -44,6 +44,23 @@ export default function GuestSaveWall({
   const [state, setState] = useState<'idle' | 'working' | 'sent'>('idle');
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * After the identity is attached. On the solve screen the caller finishes the
+   * submit (onConverted). Anywhere else (the locked-case wall) there is nothing
+   * to finish, so go back to `next` — this case. A new account is sent through
+   * onboarding first, and the gate carries `next` through it (2026-10-07).
+   */
+  async function afterConverted() {
+    if (onConverted) {
+      await onConverted();
+      return;
+    }
+    // A full load, not router.push: the URL is usually the page we are on, and
+    // the account behind the session just changed — the onboarding gate must
+    // see a fresh request (a soft refresh of the same URL did not follow it).
+    window.location.assign(next ?? '/dashboard');
+  }
+
   async function saveWithEmail(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -77,7 +94,7 @@ export default function GuestSaveWall({
       // against a token the backend will still read as a guest.
       const { data } = await supabase.auth.refreshSession();
       if (data.session?.user && data.session.user.is_anonymous !== true) {
-        await onConverted?.();
+        await afterConverted();
         return;
       }
       setState('sent');
@@ -154,7 +171,9 @@ export default function GuestSaveWall({
         <h2 className="text-lg font-bold text-foreground">Confirm your email</h2>
         <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
           We sent a link to <span className="font-medium text-foreground">{email}</span>. Open it on this device —
-          after one quick profile step it takes you straight to your results. Your answer is saved.
+          {onConverted
+            ? ' after one quick profile step it takes you straight to your results. Your answer is saved.'
+            : ' after one quick profile step it brings you straight back here.'}
         </p>
         <button
           onClick={async () => {
@@ -164,14 +183,14 @@ export default function GuestSaveWall({
             const supabase = createClient();
             const { data } = await supabase.auth.refreshSession();
             if (data.session?.user && data.session.user.is_anonymous !== true) {
-              await onConverted?.();
+              await afterConverted();
               return;
             }
             setError('Not confirmed yet — open the link in the email first.');
           }}
           className="mt-4 text-[12px] font-medium text-primary underline underline-offset-2"
         >
-          I&apos;ve confirmed — score my answer
+          {onConverted ? <>I&apos;ve confirmed — score my answer</> : <>I&apos;ve confirmed — continue</>}
         </button>
         {error && <p className="mt-3 text-[12px] text-destructive">{error}</p>}
       </div>

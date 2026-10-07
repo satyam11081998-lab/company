@@ -85,6 +85,40 @@ the same device → onboarding shows "One quick step, then your score." → resu
 A link opened on a different device signs in via /login and returns to the case with the
 conversation intact (Submit pressed again there); the copy promises nothing in that case.
 
+## Round 2 (after cfd6659): signing up from a case for ANY reason returns to that case
+
+```
+touches:  frontend
+            components/guest/guest-auth-links.tsx (NEW: header Log in / Get started; ?next=/cases/<id>
+              on case pages only) + components/guest/guest-chrome.tsx (uses it)
+            components/app-nav.tsx (logged-out Login / Sign up: same ?next= on case pages)
+            components/auth-form.tsx (login <-> sign-up links keep ?next=; confirm-email copy says
+              the link brings them back to the case)
+            components/guest/guest-save-wall.tsx (without onConverted — the locked-case wall — a
+              converted guest goes back to `next` with a full load; copy/button per context)
+            components/onboarding/onboarding-form.tsx (results/case destination: full load)
+            lib/supabase/middleware.ts + app/(app)/onboarding/page.tsx (already onboarded on
+              /onboarding?next=… → that page, not the dashboard)
+breaking: no. Same contracts. Links elsewhere (practice, casebook, static copy) unchanged.
+```
+Journeys now covered: voice "Sign up free" (already carried next=/cases/<id>; the onboarding gate
+used to drop it → dashboard), header "Get started" on a case page (had no next), the login⇄sign-up
+switch (dropped next), email sign-up confirmation (now "brings you straight back to your case"),
+the locked-case save wall (no navigation after an in-place conversion; email link went to the
+Site URL). Onboarding with a results/case destination now navigates with a full load: replaying
+the router's cached redirect of /results/<id> left the address bar on /onboarding.
+
+Gates: `tsc --noEmit` 0; `next build` exit 0; browser 23/23 (flow2) + the 31 above re-run green:
+case-page header links carry the case, /practice and the static Casebook header unchanged, no
+hydration errors; sign-up/login switch keeps next; email sign-up redirect_to = /auth/callback?
+next=/cases/c1 and copy; new account → /onboarding?next=/cases/c1 → usual copy → back on
+/cases/c1 with the workspace open and nothing submitted; revisiting /onboarding?next= after
+finishing → the case; locked-case wall: converted → /onboarding?next=/cases/c2, confirmation
+variant → redirect_to the case, "brings you straight back here", "I've confirmed — continue";
+solve-screen in-page conversion → scored once → /onboarding?next=/results/s9 → /results/s9.
+Server: onboarded + /onboarding?next=/cases/c1 → /cases/c1; next=//evil.com or /practice →
+/dashboard.
+
 ## Rollback
 Revert the commit. Nothing persistent: the localStorage key `mece:pending-submit` simply stops
 being read; old sessionStorage behaviour is unchanged by this change.

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { sanitizeNextPath } from '@/lib/constants';
+import { isReturnDestination } from '@/lib/after-onboarding';
 import { getCaptchaToken } from '@/lib/turnstile';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
@@ -29,6 +30,11 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
   // Same-site only — see sanitizeNextPath (open-redirect guard).
   const nextPath = sanitizeNextPath(searchParams.get('next'));
+  // Carry an explicit destination across the login <-> sign-up switch, so
+  // someone who arrived from a case ("Sign up to use voice", a locked case…)
+  // still lands back on that case whichever form they finish on. (2026-10-07)
+  const nextQuery = searchParams.get('next') ? `?next=${encodeURIComponent(nextPath)}` : '';
+  const backToCase = isReturnDestination(nextPath) && nextPath.startsWith('/cases/');
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
@@ -132,8 +138,10 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       <div className="rounded-xl border border-primary/20 bg-card p-6 text-center">
         <h2 className="text-lg font-bold text-foreground">Confirm your email</h2>
         <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed text-muted-foreground">
-          We sent a link to <span className="font-medium text-foreground">{email}</span>. Open it to activate your
-          account, then come back and log in.
+          We sent a link to <span className="font-medium text-foreground">{email}</span>.{' '}
+          {backToCase
+            ? 'Open it on this device — it activates your account and brings you straight back to your case.'
+            : 'Open it on this device to activate your account and sign in.'}
         </p>
         <p className="mt-4 text-[12px] text-muted-foreground/80">
           Wrong address?{' '}
@@ -247,7 +255,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             {mode === 'login' && /don't match an account/.test(formError) && (
               <>
                 {' '}
-                <Link href="/signup" className="font-medium underline underline-offset-2">
+                <Link href={`/signup${nextQuery}`} className="font-medium underline underline-offset-2">
                   Sign up
                 </Link>
               </>
@@ -269,14 +277,14 @@ export default function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         {mode === 'login' ? (
           <>
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-sm font-medium text-primary hover:text-primary/80">
+            <Link href={`/signup${nextQuery}`} className="text-sm font-medium text-primary hover:text-primary/80">
               Sign up
             </Link>
           </>
         ) : (
           <>
             Already have an account?{' '}
-            <Link href="/login" className="text-sm font-medium text-primary hover:text-primary/80">
+            <Link href={`/login${nextQuery}`} className="text-sm font-medium text-primary hover:text-primary/80">
               Login
             </Link>
           </>

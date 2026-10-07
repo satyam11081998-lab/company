@@ -24,9 +24,9 @@ export default async function OnboardingPage({
   const authUser = await getCachedAuthUser();
   if (!authUser) redirect('/login');
 
-  // Already onboarded? Send them to the dashboard.
+  // Already onboarded? Send them where they were going, else the dashboard.
   const userRow = await getCachedUserRow(authUser.id);
-  if (userRow?.onboarding_completed_at) redirect('/dashboard');
+  if (userRow?.onboarding_completed_at) redirect(returnTo ?? '/dashboard');
 
   // Did this user authenticate via LinkedIn? OIDC gives us name + photo (set by
   // the handle_new_user trigger) but NOT the public profile URL, so we prefill
