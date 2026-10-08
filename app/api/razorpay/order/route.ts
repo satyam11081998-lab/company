@@ -253,7 +253,11 @@ export async function POST(req: Request) {
       console.error('[order] attempt log/alert failed:', e);
     }
 
-    return NextResponse.json(order);
+    // key_id is the PUBLIC half of the key pair (Razorpay checkout needs it in
+    // the browser). Sent with the order so checkout always opens with the key
+    // that created this order — no separate NEXT_PUBLIC_ setting to forget
+    // (it was missing on Vercel, 2026-10-08). The secret never leaves here.
+    return NextResponse.json({ ...order, key_id: process.env.RAZORPAY_KEY_ID });
   } catch (err: any) {
     console.error("Razorpay Create Order Error:", err);
     return NextResponse.json(

@@ -180,6 +180,8 @@ export default function OnboardingForm({ colleges, prefill = {}, linkedinConnect
           ? "You're in. Scoring your answer now…"
           : after.startsWith('/cases/')
           ? "You're in. Back to your case."
+          : after === '/upgrade'
+          ? "You're in. Pick your plan."
           : "You're in. Let's get to the dashboard.",
       );
       if (isReturnDestination(after)) {

@@ -41,7 +41,7 @@ export default function DeckPurchase({ skeletonId, slug, layout = 'row' }: { ske
       if (typeof window === 'undefined' || !window.Razorpay) throw new Error('Payment is still loading — please retry.');
 
       const options: any = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: data.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: data.currency,
         name: 'MECE Deck Vault',

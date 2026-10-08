@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { PUBLIC_ROUTES, AUTH_ROUTES, isPreviewPath } from '@/lib/constants';
+import { PUBLIC_ROUTES, AUTH_ROUTES, isPreviewPath, sanitizeNextPath } from '@/lib/constants';
 import {
   detectRegion,
   intlDestination,
@@ -242,11 +242,14 @@ export async function updateSession(request: NextRequest) {
   // "Log in" — making the link a silent no-op loop. But a guest going to
   // /login is entirely legitimate: they are telling us they already have a
   // real account. They must be allowed to reach the form.
+  //
+  // An explicit, same-site ?next= wins (2026-10-08): the US pricing page sends
+  // "Get Pro" to /signup?next=/upgrade, and an already-signed-in visitor was
+  // bounced to /dashboard instead of the checkout they clicked for.
   if (user && !user.is_anonymous && isAuthPage) {
-    const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = '/dashboard';
-    homeUrl.search = '';
-    return NextResponse.redirect(homeUrl);
+    const wanted = sanitizeNextPath(request.nextUrl.searchParams.get('next'), '/dashboard');
+    const dest = /^\/(login|signup)(\/|\?|$)/.test(wanted) ? '/dashboard' : wanted;
+    return NextResponse.redirect(new URL(dest, request.nextUrl.origin));
   }
 
   // ── Onboarding gate ──────────────────────────────────────────────────

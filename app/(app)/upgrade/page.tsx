@@ -75,7 +75,7 @@ export default function UpgradePage() {
 
       // 2. Open Razorpay checkout
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: data.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: data.currency,
         name: "MECE Placement Prep",

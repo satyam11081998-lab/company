@@ -1,17 +1,17 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-06 16:17 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-07 11:36 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-10-06 - brain-rewrite + reconstructed log 2026-09-12..2026-10-05 - frontend 1dcc819 / backend 9f71870
-**Last sync:** 2026-10-06 16:17 UTC
+**Last sync:** 2026-10-07 11:36 UTC
 
 ## Last 5 commits — frontend
+- 976249e perf(us): switch off the public US/Europe site to save Fluid CPU (SatyamSK, 2026-10-07)
+- d35bf2f docs(brain): rewrite PROJECT_BRAIN v3, rebuild LEDGER/STATE, reconstruct CHANGELOG (SatyamSK, 2026-10-06)
 - e7457e9 fix(insights): compact masthead - wider two-line standfirst, smaller title, lead essay starts ~250px higher (SatyamSK, 2026-10-06)
 - f281ed4 feat(insights): photo credits with licence links, topic colours for old posts, rewrite and picture tools in Admin (SatyamSK, 2026-10-06)
 - 7d23248 feat(nav): Insights in the top bar (Case Competitions moves to More); breadcrumbs on Insights (SatyamSK, 2026-10-06)
-- 3caa073 feat(insights): essay-magazine redesign (Aeon-style) with Gemini pictures (SatyamSK, 2026-10-05)
-- 1dcc819 docs(brain): daily-blog handoff v2.1 - retired Gemini models, research fallbacks (SatyamSK, 2026-10-05)
 
 ## Last 5 commits — backend
 - 6e48abe feat(growth): real open-licensed photos, deeper essays, rewrite old posts (SatyamSK, 2026-10-06)

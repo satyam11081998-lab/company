@@ -71,7 +71,7 @@ export default function IntlUpgrade() {
       }
 
       const rzp = new window.Razorpay({
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: data.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: data.currency,
         name: 'MECE Case Interview Prep',
