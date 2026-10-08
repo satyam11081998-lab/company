@@ -1,26 +1,27 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-07 11:36 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-08 19:04 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-10-06 - brain-rewrite + reconstructed log 2026-09-12..2026-10-05 - frontend 1dcc819 / backend 9f71870
-**Last sync:** 2026-10-07 11:36 UTC
+**Last sync:** 2026-10-08 19:04 UTC
 
 ## Last 5 commits — frontend
-- 976249e perf(us): switch off the public US/Europe site to save Fluid CPU (SatyamSK, 2026-10-07)
-- d35bf2f docs(brain): rewrite PROJECT_BRAIN v3, rebuild LEDGER/STATE, reconstruct CHANGELOG (SatyamSK, 2026-10-06)
-- e7457e9 fix(insights): compact masthead - wider two-line standfirst, smaller title, lead essay starts ~250px higher (SatyamSK, 2026-10-06)
-- f281ed4 feat(insights): photo credits with licence links, topic colours for old posts, rewrite and picture tools in Admin (SatyamSK, 2026-10-06)
-- 7d23248 feat(nav): Insights in the top bar (Case Competitions moves to More); breadcrumbs on Insights (SatyamSK, 2026-10-06)
+- 5b3c92d feat(crm): MECE CRM — a Zoho-class CRM inside mece.in, with Iris (AI), analytics and DPDP tools (SatyamSK, 2026-10-09)
+- e092c90 fix(checkout): US "Get Lite/Pro" reaches the checkout; Razorpay key comes with the order (SatyamSK, 2026-10-09)
+- 4bb3825 fix(seo): canonical host is www.mece.in; US line in llms.txt; newer AI crawlers (SatyamSK, 2026-10-08)
+- b007f58 fix(brand): full MECE logo on the password pages; branded Supabase auth emails (SatyamSK, 2026-10-08)
+- 81e79e7 fix(auth): signing up from a case for any reason returns to that case (SatyamSK, 2026-10-07)
 
 ## Last 5 commits — backend
+- 8ac3a9b fix(daily): call www.mece.in for the home-page refresh (SatyamSK, 2026-10-07)
+- 0651e65 perf(daily): refresh the website home page when today's pair is written (SatyamSK, 2026-10-07)
 - 6e48abe feat(growth): real open-licensed photos, deeper essays, rewrite old posts (SatyamSK, 2026-10-06)
 - 0b29931 feat(growth): Gemini pictures for MECE Insights articles (SatyamSK, 2026-10-05)
 - 9f71870 fix(growth): daily blog research works when Gemini models are retired; OpenAI web search fallback (SatyamSK, 2026-10-05)
-- 8a564b6 fix(growth): daily blog actually publishes - robust sourced research, publication-grade writing, Telegram review (SatyamSK, 2026-10-05)
-- bbac83c feat(growth): daily blog autopilot - one sourced article a day on /insights (dormant until DAILY_BLOG_ENABLED) (SatyamSK, 2026-10-03)
 
 ## Open feature branches (not merged into main)
+- origin/feat/cloud-run
 - origin/feat/unified-interviewer-brain
 
 ## Per-feature status (mirror of LEDGER.md)
