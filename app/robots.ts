@@ -6,6 +6,10 @@ import { SITE_URL } from '@/lib/seo';
 const GATED = [
   '/api/',
   '/admin',
+  '/crm',
+  // CRM public web forms and survey answers: per-person links, never indexable
+  '/f/',
+  '/survey/',
   '/dashboard',
   '/onboarding',
   '/practice',

@@ -170,6 +170,12 @@ export const PUBLIC_ROUTES: string[] = [
   // decoration. Reads through an exact-match anon RPC, so being public here
   // exposes nothing beyond what is already printed on the paper.
   '/verify',
+  // CRM public surfaces (2026-10): web forms (mece.in/f/<form key>) and survey
+  // answers (mece.in/survey/<token>). Strangers fill these in; each one reads
+  // only its own form/survey by an unguessable key and writes through a
+  // rate-limited, validated server route. Nothing else from the CRM is public.
+  '/f',
+  '/survey',
   // SEO/crawler surfaces — extensionless URLs the middleware matcher doesn't
   // skip, so they must be explicitly public or link previews break.
   '/og', // dynamic Open Graph image generator

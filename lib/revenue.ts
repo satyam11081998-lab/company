@@ -71,7 +71,7 @@ export const EXCLUDED_PAYMENT_IDS: ReadonlySet<string> = new Set<string>([
 ]);
 
 /** Emails that are placeholders, not customers. Mirrors the analytics dashboard. */
-const PLACEHOLDER_EMAIL_RE = /@(seed\.mece\.in|mece-seed\.local|leaderboard\.mece\.in)$/i;
+export const PLACEHOLDER_EMAIL_RE = /@(seed\.mece\.in|mece-seed\.local|leaderboard\.mece\.in)$/i;
 
 /** Fetch cap per table. Sums are exact below this; `truncated` flags a breach. */
 const ROW_CAP = 50_000;
