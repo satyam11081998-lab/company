@@ -32,6 +32,9 @@ export async function runTick(svc: SupabaseClient, meta: Meta): Promise<JobResul
   const out: JobResult = {};
   const { stampMissingSla, escalateOverdue } = await import('./service');
   const { sendApproved } = await import('./outbox');
+  const { syncNewReports, syncNewUsers } = await import('./sync');
+  await step(out, 'newUsers', () => syncNewUsers(svc));
+  await step(out, 'newReports', () => syncNewReports(svc));
   await step(out, 'slaStamped', () => stampMissingSla(svc));
   await step(out, 'escalated', () => escalateOverdue(svc, meta));
   await step(out, 'emails', () => sendApproved(svc, null, undefined, 25));

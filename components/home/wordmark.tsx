@@ -11,10 +11,10 @@ export default function Wordmark({
 }: {
   tone?: 'auto' | 'light';
   className?: string;
-  /** Breakpoint from which the two-line tagline shows (the nav needs the room at lg). */
-  taglineFrom?: 'sm' | 'xl';
+  /** Breakpoint from which the two-line tagline shows (the nav needs the room at lg); 'never' hides it. */
+  taglineFrom?: 'sm' | 'xl' | 'never';
 }) {
-  const show = taglineFrom === 'xl' ? 'xl:block' : 'sm:block';
+  const show = taglineFrom === 'never' ? '' : taglineFrom === 'xl' ? 'xl:block' : 'sm:block';
   const ink = tone === 'light' ? 'text-white' : 'text-navy dark:text-white';
   const sub = tone === 'light' ? 'text-white/60' : 'text-[#5C5A52] dark:text-white/60';
   const rule = tone === 'light' ? 'bg-white/20' : 'bg-[#E6E2D8] dark:bg-white/15';

@@ -17,6 +17,7 @@ import { RecordAutomationActions, RecordAutomationPanel } from '@/components/crm
 import { toClientFields, toClientModule, toClientRecord } from '@/lib/crm/client-types';
 import RecordView from '@/components/crm/record-view';
 import { AiPanel, PrivacyPanel } from '@/components/crm/record-insights';
+import AccountPanel from '@/components/crm/account-panel';
 
 export const dynamic = 'force-dynamic';
 
@@ -123,7 +124,7 @@ export default async function RecordPage({ params }: { params: { module: string;
       }}
       userId={ctx.userId}
       email={email}
-      extra={<>{automationPanel}{!rec.deleted_at && <AiPanel recordId={rec.id} module={mod.api_name} />}{!rec.deleted_at && <PrivacyPanel recordId={rec.id} module={mod.api_name} canEdit={canEditRec || canSetup(ctx, 'manage_privacy')} />}{extra}</>}
+      extra={<>{automationPanel}{!rec.deleted_at && ctx.superAdmin && mod.api_name === 'contacts' && rec.mece_user_id && rec.locked?.kind !== 'dpdp_erased' && <AccountPanel recordId={rec.id} />}{!rec.deleted_at && <AiPanel recordId={rec.id} module={mod.api_name} />}{!rec.deleted_at && <PrivacyPanel recordId={rec.id} module={mod.api_name} canEdit={canEditRec || canSetup(ctx, 'manage_privacy')} />}{extra}</>}
       actions={automationActions}
     />
   );

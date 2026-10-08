@@ -6,6 +6,8 @@ import { homeData } from '@/lib/crm/server/home';
 import { canSetup } from '@/lib/crm/permissions';
 import { formatMoney } from '@/lib/crm/fields';
 import SyncButton from '@/components/crm/sync-button';
+import AdminPulse from '@/components/crm/admin-pulse';
+import { adminPulse } from '@/lib/crm/server/account';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +15,7 @@ export default async function CrmHome() {
   const ctx = await requireCrm().catch(() => null);
   if (!ctx) notFound();
   const meta = await loadMeta();
-  const d = await homeData(ctx, meta);
+  const [d, pulse] = await Promise.all([homeData(ctx, meta), ctx.superAdmin ? adminPulse(ctx).catch(() => null) : Promise.resolve(null)]);
   const neverSynced = !d.lastSync.at;
 
   return (
@@ -35,6 +37,8 @@ export default async function CrmHome() {
           <p className="text-muted-foreground">Press <strong>Sync MECE data</strong> to bring in your users as Contacts, colleges as Accounts, every checkout as a Deal with its invoice, plan renewals, and in-app problem reports as Cases. After that it refreshes daily on its own.</p>
         </div>
       )}
+
+      {pulse && <AdminPulse revenue={JSON.parse(JSON.stringify(pulse.revenue))} users={pulse.users} signups={pulse.signups} />}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {d.kpis.map((k) => (

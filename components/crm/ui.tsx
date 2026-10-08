@@ -1,21 +1,45 @@
 'use client';
 
 /** Small shared building blocks for CRM admin screens. */
-import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, X } from 'lucide-react';
 
 export const inp = 'h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring';
 export const area = 'w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring';
 
 export function Button({ children, onClick, primary, danger, disabled, type = 'button', small, title }: {
-  children: React.ReactNode; onClick?: () => void; primary?: boolean; danger?: boolean; disabled?: boolean; type?: 'button' | 'submit'; small?: boolean; title?: string;
+  children: React.ReactNode; onClick?: () => unknown; primary?: boolean; danger?: boolean; disabled?: boolean; type?: 'button' | 'submit'; small?: boolean; title?: string;
 }) {
+  // An async onClick shows a spinner and blocks double clicks until it settles.
+  const [pending, setPending] = useState(false);
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
+  const handle = () => {
+    if (pending || !onClick) return;
+    const r = onClick();
+    if (r && typeof (r as Promise<unknown>).then === 'function') {
+      setPending(true);
+      (r as Promise<unknown>).finally(() => { if (alive.current) setPending(false); });
+    }
+  };
   return (
-    <button type={type} onClick={onClick} disabled={disabled} title={title}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3 text-sm transition-colors disabled:opacity-50 ${small ? 'h-7 text-xs' : 'h-8'} ${
+    <button type={type} onClick={onClick ? handle : undefined} disabled={disabled || pending} title={title} aria-busy={pending || undefined}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3 text-sm transition-[background-color,transform,opacity] active:scale-[0.97] disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100 ${small ? 'h-7 text-xs' : 'h-8'} ${
         primary ? 'bg-navy text-navy-foreground hover:bg-navy/90' : danger ? 'border border-destructive/40 text-destructive hover:bg-destructive/10' : 'border border-border bg-card hover:bg-muted'}`}>
+      {pending && <Loader2 className={`${small ? 'h-3 w-3' : 'h-3.5 w-3.5'} animate-spin motion-reduce:animate-none`} aria-hidden />}
       {children}
     </button>
   );
+}
+
+/** Small spinner for inline busy states. */
+export function Spinner({ className = 'h-4 w-4' }: { className?: string }) {
+  return <Loader2 className={`${className} animate-spin text-muted-foreground motion-reduce:animate-none`} aria-hidden />;
+}
+
+/** Placeholder block while content loads. */
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-muted motion-reduce:animate-none ${className}`} />;
 }
 
 export function Modal({ title, children, onClose, wide }: { title: string; children: React.ReactNode; onClose: () => void; wide?: boolean }) {

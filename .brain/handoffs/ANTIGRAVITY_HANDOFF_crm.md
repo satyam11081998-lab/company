@@ -114,3 +114,59 @@ affects:  Admin (one nav link). Nothing student-facing changes.
 ## Rollback
 Remove the cron entry and the `/crm` nav link (or revert the branch). The `crm_*` tables are isolated;
 dropping them affects nothing else. Never drop `crm_audit` without exporting it first.
+
+---
+
+## Follow-up 2026-10-09 — admin ↔ CRM, loading feedback, logo (branch `feat/crm-admin-merge`)
+
+Owner's call: **admin stays** (it runs the product), but the two screens that duplicated the CRM move
+into it, data is synced both ways, and a dead page goes. Plus: the CRM must never feel frozen, and it
+uses the real MECE logo.
+
+```
+touches:  frontend  MOD  app/(app)/admin/feedback/page.tsx   (now redirects → /crm/m/cases?view=feedback)
+                    DEL  app/(app)/admin/feedback/{actions.ts,feedback-admin-client.tsx}
+                    MOD  app/(app)/admin/users/page.tsx      (now redirects → /crm/m/contacts)
+                    DEL  app/(app)/admin/users/{actions.ts,types.ts,users-admin-client.tsx}
+                    DEL  app/(app)/admin/deck-vault/{page.tsx,deck-vault-admin-client.tsx}  (dead: redirected
+                         to /admin since the Deck Rewards programme was disconnected)
+                    KEPT app/(app)/admin/deck-vault/actions.ts + app/api/admin/deck-vault/file (listed in C7/C8)
+                    MOD  components/admin/admin-nav.tsx      (Users → CRM, Feedback → CRM)
+                    MOD  app/(app)/admin/coupons/page.tsx    (comment only)
+                    MOD  lib/feedback.ts                     (unused listFeedback removed; labels unchanged)
+                    MOD  components/home/wordmark.tsx        (additive prop taglineFrom="never")
+                    NEW  lib/crm/server/account.ts, app/(app)/crm/account-actions.ts,
+                         components/crm/{account-panel,admin-pulse,nav-progress,skeletons}.tsx,
+                         app/(app)/crm/{loading,template}.tsx + loading.tsx for list / record / new / import
+                    MOD  lib/crm/server/{sync,records,privacy,jobs}.ts, lib/crm/views.ts, components/crm/{ui,crm-shell}.tsx,
+                         app/(app)/crm/page.tsx, app/(app)/crm/m/[module]/{page,[id]/page}.tsx
+breaking: no. C4: /admin/users and /admin/feedback still answer (they forward to the CRM); no API changed.
+          C6 (users): no schema change. The CRM now WRITES, MECE admins only, the same columns the old admin
+          Users screen wrote (is_demo, market; user_sessions.revoked_at), and users.marketing_opt_out=true when
+          marketing consent is withdrawn in the CRM, when a person is erased, or while processing is
+          restricted (restored to its previous value when the restriction lifts; never switched back on
+          otherwise). C7/C8: the deck-vault review actions and file API are untouched.
+affects:  Admin (two screens now live in the CRM). Nothing student-facing changes.
+```
+
+**Feedback → CRM Cases.** New in-app reports become cases within minutes (CRM tick + whenever the Cases
+list opens), view "In-app feedback & flags". A case's status and internal comments are written back to
+`feedback_reports` (New→new, Open→triaged, In progress/Waiting/Escalated→in_progress, Resolved→resolved,
+Closed→resolved if it was Resolved just before, else dismissed). Notes written in the old screen move onto
+the case once. The daily sync never overwrites CRM triage.
+
+**Users → CRM Contacts.** New sign-ups become contacts within minutes (facts follow with the daily sync);
+view "New sign-ups (7 days)". MECE admins get a "MECE account" panel on the contact (plan, college email,
+goals, sessions and devices, coupons, recent submissions; demo flag, market, sign out everywhere — each
+copied onto the contact at once and audited) and "Revenue received" + sign-ups on CRM home.
+
+**Loading feedback.** A thin progress bar runs while the CRM waits on the server (navigations, refreshes,
+every server action, and link clicks while Next fetches the page shell); the clicked menu item shows a
+spinner; every page has a skeleton; buttons with async work show a spinner and block double clicks; pages
+ease in. All of it is off for prefers-reduced-motion.
+
+**Logo.** The CRM header uses the site's own `Wordmark` (brand mark + MECE) with a "CRM" tag.
+
+Gates (2026-10-09, from a clean reset): tsc clean · next build clean · unit 80/80 · p1 80/80 · p2 135/135 ·
+p3 120/120 · p4 212/212 · p5 (this follow-up: redirects, live report/sign-up sync, two-way case status,
+account tools and their permissions, consent → app opt-out, loading bar/skeleton/spinners, logo) 49/49.

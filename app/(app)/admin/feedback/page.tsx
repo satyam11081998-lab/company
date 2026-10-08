@@ -1,22 +1,12 @@
-import { createClient } from '@/lib/supabase/server';
-import { listFeedback } from '@/lib/feedback';
-import { FeedbackAdminClient } from './feedback-admin-client';
+import { redirect } from 'next/navigation';
 
+/**
+ * Feedback triage moved into the CRM (2026-10): every in-app report becomes a
+ * case within minutes, and a case's status and internal comments are written
+ * back to the report. This old route forwards to that view.
+ */
 export const dynamic = 'force-dynamic';
 
-// Gating: the parent app/(app)/admin/layout.tsx already redirects non-admins.
-export default async function AdminFeedbackPage() {
-  const supabase = createClient();
-  // RLS feedback_select_admin lets an admin's own session read all rows.
-  const reports = await listFeedback(supabase, { status: 'all', category: 'all', limit: 300 });
-
-  return (
-    <div>
-      <h1 className="mb-1 text-2xl font-semibold">Feedback &amp; flags</h1>
-      <p className="mb-6 text-muted-foreground">
-        Reports from the global feedback launcher and contextual flag buttons. Triage and resolve here.
-      </p>
-      <FeedbackAdminClient initialReports={reports} />
-    </div>
-  );
+export default function AdminFeedbackPage() {
+  redirect('/crm/m/cases?view=feedback');
 }

@@ -12,6 +12,8 @@ import { criteriaFields } from '@/lib/crm/criteria';
 import { toClientFields, toClientModule, toClientRecord } from '@/lib/crm/client-types';
 import RecordList from '@/components/crm/record-list';
 import { cadencesFor, loadRules, macrosFor } from '@/lib/crm/server/automation';
+import { syncNewReports, syncNewUsers } from '@/lib/crm/server/sync';
+import { createServiceClient } from '@/lib/crm/server/svc';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +36,10 @@ export default async function ModuleListPage({ params, searchParams }: {
   const meta = await loadMeta();
   const mod = meta.module(params.module);
   if (!mod || mod.active === false || !can(ctx, mod.api_name, 'view')) notFound();
+  // Cases: pull in-app reports filed since the last sync, so feedback shows up at once
+  if (mod.api_name === 'cases') await syncNewReports(createServiceClient()).catch((e) => console.error('[crm] new reports:', e));
+  // Contacts: new sign-ups appear at once (usage facts follow with the daily sync)
+  if (mod.api_name === 'contacts') await syncNewUsers(createServiceClient()).catch((e) => console.error('[crm] new users:', e));
   const fields = meta.fields(mod.api_name);
 
   // A system view whose fields an admin switched off (or this user can't see) is not offered.

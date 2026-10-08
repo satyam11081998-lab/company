@@ -11,7 +11,7 @@ import {
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
   { href: '/admin', label: 'Operations', icon: LayoutDashboard },
   { href: '/crm', label: 'CRM', icon: Contact },
-  { href: '/admin/users', label: 'Users', icon: UsersRound },
+  { href: '/crm/m/contacts', label: 'Users → CRM', icon: UsersRound },
   { href: '/admin/us-market', label: 'US & Europe', icon: Globe },
   { href: '/admin/journeys', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
@@ -29,7 +29,7 @@ const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: stri
   { href: '/admin/cases', label: 'Cases', icon: Sparkles },
   { href: '/admin/broadcast', label: 'Broadcast', icon: Megaphone },
   { href: '/admin/decks', label: 'Deck Vault', icon: FolderLock },
-  { href: '/admin/feedback', label: 'Feedback', icon: Flag },
+  { href: '/crm/m/cases?view=feedback', label: 'Feedback → CRM', icon: Flag },
 ];
 
 export default function AdminNav() {

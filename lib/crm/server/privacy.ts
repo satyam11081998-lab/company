@@ -85,6 +85,8 @@ export async function recordConsent(svc: SupabaseClient, input: ConsentInput) {
     // pending/approved marketing mail for this person is cancelled now, not just at send time
     await svc.from('crm_outbox').update({ status: 'cancelled', status_reason: 'marketing consent withdrawn' }).eq('record_id', rec.id).eq('category', 'marketing').in('status', ['pending', 'approved']);
     await svc.from('crm_cadence_enrollments').update({ status: 'exited' }).eq('record_id', rec.id).eq('status', 'active');
+    // ...and the app's own broadcasts stop too (they read users.marketing_opt_out). Never switched back on automatically.
+    if (rec.mece_user_id) await svc.from('users').update({ marketing_opt_out: true }).eq('id', rec.mece_user_id);
   }
   await audit(svc, { actor_id: input.actorId ?? null, actor_kind: input.actorId ? 'user' : input.channel === 'webform' ? 'public' : 'system', action: 'consent', module: rec.module, record_id: rec.id, meta: { purpose: input.purpose, status: input.status, channel: input.channel } });
 }
@@ -340,6 +342,9 @@ export async function erase(ctx: CrmContext, meta: Meta, requestId: string, conf
     await svc.from('crm_audit').update({ changes: null, meta: null, redacted: true }).in('record_id', chunk).eq('redacted', false);
   }
   for (const e of emails) await svc.from('crm_blocklist').upsert({ email_hash: blocklistHash(e), reason: 'erasure', request_id: req.id }, { onConflict: 'email_hash' });
+  // no more app broadcasts to an erased person who still has an app account
+  const erasedUsers = [...new Set(primaries.map((p) => p.mece_user_id).filter(Boolean))] as string[];
+  if (erasedUsers.length) await svc.from('users').update({ marketing_opt_out: true }).in('id', erasedUsers);
   const resolution = `Erased ${primaries.length} person record(s) and personal details on ${dependents.length} related record(s) on ${now.slice(0, 10)}. Amounts, dates and invoice numbers on billing records are kept as required by tax law. Notes, attachments and email contents were deleted; the email address is blocked from re-import. If the person also has a MECE app account, delete it from the app as well.`;
   await svc.from('crm_privacy_requests').update({ status: 'completed', resolution, completed_at: now, completed_by: ctx.userId, updated_at: now, requester_email: null, details: req.details ? '[erased]' : null }).eq('id', req.id);
   await audit(svc, { actor_id: ctx.userId, action: 'privacy_erasure', module: 'privacy', meta: { id: req.id, people: primaries.length, related: dependents.length } });
@@ -358,7 +363,14 @@ export async function restrict(ctx: CrmContext, meta: Meta, requestId: string) {
   let n = 0;
   for (const r of primaries) {
     if (r.locked?.kind === 'dpdp_erased' || r.locked?.kind === 'converted') continue;
-    await svc.from('crm_records').update({ locked: { kind: 'dpdp_restricted', reason: `Privacy request ${req.id.slice(0, 8)}`, by: ctx.userId, at: now, prev: r.locked ?? null, request: req.id }, updated_at: now }).eq('id', r.id);
+    // app broadcasts pause too; the previous opt-out setting is kept with the lock and restored when it lifts
+    let prevOptOut: boolean | null = null;
+    if (r.mece_user_id) {
+      const { data: u } = await svc.from('users').select('marketing_opt_out').eq('id', r.mece_user_id).maybeSingle();
+      prevOptOut = (u as { marketing_opt_out?: boolean } | null)?.marketing_opt_out ?? null;
+      await svc.from('users').update({ marketing_opt_out: true }).eq('id', r.mece_user_id);
+    }
+    await svc.from('crm_records').update({ locked: { kind: 'dpdp_restricted', reason: `Privacy request ${req.id.slice(0, 8)}`, by: ctx.userId, at: now, prev: r.locked ?? null, request: req.id, prevOptOut }, updated_at: now }).eq('id', r.id);
     await svc.from('crm_outbox').update({ status: 'cancelled', status_reason: 'processing restricted (privacy request)' }).eq('record_id', r.id).in('status', ['pending', 'approved']);
     await svc.from('crm_cadence_enrollments').update({ status: 'paused' }).eq('record_id', r.id).eq('status', 'active');
     await audit(svc, { actor_id: ctx.userId, action: 'privacy_restrict', module: r.module, record_id: r.id, meta: { request: req.id } });
@@ -369,9 +381,11 @@ export async function restrict(ctx: CrmContext, meta: Meta, requestId: string) {
 }
 
 async function liftRestriction(svc: SupabaseClient, actorId: string, req: RequestRow) {
-  const { data } = await svc.from('crm_records').select('id, module, locked').eq('locked->>kind', 'dpdp_restricted').eq('locked->>request', req.id).limit(100);
-  for (const r of (data ?? []) as Array<{ id: string; module: string; locked: { prev?: unknown } }>) {
+  const { data } = await svc.from('crm_records').select('id, module, locked, mece_user_id').eq('locked->>kind', 'dpdp_restricted').eq('locked->>request', req.id).limit(100);
+  for (const r of (data ?? []) as Array<{ id: string; module: string; mece_user_id: string | null; locked: { prev?: unknown; prevOptOut?: boolean | null } }>) {
     await svc.from('crm_records').update({ locked: r.locked?.prev ?? null, updated_at: new Date().toISOString() }).eq('id', r.id);
+    // restore the app's email setting only if the restriction was what turned it off
+    if (r.mece_user_id && r.locked?.prevOptOut === false) await svc.from('users').update({ marketing_opt_out: false }).eq('id', r.mece_user_id);
     await svc.from('crm_cadence_enrollments').update({ status: 'active' }).eq('record_id', r.id).eq('status', 'paused');
     await audit(svc, { actor_id: actorId, action: 'privacy_unrestrict', module: r.module, record_id: r.id, meta: { request: req.id } });
   }

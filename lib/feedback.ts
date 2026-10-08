@@ -1,5 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { FeedbackReportRow, FeedbackCategory, FeedbackStatus } from '@/lib/types';
+import type { FeedbackCategory, FeedbackStatus } from '@/lib/types';
 
 /** Display metadata for each feedback category (used by panel + admin). */
 export const FEEDBACK_CATEGORIES: { id: FeedbackCategory; label: string; hint: string }[] = [
@@ -21,20 +20,4 @@ export function categoryLabel(id: string): string {
   return FEEDBACK_CATEGORIES.find((c) => c.id === id)?.label ?? id;
 }
 
-/** Admin read. Caller must already be admin (RLS select policy enforces it). */
-export async function listFeedback(
-  supabase: SupabaseClient,
-  opts: { status?: FeedbackStatus | 'all'; category?: FeedbackCategory | 'all'; limit?: number } = {},
-): Promise<FeedbackReportRow[]> {
-  let q = supabase
-    .from('feedback_reports')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(opts.limit ?? 200);
-
-  if (opts.status && opts.status !== 'all') q = q.eq('status', opts.status);
-  if (opts.category && opts.category !== 'all') q = q.eq('category', opts.category);
-
-  const { data } = await q;
-  return (data as FeedbackReportRow[] | null) ?? [];
-}
+// Triage of these reports lives in the CRM (Cases → “In-app feedback & flags”).

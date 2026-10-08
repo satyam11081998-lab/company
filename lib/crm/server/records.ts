@@ -20,6 +20,7 @@ import { CrmAccessError, CrmUserError } from './context';
 import { RECORD_COLS, audit, fetchAll, ilikeEscape, normalizeRecord, orSafe } from './db';
 import { afterDelete, afterSave, assignmentFollowUp, assignOwnerFor, beforeSave, layoutRequired } from './automation';
 import { isActiveMember } from './members';
+import { reportStatusFor } from './sync';
 import type { Meta } from './meta';
 
 export type Source = 'ui' | 'import' | 'webform' | 'api' | 'automation' | 'sync' | 'convert' | 'merge' | 'system' | 'blueprint';
@@ -469,6 +470,25 @@ async function afterWrite(svc: SupabaseClient, meta: Meta, before: CrmRecord | n
       probability: typeof after.data.probability === 'number' ? Math.round(after.data.probability) : null,
       changed_by: actorId, seconds_in_from: seconds,
     });
+  }
+
+  // A case that came from an in-app report keeps that report in step (status + internal note),
+  // so the CRM is the one place to triage feedback. Never blocks the save.
+  if (after.module === 'cases' && typeof after.data.mece_report_id === 'string' && opts.source !== 'sync' && before) {
+    const statusChanged = before.data.status !== after.data.status;
+    const noteChanged = (before.data.internal_comments ?? null) !== (after.data.internal_comments ?? null);
+    if (statusChanged || noteChanged) {
+      const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      const st = reportStatusFor(after.data.status, before.data.status);
+      if (statusChanged && st) patch.status = st;
+      if (noteChanged) patch.admin_note = typeof after.data.internal_comments === 'string' ? after.data.internal_comments.slice(0, 3000) : null;
+      try {
+        const { error } = await svc.from('feedback_reports').update(patch).eq('id', after.data.mece_report_id);
+        if (error) console.error('[crm] report write-back failed:', error.message);
+      } catch (e) {
+        console.error('[crm] report write-back failed:', e);
+      }
+    }
   }
 
   // Activities touch their parent's "last activity"

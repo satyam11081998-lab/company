@@ -81,6 +81,167 @@ const iso = (v: unknown) => (typeof v === 'string' && v ? new Date(v).toISOStrin
 const dateOnly = (v: unknown) => (typeof v === 'string' && v ? new Date(v).toISOString().slice(0, 10) : null);
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// ---- users → contacts -----------------------------------------------------
+const USER_COLS = 'id, name, full_name, email, phone, created_at, onboarding_completed_at, subscription_tier, subscription_expires_at, college_id, college_other, batch_year, placement_focus, referral_source, linkedin_url, streak_count, points, marketing_opt_out, is_admin, is_demo, is_guest, market';
+const isPerson = (u: any) => !u.is_guest && !!u.email && !String(u.email).endsWith('@guest.invalid');
+const isInternalUser = (u: any) => !!u.is_admin || !!u.is_demo || PLACEHOLDER_EMAIL_RE.test(String(u.email));
+
+/** One MECE user (+ their usage/revenue facts) → their contact row. */
+function userToContact(u: any, f: any, internalUser: boolean, accountId: string | null, now: number): SyncRow {
+  const tierActive = (u.subscription_tier === 'lite' || u.subscription_tier === 'pro') && u.subscription_expires_at && new Date(u.subscription_expires_at).getTime() > now;
+  const everPaid = Number(f.paid_count ?? 0) > 0;
+  const lastActive = [f.last_seen_at, f.last_solved_at, u.created_at].filter(Boolean).map((x: string) => new Date(x).getTime()).reduce((a: number, b: number) => Math.max(a, b), 0);
+  const expiredAgo = u.subscription_expires_at ? (now - new Date(u.subscription_expires_at).getTime()) / DAY : Infinity;
+  let lifecycle: string;
+  if (tierActive) lifecycle = 'Paying';
+  else if (everPaid) lifecycle = expiredAgo <= LAPSE_DAYS ? 'Lapsed' : 'Churned';
+  else if (now - lastActive > LAPSE_DAYS * DAY && now - new Date(u.created_at).getTime() > LAPSE_DAYS * DAY) lifecycle = 'Churned';
+  else if (Number(f.cases_solved ?? 0) > 0) lifecycle = 'Activated';
+  else if (u.onboarding_completed_at) lifecycle = 'Onboarded';
+  else lifecycle = 'Signed up';
+  const intl = [Number(f.rev_usd_cents ?? 0) ? `$${(Number(f.rev_usd_cents) / 100).toFixed(2)}` : null, Number(f.rev_eur_cents ?? 0) ? `€${(Number(f.rev_eur_cents) / 100).toFixed(2)}` : null].filter(Boolean).join(' + ');
+  const fullName = String(u.full_name || u.name || String(u.email).split('@')[0]).slice(0, 255);
+  return {
+    module: 'contacts', external_key: `user:${u.id}`, name: fullName, mece_user_id: u.id, created_at: u.created_at,
+    data: {
+      full_name: fullName,
+      email: String(u.email).toLowerCase(),
+      phone: u.phone ?? null,
+      account_id: accountId,
+      lifecycle_stage: lifecycle,
+      market: u.market ?? 'IN',
+      linkedin_url: u.linkedin_url ?? null,
+      email_opt_out: !!u.marketing_opt_out,
+      mece_signed_up_at: iso(u.created_at),
+      mece_onboarded_at: iso(u.onboarding_completed_at),
+      mece_tier: tierActive ? u.subscription_tier : 'free',
+      mece_tier_expires_at: iso(u.subscription_expires_at),
+      mece_college: u.college_other ?? null,
+      mece_batch_year: u.batch_year ?? null,
+      mece_placement_focus: u.placement_focus ?? null,
+      mece_referral_source: u.referral_source ?? null,
+      mece_cases_solved: Number(f.cases_solved ?? 0),
+      mece_avg_score: f.avg_score === null || f.avg_score === undefined ? null : Number(f.avg_score),
+      mece_best_score: f.best_score ?? null,
+      mece_first_solved_at: iso(f.first_solved_at),
+      mece_last_active_at: lastActive ? new Date(lastActive).toISOString() : null,
+      mece_active_days_30: Number(f.active_days_30 ?? 0),
+      mece_streak: u.streak_count ?? 0,
+      mece_points: u.points ?? 0,
+      mece_revenue_inr: internalUser ? 0 : Number(f.rev_inr_paise ?? 0) / 100,
+      mece_revenue_intl: internalUser ? null : intl || null,
+      mece_payments_count: internalUser ? 0 : Number(f.paid_count ?? 0),
+      mece_first_paid_at: iso(f.first_paid_at),
+      mece_last_paid_at: iso(f.last_paid_at),
+      mece_ai_cost_usd: Number(f.ai_cost_usd ?? 0),
+      mece_voice_minutes: Number(f.voice_minutes ?? 0),
+      mece_internal: internalUser,
+      mece_account_deleted: false,
+    },
+  };
+}
+
+/**
+ * New sign-ups → contacts without waiting for the daily sync (CRM tick and the
+ * Contacts list). Usage and revenue facts arrive with the next full sync.
+ */
+export async function syncNewUsers(svc: SupabaseClient, max = 300): Promise<number> {
+  const since = new Date(Date.now() - 14 * DAY).toISOString();
+  const { data } = await svc.from('users').select(USER_COLS).gte('created_at', since).eq('is_guest', false).order('created_at', { ascending: false }).limit(max);
+  const users = ((data ?? []) as any[]).filter(isPerson);
+  if (!users.length) return 0;
+  const { data: have } = await svc.from('crm_records').select('external_key').eq('module', 'contacts').in('external_key', users.map((u) => `user:${u.id}`));
+  const known = new Set(((have ?? []) as Array<{ external_key: string }>).map((h) => h.external_key));
+  const blocked = await blockedHashes(svc);
+  const fresh = users.filter((u) => !known.has(`user:${u.id}`) && !blocked.has(blocklistHash(String(u.email))));
+  if (!fresh.length) return 0;
+  const colleges = [...new Set(fresh.map((u) => u.college_id).filter(Boolean))] as string[];
+  const { data: accs } = colleges.length ? await svc.from('crm_records').select('id, external_key').eq('module', 'accounts').in('external_key', colleges.map((c) => `college:${c}`)) : { data: [] };
+  const accountOf = new Map(((accs ?? []) as Array<{ id: string; external_key: string }>).map((a) => [a.external_key.slice(8), a.id]));
+  const now = Date.now();
+  return upsert(svc, fresh.map((u) => userToContact(u, {}, isInternalUser(u), u.college_id ? accountOf.get(u.college_id) ?? null : null, now)));
+}
+
+/** Re-read one user's account flags into their contact at once (after an admin changes them). */
+export async function refreshContactFlags(svc: SupabaseClient, userId: string) {
+  const { data: u } = await svc.from('users').select(USER_COLS).eq('id', userId).maybeSingle();
+  if (!u || !isPerson(u)) return;
+  const { data: c } = await svc.from('crm_records').select('id, locked').eq('module', 'contacts').eq('external_key', `user:${userId}`).maybeSingle();
+  const rec = c as { id: string; locked: { kind?: string } | null } | null;
+  if (!rec || rec.locked?.kind === 'dpdp_erased') return;
+  await svc.rpc('crm_merge_data', { p_rows: [{ id: rec.id, data: { market: (u as any).market ?? 'IN', mece_internal: isInternalUser(u), email_opt_out: !!(u as any).marketing_opt_out } }] });
+}
+
+// ---- in-app feedback reports ↔ cases ---------------------------------------
+const REPORT_COLS = 'id, user_id, category, message, contact_email, path, status, admin_note, created_at';
+const REPORT_TYPE: Record<string, string> = { data_discrepancy: 'Content error', stale_data: 'Content error', bug: 'Bug', suggestion: 'Feature request', content_error: 'Content error', general: 'Question', other: 'Question' };
+const REPORT_STATUS: Record<string, string> = { new: 'New', triaged: 'Open', in_progress: 'In progress', resolved: 'Resolved', dismissed: 'Closed' };
+
+/** One feedback report → its case row. Status, priority and notes are set only when the case is new (then they belong to the CRM). */
+function reportToCase(r: any, existing: { id: string; data: Record<string, unknown> } | undefined, contactId: string | null, userEmail: string | null): SyncRow {
+  const msg = String(r.message ?? '').replace(/\s+/g, ' ').trim();
+  const email = (r.contact_email || userEmail || null) as string | null;
+  const data: Record<string, unknown> = {
+    subject: `${REPORT_TYPE[r.category] ?? 'Question'}: ${msg.slice(0, 80)}${msg.length > 80 ? '…' : ''}`,
+    case_origin: 'In-app report', type: REPORT_TYPE[r.category] ?? 'Question', contact_id: contactId,
+    reporter_email: email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? email.toLowerCase() : null,
+    description: String(r.message ?? '').slice(0, 32000), mece_report_id: r.id, mece_page: r.path ? String(r.path).slice(0, 255) : null,
+  };
+  if (!existing) {
+    data.status = REPORT_STATUS[r.status] ?? 'New';
+    data.priority = r.category === 'bug' ? 'High' : 'Medium';
+  }
+  // notes written in the old admin Feedback screen move onto the case once
+  if (r.admin_note && !(existing?.data.internal_comments)) data.internal_comments = String(r.admin_note).slice(0, 3000);
+  return { module: 'cases', external_key: `report:${r.id}`, name: String(data.subject), mece_user_id: r.user_id ?? null, created_at: r.created_at, data };
+}
+
+/**
+ * New in-app reports → cases without waiting for the daily sync (runs on the
+ * CRM's 5-minute tick and when the Cases list opens). Cheap: looks only at the
+ * last 14 days and skips reports that already have a case.
+ */
+export async function syncNewReports(svc: SupabaseClient, max = 200): Promise<number> {
+  const since = new Date(Date.now() - 14 * DAY).toISOString();
+  const { data } = await svc.from('feedback_reports').select(REPORT_COLS).gte('created_at', since).order('created_at', { ascending: false }).limit(max);
+  const reports = (data ?? []) as any[];
+  if (!reports.length) return 0;
+  const keys = reports.map((r) => `report:${r.id}`);
+  const { data: have } = await svc.from('crm_records').select('external_key').eq('module', 'cases').in('external_key', keys);
+  const known = new Set(((have ?? []) as Array<{ external_key: string }>).map((h) => h.external_key));
+  const fresh = reports.filter((r) => !known.has(`report:${r.id}`));
+  if (!fresh.length) return 0;
+  const uids = [...new Set(fresh.map((r) => r.user_id).filter(Boolean))] as string[];
+  const [{ data: contacts }, { data: users }, blocked] = await Promise.all([
+    uids.length ? svc.from('crm_records').select('id, external_key, locked').eq('module', 'contacts').in('external_key', uids.map((u) => `user:${u}`)) : Promise.resolve({ data: [] }),
+    uids.length ? svc.from('users').select('id, email').in('id', uids) : Promise.resolve({ data: [] }),
+    blockedHashes(svc),
+  ]);
+  const contactRows = (contacts ?? []) as Array<{ id: string; external_key: string; locked: { kind?: string } | null }>;
+  const erasedUsers = new Set(contactRows.filter((c) => c.locked?.kind === 'dpdp_erased').map((c) => c.external_key.slice(5)));
+  const contactOf = new Map(contactRows.map((c) => [c.external_key.slice(5), c.id]));
+  const emailOf = new Map(((users ?? []) as Array<{ id: string; email: string | null }>).map((u) => [u.id, u.email]));
+  const rows = fresh
+    .filter((r) => !(r.user_id && erasedUsers.has(r.user_id)))
+    .map((r) => reportToCase(r, undefined, r.user_id ? contactOf.get(r.user_id) ?? null : null, r.user_id ? emailOf.get(r.user_id) ?? null : null))
+    .filter((r) => !(typeof r.data.reporter_email === 'string' && blocked.has(blocklistHash(r.data.reporter_email))));
+  if (!rows.length) return 0;
+  await numberNew(svc, rows, new Map(), 'cases.case_number', 'case_number', 'CS-', 5);
+  return upsert(svc, rows);
+}
+
+/** CRM case status → the original report's status (Closed straight after Resolved stays resolved; Closed otherwise = dismissed). */
+export function reportStatusFor(caseStatus: unknown, previousStatus: unknown): string | null {
+  switch (caseStatus) {
+    case 'New': return 'new';
+    case 'Open': return 'triaged';
+    case 'In progress': case 'Waiting on customer': case 'Escalated': return 'in_progress';
+    case 'Resolved': return 'resolved';
+    case 'Closed': return previousStatus === 'Resolved' ? 'resolved' : 'dismissed';
+    default: return null;
+  }
+}
+
 export async function runSync(svc: SupabaseClient, trigger: string, actorId: string | null = null): Promise<SyncStats> {
   const t0 = Date.now();
   const warnings: string[] = [];
@@ -92,11 +253,9 @@ export async function runSync(svc: SupabaseClient, trigger: string, actorId: str
     const now = Date.now();
 
     // ---- users + facts --------------------------------------------------
-    const { rows: users } = await fetchAll<any>((o) => svc.from('users').select(
-      'id, name, full_name, email, phone, created_at, onboarding_completed_at, subscription_tier, subscription_expires_at, college_id, college_other, batch_year, placement_focus, referral_source, linkedin_url, streak_count, points, marketing_opt_out, is_admin, is_demo, is_guest, market', o,
-    ).order('id'), 200_000);
-    const people = users.filter((u) => !u.is_guest && u.email && !String(u.email).endsWith('@guest.invalid'));
-    const internal = new Set(people.filter((u) => u.is_admin || u.is_demo || PLACEHOLDER_EMAIL_RE.test(String(u.email))).map((u) => u.id as string));
+    const { rows: users } = await fetchAll<any>((o) => svc.from('users').select(USER_COLS, o).order('id'), 200_000);
+    const people = users.filter(isPerson);
+    const internal = new Set(people.filter(isInternalUser).map((u) => u.id as string));
 
     // DPDP erasure: erased records are never written again, and people who were erased
     // (by record or by email) are not brought back by the sync.
@@ -138,60 +297,7 @@ export async function runSync(svc: SupabaseClient, trigger: string, actorId: str
     const accountIds = await idsByKey(svc, 'accounts', 'college:');
 
     // ---- contacts --------------------------------------------------------
-    const contactRows: SyncRow[] = people.map((u) => {
-      const f = facts.get(u.id) ?? {};
-      const tierActive = (u.subscription_tier === 'lite' || u.subscription_tier === 'pro') && u.subscription_expires_at && new Date(u.subscription_expires_at).getTime() > now;
-      const everPaid = Number(f.paid_count ?? 0) > 0;
-      const lastActive = [f.last_seen_at, f.last_solved_at, u.created_at].filter(Boolean).map((x: string) => new Date(x).getTime()).reduce((a: number, b: number) => Math.max(a, b), 0);
-      const expiredAgo = u.subscription_expires_at ? (now - new Date(u.subscription_expires_at).getTime()) / DAY : Infinity;
-      let lifecycle: string;
-      if (tierActive) lifecycle = 'Paying';
-      else if (everPaid) lifecycle = expiredAgo <= LAPSE_DAYS ? 'Lapsed' : 'Churned';
-      else if (now - lastActive > LAPSE_DAYS * DAY && now - new Date(u.created_at).getTime() > LAPSE_DAYS * DAY) lifecycle = 'Churned';
-      else if (Number(f.cases_solved ?? 0) > 0) lifecycle = 'Activated';
-      else if (u.onboarding_completed_at) lifecycle = 'Onboarded';
-      else lifecycle = 'Signed up';
-      const intl = [Number(f.rev_usd_cents ?? 0) ? `$${(Number(f.rev_usd_cents) / 100).toFixed(2)}` : null, Number(f.rev_eur_cents ?? 0) ? `€${(Number(f.rev_eur_cents) / 100).toFixed(2)}` : null].filter(Boolean).join(' + ');
-      const fullName = String(u.full_name || u.name || String(u.email).split('@')[0]).slice(0, 255);
-      return {
-        module: 'contacts', external_key: `user:${u.id}`, name: fullName, mece_user_id: u.id, created_at: u.created_at,
-        data: {
-          full_name: fullName,
-          email: String(u.email).toLowerCase(),
-          phone: u.phone ?? null,
-          account_id: u.college_id ? accountIds.get(`college:${u.college_id}`)?.id ?? null : null,
-          lifecycle_stage: lifecycle,
-          market: u.market ?? 'IN',
-          linkedin_url: u.linkedin_url ?? null,
-          email_opt_out: !!u.marketing_opt_out,
-          mece_signed_up_at: iso(u.created_at),
-          mece_onboarded_at: iso(u.onboarding_completed_at),
-          mece_tier: tierActive ? u.subscription_tier : 'free',
-          mece_tier_expires_at: iso(u.subscription_expires_at),
-          mece_college: u.college_other ?? null,
-          mece_batch_year: u.batch_year ?? null,
-          mece_placement_focus: u.placement_focus ?? null,
-          mece_referral_source: u.referral_source ?? null,
-          mece_cases_solved: Number(f.cases_solved ?? 0),
-          mece_avg_score: f.avg_score === null || f.avg_score === undefined ? null : Number(f.avg_score),
-          mece_best_score: f.best_score ?? null,
-          mece_first_solved_at: iso(f.first_solved_at),
-          mece_last_active_at: lastActive ? new Date(lastActive).toISOString() : null,
-          mece_active_days_30: Number(f.active_days_30 ?? 0),
-          mece_streak: u.streak_count ?? 0,
-          mece_points: u.points ?? 0,
-          mece_revenue_inr: internal.has(u.id) ? 0 : Number(f.rev_inr_paise ?? 0) / 100,
-          mece_revenue_intl: internal.has(u.id) ? null : intl || null,
-          mece_payments_count: internal.has(u.id) ? 0 : Number(f.paid_count ?? 0),
-          mece_first_paid_at: iso(f.first_paid_at),
-          mece_last_paid_at: iso(f.last_paid_at),
-          mece_ai_cost_usd: Number(f.ai_cost_usd ?? 0),
-          mece_voice_minutes: Number(f.voice_minutes ?? 0),
-          mece_internal: internal.has(u.id),
-          mece_account_deleted: false,
-        },
-      };
-    });
+    const contactRows: SyncRow[] = people.map((u) => userToContact(u, facts.get(u.id) ?? {}, internal.has(u.id), u.college_id ? accountIds.get(`college:${u.college_id}`)?.id ?? null : null, now));
     changed += await upsert(svc, contactRows.filter(keep));
     const contactIds = await idsByKey(svc, 'contacts', 'user:');
     // Users deleted from the app: flag (never delete — privacy review decides)
@@ -331,26 +437,9 @@ export async function runSync(svc: SupabaseClient, trigger: string, actorId: str
     changed += await upsert(svc, invoicesKept);
 
     // ---- support reports → cases ---------------------------------------
-    const reports = await fetchAll<any>((o) => svc.from('feedback_reports').select('id, user_id, category, message, contact_email, path, status, created_at', o).order('id'), 50_000);
+    const reports = await fetchAll<any>((o) => svc.from('feedback_reports').select(REPORT_COLS, o).order('id'), 50_000);
     const existingCases = await idsByKey(svc, 'cases', 'report:');
-    const TYPE: Record<string, string> = { data_discrepancy: 'Content error', stale_data: 'Content error', bug: 'Bug', suggestion: 'Feature request', content_error: 'Content error', general: 'Question', other: 'Question' };
-    const STATUS: Record<string, string> = { new: 'New', triaged: 'Open', in_progress: 'In progress', resolved: 'Resolved', dismissed: 'Closed' };
-    const caseRows: SyncRow[] = reports.rows.map((r) => {
-      const key = `report:${r.id}`;
-      const msg = String(r.message ?? '').replace(/\s+/g, ' ').trim();
-      const email = (r.contact_email || (r.user_id ? userById.get(r.user_id)?.email : null) || null) as string | null;
-      const data: Record<string, unknown> = {
-        subject: `${TYPE[r.category] ?? 'Question'}: ${msg.slice(0, 80)}${msg.length > 80 ? '…' : ''}`,
-        case_origin: 'In-app report', type: TYPE[r.category] ?? 'Question', contact_id: contactOf(r.user_id),
-        reporter_email: email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? email.toLowerCase() : null,
-        description: String(r.message ?? '').slice(0, 32000), mece_report_id: r.id, mece_page: r.path ? String(r.path).slice(0, 255) : null,
-      };
-      if (!existingCases.has(key)) {
-        data.status = STATUS[r.status] ?? 'New'; // after creation, status belongs to the CRM
-        data.priority = r.category === 'bug' ? 'High' : 'Medium';
-      }
-      return { module: 'cases', external_key: key, name: String(data.subject), mece_user_id: r.user_id ?? null, created_at: r.created_at, data };
-    });
+    const caseRows: SyncRow[] = reports.rows.map((r) => reportToCase(r, existingCases.get(`report:${r.id}`), contactOf(r.user_id), (r.user_id ? userById.get(r.user_id)?.email : null) ?? null));
     const casesKept = caseRows.filter((r) => keep(r) && !(typeof r.data.reporter_email === 'string' && blocked.has(blocklistHash(r.data.reporter_email))));
     await numberNew(svc, casesKept, existingCases, 'cases.case_number', 'case_number', 'CS-', 5);
     changed += await upsert(svc, casesKept);

@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Bell, Menu, Search, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, Loader2, Menu, Search, X } from 'lucide-react';
+import Wordmark from '@/components/home/wordmark';
 import { CrmIcon } from './icons';
+import NavProgress from './nav-progress';
 
 export interface NavModule {
   api: string;
@@ -47,22 +49,31 @@ export default function CrmShell({ modules, perms, unread, superAdmin, children 
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
+  // the link just clicked lights up at once, before the next page arrives
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  useEffect(() => { setPendingHref(null); }, [pathname]);
   const byApi = new Map(modules.map((m) => [m.api, m]));
   const custom = modules.filter((m) => m.kind === 'custom');
 
   const link = (href: string, label: string, icon: string, exact = false) => {
     const active = exact ? pathname === href : pathname === href || pathname.startsWith(href + '/');
+    const going = pendingHref === href && !active;
     return (
       <Link
         key={href}
         href={href}
-        onClick={() => setOpen(false)}
-        className={`flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
-          active ? 'bg-navy text-navy-foreground font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+        onClick={(e) => {
+          setOpen(false);
+          if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !active) setPendingHref(href);
+        }}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
+          active ? 'bg-navy text-navy-foreground font-medium' : going ? 'bg-navy/10 text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         }`}
       >
         <CrmIcon name={icon} className="h-4 w-4 shrink-0" />
         <span className="truncate">{label}</span>
+        {going && <Loader2 className="ml-auto h-3.5 w-3.5 shrink-0 animate-spin text-navy motion-reduce:animate-none" aria-hidden />}
       </Link>
     );
   };
@@ -127,14 +138,15 @@ export default function CrmShell({ modules, perms, unread, superAdmin, children 
 
   return (
     <div className="min-h-screen bg-muted/30">
+      <NavProgress />
       <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-12 max-w-[1500px] items-center gap-3 px-4">
           <button type="button" className="rounded-md p-1.5 hover:bg-muted lg:hidden" onClick={() => setOpen(true)} aria-label="Open CRM menu">
             <Menu className="h-5 w-5" />
           </button>
-          <Link href="/crm" className="flex items-center gap-2 font-semibold text-navy">
-            <span className="rounded bg-navy px-1.5 py-0.5 text-xs font-bold tracking-wide text-navy-foreground">MECE</span>
-            <span>CRM</span>
+          <Link href="/crm" className="flex shrink-0 items-center gap-2.5" aria-label="MECE CRM home">
+            <Wordmark taglineFrom="never" className="[&_span]:text-[20px] [&_svg]:h-[20px]" />
+            <span className="rounded-md border border-navy/20 bg-navy/5 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-navy dark:border-white/20 dark:bg-white/5 dark:text-white">CRM</span>
           </Link>
           <form
             className="relative ml-2 flex-1 max-w-md"
@@ -175,7 +187,7 @@ export default function CrmShell({ modules, perms, unread, superAdmin, children 
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-64 overflow-y-auto bg-card p-3 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
-              <span className="font-semibold">MECE CRM</span>
+              <span className="flex items-center gap-2"><Wordmark taglineFrom="never" className="[&_span]:text-[18px] [&_svg]:h-[18px]" /><span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-navy dark:text-white">CRM</span></span>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="rounded p-1 hover:bg-muted">
                 <X className="h-5 w-5" />
               </button>

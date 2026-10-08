@@ -30,6 +30,7 @@ const BY_MODULE: Record<string, SystemView[]> = {
   ],
   contacts: [
     { key: 'paying', name: 'Paying customers', criteria: all({ field: 'lifecycle_stage', op: 'eq', value: 'Paying' }) },
+    { key: 'new_signups', name: 'New sign-ups (7 days)', criteria: all({ field: 'mece_signed_up_at', op: 'in_last_days', value: 7 }), sort: { field: 'mece_signed_up_at', dir: 'desc' } },
     { key: 'lapsed', name: 'Lapsed (win-back)', criteria: all({ field: 'lifecycle_stage', op: 'eq', value: 'Lapsed' }) },
     { key: 'activated_free', name: 'Active free users (upsell)', criteria: all({ field: 'lifecycle_stage', op: 'eq', value: 'Activated' }, { field: 'mece_last_active_at', op: 'in_last_days', value: 14 }) },
     { key: 'not_onboarded', name: 'Signed up, not onboarded', criteria: all({ field: 'lifecycle_stage', op: 'eq', value: 'Signed up' }) },
@@ -64,6 +65,7 @@ const BY_MODULE: Record<string, SystemView[]> = {
   ],
   cases: [
     { key: 'open', name: 'Open cases', criteria: all({ field: 'status', op: 'not_in', value: ['Resolved', 'Closed'] }), sort: { field: 'created_at', dir: 'asc' } },
+    { key: 'feedback', name: 'In-app feedback & flags', criteria: all({ field: 'case_origin', op: 'eq', value: 'In-app report' }), sort: { field: 'created_at', dir: 'desc' } },
     { key: 'sla_breached', name: 'SLA breached', criteria: all({ field: 'status', op: 'not_in', value: ['Resolved', 'Closed'] }, { field: 'sla_due_at', op: 'older_than_days', value: 0 }) },
     { key: 'escalated', name: 'Escalated', criteria: all({ field: 'status', op: 'eq', value: 'Escalated' }) },
     { key: 'urgent', name: 'Urgent / high', criteria: all({ field: 'priority', op: 'in', value: ['Urgent', 'High'] }, { field: 'status', op: 'not_in', value: ['Resolved', 'Closed'] }) },

@@ -42,7 +42,7 @@ export default async function AdminCouponsPage() {
   const svc = createServiceClient();
 
   // Public/influencer codes only. Deck Vault Rewards coupons are user-locked
-  // and managed from /admin/deck-vault.
+  // and were minted by the retired Deck Rewards review (app/(app)/admin/deck-vault/actions.ts).
   const [couponsRes, redemptionsRes] = await Promise.all([
     svc
       .from('discount_coupons')
