@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import AdminNav from '@/components/admin/admin-nav';
+import AdminAccount from '@/components/admin/admin-account';
+import { ADMIN_LOGIN_PATH } from '@/lib/staff-paths';
 import type { UserRow } from '@/lib/types';
 
 export default async function AdminLayout({
@@ -12,7 +15,8 @@ export default async function AdminLayout({
 }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  // The admin console has its own sign-in (2026-10-09), separate from /login.
+  if (!user) redirect(ADMIN_LOGIN_PATH);
 
   const { data: userData } = await supabase
     .from('users')
@@ -21,7 +25,10 @@ export default async function AdminLayout({
     .single();
 
   if (!(userData as Partial<UserRow>)?.is_admin) {
-    redirect('/dashboard');
+    // Signed in, but not as an admin: offer the admin sign-in (which says
+    // whose account this is, and sends CRM team members on to the CRM).
+    const here = headers().get('x-pathname') || '/admin';
+    redirect(`${ADMIN_LOGIN_PATH}?next=${encodeURIComponent(here)}`);
   }
 
   return (
@@ -32,6 +39,7 @@ export default async function AdminLayout({
           <div className="sticky top-24 rounded-xl border border-border bg-card p-2">
             <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
             <AdminNav />
+            <AdminAccount email={user.email ?? ''} />
           </div>
         </aside>
 
@@ -45,6 +53,7 @@ export default async function AdminLayout({
               <SheetContent side="left" className="w-[260px] p-3">
                 <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
                 <AdminNav />
+                <AdminAccount email={user.email ?? ''} />
               </SheetContent>
             </Sheet>
           </div>

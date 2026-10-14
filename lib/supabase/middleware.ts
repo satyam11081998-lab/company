@@ -18,6 +18,7 @@ import {
 import { ensureUserMarket } from '@/lib/market-server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isReturnDestination } from '@/lib/after-onboarding';
+import { ADMIN_LOGIN_PATH, isStaffPath } from '@/lib/staff-paths';
 
 /* ── International markets (2026-09-25) ─────────────────────────────────────
  * Every page request is placed in a market BEFORE anything renders:
@@ -230,6 +231,13 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isPublic && !isPreview) {
     const loginUrl = request.nextUrl.clone();
+    // Staff areas (admin console, CRM) have their own sign-in (2026-10-09).
+    if (isStaffPath(pathname)) {
+      loginUrl.pathname = ADMIN_LOGIN_PATH;
+      loginUrl.search = '';
+      loginUrl.searchParams.set('next', pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
+    }
     loginUrl.pathname = '/login';
     loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);
@@ -284,10 +292,12 @@ export async function updateSession(request: NextRequest) {
     const onOnboarding = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
     const { data: profile } = await supabase
       .from('users')
-      .select('onboarding_completed_at')
+      .select('onboarding_completed_at, is_admin')
       .eq('id', user.id)
       .maybeSingle();
-    const onboarded = !!profile?.onboarding_completed_at;
+    // A dedicated admin account (separate admin sign-in, 2026-10-09) never
+    // does learner onboarding, so it is not sent there from the staff areas.
+    const onboarded = !!profile?.onboarding_completed_at || (!!profile?.is_admin && isStaffPath(pathname));
 
     if (!onboarded && !onOnboarding) {
       const url = request.nextUrl.clone();

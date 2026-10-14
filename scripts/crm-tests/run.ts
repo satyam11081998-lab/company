@@ -6,5 +6,6 @@ import './marketing.test';
 import './service.test';
 import './automation.test';
 import './insights.test';
+import './staff-paths.test';
 
 run();

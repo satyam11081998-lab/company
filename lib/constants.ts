@@ -176,6 +176,9 @@ export const PUBLIC_ROUTES: string[] = [
   // rate-limited, validated server route. Nothing else from the CRM is public.
   '/f',
   '/survey',
+  // Staff sign-in for the admin console and the CRM (2026-10-09). Only this one
+  // page is public — /admin and /crm themselves still need a session.
+  '/admin/login',
   // SEO/crawler surfaces — extensionless URLs the middleware matcher doesn't
   // skip, so they must be explicitly public or link previews break.
   '/og', // dynamic Open Graph image generator
