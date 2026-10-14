@@ -61,6 +61,17 @@ type TurnRow = {
   comparable: boolean; not_comparable_reason: string | null; replies_identical: boolean;
   vote?: string; reveal?: Reveal; persisted?: boolean; persistDetail?: string; smallN?: string | null;
 };
+type ResultPair = {
+  variants: { id: string; fingerprint: string; wins: number }[];
+  votes: number; ties: number; both_bad: number; decided_votes: number;
+  verdict: string | null; by_case_type: Record<string, number>;
+};
+type Results = {
+  available: boolean; note: string | null; total_votes: number;
+  min_n_for_a_verdict?: number; pairs: ResultPair[];
+  self_noise: { votes: number; left: number; right: number; tie: number; both_bad: number; note?: string } | null;
+  position: { left: number; right: number; tie: number; both_bad: number; note: string | null } | null;
+};
 type Session = {
   session_id: string;
   case: { id: string; title: string; type: string; difficulty: string | null; content: string };
@@ -102,6 +113,8 @@ export default function ArenaPage() {
   const [loading, setLoading] = useState(true);
   const [showRaw, setShowRaw] = useState<Record<string, boolean>>({});
   const [briefOpen, setBriefOpen] = useState(true);
+  const [results, setResults] = useState<Results | null>(null);
+  const [resultsOpen, setResultsOpen] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const authHeader = useCallback(async (): Promise<Record<string, string>> => {
@@ -134,6 +147,7 @@ export default function ArenaPage() {
         setModelMode(cfg.default_model_mode);
         const cs = await api('/cases?limit=200') as { cases: CaseRow[] };
         setCases(cs.cases || []);
+        setResults(await api('/results') as Results);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load the arena');
       } finally {
@@ -242,6 +256,7 @@ export default function ArenaPage() {
       setTurns((ts) => ts.map((t) => t.index === turnIndex
         ? { ...t, vote: choice, reveal: res.reveal, persisted: res.persisted, persistDetail: res.detail, smallN: res.small_n_warning }
         : t));
+      try { setResults(await api('/results') as Results); } catch { /* tally is non-critical */ }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not record the vote');
     }
@@ -280,6 +295,8 @@ export default function ArenaPage() {
           <span>{config.persistence_note}</span>
         </div>
       )}
+
+      {results && <ResultsPanel results={results} open={resultsOpen} onToggle={() => setResultsOpen((o) => !o)} />}
 
       {!session ? (
         <SetupCard
@@ -678,6 +695,94 @@ function VerdictBar({ turn, onVote, afterReveal }: {
               {label}
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResultsPanel({ results, open, onToggle }: { results: Results; open: boolean; onToggle: () => void }) {
+  if (!results.available) {
+    return (
+      <div className="flex items-start gap-2 rounded-xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+        <BarChart3 className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>{results.note}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border bg-card">
+      <button onClick={onToggle} className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium">
+        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        <BarChart3 className="h-4 w-4" />
+        Recorded votes
+        <Chip>{results.total_votes} total</Chip>
+        {results.pairs.length > 0 && <Chip>{results.pairs.length} pairing{results.pairs.length > 1 ? 's' : ''}</Chip>}
+      </button>
+
+      {open && (
+        <div className="space-y-4 border-t border-border px-4 py-4">
+          {results.pairs.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No head-to-head votes yet. (Self-noise runs are tracked separately and never counted as wins.)
+            </p>
+          )}
+
+          {results.pairs.map((pair, i) => {
+            const total = Math.max(1, pair.decided_votes);
+            return (
+              <div key={i} className="space-y-2 rounded-lg border border-border p-3">
+                <div className="space-y-1.5">
+                  {pair.variants.map((v) => (
+                    <div key={v.id + v.fingerprint} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="font-medium">{v.id}</span>
+                        <span className="text-muted-foreground">
+                          {v.wins} win{v.wins === 1 ? '' : 's'} · <span className="font-mono">{v.fingerprint}</span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-foreground" style={{ width: `${(v.wins / total) * 100}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <Chip>{pair.decided_votes} decided</Chip>
+                  {pair.ties > 0 && <Chip>{pair.ties} tie{pair.ties > 1 ? 's' : ''}</Chip>}
+                  {pair.both_bad > 0 && <Chip>{pair.both_bad} both-bad</Chip>}
+                  {Object.entries(pair.by_case_type).map(([ct, n]) => <Chip key={ct}>{ct}: {n}</Chip>)}
+                </div>
+                {pair.verdict && (
+                  <p className={`text-xs ${pair.verdict.includes('Too few') || pair.verdict.includes('noise floor')
+                    ? 'text-amber-900' : 'text-foreground'}`}>
+                    {pair.verdict}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+
+          {results.self_noise && results.self_noise.votes > 0 && (
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
+              <p className="mb-1 flex items-center gap-1.5 font-medium">
+                <Flame className="h-3.5 w-3.5" /> Your noise floor
+              </p>
+              <p className="text-muted-foreground">
+                {results.self_noise.votes} vote(s) on identical arms — {results.self_noise.left} left,{' '}
+                {results.self_noise.right} right, {results.self_noise.tie} tie, {results.self_noise.both_bad} both-bad.
+                These are never counted as wins.
+              </p>
+              {results.self_noise.note && <p className="mt-1">{results.self_noise.note}</p>}
+            </div>
+          )}
+
+          {results.position?.note && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <ArrowLeftRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{results.position.note}</span>
+            </div>
+          )}
         </div>
       )}
     </div>
