@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-08 20:04 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-14 11:38 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
-**Branch:** main (frontend) / main (backend)
+**Branch:** main (frontend) / test/ai-behaviour-patch (backend)
 **Last landed:** 2026-10-06 - brain-rewrite + reconstructed log 2026-09-12..2026-10-05 - frontend 1dcc819 / backend 9f71870
-**Last sync:** 2026-10-08 20:04 UTC
+**Last sync:** 2026-10-14 11:38 UTC
 
 ## Last 5 commits — frontend
+- e1238d3 feat(admin): separate admin sign-in at /admin/login (SatyamSK, 2026-10-14)
+- c14ecb2 chore(brain): sync state (SatyamSK, 2026-10-09)
 - 9a13e00 feat(crm): feedback and users move into the CRM; loading feedback; MECE logo (SatyamSK, 2026-10-09)
 - 9d4ca1d chore(brain): sync state (SatyamSK, 2026-10-09)
 - 5b3c92d feat(crm): MECE CRM — a Zoho-class CRM inside mece.in, with Iris (AI), analytics and DPDP tools (SatyamSK, 2026-10-09)
-- e092c90 fix(checkout): US "Get Lite/Pro" reaches the checkout; Razorpay key comes with the order (SatyamSK, 2026-10-09)
-- 4bb3825 fix(seo): canonical host is www.mece.in; US line in llms.txt; newer AI crawlers (SatyamSK, 2026-10-08)
 
 ## Last 5 commits — backend
+- c4674d7 fix(ai-behaviour): repair the regressions the patch introduced in the live interviewer (SatyamSK, 2026-10-13)
+- 1c6b807 feat(ai-behaviour): prompt safety boundaries, arithmetic backstop, and evidence gate (SatyamSK, 2026-10-12)
+- 5f66b3b fix(gd-brief): fix JSON truncation, expand thinking token headroom, and add fallback validation (SatyamSK, 2026-10-12)
 - 8ac3a9b fix(daily): call www.mece.in for the home-page refresh (SatyamSK, 2026-10-07)
 - 0651e65 perf(daily): refresh the website home page when today's pair is written (SatyamSK, 2026-10-07)
-- 6e48abe feat(growth): real open-licensed photos, deeper essays, rewrite old posts (SatyamSK, 2026-10-06)
-- 0b29931 feat(growth): Gemini pictures for MECE Insights articles (SatyamSK, 2026-10-05)
-- 9f71870 fix(growth): daily blog research works when Gemini models are retired; OpenAI web search fallback (SatyamSK, 2026-10-05)
 
 ## Open feature branches (not merged into main)
 - origin/feat/cloud-run
