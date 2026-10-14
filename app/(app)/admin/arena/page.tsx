@@ -35,7 +35,10 @@ type Variant = { id: string; label: string; description: string; origin: string;
 type Scenario = { id: string; case_type: string; turns: number; new_message: string; transcript: { role: string; content: string }[] };
 type CaseRow = { id: string; title: string; type: string; difficulty: string | null; market: string | null; content_chars: number };
 type Config = {
-  variants: Variant[]; default_arm_a: string; default_arm_b: string;
+  variants: Variant[];
+  /** which frozen snapshot the DEPLOYED prompt tree equals, or null mid-edit */
+  live_matches: string | null;
+  default_arm_a: string; default_arm_b: string;
   model_modes: { id: string; label: string }[]; default_model_mode: string;
   teaching_policies: string[]; seed_scenarios: Scenario[];
   votes_persisted: boolean; persistence_note: string;
@@ -456,9 +459,30 @@ function SetupCard(p: {
   if (!config) return null;
   const sameVariant = p.variantA === p.variantB;
   const variantMeta = (id: string) => config.variants.find((v) => v.id === id);
+  const liveLabel = config.live_matches
+    ? variantMeta(config.live_matches)?.label ?? config.live_matches
+    : null;
 
   return (
     <div className="space-y-5 rounded-xl border border-border bg-card p-5">
+      {/* Which arm is production. Without this you can spend an evening comparing
+          two candidates and never notice neither of them is what users get. */}
+      <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
+        <Gauge className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        {liveLabel ? (
+          <span>
+            On this deployment the interviewer your users get right now is{' '}
+            <strong>{liveLabel}</strong> (<code className="font-mono">{config.live_matches}</code>).
+            Put it on one arm and you are measuring a candidate against production.
+          </span>
+        ) : (
+          <span>
+            The deployed prompt tree does not match any frozen snapshot — it is mid-edit, or a
+            stack nobody has snapshotted. Neither arm is production, so treat the result as
+            candidate-vs-candidate only.
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <label className="space-y-1.5 md:col-span-2">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Case or guesstimate</span>
