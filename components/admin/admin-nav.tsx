@@ -6,6 +6,7 @@ import {
   LayoutDashboard, MessageSquareQuote, Users, Megaphone, FileText,
   FolderLock, Flag, Sparkles, Activity, BadgeCheck, BarChart3,
   UsersRound, TicketPercent, Award, Cpu, Bot, Rocket, Globe, ClipboardCheck, Contact,
+  Swords,
 } from 'lucide-react';
 
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -19,6 +20,7 @@ const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: stri
   { href: '/admin/ai-usage', label: 'AI usage', icon: BarChart3 },
   { href: '/admin/ai-providers', label: 'AI providers', icon: Cpu },
   { href: '/admin/agentic', label: 'Agentic AI', icon: Bot },
+  { href: '/admin/arena', label: 'Interviewer arena', icon: Swords },
   { href: '/admin/prep-copilot', label: 'Prep Copilot', icon: Sparkles },
   { href: '/admin/interview-intelligence', label: 'Interview Intelligence', icon: ClipboardCheck },
   { href: '/admin/growth', label: 'Growth (SEO)', icon: Rocket },
