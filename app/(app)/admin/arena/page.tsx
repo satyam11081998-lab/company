@@ -14,6 +14,12 @@
  * The admin gate is the parent layout (server-side is_admin) PLUS each backend
  * route's own _require_admin -- this page is just the surface.
  *
+ * What each pane shows is what a candidate would receive: the backend runs every arm
+ * through the SAME streaming function the live chat uses, opens each session with the
+ * same "Case ready" note a real attempt starts with, and spends the clarifying-question
+ * quota of the chosen plan the way production does. "User view" renders the panes
+ * like the real solve chat; "Diagnostics" adds the decision behind each reply.
+ *
  * Reading the result honestly (both enforced by the backend, surfaced here):
  *  - V11 answers MANY turns in a deterministic lane. No prompt is built, both arms
  *    say the same thing, and the turn is marked NOT COMPARABLE. Those turns say
@@ -24,14 +30,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { stripSayLabel } from '@/lib/voice/v11-voice';
 import {
-  AlertTriangle, ArrowLeftRight, BarChart3, Check, ChevronDown, ChevronRight,
-  Eye, Flame, Gauge, Loader2, Play, RotateCcw, Send, Swords, Timer, Zap,
+  AlertTriangle, ArrowLeftRight, BarChart3, Check, ChevronDown, ChevronRight, Cpu,
+  Eye, Flame, Gauge, HelpCircle, Loader2, MessageSquare, Play, RotateCcw, Send, Swords,
+  Timer, Wrench, Zap,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type Variant = { id: string; label: string; description: string; origin: string; frozen: boolean; sha256: string | null };
+/** One conversation row as the engine reads it. `kind` matters: the opening note is a system_note. */
+type TranscriptTurn = { role: string; content: string; kind?: string };
+type Tier = { id: string; quota: number };
+type TurnClarification = { counted: number; quota: number; used: number; remaining: number; exhausted_this_turn: boolean };
 type Scenario = { id: string; case_type: string; turns: number; new_message: string; transcript: { role: string; content: string }[] };
 type CaseRow = { id: string; title: string; type: string; difficulty: string | null; market: string | null; content_chars: number };
 type Config = {
@@ -41,6 +53,8 @@ type Config = {
   default_arm_a: string; default_arm_b: string;
   model_modes: { id: string; label: string }[]; default_model_mode: string;
   teaching_policies: string[]; seed_scenarios: Scenario[];
+  /** the plan the simulated candidate is on: sets the clarifying-question quota (C9) */
+  tiers: Tier[]; default_tier: string;
   votes_persisted: boolean; persistence_note: string;
   limits: { max_transcript_turns: number; max_message_chars: number };
 };
@@ -62,6 +76,7 @@ type Reveal = { left: { variant_id: string; label: string; origin: string; froze
 type TurnRow = {
   index: number; message: string; left: Arm; right: Arm;
   comparable: boolean; not_comparable_reason: string | null; replies_identical: boolean;
+  clarification?: TurnClarification;
   vote?: string; reveal?: Reveal; persisted?: boolean; persistDetail?: string; smallN?: string | null;
 };
 type ResultPair = {
@@ -79,7 +94,13 @@ type Session = {
   session_id: string;
   case: { id: string; title: string; type: string; difficulty: string | null; content: string };
   teaching_policy: string; model_mode: string; blinded: boolean; self_noise_run: boolean;
+  /** what every real attempt starts with: the "Case ready" system note */
+  opening_transcript: TranscriptTurn[];
+  clarification: { tier: string; quota: number; used: number; remaining: number };
 };
+
+type ViewMode = 'user' | 'diagnostics';
+const VIEW_KEY = 'mece.arena.view';
 
 const SIDES = ['left', 'right'] as const;
 const SIDE_LABEL: Record<string, string> = { left: 'A', right: 'B' };
@@ -104,12 +125,19 @@ export default function ArenaPage() {
   const [modelMode, setModelMode] = useState('');
   const [policy, setPolicy] = useState('coached');
   const [seedId, setSeedId] = useState('');
+  const [tier, setTier] = useState('free');
 
   const [session, setSession] = useState<Session | null>(null);
   const [turns, setTurns] = useState<TurnRow[]>([]);
-  const [armState, setArmState] = useState<Record<string, { transcript: { role: string; content: string }[]; prior_state: Record<string, unknown> | null }>>({
+  const [armState, setArmState] = useState<Record<string, { transcript: TranscriptTurn[]; prior_state: Record<string, unknown> | null }>>({
     left: { transcript: [], prior_state: null }, right: { transcript: [], prior_state: null },
   });
+  // The conversation both arms START from (opening note + any seeded scenario).
+  // Rendered on every turn, not only before the first one.
+  const [prefix, setPrefix] = useState<{ turn: TranscriptTurn; seeded: boolean }[]>([]);
+  const [pending, setPending] = useState<string | null>(null);
+  const [clar, setClar] = useState<{ quota: number; remaining: number; tier: string } | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('user');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +147,18 @@ export default function ArenaPage() {
   const [results, setResults] = useState<Results | null>(null);
   const [resultsOpen, setResultsOpen] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
+
+  // A per-viewer convenience only: which view you last used.
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem(VIEW_KEY);
+      if (v === 'user' || v === 'diagnostics') setViewMode(v);
+    } catch { /* storage unavailable: default view */ }
+  }, []);
+  const chooseView = (v: ViewMode) => {
+    setViewMode(v);
+    try { window.localStorage.setItem(VIEW_KEY, v); } catch { /* non-critical */ }
+  };
 
   const authHeader = useCallback(async (): Promise<Record<string, string>> => {
     const supabase = createClient();
@@ -148,6 +188,7 @@ export default function ArenaPage() {
         setVariantA(cfg.default_arm_a);
         setVariantB(cfg.default_arm_b);
         setModelMode(cfg.default_model_mode);
+        if (cfg.default_tier) setTier(cfg.default_tier);
         const cs = await api('/cases?limit=200') as { cases: CaseRow[] };
         setCases(cs.cases || []);
         setResults(await api('/results') as Results);
@@ -195,14 +236,25 @@ export default function ArenaPage() {
     try {
       const s = await api('/session', {
         method: 'POST',
-        body: JSON.stringify({ case_id: caseId, variant_a: variantA, variant_b: variantB, model_mode: modelMode, teaching_policy: policy }),
+        body: JSON.stringify({ case_id: caseId, variant_a: variantA, variant_b: variantB, model_mode: modelMode, teaching_policy: policy, tier }),
       }) as Session;
       setSession(s);
       setTurns([]);
-      // A seeded scenario starts BOTH arms from the identical prior conversation, so
-      // the first compared turn is the hard moment rather than turn one of small talk.
-      const pre = seed ? seed.transcript.map((t) => ({ role: t.role, content: t.content })) : [];
+      // Every real attempt opens with the "Case ready" system note, and the engine
+      // reads it on every turn -- so both arms start with it. A seeded scenario then
+      // adds the identical prior conversation, so the first compared turn is the hard
+      // moment rather than turn one of small talk.
+      const opening = (s.opening_transcript || []).map((t) => ({ ...t }));
+      const seeded: TranscriptTurn[] = seed
+        ? seed.transcript.map((t) => ({ role: t.role, content: t.content, kind: 'text' }))
+        : [];
+      const pre = [...opening, ...seeded];
+      setPrefix([
+        ...opening.map((turn) => ({ turn, seeded: false })),
+        ...seeded.map((turn) => ({ turn, seeded: true })),
+      ]);
       setArmState({ left: { transcript: [...pre], prior_state: null }, right: { transcript: [...pre], prior_state: null } });
+      setClar(s.clarification ? { quota: s.clarification.quota, remaining: s.clarification.remaining, tier: s.clarification.tier } : null);
       setMessage(seed?.new_message || '');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start the session');
@@ -213,6 +265,10 @@ export default function ArenaPage() {
     if (!session || !message.trim() || busy) return;
     const msg = message.trim();
     setError(null); setBusy(true);
+    // Show the candidate's turn straight away, the way the real chat does, while
+    // both interviewers think.
+    setPending(msg);
+    setMessage('');
     try {
       const res = await api('/turn', {
         method: 'POST',
@@ -222,27 +278,31 @@ export default function ArenaPage() {
           left: armState.left,
           right: armState.right,
         }),
-      }) as { turn_index: number; left: Arm; right: Arm; comparable: boolean; not_comparable_reason: string | null; replies_identical: boolean };
+      }) as { turn_index: number; left: Arm; right: Arm; comparable: boolean; not_comparable_reason: string | null; replies_identical: boolean; clarification?: TurnClarification };
       setTurns((t) => [...t, {
         index: res.turn_index, message: msg, left: res.left, right: res.right,
         comparable: res.comparable, not_comparable_reason: res.not_comparable_reason,
-        replies_identical: res.replies_identical,
+        replies_identical: res.replies_identical, clarification: res.clarification,
       }]);
+      if (res.clarification) {
+        setClar((c) => ({ quota: res.clarification!.quota, remaining: res.clarification!.remaining, tier: c?.tier || tier }));
+      }
       // The arms DIVERGE from here: each keeps its own transcript and its own state.
       setArmState((prev) => {
         const next = { ...prev };
         for (const side of SIDES) {
           const arm = res[side];
-          const t = [...prev[side].transcript, { role: 'user', content: msg }];
-          if (arm.reply && !arm.silent) t.push({ role: 'assistant', content: arm.reply });
+          const t: TranscriptTurn[] = [...prev[side].transcript, { role: 'user', content: msg, kind: 'text' }];
+          // Same rule as production: a silence writes no assistant row.
+          if (arm.reply && !arm.silent) t.push({ role: 'assistant', content: arm.reply, kind: 'text' });
           next[side] = { transcript: t, prior_state: arm.next_state ?? prev[side].prior_state };
         }
         return next;
       });
-      setMessage('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Turn failed');
-    } finally { setBusy(false); }
+      setMessage(msg);  // give the turn back so it can be resent
+    } finally { setBusy(false); setPending(null); }
   };
 
   const vote = async (turnIndex: number, choice: string) => {
@@ -265,7 +325,10 @@ export default function ArenaPage() {
     }
   };
 
-  const reset = () => { setSession(null); setTurns([]); setMessage(''); setError(null); };
+  const reset = () => {
+    setSession(null); setTurns([]); setMessage(''); setError(null);
+    setPrefix([]); setPending(null); setClar(null);
+  };
 
   if (loading) {
     return (
@@ -282,9 +345,9 @@ export default function ArenaPage() {
           <Swords className="h-6 w-6" /> Interviewer arena
         </h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Two prompt variants, one case, the same candidate turn. You will not be told which
-          side is which until you vote — knowing which one is “the new build” is enough to
-          decide the answer.
+          Two prompt variants, one case, the same candidate turn — each pane is exactly what a
+          candidate would receive from the live chat. You will not be told which side is which
+          until you vote — knowing which one is “the new build” is enough to decide the answer.
         </p>
       </header>
 
@@ -314,6 +377,7 @@ export default function ArenaPage() {
           modelMode={modelMode} setModelMode={setModelMode}
           policy={policy} setPolicy={setPolicy}
           seedId={seedId} setSeedId={setSeedId}
+          tier={tier} setTier={setTier}
           seed={seed}
           busy={busy}
           onStart={start}
@@ -330,9 +394,14 @@ export default function ArenaPage() {
             {session.self_noise_run && (
               <Chip tone="warn"><Flame className="mr-1 inline h-3 w-3" />self-noise run — same variant both sides</Chip>
             )}
-            <button onClick={reset} className="ml-auto flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-muted">
-              <RotateCcw className="h-3.5 w-3.5" /> New session
-            </button>
+            {clar && <QuestionsLeft remaining={clar.remaining} quota={clar.quota} tier={clar.tier} />}
+            <div className="ml-auto flex items-center gap-2">
+              <ViewToggle value={viewMode} onChange={chooseView} />
+              <button onClick={reset} aria-label="New session" title="New session"
+                className="flex items-center gap-1 whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm hover:bg-muted">
+                <RotateCcw className="h-3.5 w-3.5" /> <span className="hidden sm:inline">New session</span>
+              </button>
+            </div>
           </div>
 
           <div className="rounded-xl border border-border bg-card">
@@ -381,24 +450,15 @@ export default function ArenaPage() {
                     <Chip tone="reveal">{revealedPairing[side].label}</Chip>
                   )}
                 </div>
-                <div className="max-h-[32rem] space-y-3 overflow-auto p-4">
-                  {armState[side].transcript.length === 0 && turns.length === 0 && (
-                    <p className="text-xs text-muted-foreground">No turns yet. Send a candidate message below.</p>
-                  )}
-                  {seed && turns.length === 0 && armState[side].transcript.map((t, i) => (
-                    <Bubble key={`seed-${i}`} role={t.role} text={t.content} muted />
-                  ))}
-                  {turns.map((turn) => (
-                    <div key={`${side}-${turn.index}`} className="space-y-2">
-                      <Bubble role="user" text={turn.message} />
-                      <ReplyBlock
-                        arm={turn[side]}
-                        showRaw={!!showRaw[`${side}-${turn.index}`]}
-                        onToggleRaw={() => setShowRaw((s) => ({ ...s, [`${side}-${turn.index}`]: !s[`${side}-${turn.index}`] }))}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <ArmThread
+                  side={side}
+                  prefix={prefix}
+                  turns={turns}
+                  pending={pending}
+                  viewMode={viewMode}
+                  showRaw={showRaw}
+                  onToggleRaw={(key) => setShowRaw((s) => ({ ...s, [key]: !s[key] }))}
+                />
               </div>
             ))}
           </div>
@@ -409,6 +469,7 @@ export default function ArenaPage() {
               turn={turn}
               onVote={vote}
               afterReveal={firstRevealedTurn !== null && turn.index > firstRevealedTurn}
+              clarQuota={clar?.quota ?? null}
             />
           ))}
 
@@ -428,7 +489,7 @@ export default function ArenaPage() {
               <button
                 onClick={send}
                 disabled={busy || !message.trim()}
-                className="flex h-10 items-center gap-2 rounded-lg bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
+                className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-foreground px-4 text-sm font-medium text-background disabled:opacity-50"
               >
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 Send to both
@@ -453,6 +514,7 @@ function SetupCard(p: {
   modelMode: string; setModelMode: (v: string) => void;
   policy: string; setPolicy: (v: string) => void;
   seedId: string; setSeedId: (v: string) => void;
+  tier: string; setTier: (v: string) => void;
   seed: Scenario | null; busy: boolean; onStart: () => void;
 }) {
   const { config } = p;
@@ -536,13 +598,26 @@ function SetupCard(p: {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <label className="space-y-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Teaching policy</span>
           <select value={p.policy} onChange={(e) => p.setPolicy(e.target.value)}
             className="w-full rounded-lg border border-border bg-background px-2 py-2 text-sm">
             {config.teaching_policies.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
+        </label>
+        <label className="space-y-1.5">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Candidate&rsquo;s plan</span>
+          <select value={p.tier} onChange={(e) => p.setTier(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-2 py-2 text-sm">
+            {(config.tiers || []).map((t) => (
+              <option key={t.id} value={t.id}>{t.id} · {t.quota} clarifying questions</option>
+            ))}
+          </select>
+          <span className="block text-xs text-muted-foreground">
+            Spent the way the live chat spends it. Once it runs out the interviewer is told to
+            decline further questions — worth testing on purpose.
+          </span>
         </label>
         <label className="space-y-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -604,21 +679,184 @@ function Chip({ children, tone = 'default' }: { children: React.ReactNode; tone?
   return <span className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${tones[tone]}`}>{children}</span>;
 }
 
-function Bubble({ role, text, muted }: { role: string; text: string; muted?: boolean }) {
-  const isUser = role === 'user';
+/* The four renderers below mirror components/solve/ConversationalSolve.tsx
+   (MessageBubble, renderWithBold, the "thinking" row, ClarificationCounter) so a pane
+   reads like the real solve chat. Keep them in step if that file's look changes. */
+
+function renderWithBold(text: string) {
+  if (!text) return null;
+  const parts = text.split(/(\*\*.*?\*\*)/g);
   return (
-    <div className={`rounded-lg px-3 py-2 text-sm ${
-      isUser ? 'bg-muted/70' : 'border border-border bg-background'
-    } ${muted ? 'opacity-60' : ''}`}>
-      <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {isUser ? 'Candidate' : 'Interviewer'}{muted ? ' · seeded' : ''}
-      </span>
-      <span className="whitespace-pre-wrap">{text}</span>
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+          return <strong key={index}>{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
+function SystemPill({ text }: { text: string }) {
+  let display = text || '';
+  if (display.toUpperCase().startsWith('CASE READY:')) {
+    const dot = display.indexOf('.');
+    if (dot !== -1) display = display.slice(dot + 1).trim();
+  }
+  if (display) display = display.charAt(0).toUpperCase() + display.slice(1).toLowerCase();
+  return (
+    <div className="my-3 flex justify-center">
+      <p className="rounded-full bg-black/5 px-4 py-1.5 text-center text-micro font-medium text-muted-foreground shadow-sm dark:bg-white/5">
+        {display}
+      </p>
     </div>
   );
 }
 
-function ReplyBlock({ arm, showRaw, onToggleRaw }: { arm: Arm; showRaw: boolean; onToggleRaw: () => void }) {
+function CandidateBubble({ text, muted }: { text: string; muted?: boolean }) {
+  return (
+    <div className={`flex justify-end ${muted ? 'opacity-60' : ''}`}>
+      <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-body text-primary-foreground">
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function InterviewerBubble({ text, muted, note }: { text: string; muted?: boolean; note?: string }) {
+  return (
+    <div className={`flex justify-start ${muted ? 'opacity-60' : ''}`}>
+      <div className="max-w-[85%]">
+        <p className="mb-1 text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+          Interviewer{note ? ` · ${note}` : ''}
+        </p>
+        <div className="whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-muted px-4 py-2 text-body text-foreground">
+          {renderWithBold(stripSayLabel(text || ''))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ThinkingBubble() {
+  return (
+    <div className="flex justify-start">
+      <div className="max-w-[85%]">
+        <p className="mb-1 text-micro font-semibold uppercase tracking-widest text-muted-foreground">Interviewer</p>
+        <div className="rounded-2xl bg-muted px-4 py-2 text-small text-muted-foreground">
+          <Loader2 className="inline h-3 w-3 animate-spin" /> thinking…
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuestionsLeft({ remaining, quota, tier }: { remaining: number; quota: number; tier: string }) {
+  const danger = remaining <= 1;
+  return (
+    <span
+      className={`rounded-full border px-3 py-1 text-micro font-semibold ${danger
+        ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300'
+        : 'border-border bg-muted text-foreground/80'}`}
+      title={`A ${tier} candidate can ask ${quota} clarifying questions in total.`}
+    >
+      <HelpCircle className="mr-1 inline h-3 w-3" />
+      Questions remaining: {remaining} <span className="font-normal text-muted-foreground">({tier})</span>
+    </span>
+  );
+}
+
+function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
+  const opts: { id: ViewMode; label: string; icon: React.ReactNode; title: string }[] = [
+    { id: 'user', label: 'User view', icon: <MessageSquare className="h-3.5 w-3.5" />,
+      title: 'Only what the candidate sees, styled like the real solve chat' },
+    { id: 'diagnostics', label: 'Diagnostics', icon: <Wrench className="h-3.5 w-3.5" />,
+      title: 'Add the decision behind each reply: function, guardrail flags, latency, raw text' },
+  ];
+  return (
+    <div className="flex rounded-lg border border-border p-0.5" role="group" aria-label="Pane view">
+      {opts.map((o) => (
+        <button
+          key={o.id}
+          onClick={() => onChange(o.id)}
+          title={o.title}
+          aria-pressed={value === o.id}
+          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium ${value === o.id
+            ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted'}`}
+        >
+          {o.icon}{o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ArmThread({ side, prefix, turns, pending, viewMode, showRaw, onToggleRaw }: {
+  side: 'left' | 'right';
+  prefix: { turn: TranscriptTurn; seeded: boolean }[];
+  turns: TurnRow[];
+  pending: string | null;
+  viewMode: ViewMode;
+  showRaw: Record<string, boolean>;
+  onToggleRaw: (key: string) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [turns.length, pending, viewMode]);
+  const firstSeeded = prefix.findIndex((p) => p.seeded);
+
+  return (
+    <div ref={scrollRef} className="h-[34rem] space-y-4 overflow-y-auto px-4 py-4">
+      {prefix.map(({ turn, seeded }, i) => (
+        <div key={`pre-${i}`} className="space-y-2">
+          {i === firstSeeded && (
+            <p className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">
+              Seeded conversation · both arms start here
+            </p>
+          )}
+          {turn.role === 'system'
+            ? <SystemPill text={turn.content} />
+            : turn.role === 'user'
+              ? <CandidateBubble text={turn.content} muted={seeded} />
+              : <InterviewerBubble text={turn.content} muted={seeded} />}
+        </div>
+      ))}
+
+      {turns.length === 0 && !pending && (
+        <p className="text-center text-xs text-muted-foreground">Send the candidate&rsquo;s first turn below.</p>
+      )}
+
+      {turns.map((turn) => {
+        const key = `${side}-${turn.index}`;
+        return (
+          <div key={key} className="space-y-3">
+            <CandidateBubble text={turn.message} />
+            <InterviewerTurn
+              arm={turn[side]}
+              viewMode={viewMode}
+              showRaw={!!showRaw[key]}
+              onToggleRaw={() => onToggleRaw(key)}
+            />
+          </div>
+        );
+      })}
+
+      {pending && (
+        <div className="space-y-3">
+          <CandidateBubble text={pending} />
+          <ThinkingBubble />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InterviewerTurn({ arm, viewMode, showRaw, onToggleRaw }: {
+  arm: Arm; viewMode: ViewMode; showRaw: boolean; onToggleRaw: () => void;
+}) {
   if (arm.error) {
     return (
       <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -627,43 +865,56 @@ function ReplyBlock({ arm, showRaw, onToggleRaw }: { arm: Arm; showRaw: boolean;
       </div>
     );
   }
-  const body = arm.silent
-    ? <em className="text-muted-foreground">(chose to say nothing — a deliberate silence, not an error)</em>
-    : <span className="whitespace-pre-wrap">{showRaw ? (arm.raw_reply || arm.reply) : arm.reply}</span>;
+  const diagnostics = viewMode === 'diagnostics';
+  const body = arm.silent ? (
+    // Production writes no row and shows no bubble for a silence.
+    <p className="text-center text-[11px] italic text-muted-foreground">
+      The interviewer stayed silent here — the candidate sees no reply.
+    </p>
+  ) : (
+    <InterviewerBubble
+      text={showRaw ? (arm.raw_reply || arm.reply) : arm.reply}
+      note={showRaw ? 'raw model text, before post-processing' : undefined}
+    />
+  );
+  if (!diagnostics) return body;
 
   return (
     <div className="space-y-1.5">
-      <div className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-        <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Interviewer{showRaw ? ' · raw model text, before enforcement' : ''}
-        </span>
-        {body}
-      </div>
+      {body}
       <div className="flex flex-wrap items-center gap-1.5">
         {!arm.prompt_consulted && <Chip tone="warn"><Zap className="mr-1 inline h-3 w-3" />no prompt used</Chip>}
-        {arm.control.mode && <Chip>{arm.control.mode}</Chip>}
+        {arm.control.function && <Chip>{arm.control.function}</Chip>}
+        {arm.control.mode && arm.control.mode !== arm.control.function && <Chip>{arm.control.mode}</Chip>}
         {arm.control.intervention && <Chip>{arm.control.intervention}</Chip>}
         {arm.control.materiality && <Chip>materiality: {arm.control.materiality}</Chip>}
         {arm.control.hint && <Chip>hint {arm.control.hint}</Chip>}
+        {arm.control.fallback && <Chip tone="warn">fallback line</Chip>}
         <Chip><Timer className="mr-1 inline h-3 w-3" />{arm.latency_ms} ms</Chip>
         <Chip><Gauge className="mr-1 inline h-3 w-3" />{arm.metrics.words}w · {arm.metrics.questions}?</Chip>
+        <Chip><Cpu className="mr-1 inline h-3 w-3" />{arm.model || 'no model call'}</Chip>
         {arm.violations.map((v) => (
           <Chip key={v} tone="bad">{VIOLATION_LABEL[v] || v}</Chip>
         ))}
         {arm.enforced && (
           <button onClick={onToggleRaw} className="rounded-md border border-border px-2 py-0.5 text-[11px] font-medium hover:bg-muted">
             <ArrowLeftRight className="mr-1 inline h-3 w-3" />
-            {showRaw ? 'show shipped' : 'enforcer rewrote this — show raw'}
+            {showRaw ? 'show what the candidate gets' : 'post-processing changed this — show raw'}
           </button>
         )}
       </div>
+      {arm.control.reason && (
+        <p className="text-[11px] text-muted-foreground">why: {arm.control.reason}</p>
+      )}
     </div>
   );
 }
 
-function VerdictBar({ turn, onVote, afterReveal }: {
-  turn: TurnRow; onVote: (i: number, c: string) => void; afterReveal?: boolean;
+function VerdictBar({ turn, onVote, afterReveal, clarQuota }: {
+  turn: TurnRow; onVote: (i: number, c: string) => void; afterReveal?: boolean; clarQuota?: number | null;
 }) {
+  const flags = (arm: Arm) => (arm.error ? ['arm failed'] : arm.violations.map((v) => VIOLATION_LABEL[v] || v));
+  const c = turn.clarification;
   return (
     <div className="space-y-2 rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -672,7 +923,19 @@ function VerdictBar({ turn, onVote, afterReveal }: {
         </span>
         <span className="truncate text-xs italic text-muted-foreground">“{turn.message}”</span>
         {afterReveal && <Chip tone="warn">judged after the reveal — not blind</Chip>}
+        {c && c.counted > 0 && !c.exhausted_this_turn && (
+          <Chip>used {c.counted} of {clarQuota ?? c.quota} questions · {c.remaining} left</Chip>
+        )}
+        {c?.exhausted_this_turn && (
+          <Chip tone="warn">out of questions — both interviewers were told to decline</Chip>
+        )}
       </div>
+
+      {(flags(turn.left).length > 0 || flags(turn.right).length > 0) && (
+        <p className="text-xs text-muted-foreground">
+          Guardrail flags — A: {flags(turn.left).join(', ') || 'none'} · B: {flags(turn.right).join(', ') || 'none'}
+        </p>
+      )}
 
       {!turn.comparable && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">

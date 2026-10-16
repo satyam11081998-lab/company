@@ -1,6 +1,146 @@
 # ANTIGRAVITY HANDOFF — Interviewer arena (admin A/B test window)
 
-**STATUS: BUILT 2026-10-14, usable core complete, NOT pushed, NOT on main.**
+## v2 — PRODUCTION PARITY (2026-10-16) · read this first
+
+**STATUS (2026-10-16):** v1 below was ported to local `main` in both repos on 2026-10-14
+(backend `12d59d5`, frontend `e3d93eb`/`848a2f7`/`a4fa137`) — **not pushed**; GitHub `main`
+is still `5f66b3b` / `e8061be`. v2 lands on top of that, also on local `main`, not pushed.
+
+**Why v2:** "so I can check the response in how it's working." The arena has to show the
+text a candidate would actually receive. It didn't always.
+
+```
+touches:  backend  MOD  services/interview_engine.py  stream_interviewer_reply gains the same three
+                        optional params complete_interviewer_reply already had (messages_builder,
+                        llm_override, usage_out); _contextual_line gains llm/usage_out; one new
+                        helper _record_or_log. ALL default to None = production, unchanged.
+                   MOD  services/arena.py   runs stream_interviewer_reply, not complete_interviewer_reply
+                   MOD  routes/arena.py     both arms in parallel; "Case ready" opening note; C9 quota by plan
+                   NEW  tests/test_arena_parity.py   (12 tests)
+                   MOD  tests/test_arena_routes.py   (+5 tests, contract keys updated)
+                   MOD  tests/test_arena_isolation.py (fake model now answers streamed calls)
+          frontend MOD  app/(app)/admin/arena/page.tsx
+breaking: no. No CONTRACTS.md surface. Arena-only response keys added (session: opening_transcript,
+          clarification; turn: clarification; config: tiers, default_tier) and pinned in
+          test_arena_routes.py. Production streaming path: identical behaviour with the new params
+          absent — proven, see gates.
+affects:  Case interviewer (text, V12) — the production streaming function gained default-off params.
+```
+
+### What was wrong in v1 (proven, not suspected)
+
+1. **The arena showed a cleaner interviewer than users get.** Production text turns run
+   `stream_interviewer_reply`. In the question-allowed functions (OPEN, TARGETED_QUESTION,
+   TARGETED_PROBE, RETHINK_CUE, CONTINUE_AS_AGREED, PROBE, NOISE, CHALLENGE_CLAIM,
+   SANITY_CHECK) it streams the model's words with **no `sanitize_reply`**. v1 called
+   `complete_interviewer_reply`, which sanitises every reply (strips praise openers, cuts a
+   reply to its first question). Same faked model reply, same turn (OPEN):
+   production sent *"…What's the split between dine-in and delivery? And how many outlets are
+   company-owned?"*; v1's arena showed only the first question. So the `stacked questions`
+   flag could never fire in the arena on the turns where users actually receive them.
+2. **The pinned model did not reach presence lines.** `_contextual_line` always used the live
+   default model, while the arena reported the pinned one (e.g. said "gpt-4o" when
+   gpt-4o-mini answered).
+3. **No opening note.** Every real attempt starts with the server-seeded system_note
+   (`Case ready: <title>. Ask any clarifying questions before structuring.`) and the engine
+   reads it every turn. v1 started from an empty transcript — and the two snapshot variants
+   differ precisely in how they treat a system turn (review FIX 3), so v1 never exercised it.
+4. **No clarification quota.** Production spends 7/12/20 questions by plan and, once spent,
+   tells the interviewer to decline. v1 never sent that directive unless forced.
+5. Seeded history disappeared from the panes after the first turn (render bug).
+
+### What v2 does
+
+- Each arm runs `stream_interviewer_reply` and joins the chunks exactly as
+  `routes/attempts.py post_message` does. With `usage_out` passed, the engine hands its model
+  calls back instead of logging them as production traffic; the arena logs each under
+  `/admin/arena/turn` with real tokens and `meta.engine_endpoint`. Zero-cost fast-lane beats
+  are not logged (nothing spent). `raw_reply` = the model text before post-processing;
+  `enforced` now means "production post-processing changed this", which on streamed turns
+  is correctly almost never.
+- `model`/`provider` are `None` when no model ran (deterministic lane) instead of naming one.
+- Both arms run concurrently (thread pool, 4 workers): one turn's wait, not two. Latency is
+  still per arm.
+- `/session` returns `opening_transcript`; the page seeds both arms with it (and prepends it
+  to seeded scenarios). Quota copied from `routes/attempts.py` — `CLARIFICATION_QUOTA` and the
+  note template are **copies pinned by test** (importing `routes.attempts` drags the whole
+  attempts stack into the arena), so a change there fails `test_arena_parity.py`.
+- Quota: `tier` on `/session` (default **free**, what most users are on), counted with the same
+  `count_clarifications`, spent before the model call, "exhausted" only on a turn that asks for
+  something once the quota is gone — `post_message`'s exact rule.
+- Page: panes render with the solve chat's own bubble styles (system pill, red candidate
+  bubble, "INTERVIEWER" label, `renderWithBold(stripSayLabel())`), a pending "thinking…" bubble,
+  a **User view / Diagnostics** switch (remembered per browser; user view = only what the
+  candidate sees; diagnostics = function, mode, intervention, guardrail flags, latency, words,
+  model, raw-text toggle, "why"), a "Questions remaining" pill, a plan picker, per-turn
+  quota/guardrail lines in the verdict bar. A silence renders as "the candidate sees no reply".
+
+### Gates run (2026-10-16, on the owner's machine via the device shell, Python 3.10)
+
+- `python -m pytest -q tests/test_arena_variants.py tests/test_arena_isolation.py
+  tests/test_arena_routes.py tests/test_arena_parity.py` → **62 passed**.
+- **Mutation check:** re-running the parity tests with the arena forced back to v1's
+  `complete_interviewer_reply` fails exactly the question-turn parity, stacked-question and
+  model-pin tests (3 failed / 4 passed — the lanes where v1 genuinely matched still pass).
+- **Production unchanged, byte for byte:** `git archive HEAD` extracted to a scratch tree; same
+  `.env`; outputs diffed. `tests.test_response_functions` (drives `stream_interviewer_reply`),
+  `tests.test_interviewer_mode` (24 known failures), `tests.test_session_signals` (5 known
+  failures), `tests.test_learning_model` → **identical output** to HEAD.
+  `python -m tools.eval_interviewer_behavior` (offline) → identical (16 known mismatches;
+  only the saved-file path line differs). `test_count_clarifications`, `test_markets`,
+  `test_visuals_sanitizer` pass.
+- `python -m compileall -q prompts services routes tests` → exit 0.
+- Arena router booted with the REAL admin gate: all 6 endpoints → **401** with no token and with
+  a bogus bearer.
+- Frontend: scoped `tsc --noEmit` over `page.tsx` and everything it imports, using the repo
+  tsconfig → exit 0 (canary file with a deliberate error through the same `@/` aliases → caught,
+  so the check is not vacuous). Full-repo `tsc` exceeds the device shell's 3-minute limit.
+- Rendered the real `page.tsx` (esbuild + the repo's Tailwind config/globals.css, backend mocked
+  with v2-shaped responses) in headless Chromium at 1440 and 390 px: setup → three turns
+  (question turn with a stacked question, fast-lane turn, hint-vs-silence turn) → Diagnostics →
+  raw toggle → vote → reveal. No runtime errors, no horizontal scroll at 390 px.
+
+**Not run:** `next build` (Windows SWC binary in `node_modules`; run on the dev machine);
+a live-model turn (OpenAI is not reachable from the device sandbox) — that is acceptance step 3.
+
+### Owner acceptance (replaces Phase 3 below where they overlap)
+
+1. `npx next build` in `consilio` — clean.
+2. Backend from `D:\dev\mece\consilio-backend` on `main`: `venv\Scripts\activate`,
+   `python -m uvicorn main:app --port 8000`. Frontend: temporarily
+   `NEXT_PUBLIC_API_URL="http://localhost:8000"` in `.env.local`, `npm run dev`, open
+   `http://localhost:3000/admin/arena`. (Put the prod URL back after.)
+3. Self-noise first (both arms `baseline-main`), then `baseline-main` vs `patched-2026-10-14`,
+   plan **free**. Open with a clarifying question — that turn routes to OPEN, a question-allowed
+   function, so you now see what users get, stacked questions included.
+4. Spend 7 questions, then ask an 8th: the verdict bar says "out of questions — both
+   interviewers were told to decline"; read how each arm declines.
+5. `/admin/ai-usage` shows the turns under `/admin/arena/turn`.
+6. Optional: run `migrations/2026-10-14_arena_votes.sql` so votes are tallied.
+To check it on mece.in instead: push both repos (Render + Vercel deploy from `main`). That is a
+production deploy of `services/interview_engine.py` — default-off params, proven identical
+above, but still the live interviewer's file. Your call.
+
+### Findings for separate tickets (pre-existing, NOT changed here)
+
+- **Production may be shipping stacked questions.** On question-allowed turns the streamed reply
+  skips `sanitize_reply`, so a two-question or praise-opening model reply reaches the candidate
+  as-is (`_fold_session_state` only prints a `guardrail_violation`). The arena now makes this
+  visible; whether to sanitise the stream (e.g. buffer to the first sentence boundary) is a
+  product decision with a latency cost.
+- **The behavioural eval has v1's blind spot.** `tools/eval_interviewer_behavior.py --live` and
+  `tools/eval_interview_scoring.py` call `complete_interviewer_reply`, so on question turns
+  they grade a sanitised reply users never get. Switch them to the streaming path before
+  trusting their interviewer verdicts.
+- **Context-assessor spend is unlogged.** `assess_context_with_llm` (hard-pinned gpt-4o-mini)
+  writes no `ai_usage_log` row — invisible to the $10/day kill switch and the AI usage report,
+  in production and in the arena alike.
+
+---
+
+## v1 — original build (2026-10-14)
+
+**v1 STATUS (2026-10-14, superseded by the v2 section above): BUILT, usable core complete.**
 Backend `test/ai-behaviour-patch` @ `ada42e4` (on top of the review fixes `c4674d7`).
 Frontend `feat/interviewer-arena` @ `e3d93eb` (off frontend `main` @ `e8061be`).
 **Why (owner):** "a test window in the admin panel for this feature only, because it is
