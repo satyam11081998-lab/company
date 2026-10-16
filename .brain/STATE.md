@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-14 18:11 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-16 10:24 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-10-06 - brain-rewrite + reconstructed log 2026-09-12..2026-10-05 - frontend 1dcc819 / backend 9f71870
-**Last sync:** 2026-10-14 18:11 UTC
+**Last sync:** 2026-10-16 10:24 UTC
 
 ## Last 5 commits — frontend
+- 48532cf feat(admin): arena panes read like the real solve chat, and show what users get (SatyamSK, 2026-10-16)
+- 5177d82 chore(brain): sync state (SatyamSK, 2026-10-14)
 - a4fa137 feat(admin): arena shows which arm is production (SatyamSK, 2026-10-14)
 - 848a2f7 feat(admin): arena results panel + the two session handoffs (SatyamSK, 2026-10-14)
 - e3d93eb feat(admin): Interviewer arena - blind side-by-side of two prompt variants (SatyamSK, 2026-10-14)
-- e8061be chore(brain): sync state (SatyamSK, 2026-10-14)
-- e1238d3 feat(admin): separate admin sign-in at /admin/login (SatyamSK, 2026-10-14)
 
 ## Last 5 commits — backend
+- a0dc775 feat(arena): each pane is what the candidate would actually receive (SatyamSK, 2026-10-16)
 - 12d59d5 feat(arena): admin interviewer arena, with NO change to the live interviewer (SatyamSK, 2026-10-14)
 - 5f66b3b fix(gd-brief): fix JSON truncation, expand thinking token headroom, and add fallback validation (SatyamSK, 2026-10-12)
 - 8ac3a9b fix(daily): call www.mece.in for the home-page refresh (SatyamSK, 2026-10-07)
 - 0651e65 perf(daily): refresh the website home page when today's pair is written (SatyamSK, 2026-10-07)
-- 6e48abe feat(growth): real open-licensed photos, deeper essays, rewrite old posts (SatyamSK, 2026-10-06)
 
 ## Open feature branches (not merged into main)
 - origin/feat/cloud-run
