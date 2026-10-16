@@ -45,7 +45,15 @@ type TranscriptTurn = { role: string; content: string; kind?: string };
 type Tier = { id: string; quota: number };
 type TurnClarification = { counted: number; quota: number; used: number; remaining: number; exhausted_this_turn: boolean };
 type Scenario = { id: string; case_type: string; turns: number; new_message: string; transcript: { role: string; content: string }[] };
-type CaseRow = { id: string; title: string; type: string; difficulty: string | null; market: string | null; content_chars: number };
+type CaseRow = {
+  id: string; title: string; type: string; difficulty: string | null; market: string | null;
+  is_active: boolean | null; unlisted: boolean | null; created_at: string | null;
+};
+/** One page of the server-side case search (/admin/arena/cases). */
+type CasesPage = {
+  cases: CaseRow[]; count: number; total: number; offset: number; limit: number;
+  has_more: boolean; markets_supported: boolean;
+};
 type Config = {
   variants: Variant[];
   /** which frozen snapshot the DEPLOYED prompt tree equals, or null mid-edit */
@@ -99,8 +107,16 @@ type Session = {
   clarification: { tier: string; quota: number; used: number; remaining: number };
 };
 
-type ViewMode = 'user' | 'diagnostics';
+type ViewMode = 'candidate' | 'diagnostics';
 const VIEW_KEY = 'mece.arena.view';
+
+// Known case types (the cases.type check constraint). Types found in results are added.
+const CASE_TYPES: [string, string][] = [
+  ['guesstimate', 'Guesstimates'], ['profitability', 'Profitability'],
+  ['market_sizing', 'Market sizing'], ['growth', 'Growth'],
+];
+const MARKETS: [string, string][] = [['IN', 'India'], ['US', 'US & Europe']];
+const CASE_PAGE = 50;
 
 const SIDES = ['left', 'right'] as const;
 const SIDE_LABEL: Record<string, string> = { left: 'A', right: 'B' };
@@ -116,10 +132,19 @@ const VIOLATION_LABEL: Record<string, string> = {
 
 export default function ArenaPage() {
   const [config, setConfig] = useState<Config | null>(null);
+  // Case picker: searches the WHOLE library server-side (every case and guesstimate,
+  // active or not, listed or unlisted, both markets), newest first, a page at a time.
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [caseQuery, setCaseQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [caseId, setCaseId] = useState('');
+  const [marketFilter, setMarketFilter] = useState<string>('all');
+  const [caseTotal, setCaseTotal] = useState<number | null>(null);
+  const [caseHasMore, setCaseHasMore] = useState(false);
+  const [casesLoading, setCasesLoading] = useState(false);
+  const [casesError, setCasesError] = useState<string | null>(null);
+  const [marketsSupported, setMarketsSupported] = useState(true);
+  const [selectedCase, setSelectedCase] = useState<CaseRow | null>(null);
+  const caseReq = useRef(0);
   const [variantA, setVariantA] = useState('');
   const [variantB, setVariantB] = useState('');
   const [modelMode, setModelMode] = useState('');
@@ -137,7 +162,7 @@ export default function ArenaPage() {
   const [prefix, setPrefix] = useState<{ turn: TranscriptTurn; seeded: boolean }[]>([]);
   const [pending, setPending] = useState<string | null>(null);
   const [clar, setClar] = useState<{ quota: number; remaining: number; tier: string } | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('user');
+  const [viewMode, setViewMode] = useState<ViewMode>('candidate');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,7 +177,7 @@ export default function ArenaPage() {
   useEffect(() => {
     try {
       const v = window.localStorage.getItem(VIEW_KEY);
-      if (v === 'user' || v === 'diagnostics') setViewMode(v);
+      if (v === 'candidate' || v === 'diagnostics') setViewMode(v);
     } catch { /* storage unavailable: default view */ }
   }, []);
   const chooseView = (v: ViewMode) => {
@@ -189,8 +214,6 @@ export default function ArenaPage() {
         setVariantB(cfg.default_arm_b);
         setModelMode(cfg.default_model_mode);
         if (cfg.default_tier) setTier(cfg.default_tier);
-        const cs = await api('/cases?limit=200') as { cases: CaseRow[] };
-        setCases(cs.cases || []);
         setResults(await api('/results') as Results);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load the arena');
@@ -202,16 +225,41 @@ export default function ArenaPage() {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [turns.length]);
 
-  const filteredCases = useMemo(() => cases.filter((c) => {
-    if (typeFilter !== 'all' && (c.type || '').toLowerCase() !== typeFilter) return false;
-    if (caseQuery && !(c.title || '').toLowerCase().includes(caseQuery.toLowerCase())) return false;
-    return true;
-  }), [cases, caseQuery, typeFilter]);
+  // One page of the server-side search. A request counter drops responses that come
+  // back after a newer search was typed, so the list never shows a stale query.
+  const loadCases = useCallback(async (offset: number) => {
+    const req = ++caseReq.current;
+    setCasesLoading(true); setCasesError(null);
+    const qs = new URLSearchParams({ limit: String(CASE_PAGE), offset: String(offset) });
+    if (caseQuery.trim()) qs.set('q', caseQuery.trim());
+    if (typeFilter !== 'all') qs.set('case_type', typeFilter);
+    if (marketFilter !== 'all') qs.set('market', marketFilter);
+    try {
+      const page = await api(`/cases?${qs.toString()}`) as CasesPage;
+      if (req !== caseReq.current) return;
+      setCases((prev) => (offset === 0 ? page.cases : [...prev, ...page.cases]));
+      setCaseTotal(page.total);
+      setCaseHasMore(page.has_more);
+      setMarketsSupported(page.markets_supported !== false);
+    } catch (e) {
+      if (req !== caseReq.current) return;
+      setCasesError(e instanceof Error ? e.message : 'Could not search cases');
+    } finally {
+      if (req === caseReq.current) setCasesLoading(false);
+    }
+  }, [api, caseQuery, typeFilter, marketFilter]);
 
-  const caseTypes = useMemo(
-    () => Array.from(new Set(cases.map((c) => (c.type || '').toLowerCase()).filter(Boolean))).sort(),
-    [cases],
-  );
+  useEffect(() => {
+    if (!config || session) return;
+    const t = setTimeout(() => { loadCases(0); }, 250);
+    return () => clearTimeout(t);
+  }, [config, session, loadCases]);
+
+  const caseTypes = useMemo(() => {
+    const known = new Map(CASE_TYPES);
+    for (const c of cases) if (c.type && !known.has(c.type)) known.set(c.type, c.type);
+    return Array.from(known.entries());
+  }, [cases]);
 
   const seed = useMemo(
     () => config?.seed_scenarios.find((s) => s.id === seedId) || null,
@@ -236,7 +284,7 @@ export default function ArenaPage() {
     try {
       const s = await api('/session', {
         method: 'POST',
-        body: JSON.stringify({ case_id: caseId, variant_a: variantA, variant_b: variantB, model_mode: modelMode, teaching_policy: policy, tier }),
+        body: JSON.stringify({ case_id: selectedCase?.id, variant_a: variantA, variant_b: variantB, model_mode: modelMode, teaching_policy: policy, tier }),
       }) as Session;
       setSession(s);
       setTurns([]);
@@ -345,9 +393,10 @@ export default function ArenaPage() {
           <Swords className="h-6 w-6" /> Interviewer arena
         </h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Two prompt variants, one case, the same candidate turn — each pane is exactly what a
-          candidate would receive from the live chat. You will not be told which side is which
-          until you vote — knowing which one is “the new build” is enough to decide the answer.
+          Pick any case or guesstimate and put the interviewer on <code className="font-mono">main</code> next
+          to a branch build, turn by turn. Each pane shows exactly what a candidate would receive from that
+          build. You will not be told which side is which until you vote — knowing which one is “the new
+          build” is enough to decide the answer.
         </p>
       </header>
 
@@ -367,11 +416,14 @@ export default function ArenaPage() {
       {!session ? (
         <SetupCard
           config={config}
-          cases={filteredCases}
-          caseTypes={caseTypes}
-          caseQuery={caseQuery} setCaseQuery={setCaseQuery}
-          typeFilter={typeFilter} setTypeFilter={setTypeFilter}
-          caseId={caseId} setCaseId={setCaseId}
+          picker={{
+            query: caseQuery, setQuery: setCaseQuery,
+            type: typeFilter, setType: setTypeFilter, types: caseTypes,
+            market: marketFilter, setMarket: setMarketFilter, marketsSupported,
+            cases, total: caseTotal, hasMore: caseHasMore, loading: casesLoading, error: casesError,
+            onMore: () => loadCases(cases.length),
+            selected: selectedCase, onSelect: setSelectedCase,
+          }}
           variantA={variantA} setVariantA={setVariantA}
           variantB={variantB} setVariantB={setVariantB}
           modelMode={modelMode} setModelMode={setModelMode}
@@ -505,10 +557,8 @@ export default function ArenaPage() {
 /* ------------------------------------------------------------------ setup */
 
 function SetupCard(p: {
-  config: Config | null; cases: CaseRow[]; caseTypes: string[];
-  caseQuery: string; setCaseQuery: (v: string) => void;
-  typeFilter: string; setTypeFilter: (v: string) => void;
-  caseId: string; setCaseId: (v: string) => void;
+  config: Config | null;
+  picker: PickerProps;
   variantA: string; setVariantA: (v: string) => void;
   variantB: string; setVariantB: (v: string) => void;
   modelMode: string; setModelMode: (v: string) => void;
@@ -546,28 +596,9 @@ function SetupCard(p: {
         )}
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <label className="space-y-1.5 md:col-span-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Case or guesstimate</span>
-          <div className="flex gap-2">
-            <input
-              value={p.caseQuery} onChange={(e) => p.setCaseQuery(e.target.value)}
-              placeholder="Search by title…"
-              className="w-48 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-            />
-            <select value={p.typeFilter} onChange={(e) => p.setTypeFilter(e.target.value)}
-              className="rounded-lg border border-border bg-background px-2 py-2 text-sm">
-              <option value="all">All types</option>
-              {p.caseTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <select value={p.caseId} onChange={(e) => p.setCaseId(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-border bg-background px-2 py-2 text-sm">
-              <option value="">Pick a case ({p.cases.length} shown)</option>
-              {p.cases.map((c) => (
-                <option key={c.id} value={c.id}>{c.title} · {c.type}{c.difficulty ? ` · ${c.difficulty}` : ''}</option>
-              ))}
-            </select>
-          </div>
-        </label>
+        <div className="md:col-span-2">
+          <CasePicker {...p.picker} />
+        </div>
 
         <label className="space-y-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Model (both arms)</span>
@@ -656,12 +687,106 @@ function SetupCard(p: {
 
       <button
         onClick={p.onStart}
-        disabled={!p.caseId || p.busy}
+        disabled={!p.picker.selected || p.busy}
         className="flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
       >
         {p.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
         Start blind session
       </button>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ case picker */
+
+type PickerProps = {
+  query: string; setQuery: (v: string) => void;
+  type: string; setType: (v: string) => void; types: [string, string][];
+  market: string; setMarket: (v: string) => void; marketsSupported: boolean;
+  cases: CaseRow[]; total: number | null; hasMore: boolean; loading: boolean; error: string | null;
+  onMore: () => void; selected: CaseRow | null; onSelect: (c: CaseRow) => void;
+};
+
+const TYPE_LABEL: Record<string, string> = Object.fromEntries(CASE_TYPES);
+const MARKET_LABEL: Record<string, string> = Object.fromEntries(MARKETS);
+
+function shortDate(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function CasePicker(p: PickerProps) {
+  return (
+    <div className="space-y-2">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Case or guesstimate — the whole library
+      </span>
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={p.query} onChange={(e) => p.setQuery(e.target.value)}
+          placeholder="Search by title, or paste a case ID…"
+          aria-label="Search cases"
+          className="min-w-[12rem] flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+        />
+        <select value={p.type} onChange={(e) => p.setType(e.target.value)} aria-label="Case type"
+          className="rounded-lg border border-border bg-background px-2 py-2 text-sm">
+          <option value="all">All types</option>
+          {p.types.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+        </select>
+        {p.marketsSupported && (
+          <select value={p.market} onChange={(e) => p.setMarket(e.target.value)} aria-label="Market"
+            className="rounded-lg border border-border bg-background px-2 py-2 text-sm">
+            <option value="all">All markets</option>
+            {MARKETS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+          </select>
+        )}
+      </div>
+
+      <div className="max-h-72 overflow-y-auto rounded-lg border border-border" role="listbox" aria-label="Cases">
+        {p.error && <p className="px-3 py-3 text-sm text-red-700">{p.error}</p>}
+        {!p.error && p.cases.length === 0 && (
+          <p className="px-3 py-3 text-sm text-muted-foreground">
+            {p.loading ? 'Searching…' : p.query ? <>Nothing matches &ldquo;{p.query}&rdquo;.</> : 'No cases found.'}
+          </p>
+        )}
+        {p.cases.map((c) => {
+          const active = p.selected?.id === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              role="option"
+              aria-selected={active}
+              onClick={() => p.onSelect(c)}
+              className={`block w-full border-b border-border px-3 py-2 text-left last:border-b-0 hover:bg-muted ${active ? 'bg-muted ring-1 ring-inset ring-foreground/30' : ''}`}
+            >
+              <span className="block truncate text-sm font-medium">{c.title}</span>
+              <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span>{TYPE_LABEL[c.type] || c.type}</span>
+                {c.difficulty && <><span aria-hidden>·</span><span>{c.difficulty}</span></>}
+                {c.market && <><span aria-hidden>·</span><span>{MARKET_LABEL[c.market] || c.market}</span></>}
+                {c.created_at && <><span aria-hidden>·</span><span>{shortDate(c.created_at)}</span></>}
+                {c.unlisted && <Chip tone="warn">unlisted</Chip>}
+                {c.is_active === false && <Chip tone="warn">inactive</Chip>}
+              </span>
+            </button>
+          );
+        })}
+        {p.hasMore && (
+          <button type="button" onClick={p.onMore} disabled={p.loading}
+            className="block w-full px-3 py-2 text-center text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-50">
+            {p.loading ? 'Loading…' : `Load more (${p.cases.length} of ${p.total ?? '?'})`}
+          </button>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        {p.total !== null && <>{p.total} match{p.total === 1 ? '' : 'es'} · newest first · </>}
+        {p.selected
+          ? <>selected: <strong className="text-foreground">{p.selected.title}</strong></>
+          : 'pick one to start'}
+      </p>
     </div>
   );
 }
@@ -769,8 +894,8 @@ function QuestionsLeft({ remaining, quota, tier }: { remaining: number; quota: n
 
 function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
   const opts: { id: ViewMode; label: string; icon: React.ReactNode; title: string }[] = [
-    { id: 'user', label: 'User view', icon: <MessageSquare className="h-3.5 w-3.5" />,
-      title: 'Only what the candidate sees, styled like the real solve chat' },
+    { id: 'candidate', label: 'Candidate view', icon: <MessageSquare className="h-3.5 w-3.5" />,
+      title: 'Only what the candidate would see, styled like the real solve chat' },
     { id: 'diagnostics', label: 'Diagnostics', icon: <Wrench className="h-3.5 w-3.5" />,
       title: 'Add the decision behind each reply: function, guardrail flags, latency, raw text' },
   ];
