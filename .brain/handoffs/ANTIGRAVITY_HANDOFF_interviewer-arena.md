@@ -1,6 +1,90 @@
 # ANTIGRAVITY HANDOFF — Interviewer arena (admin A/B test window)
 
-## v2.1 — THE BRANCH ARM IS THE WHOLE BRANCH; ANY CASE (2026-10-16) · read this first
+## v3 — CURRENT vs NEW: TWO DEPLOYMENTS (2026-10-17) · read this first
+
+**Owner's workflow (2026-10-17):** live users stay on `main`. Every interviewer fix goes to a
+**`candidate`** branch, deployed as a second backend. In `/admin/arena` → **Current vs New**,
+pull any case or guesstimate; the same case opens in two labelled panes — **Current** = live
+backend (main), **New** = candidate backend. Send a turn to both, or to one side only. The owner
+says what is wrong → Claude changes the candidate → owner re-tests. **Only when the owner says
+"push"** does the candidate go to `main` (= the live site). "Update" = push the candidate only.
+
+```
+touches:  backend  NEW  services/voice_lane.py   (/voice-decision's lane/say/event logic, moved
+                        from routes/attempts.py unchanged; shared with the arena)
+                   MOD  routes/attempts.py       uses voice_lane (byte-identical behaviour, gated)
+                   MOD  routes/arena.py          /arm-turn, /build, /judge, /case; config: build, candidate_url
+                   MOD  services/arena.py        run_turn(channel="voice")
+                   MOD  tools/eval_interviewer_behavior.py   judge_prompt() extracted (shared)
+                   NEW  tests/test_voice_lane.py; MOD tests/test_arena_{routes,parity}.py
+          frontend NEW  components/admin/arena/{parts,builds-arena,adversarial-check}.tsx
+                   MOD  app/(app)/admin/arena/page.tsx   (mode switch; snapshot mode uses parts)
+breaking: no. No CONTRACTS.md surface. Production paths byte-identical (gates below).
+```
+
+### Why two deployments
+A prompt snapshot (v2.1) can only swap prompt TEXT. The bugs being chased are often CODE
+(signals, decision logic, voice path, streaming). So "New" is the whole candidate backend: each
+pane calls `POST /admin/arena/arm-turn` on its OWN backend and runs its own code end to end.
+
+### Endpoints (all admin-gated, budget-gated before any model call)
+- `POST /admin/arena/arm-turn` — one stateless turn on THIS build (page holds transcript,
+  learner state and question count, so a sleeping service waking up loses nothing).
+  `channel: text|voice` (voice = the engine's voice channel + `services/voice_lane`, i.e. what
+  `/voice-decision` would make a voice session say). `case_id` or `scenario_id` (eval case text).
+- `GET /admin/arena/build` — commit/branch (Render `RENDER_GIT_*`, or local `.git` read directly).
+- `POST /admin/arena/judge` — the eval's own judge prompt/model; the page sends BOTH builds'
+  replies to the LIVE backend's judge.
+- `GET /admin/arena/case` — brief + the production opening note.
+
+### Adversarial check (the "check agent")
+Panel under Current vs New: runs the 50 eval scenarios through both builds, optional judge,
+table of both replies + decision + guardrail flags, filters (regressions / failures /
+differences), "Copy for Claude". **A regression = Current passes, New fails.** Claude also runs
+the backend test suites + this check before every candidate update and before any push.
+
+### One-time setup (owner)
+1. **Link GitHub to Claude** (claude.ai settings) for `satyam11081998-lab/backend` and
+   `/company`. Without it Claude cannot push; the device shell has no GitHub credentials.
+2. **Render → New → Web Service** → repo `satyam11081998-lab/backend`, **branch `candidate`**,
+   name `consilio-backend-candidate`, same region, same build and start command as the live
+   service (start must use `--workers 1`). Auto-deploy ON.
+   - **Instance: Starter (paid), not Free.** The live service is on the free plan and kept awake
+     by the keep-alive job (~720 of the workspace's 750 free hours/month). A second free service
+     eats the rest, and when free hours run out Render suspends ALL free services — the live
+     site included.
+   - **Environment:** copy the live service's variables (OPENAI/GROQ/GEMINI keys, SUPABASE_URL,
+     SUPABASE_SERVICE_ROLE_KEY, AI_DAILY_BUDGET_USD …) and add `ARENA_BUILD_ROLE=candidate`.
+     **Do NOT copy `II_DATABASE_URL` / `II_ENCRYPTION_KEY` / `II_*`** — Interview Intelligence
+     starts worker threads that would claim real users' jobs with candidate code.
+     Do not add `DAILY_BLOG_ENABLED`. GitHub Actions crons call the live URL only.
+3. Paste the candidate's `https://…onrender.com` URL into the **New** card in the arena
+   (remembered per browser), or set `ARENA_CANDIDATE_URL` on the LIVE service.
+4. Optional: `migrations/2026-10-14_arena_votes.sql` (blind-mode vote tally only).
+
+### The loop (Claude's protocol)
+- Candidate work happens in a worktree, `D:\dev\mece\consilio-backend-candidate` (branch
+  `candidate`); the `main` working copy is never edited for candidate work.
+- Each change: tests + production identity suites + adversarial check → commit on `candidate`
+  → push `candidate` (owner said "update") → Render redeploys New → owner tests.
+- **"push"**: merge `candidate` into `main` (fast-forward or merge commit), re-run gates on the
+  merged tree, push `main` → live backend redeploys. Never push `main` without that word.
+
+### Gates run (2026-10-17)
+101 arena + voice-lane tests pass (incl. arena voice text == voice route's on every lane; arena
+chat text == production's). Production identical to HEAD: test_response_functions and
+test_v11_voice_integration (both drive /voice-decision; bar ms timings), test_voice_model_led,
+test_interviewer_mode (24 known), test_session_signals (5 known), test_learning_model,
+test_count_clarifications, test_markets, test_gemini_free_trial, test_broadcast_market;
+compileall exit 0. Frontend: scoped tsc (repo tsconfig) exit 0; ESLint next/core-web-vitals
+clean; driven in headless Chromium inside the admin layout against two mock backends (badges,
+wake-up, send to both / one side, divergent transcripts, per-pane quota, voice path, copy for
+Claude, adversarial run with a planted regression) at 1440 and 390 px — no errors, no
+horizontal scroll. Not run: `next build`; a live-model turn.
+
+---
+
+## v2.1 — THE BRANCH ARM IS THE WHOLE BRANCH; ANY CASE (2026-10-16)
 
 **Purpose, in the owner's words:** admin-only. "As an admin I can test the existing one and
 the changes made on the new branch, side by side, on the same case or guesstimate. Admin can
