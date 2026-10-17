@@ -1,24 +1,24 @@
-<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-16 10:56 -->
+<!-- AUTO-GENERATED above the marker by .brain/sync.mjs — do not hand-edit this section. Last run: 2026-10-17 17:32 -->
 # STATE — what is true right now
 
 **Repo:** mece (frontend: Next.js 14 / Supabase / Razorpay) + backend (FastAPI)
 **Branch:** main (frontend) / main (backend)
 **Last landed:** 2026-10-06 - brain-rewrite + reconstructed log 2026-09-12..2026-10-05 - frontend 1dcc819 / backend 9f71870
-**Last sync:** 2026-10-16 10:56 UTC
+**Last sync:** 2026-10-17 17:32 UTC
 
 ## Last 5 commits — frontend
+- 5afd4b9 feat(admin): arena Current vs New -- the live backend and the candidate side by side (SatyamSK, 2026-10-17)
+- 82b451e chore(brain): sync state (SatyamSK, 2026-10-16)
 - 77f7fea feat(admin): arena case picker searches the whole library; "Candidate view" (SatyamSK, 2026-10-16)
 - 2bdd2ef chore(brain): sync state (SatyamSK, 2026-10-16)
 - 48532cf feat(admin): arena panes read like the real solve chat, and show what users get (SatyamSK, 2026-10-16)
-- 5177d82 chore(brain): sync state (SatyamSK, 2026-10-14)
-- a4fa137 feat(admin): arena shows which arm is production (SatyamSK, 2026-10-14)
 
 ## Last 5 commits — backend
+- 7512689 feat(arena): /admin/arena/case -- the brief and opening note for the Current vs New panel (SatyamSK, 2026-10-17)
+- 12f0488 feat(arena): Current vs New -- one turn on THIS build's engine, voice path, shared judge (SatyamSK, 2026-10-17)
 - 3093691 feat(arena): the branch arm is the whole branch, and any case can be picked (SatyamSK, 2026-10-16)
 - a0dc775 feat(arena): each pane is what the candidate would actually receive (SatyamSK, 2026-10-16)
 - 12d59d5 feat(arena): admin interviewer arena, with NO change to the live interviewer (SatyamSK, 2026-10-14)
-- 5f66b3b fix(gd-brief): fix JSON truncation, expand thinking token headroom, and add fallback validation (SatyamSK, 2026-10-12)
-- 8ac3a9b fix(daily): call www.mece.in for the home-page refresh (SatyamSK, 2026-10-07)
 
 ## Open feature branches (not merged into main)
 - origin/feat/cloud-run
