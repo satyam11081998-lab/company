@@ -334,14 +334,43 @@ click. The run was not failing, it was crawling. Fixed:
 - **`PHOTO_BUDGET_S = 45`.** A whole-article ceiling on photo search. Whatever has been found when the budget
   expires is used; a shorter candidate list still yields a picture, waiting yields nothing.
 
-**New photo source: Pexels (`search_pexels`).** Commons and Openverse are genuinely thin on Indian business
-subjects — the log is full of `no open-licensed photo found for: delivery executive scooter india` and
-`8 photo(s) found for 'Navi Mumbai data centre', none showed the subject closely enough`. Pexels has thousands of
-usable editorial business photographs and its licence permits commercial use and modification.
-**The API key is free — there is nothing to pay.** Set `PEXELS_API_KEY` on Render (pexels.com/api, about a minute).
-With no key the function returns `[]` and the chain behaves exactly as before, so this is safe to deploy either way.
-Search order is `commons → pexels → openverse`, by reliability rather than preference. Attribution is not required
-by the Pexels licence; the photographer is credited anyway.
+**New photo source: Wikipedia lead images (`search_wikipedia`). Keyless, and the most precise source in the chain.**
+
+Added on 2026-10-28 after Pexels answered *"New API key issuance is currently paused and cannot be requested."*
+It turns out to be the better source anyway for the queries that were failing. The writer plans proper-noun
+subjects — "Tata Sons Bombay House", "Jawaharlal Nehru Port", "State Bank of India" — and a full-text search of
+Commons is bad at finding the one good photograph of a named thing among thousands of loosely tagged files.
+Wikipedia has already done that curation: a notable company, building or port has a lead image chosen by editors.
+
+**Verified against the live API from the browser, not from fixtures**, which caught four things fixtures never
+would have:
+
+| Bug found live | Fix |
+|---|---|
+| Zero hits for every query | `pageimage` comes back with underscores, the API echoes titles with spaces — the lookup key never matched. Normalise both. |
+| "Bombay Stock Exchange" returned a photo of the **New York** Stock Exchange; "Jawaharlal Nehru Port" returned a suburban train | Only Wikipedia's **top-ranked** article is used, and it must cover ≥50% of the query's meaningful words. Both wrong answers came from the 2nd/3rd search result. |
+| Correct photos of Bombay House (808 px) and JNPT (700 px) discarded | Minimum width 640 on this path only. Relevance is already guaranteed here, so a slightly soft but *correct* photo beats none. |
+| Some lead images are hosted on enwiki, not Commons, and resolved to nothing | Ask `en.wikipedia.org` for imageinfo — it serves metadata for both. |
+
+Live hit rate: **6 of 12** named subjects, every one of them exactly right — Bombay House for a Tata story, the SBI
+Corporate Centre, JNPT, Dalal Street, Mumbai airport, Nariman Point. The six misses are pages whose lead image is
+genuinely a logo or seal (BSE, Jio, RBI, Starlink) or that have no image at all (IDBI, Infosys); those fall through
+to Commons and the stock sources, which is correct. The logo hazard is handled: `_BAD_TITLE` rejects
+logo/emblem/seal names and the mime filter drops SVG, which is what most wordmarks are.
+
+**Stock sources: Pexels and Pixabay (`search_pexels`, `search_pixabay`).** Commons and Openverse are genuinely thin on generic Indian
+business scenes — the log is full of `no open-licensed photo found for: delivery executive scooter india`. Both
+sources have thousands of usable editorial business photographs under licences permitting commercial use and
+modification, and **both keys are free; there is nothing to pay.**
+
+**Pexels paused new key issuance on 2026-10-27**, which is why Pixabay is there as well: set whichever of
+`PEXELS_API_KEY` / `PIXABAY_API_KEY` you can actually obtain. With neither, both functions return `[]` and
+Wikipedia and Commons carry the chain, so this is safe to deploy either way. Attribution is not required by
+either licence; the photographer is credited anyway.
+
+Search order is **`wikipedia → commons → pexels → pixabay → openverse`** — precision first (the named subject),
+then breadth, with the source that read-times-out from Render last, where the circuit breaker usually skips it
+before it costs anything.
 
 **Cannibalisation guard (`STORY_CLUSTERS`, `clusters_of`, `recent_clusters` in `daily_blog.py`).**
 A dedupe already existed — Jaccard ≥ 0.30 on title tokens against 45 days of posts — and four RBI essays and four
@@ -382,8 +411,16 @@ every existing `from '@/components/insights/parts'` import is unchanged.
 - `py_compile` clean; the 10 image checks and 4 daily_blog checks from §5 all still pass.
 - **3 new latency checks:** a timing-out source is called once and then skipped (not once per query); an expired
   deadline halts the sweep and logs "photo search hit its time budget"; the constants are 7s / 45s.
-- **3 new Pexels checks:** no key → clean `[]` no-op; search order is commons, pexels, openverse; credits render as
-  `Photo: Jane Doe / Pexels` and `Photo: A B / Wikimedia Commons, CC BY-SA 4.0`.
+- **Stock-source checks:** Pexels and Pixabay are clean `[]` no-ops without keys; search order is wikipedia,
+  commons, pexels, pixabay, openverse; credits render as `Photo: Jane Doe / Pexels` and
+  `Photo: A B / Wikimedia Commons, CC BY-SA 4.0`.
+- **7 Wikipedia checks**, each pinned to a bug found against the live API: the wordy-query/short-article case
+  (Bombay House, 808 px) is accepted; JNPT at 700 px is accepted; a BSE query stops at the logo and never reaches
+  the New York Stock Exchange photo behind it; an unrelated top article yields nothing; under 640 px is rejected;
+  a non-commercial licence is rejected even for the exact subject; an article with no lead image yields nothing.
+- **Live verification from the browser** (the container's proxy cannot reach Wikipedia): 6/12 named subjects, all
+  correct; the war/conflict additions to `_BAD_TITLE` reject "Starlink in the Russo-Ukrainian war" while every one
+  of the six winning titles survives.
 - **7 new cannibalisation checks**, run against the **real** duplicate titles from the live site: the fourth RBI
   headline is refused naming the existing post; the UPI cluster likewise; the near-duplicate title that slipped
   past 0.30 is now caught; the cluster reopens after the 21-day cooldown; an unrelated story is unaffected; a
