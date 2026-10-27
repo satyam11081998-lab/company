@@ -277,10 +277,116 @@ sitemap; `site:` queries through a search tool are not reliable evidence.
 - **Not run here:** `tsc --noEmit` / `next build` for the sitemap change.
 - **Not verified here:** live Commons/Openverse/Gemini calls (no network to them from this session).
 
-## 6. After deploying
+## 6. Pushing and verifying
 
-1. Push both repos, let Render and Vercel redeploy, then `node .brain\sync.mjs`.
-2. Admin → Growth → **Test pictures**. Expect photo search ✅, storage ✅; generation ✅ only if billing is on.
-3. Admin → Growth → **Add pictures to older posts**, repeatedly. It now advances three posts per click instead of
-   retrying the same three — 15 posts without a hero means about five clicks.
-4. Re-read `/sitemap.xml` and confirm all live posts are listed.
+This session had no shell on the owner's machine (the device bridge exposed file tools only), so **nothing here is
+committed to git** — the files are written into the working tree and nothing else. The brain's own rule for shells
+that cannot delete files applies anyway: they must not run git write commands, because a left-behind
+`.git/index.lock` blocks the owner's next command.
+
+```bat
+cd /d D:\dev\mece\consilio-backend
+python -m tests.test_daily_blog
+git add services/growth/images.py services/growth/daily_blog.py
+git commit -m "feat(insights): photos without a paid image API; stop story cannibalisation at the topic picker"
+git push
+
+cd /d D:\dev\mece\consilio
+npx tsc --noEmit
+git add app/sitemap.ts app/insights/page.tsx "app/insights/feed.xml/route.ts" "app/insights/topic/[topic]/page.tsx" lib/insights/topics.ts lib/seo-pages.ts components/insights/parts.tsx "app/(app)/admin/growth/growth-admin-client.tsx" .brain/handoffs/ANTIGRAVITY_HANDOFF_insights-pictures-and-seo.md
+git commit -m "feat(seo): RSS feed, topic hubs, hourly sitemap revalidation"
+git push
+
+node .brain\sync.mjs
+```
+
+Then, once Render and Vercel have redeployed:
+
+1. Admin → Growth → **Test pictures**. Expect photo search ✅, storage ✅, and image generation reported as *off*
+   (not as a red 429).
+2. Admin → Growth → **Add pictures to older posts**, repeatedly. It now advances three posts per click instead of
+   retrying the same three — 15 posts without a hero is about five clicks. Watch the per-post "last attempt" line:
+   it now says which of the four outcomes happened.
+3. Re-read `/sitemap.xml` and confirm all live posts are listed (allow an hour plus one request).
+4. Spot-check three backfilled posts for a wrong or embarrassing photo. The judge-free path is new; the guards are
+   tested but the live photo corpus is not something this session could see.
+
+---
+
+## 7. Round two (same session, after the first deploy)
+
+The first deploy went out and the backfill was run from Admin. It produced **nothing in twelve minutes**. The admin
+log said why, and it was not the judge:
+
+```
+search_openverse('Yes Bank Mumbai headquarters'): ReadTimeout
+search_openverse('Yes Bank corporate office'):    ReadTimeout
+search_openverse('rural India vehicles'):         ReadTimeout
+```
+
+`api.openverse.org` read-times-out from Render routinely. At the old 12-second timeout that is 144 seconds of pure
+waiting per picture slot once the widened second search is included — three slots per article, three articles per
+click. The run was not failing, it was crawling. Fixed:
+
+- **`_HTTP_TIMEOUT` 12s → 7s.** Commons answers in well under a second when it answers at all.
+- **Circuit breaker.** A source that times out or refuses a connection is skipped for ten minutes
+  (`_source_dead`) instead of being retried for every single query.
+- **`PHOTO_BUDGET_S = 45`.** A whole-article ceiling on photo search. Whatever has been found when the budget
+  expires is used; a shorter candidate list still yields a picture, waiting yields nothing.
+
+**New photo source: Pexels (`search_pexels`).** Commons and Openverse are genuinely thin on Indian business
+subjects — the log is full of `no open-licensed photo found for: delivery executive scooter india` and
+`8 photo(s) found for 'Navi Mumbai data centre', none showed the subject closely enough`. Pexels has thousands of
+usable editorial business photographs and its licence permits commercial use and modification.
+**The API key is free — there is nothing to pay.** Set `PEXELS_API_KEY` on Render (pexels.com/api, about a minute).
+With no key the function returns `[]` and the chain behaves exactly as before, so this is safe to deploy either way.
+Search order is `commons → pexels → openverse`, by reliability rather than preference. Attribution is not required
+by the Pexels licence; the photographer is credited anyway.
+
+**Cannibalisation guard (`STORY_CLUSTERS`, `clusters_of`, `recent_clusters` in `daily_blog.py`).**
+A dedupe already existed — Jaccard ≥ 0.30 on title tokens against 45 days of posts — and four RBI essays and four
+UPI essays walked straight past it, for two reasons:
+- the same subject has names that share no tokens at all ("Reserve Bank" / "central bank" / "RBI" / "MPC");
+- two differently-worded headlines about one event score about **0.27**, just under the threshold.
+
+So: the Jaccard threshold drops to **0.22**, and on top of it twelve named clusters (rbi-policy, upi-pricing,
+quick-commerce, india-ai, tata-group, reliance-jio, adani, bank-ma, satellite-telecom, capital-markets-tax,
+energy-oil, ev-auto) are matched by regex against the headline and against every recent post's title, topic and
+keywords. A cluster covered within **21 days** is refused, with a reason that names the existing post:
+
+```
+'rbi-policy' was already covered on 2026-10-26: "Why the Reserve Bank raised rates without wanting a fight"
+ — update that post instead of writing a rival to it
+```
+
+Twenty-one days is the trade-off: long enough that the archive stops competing with itself, short enough that a
+genuine new development in a running story still gets written. Rejected posts do not reserve a cluster. The right
+move for a recurring story is `rewrite_page`, which keeps the slug and therefore the link equity.
+
+**RSS feed — `app/insights/feed.xml/route.ts`.** RSS 2.0, 50 most recent, `media:content` for the hero (not
+`<enclosure>`, which needs a byte length we do not store, and a wrong length is worse than none), revalidated every
+15 minutes. Autodiscovery `<link rel="alternate">` added to the index metadata — without it the feed exists but
+nothing looking at the page knows.
+
+**Topic hubs — `app/insights/topic/[topic]/page.tsx`.** One page per subject, with its own copy, CollectionPage and
+BreadcrumbList JSON-LD, and cross-links to the other topics. A hub with no essays **404s** rather than shipping an
+empty indexable page, and only hubs that have essays go in the sitemap. A "Browse by topic" row on `/insights`
+links them with counts — a page reachable only from the sitemap is a page Google has little reason to trust.
+
+**Refactor: `lib/insights/topics.ts`.** `TOPIC_COLORS` / `topicOf` moved out of `components/insights/parts.tsx`
+into a leaf module with no React imports, so `app/sitemap.ts` and the hubs can use the taxonomy without pulling
+`Link`, `ThemeToggle` and the whole reading-experience tree into a server route. `parts.tsx` re-exports them, so
+every existing `from '@/components/insights/parts'` import is unchanged.
+
+### Round-two gates
+- `py_compile` clean; the 10 image checks and 4 daily_blog checks from §5 all still pass.
+- **3 new latency checks:** a timing-out source is called once and then skipped (not once per query); an expired
+  deadline halts the sweep and logs "photo search hit its time budget"; the constants are 7s / 45s.
+- **3 new Pexels checks:** no key → clean `[]` no-op; search order is commons, pexels, openverse; credits render as
+  `Photo: Jane Doe / Pexels` and `Photo: A B / Wikimedia Commons, CC BY-SA 4.0`.
+- **7 new cannibalisation checks**, run against the **real** duplicate titles from the live site: the fourth RBI
+  headline is refused naming the existing post; the UPI cluster likewise; the near-duplicate title that slipped
+  past 0.30 is now caught; the cluster reopens after the 21-day cooldown; an unrelated story is unaffected; a
+  rejected post does not reserve a cluster; cluster matching itself is correct.
+- All eight changed TS/TSX files parse clean under esbuild. **`npx tsc --noEmit` and `next build` still have to be
+  run on the real tree** — esbuild checks syntax, not types.

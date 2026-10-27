@@ -14,43 +14,12 @@ import Link from 'next/link';
 import type { SeoImage, SeoPage } from '@/lib/seo-pages';
 import { ThemeToggle } from './ReadingChrome';
 
-/** Topic colours (an essay-magazine palette: one strong colour per subject). */
-export const TOPIC_COLORS: Record<string, string> = {
-  Strategy: '#0C776D',
-  Marketing: '#B5651D',
-  Finance: '#035A6D',
-  Operations: '#5B4B8A',
-  Technology: '#940B52',
-  Economy: '#9D120D',
-  Careers: '#2F6B3A',
-  Business: '#4A4A4A',
-};
+// The topic taxonomy now lives in a leaf module with no React imports, so that app/sitemap.ts and the topic hubs
+// can use it without pulling this whole component tree into a server route. Re-exported here so every existing
+// `from '@/components/insights/parts'` import keeps working unchanged.
+import { TOPIC_COLORS, topicOf } from '@/lib/insights/topics';
 
-/** For posts written before topic labels existed: the subject from the title and keywords. */
-const TOPIC_WORDS: [string, RegExp][] = [
-  ['Finance', /\b(upi|banks?|banking|rbi|loans?|credit|fintech|mutual funds?|stocks?|shares|ipos?|investors?|investment|insurance|nbfcs?|sebi|mdr|payments?|wealth|markets?)\b/gi],
-  ['Economy', /\b(gdp|inflation|econom\w*|oil|crude|pipelines?|exports?|imports?|tariffs?|rupee|fiscal|budget|repo|monsoon|saudi|opec)\b/gi],
-  ['Technology', /\b(ai|artificial intelligence|tech\w*|software|saas|semiconductors?|chips?|data cent(?:er|re)s?|cloud|ott|digital)\b/gi],
-  ['Marketing', /\b(brands?|fmcg|consumers?|retail|advertis\w*|marketing|d2c|premium|rural)\b/gi],
-  ['Operations', /\b(supply chains?|logistics|manufactur\w*|plants?|factor(?:y|ies)|airlines?|railways?|evs?|quick commerce|delivery|warehouses?|ports?)\b/gi],
-  ['Careers', /\b(jobs?|hiring|campus|placements?|salar\w*|gccs?|talent|layoffs?)\b/gi],
-  ['Strategy', /\b(mergers?|acquisitions?|strateg\w*|conglomerates?|group|competition|market share|ownership|tata|reliance|adani)\b/gi],
-];
-
-function inferTopic(page: Pick<SeoPage, 'title'> & { keywords?: string[] | null; topic?: string | null }): string {
-  const text = [page.title, page.topic, ...(page.keywords || [])].filter(Boolean).join(' ');
-  let best = 'Business', most = 0;
-  for (const [label, re] of TOPIC_WORDS) {
-    const n = (text.match(re) || []).length;
-    if (n > most) { best = label; most = n; }
-  }
-  return best;
-}
-
-export function topicOf(page: Pick<SeoPage, 'content' | 'kind' | 'title'> & { keywords?: string[] | null; topic?: string | null }): { label: string; color: string } {
-  const label = page.content?.topic_label || inferTopic(page);
-  return { label, color: TOPIC_COLORS[label] || TOPIC_COLORS.Business };
-}
+export { TOPIC_COLORS, topicOf, topicSlug, topicFromSlug } from '@/lib/insights/topics';
 
 export const fmtDate = (iso: string | null | undefined, long = false) =>
   iso

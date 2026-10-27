@@ -5,6 +5,7 @@ import { GLOSSARY_TERMS } from '@/lib/glossary/terms';
 import { SITE_URL, isCanonicalisedAway, HREFLANG_HOME, HREFLANG_PRICING } from '@/lib/seo';
 import { getIndexableDecks } from '@/lib/decks';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
+import { topicOf, topicSlug } from '@/lib/insights/topics';
 import { LEARN_BASE, LEARN_HUB, LEARN_PAGES, learnPath } from '@/lib/us-learn';
 import { learnLanguages } from '@/lib/us-learn/seo';
 import { INTL_MARKET_ACTIVE } from '@/lib/market';
@@ -137,6 +138,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             'monthly',
             p.published_at ? new Date(p.published_at) : (p.updated_at ? new Date(p.updated_at) : undefined),
           ),
+        ),
+      );
+      // Topic hubs (/insights/topic/<topic>). Only the ones that actually have
+      // essays: the route 404s on an empty topic, and submitting a URL that
+      // 404s is exactly the contradictory signal the comment at the top of this
+      // file warns about. lastmod is the newest essay in that topic.
+      const newest = new Map<string, Date>();
+      for (const p of pages) {
+        const label = topicOf(p).label;
+        const when = p.published_at ? new Date(p.published_at) : (p.updated_at ? new Date(p.updated_at) : undefined);
+        if (!when) continue;
+        const prev = newest.get(label);
+        if (!prev || when > prev) newest.set(label, when);
+      }
+      insightEntries.push(
+        ...[...newest.entries()].map(([label, when]) =>
+          entry(`/insights/topic/${topicSlug(label)}`, 0.6, 'weekly', when),
         ),
       );
     }

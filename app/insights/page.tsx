@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { homeSerif } from '@/components/home/fonts';
 import {
-  ACCENT_DARK, Crumbs, InsightCard, InsightsBar, InsightsFooter, PAPER, TopicLabel, accentStyle, fmtDate, topicOf,
+  ACCENT_DARK, Crumbs, InsightCard, InsightsBar, InsightsFooter, PAPER, TopicLabel, accentStyle, fmtDate,
 } from '@/components/insights/parts';
+import { TOPIC_COLORS, topicOf, topicSlug } from '@/lib/insights/topics';
 import { SITE_URL } from '@/lib/seo';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
 
@@ -14,7 +15,13 @@ export const metadata: Metadata = {
   title: { absolute: 'MECE Insights: a business story a day for MBA students' },
   description:
     'One business story a day, explained with sourced facts and figures, and turned into GD, WAT, interview and case practice for MBA students and aspirants.',
-  alternates: { canonical: `${SITE_URL}/insights` },
+  alternates: {
+    canonical: `${SITE_URL}/insights`,
+    // Feed autodiscovery: this is how Feedly, Inoreader and newsletter automations
+    // find a publication. Without the <link>, /insights/feed.xml exists but nothing
+    // looking at the page knows it does.
+    types: { 'application/rss+xml': [{ url: `${SITE_URL}/insights/feed.xml`, title: 'MECE Insights' }] },
+  },
   openGraph: {
     title: 'MECE Insights',
     description: 'A business story a day, sourced and explained, for MBA students and aspirants.',
@@ -32,6 +39,14 @@ export default async function InsightsIndex() {
   const [lead, ...rest] = pages;
   const latest = rest.slice(0, 9);
   const archive = rest.slice(9);
+  // Topic hubs, ordered by how much we have actually published on each. Rendering them here is what makes the
+  // hubs crawlable at all: a page reachable only from the sitemap is a page Google has little reason to trust.
+  const topicCounts = new Map<string, number>();
+  for (const p of pages) {
+    const l = topicOf(p).label;
+    topicCounts.set(l, (topicCounts.get(l) || 0) + 1);
+  }
+  const topics = [...topicCounts.entries()].sort((a, b) => b[1] - a[1]);
   const listLd = pages.length ? {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -108,6 +123,27 @@ export default async function InsightsIndex() {
               ))}
             </dl>
           </section>
+
+          {/* ---------- browse by topic ---------- */}
+          {topics.length > 1 && (
+            <nav className="mx-auto mt-12 max-w-[1200px] px-5 sm:px-6" aria-label="Browse by topic">
+              <h2 className="font-editorial text-[1.4rem] font-semibold">Browse by topic</h2>
+              <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+                {topics.map(([label, n]) => (
+                  <li key={label}>
+                    <Link
+                      href={`/insights/topic/${topicSlug(label)}`}
+                      className="font-sans text-[0.82rem] font-semibold uppercase tracking-[0.14em] underline-offset-4 hover:underline"
+                      style={{ color: TOPIC_COLORS[label] || TOPIC_COLORS.Business }}
+                    >
+                      {label}
+                      <span className="ml-1.5 font-normal normal-case tracking-normal text-neutral-400">{n}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
           {/* ---------- latest ---------- */}
           {latest.length > 0 && (
