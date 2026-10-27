@@ -366,7 +366,8 @@ interface PicReport {
   gemini_key: boolean;
   image_models?: string[];
   photo_search?: { ok: boolean; found?: number; errors?: string[]; example?: { title: string; source: string; license: string; page_url: string } | null };
-  generation?: { ok: boolean; model?: string; error?: string };
+  // ok === null means generation was not attempted at all (it is off, because it is paid-only) — `skipped` says why.
+  generation?: { ok: boolean | null; model?: string; error?: string; skipped?: string };
   storage?: { ok: boolean; bucket: string; url?: string; error?: string };
 }
 
@@ -447,7 +448,7 @@ function DailyPanel({ authHeader, onCreated }: {
       const r = await call(`/seo/daily/images/${id}`, {}) as { ok: boolean; images?: number; errors?: string[]; reason?: string };
       setNote(r.ok
         ? `Pictures added (${r.images ?? 0} inline${r.errors?.length ? `; ${r.errors.join('; ')}` : ''}). A published page shows them within 10 minutes.`
-        : `No pictures: ${r.reason || (r.errors || []).join('; ') || 'Gemini returned none'}`);
+        : `No pictures: ${r.reason || (r.errors || []).join('; ') || 'no open-licensed photo matched'}`);
       load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Pictures failed');
@@ -491,8 +492,9 @@ function DailyPanel({ authHeader, onCreated }: {
           <p className="mt-0.5 max-w-2xl text-xs text-muted-foreground">
             From 07:00 IST: picks a non-political business story (or an evergreen topic), researches 15–30 sourced
             facts, writes a 1,600–2,000 word essay with a GD / PI / WAT section and a related case, line-edits it for a
-            human voice, checks every number against its sources, adds open-licensed photos (Gemini makes a picture
-            only when no real photo fits), scores it and sends it to your Telegram. Reply publish there to post it. If
+            human voice, checks every number against its sources, adds open-licensed photos (Wikimedia Commons and
+            Openverse, both free; AI image generation is switched off because it is paid-only on the Gemini API),
+            scores it and sends it to your Telegram. Reply publish there to post it. If
             no topic works it tries again every 30 minutes until 11:30.
           </p>
         </div>
@@ -509,9 +511,9 @@ function DailyPanel({ authHeader, onCreated }: {
         </div>
       </div>
       {(busy === 'preview' || busy === 'draft') && <p className="mt-2 text-xs text-muted-foreground">Researching and writing — this takes a minute or two.</p>}
-      {busy === 'images' && <p className="mt-2 text-xs text-muted-foreground">Finding photos (or making them with Gemini) — about a minute.</p>}
+      {busy === 'images' && <p className="mt-2 text-xs text-muted-foreground">Finding open-licensed photos — about a minute.</p>}
       {busy === 'backfill' && <p className="mt-2 text-xs text-muted-foreground">Adding pictures to up to three older posts — a minute or two.</p>}
-      {busy === 'test' && <p className="mt-2 text-xs text-muted-foreground">Testing photo search, Gemini and storage…</p>}
+      {busy === 'test' && <p className="mt-2 text-xs text-muted-foreground">Testing photo search and storage…</p>}
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
         <span className="text-muted-foreground">Pictures:</span>
@@ -533,8 +535,10 @@ function DailyPanel({ authHeader, onCreated }: {
           <p className="mt-1"><span className="font-semibold">Gemini key:</span> {picReport.gemini_key ? 'set' : 'missing (GEMINI_API_KEY)'}
             {picReport.image_models?.length ? ` · image models: ${picReport.image_models.join(', ')}` : ''}</p>
           {picReport.generation && (
-            <p className="mt-1"><span className="font-semibold">Gemini test picture:</span>{' '}
-              {picReport.generation.ok ? `made with ${picReport.generation.model}` : <span className="text-red-600">{picReport.generation.error}</span>}</p>
+            <p className="mt-1"><span className="font-semibold">AI image generation:</span>{' '}
+              {picReport.generation.skipped ? <span className="text-muted-foreground">{picReport.generation.skipped}</span>
+                : picReport.generation.ok ? `made with ${picReport.generation.model}`
+                : <span className="text-red-600">{picReport.generation.error}</span>}</p>
           )}
           <p className="mt-1"><span className="font-semibold">Storage (bucket “{picReport.storage?.bucket}”):</span>{' '}
             {picReport.storage?.ok ? 'works' : <span className="text-red-600">{picReport.storage?.error || 'not working'}</span>}</p>
@@ -580,7 +584,7 @@ function DailyPanel({ authHeader, onCreated }: {
           <span className="text-muted-foreground">({st.today.status}, QA {st.today.quality_score ?? '—'})</span>{' '}
           <button onClick={() => addPictures(st.today!.id)} disabled={busy !== null}
             className="ml-1 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 font-medium text-foreground hover:bg-muted/40 disabled:opacity-50">
-            {busy === 'images' ? <Loader2 className="h-3 w-3 animate-spin" /> : null} Add or redo pictures (Gemini)
+            {busy === 'images' ? <Loader2 className="h-3 w-3 animate-spin" /> : null} Add or redo pictures
           </button>
         </p>
       )}

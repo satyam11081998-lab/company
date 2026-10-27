@@ -10,6 +10,20 @@ import { learnLanguages } from '@/lib/us-learn/seo';
 import { INTL_MARKET_ACTIVE } from '@/lib/market';
 
 /**
+ * Rebuild the sitemap hourly.
+ *
+ * Without this, Next treats this route as fully static: it is generated once at
+ * build time and then served unchanged until the next deploy. Decks and
+ * /insights posts are read from Supabase at generation time, so every post
+ * published after a deploy was simply absent from sitemap.xml — on 2026-10-27
+ * the three newest insight posts were live and linked on /insights but missing
+ * from the sitemap, and would have stayed missing until an unrelated deploy
+ * happened to rebuild it. An hour is well inside the window that matters for a
+ * daily post, and the route is cheap (two Supabase selects).
+ */
+export const revalidate = 3600;
+
+/**
  * Public, indexable routes only.
  * - /learn/casebook/** is public (guest chrome in the (app) layout).
  * - /learn/<domain> pages self-redirect guests to /login, so they are

@@ -62,6 +62,11 @@ export interface SeoImage {
   credit_url?: string;
   license?: string;
   license_url?: string;
+  // The original file URL the photo was fetched from. Never rendered — it is how
+  // services/growth/images.py keeps the same photograph off a later article
+  // (recent_photo_urls). Before it existed, `used` was per-article only and one
+  // bank-branch photo ended up on several posts.
+  source_url?: string;
 }
 
 /** A case or guesstimate in MECE's bank, matched to the article by the writer pipeline. */
