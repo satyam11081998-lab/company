@@ -8,6 +8,20 @@ if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
   console.error('[MECE] NEXT_PUBLIC_API_URL is not set in production; backend calls will fail.');
 }
 
+/**
+ * The two ways a case can be run.
+ *
+ *   interview  — a real interviewer. No praise, no hints, no corrected figures.
+ *                Scored, ranked, and bankable as an exemplar.
+ *   whiteboard — works the problem with you and draws your structure as you talk.
+ *                Scored for feedback only: no points, no badges, no percentile.
+ *
+ * Backed by the engine's own `teaching_policy` of 'exam' | 'coached' (migration 0076).
+ * Chosen when the attempt starts and IMMUTABLE afterwards — a resumed attempt keeps the
+ * mode it began in, so always render `summary.mode`, never the mode you asked for.
+ */
+export type AttemptMode = 'interview' | 'whiteboard';
+
 export interface AttemptSummary {
   attempt_id: string;
   case_id: string;
@@ -16,6 +30,8 @@ export interface AttemptSummary {
   clarification_used: number;
   clarification_remaining: number;
   status: 'active' | 'submitted' | 'abandoned';
+  /** Optional so a response from a backend older than 0076 still parses. */
+  mode?: AttemptMode;
 }
 
 export type MessageKind = 'text' | 'voice' | 'image' | 'file' | 'recommendation' | 'system_note';
@@ -60,6 +76,13 @@ export interface UploadResponse {
 export interface SubmitResponse {
   submission_id: string;
   attempt_id: string;
+  /**
+   * `ranked` false means this came from a Whiteboard run. The score is present — it is
+   * the candidate's own data — but it must NOT be shown as a headline number, a grade or
+   * a percentile (owner, 2026-10-29). Render the written feedback instead.
+   */
+  mode?: AttemptMode;
+  ranked?: boolean;
   score: number;
   breakdown: Record<string, number>;
   strengths: string[];
@@ -97,11 +120,23 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   return trimmed && trimmed.length < 200 && !trimmed.startsWith('<') ? trimmed : fallback;
 }
 
-export async function startAttempt(caseId: string, token: string): Promise<AttemptSummary> {
+/**
+ * Starts — or resumes — an attempt in `mode`.
+ *
+ * Resume only matches an active attempt in the SAME mode, so asking for an Interview
+ * never drops you into a half-finished Whiteboard run (and vice versa); the unfinished
+ * one stays active and reachable from your history. Omitting `mode` keeps the old
+ * behaviour exactly: the case's own default.
+ */
+export async function startAttempt(
+  caseId: string,
+  token: string,
+  mode?: AttemptMode,
+): Promise<AttemptSummary> {
   const res = await fetch(`${API_URL}/attempts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ case_id: caseId }),
+    body: JSON.stringify({ case_id: caseId, ...(mode ? { mode } : {}) }),
   });
   if (!res.ok) throw new Error(await errorMessage(res, "Couldn't start this session. Please refresh and try again."));
   return res.json();

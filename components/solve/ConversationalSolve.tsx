@@ -84,8 +84,10 @@ import {
   submitAttempt,
   type AttemptDetail,
   type AttemptMessage,
+  type AttemptMode,
   type AttemptSummary,
 } from '@/lib/interview-api';
+import ModePicker from '@/components/solve/mode-picker';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS } from '@/lib/limits';
 import { useTrackAction } from '@/hooks/use-track-action';
@@ -149,6 +151,12 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(!lockedOverlay);
   const [attempt, setAttempt] = useState<AttemptSummary | null>(null);
+  // Interview or Whiteboard. Null until the candidate picks, because the attempt cannot
+  // be created before the mode is known — it is immutable once the row exists
+  // (migration 0076). `attempt.mode` is the authority afterwards: a resumed attempt
+  // keeps the mode it began in, which on a pre-0076 backend may differ from the ask.
+  const [mode, setMode] = useState<AttemptMode | null>(null);
+  const interview = (attempt?.mode ?? mode) === 'interview';
   const [caseDetail, setCaseDetail] = useState<AttemptDetail['case'] | typeof initialCase>(initialCase);
   const [messages, setMessages] = useState<AttemptMessage[]>([]);
   const [draftAssistant, setDraftAssistant] = useState<DraftAssistant | null>(null);
@@ -290,28 +298,57 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           resumeAttemptRef.current = stored?.attemptId ?? null;
           // Defer so the attempt below is loaded before we submit against it.
           setResumeRec(rec);
+          // They already pressed "See my score" before the OAuth redirect — do NOT
+          // stop to ask for a mode. The attempt they are coming back to already has
+          // one, and the effect below reads it off that attempt instead of guessing.
+          // 'whiteboard' here is a placeholder to release the gate, never the policy:
+          // the server's answer overwrites it via setAttempt.
+          setMode((m) => m ?? 'whiteboard');
         }
       }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [caseId, router]);
+
+  // Create (or resume) the attempt, once the mode is known.
+  //
+  // Split out of the effect above on 2026-10-29. The session read, the guest flag and
+  // the parked-recommendation recovery must not wait behind a tap — a candidate
+  // returning from a Google conversion has already asked to be scored.
+  useEffect(() => {
+    if (lockedOverlay || !token || !mode || attempt) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
       try {
-        const summary = await startAttempt(caseId, tok);
+        // A parked submit names the exact attempt it belongs to. Go straight to it:
+        // calling startAttempt instead would be matched by mode, and a mismatch would
+        // create a SECOND, empty attempt and then submit a blank transcript against
+        // it — stranding fifteen minutes of their work in the original row.
+        const resumeId = resumeAttemptRef.current;
+        const attemptId = resumeId ?? (await startAttempt(caseId, token, mode)).attempt_id;
         if (cancelled) return;
-        setAttempt(summary);
+        const detail = await getAttempt(attemptId, token);
+        if (cancelled) return;
+        setAttempt(detail.attempt);
+        setCaseDetail(detail.case);
+        setMessages(detail.messages);
         // attempt_id makes this timeline entry resolvable to THIS conversation.
         // Without it the admin viewer falls back to "latest attempt for this
         // case", which shows the wrong transcript on a re-attempt.
-        trackAction('start_case', 'case', initialCase.title, { case_id: caseId, attempt_id: summary.attempt_id, type: initialCase.type, difficulty: initialCase.difficulty });
-        const detail = await getAttempt(summary.attempt_id, tok);
-        if (cancelled) return;
-        setCaseDetail(detail.case);
-        setMessages(detail.messages);
+        trackAction('start_case', 'case', initialCase.title, { case_id: caseId, attempt_id: attemptId, type: initialCase.type, difficulty: initialCase.difficulty, mode: detail.attempt.mode ?? mode });
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'Failed to start session');
+        // Back to the picker rather than a dead screen they can only refresh out of.
+        if (!cancelled && !resumeAttemptRef.current) setMode(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [caseId, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, mode, attempt, caseId, lockedOverlay]);
 
   useEffect(() => {
     const el = threadRef.current;
@@ -1092,6 +1129,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           <span>{CASE_TYPE_LABELS[caseDetail.type] || caseDetail.type}</span>
           <span>·</span>
           <span>{DIFFICULTY_LABELS[caseDetail.difficulty] || caseDetail.difficulty}</span>
+          <span>·</span>
+          {/* Which room they are in. The two modes behave very differently, so this is
+              never implicit -- and it is the mode the ATTEMPT carries, not the one that
+              was asked for. */}
+          <span className="text-foreground">{interview ? 'Interview' : 'Whiteboard'}</span>
         </div>
         <h1 className="mt-1 text-h4 font-semibold leading-tight text-foreground">{caseDetail.title}</h1>
       </header>
@@ -1102,20 +1144,22 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
               {renderWithBold(caseDetail.content)}
             </div>
           )}
-          {(caseDetail.hint || caseDetail.type === 'guesstimate') && (
+          {/* Same withholding as the desktop sidebar below — this copy is the mobile
+              drawer, and a hint reachable on a phone is a hint. See the comment there. */}
+          {((caseDetail.hint && !interview) || caseDetail.type === 'guesstimate') && (
             <details className="group mt-4">
               <summary className="cursor-pointer select-none text-small font-medium text-primary hover:underline">
-                <span className="group-open:hidden">Show hint</span>
-                <span className="hidden group-open:inline">Hide hint</span>
+                <span className="group-open:hidden">Show {caseDetail.hint && !interview ? 'hint' : 'framework'}</span>
+                <span className="hidden group-open:inline">Hide {caseDetail.hint && !interview ? 'hint' : 'framework'}</span>
               </summary>
               <div className="mt-2 rounded bg-accent px-3 py-2 text-small leading-relaxed text-foreground/80 whitespace-pre-wrap">
                 {caseDetail.type === 'guesstimate' && (
-                  <div className={caseDetail.hint ? 'mb-3 pb-3 border-b border-border/50' : ''}>
+                  <div className={caseDetail.hint && !interview ? 'mb-3 pb-3 border-b border-border/50' : ''}>
                     <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Framework / Context</span>
                     {renderWithBold(caseDetail.content)}
                   </div>
                 )}
-                {caseDetail.hint && (
+                {caseDetail.hint && !interview && (
                   <div>
                     {caseDetail.type === 'guesstimate' && <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Hint</span>}
                     {renderWithBold(caseDetail.hint)}
@@ -1130,9 +1174,21 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
     </div>
   );
 
+  // The mode gate. Before this screen can exist, the candidate has to choose how the
+  // case is run, because the choice is immutable once the attempt row is created.
+  // Skipped while locked (the overlay owns the screen) and skipped on the
+  // parked-submit path, which sets a mode itself so a conversion never stalls here.
+  if (!lockedOverlay && !mode) {
+    return (
+      <div className="fixed top-0 xl:top-16 left-0 right-0 bottom-0 z-30 overflow-y-auto bg-background">
+        <ModePicker caseTitle={caseDetail.title} onChoose={setMode} busy={loading} />
+      </div>
+    );
+  }
+
   return (
     <div className="fixed top-0 xl:top-16 left-0 right-0 bottom-0 flex flex-col lg:flex-row bg-background overflow-hidden z-30 shadow-2xl">
-      
+
       {/* --------------------------------------------------------- */}
       {/* 1. LEFT PANEL: Case Context & History                      */}
       {/* --------------------------------------------------------- */}
@@ -1145,6 +1201,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             <span>{CASE_TYPE_LABELS[caseDetail.type] || caseDetail.type}</span>
             <span>·</span>
             <span>{DIFFICULTY_LABELS[caseDetail.difficulty] || caseDetail.difficulty}</span>
+            <span>·</span>
+            {/* Which room they are in. The two modes behave very differently, so this is
+                never implicit -- and it is the mode the ATTEMPT carries, not the one that
+                was asked for. */}
+            <span className="text-foreground">{interview ? 'Interview' : 'Whiteboard'}</span>
           </div>
           <h1 className="mt-1 text-h4 font-semibold leading-tight text-foreground">
             {caseDetail.title}
@@ -1158,20 +1219,32 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 {renderWithBold(caseDetail.content)}
               </div>
             )}
-            {(caseDetail.hint || caseDetail.type === 'guesstimate') && (
+            {/* INTERVIEW MODE: the stored hint is withheld. The persona refuses to hint,
+                so leaving a "Show hint" disclosure on the same screen would hand over in
+                one click exactly what the interviewer just declined to give — and the
+                run is ranked. The guesstimate FRAMEWORK/CONTEXT is not a hint: it is the
+                case prompt, which a real interviewer repeats on request, so it stays. */}
+            {((caseDetail.hint && !interview) || caseDetail.type === 'guesstimate') && (
               <details className="group mt-4">
                 <summary className="cursor-pointer select-none text-small font-medium text-primary hover:underline">
-                  <span className="group-open:hidden">Show hint</span>
-                  <span className="hidden group-open:inline">Hide hint</span>
+                  {(() => {
+                    const label = caseDetail.hint && !interview ? 'hint' : 'framework';
+                    return (
+                      <>
+                        <span className="group-open:hidden">Show {label}</span>
+                        <span className="hidden group-open:inline">Hide {label}</span>
+                      </>
+                    );
+                  })()}
                 </summary>
                 <div className="mt-2 rounded bg-accent px-3 py-2 text-small leading-relaxed text-foreground/80 whitespace-pre-wrap">
                   {caseDetail.type === 'guesstimate' && (
-                    <div className={caseDetail.hint ? "mb-3 pb-3 border-b border-border/50" : ""}>
+                    <div className={caseDetail.hint && !interview ? "mb-3 pb-3 border-b border-border/50" : ""}>
                       <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Framework / Context</span>
                       {renderWithBold(caseDetail.content)}
                     </div>
                   )}
-                  {caseDetail.hint && (
+                  {caseDetail.hint && !interview && (
                     <div>
                       {caseDetail.type === 'guesstimate' && <span className="font-semibold text-foreground uppercase tracking-widest text-micro mb-1 block">Hint</span>}
                       {renderWithBold(caseDetail.hint)}
@@ -1336,12 +1409,19 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                 </div>
               )}
 
+              {/* INTERVIEW MODE drops "Hint" and "Show approach": the interviewer will
+                  refuse both, and offering a button for something that always gets
+                  declined reads as a broken product rather than a hard interview.
+                  "Skip" and "Explain" stay — the exam persona answers why a question
+                  matters and lets anyone stop, so those are not help. */}
               {COACHED_CONTROLS && recording === 'idle' && (
                 <div className="mb-2 flex flex-wrap items-center gap-1.5 px-1">
-                  <span className="mr-0.5 text-micro text-muted-foreground">Stuck?</span>
+                  <span className="mr-0.5 text-micro text-muted-foreground">{interview ? 'Shortcuts' : 'Stuck?'}</span>
                   {[
-                    { label: 'Hint', msg: 'Can I get a hint?' },
-                    { label: 'Show approach', msg: 'Show me the approach' },
+                    ...(interview ? [] : [
+                      { label: 'Hint', msg: 'Can I get a hint?' },
+                      { label: 'Show approach', msg: 'Show me the approach' },
+                    ]),
                     { label: 'Skip', msg: "Let's skip this and move on" },
                     { label: 'Explain', msg: 'Can you explain why this matters?' },
                   ].map((a) => (

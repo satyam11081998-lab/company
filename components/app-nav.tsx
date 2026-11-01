@@ -161,6 +161,10 @@ export default function AppNav() {
     // /coach still opens by URL for testing. Flip PREP_COPILOT_IN_NAV when it launches.
     ...(PREP_COPILOT_IN_NAV && tier === 'pro' ? [{ href: '/coach', label: 'Prep Copilot' }] as NavLink[] : []),
     ...II_LINKS,
+    // Group Discussions — live, moderated, college-verified. In development: the entry leads to
+    // a page that explains the concept rather than a 404, and booking is not open. India only
+    // (the intl MORE_LINKS branch above deliberately omits it).
+    { href: '/gd-arena', label: 'Group Discussions' },
     { href: '/resume', label: 'CV Pointer Lab' },
     { href: '/leaderboard', label: 'Leaderboard' },
     { href: '/skeletons', label: 'Deck Vault' },
