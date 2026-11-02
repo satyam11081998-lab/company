@@ -55,10 +55,27 @@ export interface CaseDetail {
   hint?: string | null;
 }
 
+/**
+ * One node of the live structure diagram. Declared here, not in the component, because the
+ * wire format is the contract: the backend builds it (services/structure_tree.py), this
+ * module carries it, the component only draws it.
+ */
+export interface StructureNode {
+  id: string;
+  label: string;
+  value?: string | null;
+  kind?: 'stated' | 'inferred' | 'gap';
+  children?: StructureNode[];
+}
+
 export interface AttemptDetail {
   attempt: AttemptSummary;
   case: CaseDetail;
   messages: AttemptMessage[];
+  /** The diagram as of the last turn, so a refresh mid-case does not wipe it. Absent on
+   *  Interview attempts and on a backend older than this field. */
+  structure?: StructureNode | null;
+  structure_active?: string | null;
 }
 
 export interface UploadResponse {
@@ -170,6 +187,9 @@ export async function postMessageStream(
     }) => void;
     onToken?: (text: string) => void;
     onDone?: (info: { message_id: string | null }) => void;
+    /** The structure diagram after this turn. Arrives on the reply stream that is already
+     *  open — no second request — and only on Whiteboard turns that added a branch. */
+    onTree?: (tree: { root: StructureNode; active_id: string | null }) => void;
     onError?: (err: string) => void;
   } = {},
 ): Promise<{ assistantText: string; quotaRemaining: number | null; clarificationsSpent: boolean }> {
@@ -226,6 +246,12 @@ export async function postMessageStream(
         const tok = data.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
         assistantText += tok;
         callbacks.onToken?.(tok);
+      } else if (event === 'tree') {
+        try {
+          callbacks.onTree?.(JSON.parse(data));
+        } catch {
+          /* a malformed diagram leaves the last good one on screen */
+        }
       } else if (event === 'done') {
         try {
           callbacks.onDone?.(JSON.parse(data));

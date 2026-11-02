@@ -86,8 +86,10 @@ import {
   type AttemptMessage,
   type AttemptMode,
   type AttemptSummary,
+  type StructureNode,
 } from '@/lib/interview-api';
 import ModePicker from '@/components/solve/mode-picker';
+import StructureTree from '@/components/solve/structure-tree';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS } from '@/lib/limits';
 import { useTrackAction } from '@/hooks/use-track-action';
@@ -156,6 +158,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // (migration 0076). `attempt.mode` is the authority afterwards: a resumed attempt
   // keeps the mode it began in, which on a pre-0076 backend may differ from the ask.
   const [mode, setMode] = useState<AttemptMode | null>(null);
+  // The live structure diagram. Whiteboard only: the backend sends nothing on an
+  // Interview, so this simply stays null there and the panel never mounts.
+  const [structure, setStructure] = useState<StructureNode | null>(null);
+  const [structureActive, setStructureActive] = useState<string | null>(null);
   const interview = (attempt?.mode ?? mode) === 'interview';
   const [caseDetail, setCaseDetail] = useState<AttemptDetail['case'] | typeof initialCase>(initialCase);
   const [messages, setMessages] = useState<AttemptMessage[]>([]);
@@ -334,6 +340,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         setAttempt(detail.attempt);
         setCaseDetail(detail.case);
         setMessages(detail.messages);
+        setStructure(detail.structure ?? null);
+        setStructureActive(detail.structure_active ?? null);
         // attempt_id makes this timeline entry resolvable to THIS conversation.
         // Without it the admin viewer falls back to "latest attempt for this
         // case", which shows the wrong transcript on a re-attempt.
@@ -492,6 +500,10 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             setDraftAssistant((d) => (d ? { ...d, text: d.text + chunk } : d));
             // Talk mode listens here. No-op when the overlay is closed.
             tokenSinkRef.current?.(chunk);
+          },
+          onTree: (t) => {
+            setStructure(t.root);
+            setStructureActive(t.active_id);
           },
           onDone: (info) => {
             done = info;
@@ -1255,6 +1267,19 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             )}
           </div>
           
+          {/* The structure they are building, drawn as they talk. Above previous attempts
+              because it is live; below the prompt because the prompt is what it answers.
+              Mounts only once there is something to draw -- an empty frame on turn one
+              reads as a broken feature. */}
+          {structure && (
+            <div className="pt-6 border-t">
+              <h2 className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+                Your structure
+              </h2>
+              <StructureTree root={structure} activeId={structureActive} className="mt-3 -mx-1" />
+            </div>
+          )}
+
           {historyPanel && (
             <div className="pt-6 border-t">
               {historyPanel}
