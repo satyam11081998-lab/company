@@ -2,6 +2,7 @@
 
 import { memo, useMemo } from 'react';
 import type { CSSProperties } from 'react';
+import type { StructureNode } from '@/lib/interview-api';
 
 /**
  * The live structure tree — Whiteboard mode only.
@@ -26,20 +27,19 @@ import type { CSSProperties } from 'react';
  * tree is unreadable), icons inside nodes, drop shadows, gradients, rounded "AI" pills.
  */
 
-export interface StructureNode {
-  id: string;
-  /** The candidate's own words, trimmed. Never paraphrased into house style. */
-  label: string;
-  /** A figure they attached to this branch, already formatted ("₹2.4 cr", "40%"). */
-  value?: string;
-  children?: StructureNode[];
-  /**
-   * 'stated'    the candidate said it
-   * 'inferred'  read from their reasoning but not said outright — drawn lighter, dashed
-   * 'gap'       a branch their own framework implies and they have not opened yet
-   */
-  kind?: 'stated' | 'inferred' | 'gap';
-}
+/**
+ * The node shape comes from the WIRE, so it is declared once, in lib/interview-api.ts,
+ * beside the call that receives it — the backend builds it (services/structure_tree.py),
+ * that module types it, this one only draws it.
+ *
+ * It was briefly declared in both places, on the reasoning that TypeScript is structural
+ * so two identical shapes interchange. They were not identical: the wire sends `null` for
+ * a node carrying no figure, and `string | null` is not assignable to `string | undefined`.
+ * A duplicated type does not stay in sync by good intentions — the second copy is the bug.
+ *
+ * Re-exported so importing it from this component keeps working.
+ */
+export type { StructureNode } from '@/lib/interview-api';
 
 export interface StructureTreeProps {
   root: StructureNode | null;
