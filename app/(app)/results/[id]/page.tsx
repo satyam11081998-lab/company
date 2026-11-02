@@ -93,6 +93,11 @@ export default async function ResultPage({ params }: { params: { id: string } })
   const validity = feedback.validity;
   // Hard gate: gibberish / off-topic submissions score 0 and say why.
   const notScored = validity?.verdict === 'gibberish' || validity?.verdict === 'off_topic';
+  // 0076: false = a Whiteboard run. Scored for feedback, never ranked, and the number is
+  // not shown. `?? true` is load-bearing: every submission written before the migration
+  // was ranked, so an absent column must read as true or the whole archive loses its
+  // scores.
+  const ranked = (submission as unknown as { ranked?: boolean | null }).ranked ?? true;
   const summary = feedback.summary || 'No summary available yet.';
   const isGuesstimate = feedback.rubric === 'guesstimate';
   // Guesstimate dimensions are 0-100 for submissions scored on/after 2026-09-01
@@ -230,7 +235,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
   return (
     <div className="min-h-screen bg-muted">
       <main className="container max-w-6xl py-10">
-        <TrackPageAction action="view_results" category="case" label={`Score: ${score}/100`} value={{ submission_id: params.id, score, is_guesstimate: isGuesstimate, attempt_id: attemptId }} />
+        <TrackPageAction action="view_results" category="case" label={ranked ? `Score: ${score}/100` : 'Whiteboard run (not ranked)'} value={{ submission_id: params.id, score, ranked, is_guesstimate: isGuesstimate, attempt_id: attemptId }} />
 
         {newBadges.length > 0 && (
           <Card className="mb-6 border-primary/20 bg-primary/[0.03] p-5">
@@ -252,6 +257,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
           caseTitle={caseTitle}
           caseType={isGuesstimate ? 'guesstimate' : 'case'}
           notScored={notScored}
+          ranked={ranked}
           validityReason={validity?.reason ?? null}
           radar={radar}
           bars={bars}

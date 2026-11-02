@@ -49,6 +49,12 @@ export interface ResultsDeckProps {
   caseTitle: string | null;
   caseType: string | null;
   notScored: boolean;
+  /**
+   * false = this came from a Whiteboard run. It is scored for feedback, but the number
+   * is never shown: no ring, no band, no marks, no percentile (owner, 2026-10-29).
+   * Optional so a results page that predates migration 0076 renders exactly as before.
+   */
+  ranked?: boolean;
   validityReason?: string | null;
   radar: RadarDatum[];
   bars: DimBar[];
@@ -140,6 +146,7 @@ export default function ResultsDeck(p: ResultsDeckProps) {
 
   const sections = useMemo<DeckSection[]>(() => {
     const out: DeckSection[] = [];
+    const ranked = p.ranked !== false;
     const verdict = band(p.score);
 
     // 1 · Verdict
@@ -148,16 +155,27 @@ export default function ResultsDeck(p: ResultsDeckProps) {
       render: () => (
         <div>
           <PanelHeading eyebrow="The verdict" title={p.caseTitle ?? 'Your attempt'} />
-          <div className="grid items-center gap-8 md:grid-cols-[auto,1fr]">
-            <div className="flex flex-col items-center">
-              <div className="score-ring score-ring-lg" style={{ '--progress': p.score } as React.CSSProperties}>
-                <p className="text-6xl font-bold tracking-tighter text-primary">
-                  {p.score}
-                  <span className="text-base font-normal text-muted-foreground/70">/{p.scale}</span>
+          <div className={ranked ? 'grid items-center gap-8 md:grid-cols-[auto,1fr]' : 'grid gap-8'}>
+            {ranked ? (
+              <div className="flex flex-col items-center">
+                <div className="score-ring score-ring-lg" style={{ '--progress': p.score } as React.CSSProperties}>
+                  <p className="text-6xl font-bold tracking-tighter text-primary">
+                    {p.score}
+                    <span className="text-base font-normal text-muted-foreground/70">/{p.scale}</span>
+                  </p>
+                </div>
+                <p className={`mt-3 text-small font-semibold ${verdict.tone}`}>{verdict.label}</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-small font-semibold text-foreground">Whiteboard run — not scored</p>
+                <p className="mt-1 text-small leading-relaxed text-muted-foreground">
+                  You worked this one through with help, so there is no mark and it does not count
+                  toward your ranking. What is below is the part that transfers. Run it as an
+                  Interview when you want the number.
                 </p>
               </div>
-              <p className={`mt-3 text-small font-semibold ${verdict.tone}`}>{verdict.label}</p>
-            </div>
+            )}
             <div>
               <p className="text-body leading-relaxed text-foreground/85">{p.summary}</p>
               {p.notScored && (
@@ -171,8 +189,11 @@ export default function ResultsDeck(p: ResultsDeckProps) {
               )}
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <Stat label="Strongest" value={p.bars.length ? [...p.bars].sort((a, b) => (b.earned / b.available) - (a.earned / a.available))[0].label.split(' ')[0] : '—'} />
-                <Stat label="Costliest gap" value={p.bridge.length ? [...p.bridge].sort((a, b) => b.lost - a.lost)[0].label.split(' ')[0] : '—'}
-                  sub={p.bridge.length ? `−${Math.round([...p.bridge].sort((a, b) => b.lost - a.lost)[0].lost)} marks` : undefined} />
+                {/* The marks figure is withheld on a Whiteboard run; the NAME of the gap
+                    is the useful half and carries no number. */}
+                <Stat label={ranked ? 'Costliest gap' : 'Biggest gap'}
+                  value={p.bridge.length ? [...p.bridge].sort((a, b) => b.lost - a.lost)[0].label.split(' ')[0] : '—'}
+                  sub={ranked && p.bridge.length ? `−${Math.round([...p.bridge].sort((a, b) => b.lost - a.lost)[0].lost)} marks` : undefined} />
                 <Stat label="Red flags" value={String(p.redFlags.length)} sub={p.redFlags.length ? 'see scorecard' : 'none raised'} />
               </div>
             </div>
@@ -181,8 +202,10 @@ export default function ResultsDeck(p: ResultsDeckProps) {
       ),
     });
 
-    // 2 · Scorecard
-    if (p.radar.length >= 3) {
+    // 2 · Scorecard — radar rings and dimension bars are marks by another name, so the
+    // whole section is withheld on a Whiteboard run rather than being redrawn without
+    // its axes.
+    if (ranked && p.radar.length >= 3) {
       out.push({
         id: 'scorecard', label: 'Scorecard', icon: <Target className="h-4 w-4" />,
         render: () => (
