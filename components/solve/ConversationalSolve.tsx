@@ -91,6 +91,7 @@ import {
 import ModePicker from '@/components/solve/mode-picker';
 import StructureTree from '@/components/solve/structure-tree';
 import StageRail from '@/components/solve/stage-rail';
+import { RailSplitter, useRailWidth } from '@/components/solve/rail-splitter';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS } from '@/lib/limits';
 import { useTrackAction } from '@/hooks/use-track-action';
@@ -166,6 +167,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [stage, setStage] = useState<string | null>(null);
   const [stages, setStages] = useState<string[]>([]);
   const [equation, setEquation] = useState<string | null>(null);
+  // The rail holds a diagram that grows sideways, so its width is the candidate's to set
+  // and is remembered between sessions.
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const { width: railWidth, setWidth: setRailWidth, dragging, setDragging, expanded, toggleWide } =
+    useRailWidth();
   const interview = (attempt?.mode ?? mode) === 'interview';
   const [caseDetail, setCaseDetail] = useState<AttemptDetail['case'] | typeof initialCase>(initialCase);
   const [messages, setMessages] = useState<AttemptMessage[]>([]);
@@ -1141,6 +1147,44 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
 
   // Case prompt + hint + previous attempts. Rendered as the desktop sidebar AND
   // inside the mobile drawer (opened from the chat bar) so the phone is chat-first.
+  /* The structure and the process rail. Defined once and rendered in BOTH the desktop
+     rail and the phone drawer -- this markup lived only in the desktop copy, so the
+     diagram did not exist on a phone, which is where a good share of practice happens. */
+  const structurePanel = (
+    <>
+      {/* Two different objects: where they are, and what they have built. Drawn apart. */}
+      {stages.length > 0 && structure && (
+        <div className="pt-6 border-t">
+          <StageRail stages={stages} current={stage} />
+        </div>
+      )}
+      {structure && (
+        <div className="pt-6 border-t">
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
+              Your structure
+            </h2>
+            {/* The wide view. Desktop only: the phone drawer is already full width. */}
+            <button
+              type="button"
+              onClick={toggleWide}
+              className="hidden lg:inline-flex shrink-0 text-micro text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+              aria-label={expanded ? 'Narrow the case panel' : 'Widen the case panel'}
+            >
+              {expanded ? 'Narrow' : 'Widen'}
+            </button>
+          </div>
+          {equation && (
+            /* What the case asks them to build. A caption, not a node: it stays correct
+               while their tree is still half empty. */
+            <p className="mt-1.5 text-micro text-muted-foreground">{equation}</p>
+          )}
+          <StructureTree root={structure} activeId={structureActive} className="mt-3 -mx-1" />
+        </div>
+      )}
+    </>
+  );
+
   const caseContext = (
     <div className="flex h-full flex-col overflow-y-auto bg-card">
       <header className="shrink-0 border-b bg-card px-5 py-4">
@@ -1191,6 +1235,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             </details>
           )}
         </div>
+        {structurePanel}
         {historyPanel && <div className="pt-6 border-t">{historyPanel}</div>}
       </div>
     </div>
@@ -1214,7 +1259,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
       {/* --------------------------------------------------------- */}
       {/* 1. LEFT PANEL: Case Context & History                      */}
       {/* --------------------------------------------------------- */}
-      <div className="hidden w-full lg:flex lg:w-[35%] xl:w-[30%] flex-col border-r bg-card lg:h-full overflow-y-auto">
+      <div
+        ref={railRef}
+        style={{ width: railWidth }}
+        className="hidden w-full lg:flex shrink-0 flex-col bg-card lg:h-full overflow-y-auto"
+      >
         <header className="shrink-0 border-b bg-card px-5 py-4">
           <Link href="/practice" className="mb-3 inline-flex items-center gap-1 text-micro text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3 w-3" /> Practice
@@ -1281,27 +1330,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
               because it is live; below the prompt because the prompt is what it answers.
               Mounts only once there is something to draw -- an empty frame on turn one
               reads as a broken feature. */}
-          {/* The process rail and the structure are two different objects: where they
-              are, and what they have built. Drawn apart for that reason. */}
-          {stages.length > 0 && structure && (
-            <div className="pt-6 border-t">
-              <StageRail stages={stages} current={stage} />
-            </div>
-          )}
-
-          {structure && (
-            <div className="pt-6 border-t">
-              <h2 className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
-                Your structure
-              </h2>
-              {equation && (
-                /* The equation the case is asking them to build. A caption, not a node:
-                   it stays correct while their tree is still half empty. */
-                <p className="mt-1.5 text-micro text-muted-foreground">{equation}</p>
-              )}
-              <StructureTree root={structure} activeId={structureActive} className="mt-3 -mx-1" />
-            </div>
-          )}
+          {structurePanel}
 
           {historyPanel && (
             <div className="pt-6 border-t">
@@ -1310,6 +1339,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           )}
         </div>
       </div>
+
+      <RailSplitter
+        width={railWidth}
+        setWidth={setRailWidth}
+        dragging={dragging}
+        setDragging={setDragging}
+        originRef={railRef}
+      />
 
       {/* --------------------------------------------------------- */}
       {/* 2. RIGHT PANEL: Chat Window                                */}
