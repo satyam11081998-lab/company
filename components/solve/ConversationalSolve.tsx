@@ -165,6 +165,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [structureActive, setStructureActive] = useState<string | null>(null);
   const [stage, setStage] = useState<string | null>(null);
   const [stages, setStages] = useState<string[]>([]);
+  const [equation, setEquation] = useState<string | null>(null);
   const interview = (attempt?.mode ?? mode) === 'interview';
   const [caseDetail, setCaseDetail] = useState<AttemptDetail['case'] | typeof initialCase>(initialCase);
   const [messages, setMessages] = useState<AttemptMessage[]>([]);
@@ -347,6 +348,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         setStructureActive(detail.structure_active ?? null);
         setStage(detail.structure_stage ?? null);
         setStages(detail.structure_stages ?? []);
+        setEquation(detail.structure_equation ?? null);
         // attempt_id makes this timeline entry resolvable to THIS conversation.
         // Without it the admin viewer falls back to "latest attempt for this
         // case", which shows the wrong transcript on a re-attempt.
@@ -511,6 +513,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             setStructureActive(t.active_id);
             if (t.stage) setStage(t.stage);
             if (t.stages?.length) setStages(t.stages);
+            if (t.equation) setEquation(t.equation);
           },
           onDone: (info) => {
             done = info;
@@ -1291,6 +1294,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
               <h2 className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">
                 Your structure
               </h2>
+              {equation && (
+                /* The equation the case is asking them to build. A caption, not a node:
+                   it stays correct while their tree is still half empty. */
+                <p className="mt-1.5 text-micro text-muted-foreground">{equation}</p>
+              )}
               <StructureTree root={structure} activeId={structureActive} className="mt-3 -mx-1" />
             </div>
           )}

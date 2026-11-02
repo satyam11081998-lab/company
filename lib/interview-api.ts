@@ -88,6 +88,9 @@ export interface AttemptDetail {
   /** Where they are in CLARIFY → … → CONCLUDE, and the full list for that case type. */
   structure_stage?: string | null;
   structure_stages?: string[] | null;
+  /** The framework's equation for this case — what they are being asked to build.
+   *  Distinct from a node's own `formula`, which is what they have built. */
+  structure_equation?: string | null;
 }
 
 export interface UploadResponse {
@@ -206,6 +209,7 @@ export async function postMessageStream(
       active_id: string | null;
       stage?: string | null;
       stages?: string[] | null;
+      equation?: string | null;
     }) => void;
     onError?: (err: string) => void;
   } = {},
