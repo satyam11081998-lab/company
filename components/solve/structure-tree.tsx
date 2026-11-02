@@ -45,6 +45,12 @@ export interface StructureTreeProps {
   root: StructureNode | null;
   /** The node the conversation is on right now. The only thing drawn in --primary. */
   activeId?: string | null;
+  /** The node the candidate has tapped, if any. Shares the active treatment: at most one
+   *  of the two is ever set, because tapping a node is choosing what to talk about next. */
+  selectedId?: string | null;
+  /** Tapping a node hands it back so the caller can offer what to do with it. Omit this
+   *  and the diagram is inert, which is what the results page wants. */
+  onSelect?: (node: StructureNode) => void;
   className?: string;
 }
 
@@ -83,9 +89,16 @@ function flatten(l: Laid, out: Laid[] = []): Laid[] {
   return out;
 }
 
-function NodeBox({ l, activeId }: { l: Laid; activeId?: string | null }) {
+function NodeBox({ l, activeId, selectedId, onSelect }: {
+  l: Laid;
+  activeId?: string | null;
+  selectedId?: string | null;
+  onSelect?: (node: StructureNode) => void;
+}) {
   const { node, x, y } = l;
   const active = node.id === activeId;
+  const selected = node.id === selectedId;
+  const clickable = Boolean(onSelect) && node.id !== '__root';
   const gap = node.kind === 'gap';
   const inferred = node.kind === 'inferred';
   // A branch the framework expects and they have not opened. Drawn as an outline with no
@@ -94,15 +107,33 @@ function NodeBox({ l, activeId }: { l: Laid; activeId?: string | null }) {
 
   // §C monochrome only. A gap is a thinner, dashed outline of the same hue — never a
   // different colour, because a second colour would read as a second meaning.
-  const stroke = active ? 'hsl(var(--primary))' : 'hsl(var(--border))';
-  const fill = active
+  const stroke = active || selected ? 'hsl(var(--primary))' : 'hsl(var(--border))';
+  const fill = active || selected
     ? 'hsl(var(--primary) / 0.06)'
     : gap
       ? 'transparent'
       : 'hsl(var(--card))';
 
+  // The whole node is the control, not a tiny icon inside it: on a phone the target has
+  // to be the box. role/tabIndex rather than a <button> because a button cannot wrap an
+  // SVG <rect> — so Enter and Space are handled by hand, which a real button would give
+  // for free and which is exactly the kind of thing that silently goes missing.
+  const press = clickable ? () => onSelect!(node) : undefined;
+
   return (
-    <g>
+    <g
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      aria-pressed={clickable ? selected : undefined}
+      aria-label={clickable
+        ? `${node.label}${node.value ? `, ${node.value}` : ''}${gap ? ', not covered yet' : ''}`
+        : undefined}
+      onClick={press}
+      onKeyDown={clickable ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press!(); }
+      } : undefined}
+      className={clickable ? 'cursor-pointer focus:outline-none [&>rect]:focus-visible:stroke-2' : undefined}
+    >
       <rect
         x={x}
         y={y}
@@ -196,7 +227,7 @@ function Edges({ l }: { l: Laid }) {
   );
 }
 
-function StructureTreeImpl({ root, activeId, className = '' }: StructureTreeProps) {
+function StructureTreeImpl({ root, activeId, selectedId, onSelect, className = '' }: StructureTreeProps) {
   const laid = useMemo(() => (root ? layout(root, 0, { x: PAD }) : null), [root]);
   const nodes = useMemo(() => (laid ? flatten(laid) : []), [laid]);
 
@@ -225,7 +256,8 @@ function StructureTreeImpl({ root, activeId, className = '' }: StructureTreeProp
       >
         <Edges l={laid} />
         {nodes.map((n) => (
-          <NodeBox key={n.node.id} l={n} activeId={activeId} />
+          <NodeBox key={n.node.id} l={n} activeId={activeId}
+                   selectedId={selectedId} onSelect={onSelect} />
         ))}
       </svg>
     </div>
@@ -236,3 +268,41 @@ function StructureTreeImpl({ root, activeId, className = '' }: StructureTreeProp
    an unrelated piece of state does not re-run the layout. */
 export const StructureTree = memo(StructureTreeImpl);
 export default StructureTree;
+
+/**
+ * What the shapes mean. Without this the dashed boxes read as a rendering fault rather
+ * than as "the framework expects this and you have not opened it yet" — the diagram's
+ * whole vocabulary is three visual states, and two of them are not self-evident.
+ *
+ * Deliberately one line of plain words, not a boxed key with swatches: a legend that
+ * takes up more room than the thing it explains is a sign the thing needs redrawing.
+ */
+export const StructureLegend = memo(function StructureLegend(
+  { className = '' }: { className?: string },
+) {
+  return (
+    <p className={`text-micro text-muted-foreground ${className}`}>
+      <span className="text-foreground">Solid</span> is what you have said ·{' '}
+      <span className="text-foreground">dashed</span> is a branch the framework expects
+      next · <span className="text-primary">red</span> is where you are.
+      {' '}Tap any box to take it further.
+    </p>
+  );
+});
+
+/**
+ * The diagram as plain indented text.
+ *
+ * The thing students actually pass around is a screenshot or a paste into a group chat,
+ * and an SVG does neither. An outline survives WhatsApp, a notes app and an email, costs
+ * nothing to produce, and needs no image service.
+ */
+export function outlineOf(node: StructureNode | null, depth = 0): string {
+  if (!node) return '';
+  const pad = '  '.repeat(depth);
+  const value = node.value ? ` — ${node.value}` : node.kind === 'gap' ? ' — (not yet)' : '';
+  const head = `${pad}${depth ? '• ' : ''}${node.label}${value}`;
+  const formula = node.formula ? `\n${pad}  = ${node.formula}` : '';
+  const kids = (node.children ?? []).map((c) => outlineOf(c, depth + 1)).join('\n');
+  return head + formula + (kids ? '\n' + kids : '');
+}

@@ -92,6 +92,8 @@ import ModePicker from '@/components/solve/mode-picker';
 import StructureTree from '@/components/solve/structure-tree';
 import StageRail from '@/components/solve/stage-rail';
 import { RailSplitter, useRailWidth } from '@/components/solve/rail-splitter';
+import { StructureLegend, outlineOf } from '@/components/solve/structure-tree';
+import NodeActionBar from '@/components/solve/node-actions';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS } from '@/lib/limits';
 import { useTrackAction } from '@/hooks/use-track-action';
@@ -169,6 +171,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [equation, setEquation] = useState<string | null>(null);
   // The rail holds a diagram that grows sideways, so its width is the candidate's to set
   // and is remembered between sessions.
+  const [selectedNode, setSelectedNode] = useState<StructureNode | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
   const { width: railWidth, setWidth: setRailWidth, dragging, setDragging, expanded, toggleWide } =
     useRailWidth();
@@ -1150,6 +1153,24 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   /* The structure and the process rail. Defined once and rendered in BOTH the desktop
      rail and the phone drawer -- this markup lived only in the desktop copy, so the
      diagram did not exist on a phone, which is where a good share of practice happens. */
+  /** A tap on a node becomes a sentence opener in the composer. It is APPENDED, never
+      substituted: losing a half-typed thought because you tapped the diagram to look at
+      something would be the worst possible trade. Nothing here sends. */
+  const draftFromNode = (draft: string) => {
+    setComposer((c) => {
+      const cur = c.trimEnd();
+      return cur ? `${cur}\n${draft}` : draft;
+    });
+    setSelectedNode(null);
+    setContextOpen(false);          // on a phone the diagram is a drawer over the composer
+    requestAnimationFrame(() => {
+      const el = composerTextRef.current;
+      if (!el) return;
+      el.focus();
+      el.selectionStart = el.selectionEnd = el.value.length;
+    });
+  };
+
   const structurePanel = (
     <>
       {/* Two different objects: where they are, and what they have built. Drawn apart. */}
@@ -1165,21 +1186,55 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
               Your structure
             </h2>
             {/* The wide view. Desktop only: the phone drawer is already full width. */}
-            <button
-              type="button"
-              onClick={toggleWide}
-              className="hidden lg:inline-flex shrink-0 text-micro text-muted-foreground hover:text-foreground focus-visible:text-foreground"
-              aria-label={expanded ? 'Narrow the case panel' : 'Widen the case panel'}
-            >
-              {expanded ? 'Narrow' : 'Widen'}
-            </button>
+            <div className="flex shrink-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(outlineOf(structure));
+                    toast.success('Structure copied');
+                  } catch {
+                    toast.error("Couldn't copy — select the text instead");
+                  }
+                }}
+                className="text-micro text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+              >
+                Copy
+              </button>
+              <button
+                type="button"
+                onClick={toggleWide}
+                className="hidden lg:inline-flex text-micro text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+                aria-label={expanded ? 'Narrow the case panel' : 'Widen the case panel'}
+              >
+                {expanded ? 'Narrow' : 'Widen'}
+              </button>
+            </div>
           </div>
           {equation && (
             /* What the case asks them to build. A caption, not a node: it stays correct
                while their tree is still half empty. */
             <p className="mt-1.5 text-micro text-muted-foreground">{equation}</p>
           )}
-          <StructureTree root={structure} activeId={structureActive} className="mt-3 -mx-1" />
+          <StructureTree
+            root={structure}
+            activeId={structureActive}
+            selectedId={selectedNode?.id ?? null}
+            onSelect={setSelectedNode}
+            className="mt-3 -mx-1"
+          />
+          {selectedNode ? (
+            <NodeActionBar
+              node={selectedNode}
+              onPick={draftFromNode}
+              onDismiss={() => setSelectedNode(null)}
+              className="mt-3"
+            />
+          ) : (
+            /* The legend sits where the action bar will be, so the panel does not jump
+               height when a node is tapped. */
+            <StructureLegend className="mt-3" />
+          )}
         </div>
       )}
     </>
