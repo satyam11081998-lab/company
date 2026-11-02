@@ -65,6 +65,15 @@ export interface StructureNode {
   label: string;
   value?: string | null;
   kind?: 'stated' | 'inferred' | 'gap';
+  /** How this node's CHILDREN combine to produce it. The formula is derived from this
+   *  server-side and sent as `formula`; the operator is here for the renderer to draw
+   *  between sibling branches. */
+  op?: '*' | '/' | '+' | '-' | null;
+  /** 'derived' = computed from its children (dependent). 'input' = a figure the
+   *  candidate supplied (independent). */
+  role?: 'input' | 'derived' | null;
+  /** "Customers × Penetration × Price", rendered from whichever children exist. */
+  formula?: string | null;
   children?: StructureNode[];
 }
 
@@ -76,6 +85,9 @@ export interface AttemptDetail {
    *  Interview attempts and on a backend older than this field. */
   structure?: StructureNode | null;
   structure_active?: string | null;
+  /** Where they are in CLARIFY → … → CONCLUDE, and the full list for that case type. */
+  structure_stage?: string | null;
+  structure_stages?: string[] | null;
 }
 
 export interface UploadResponse {
@@ -189,7 +201,12 @@ export async function postMessageStream(
     onDone?: (info: { message_id: string | null }) => void;
     /** The structure diagram after this turn. Arrives on the reply stream that is already
      *  open — no second request — and only on Whiteboard turns that added a branch. */
-    onTree?: (tree: { root: StructureNode; active_id: string | null }) => void;
+    onTree?: (tree: {
+      root: StructureNode;
+      active_id: string | null;
+      stage?: string | null;
+      stages?: string[] | null;
+    }) => void;
     onError?: (err: string) => void;
   } = {},
 ): Promise<{ assistantText: string; quotaRemaining: number | null; clarificationsSpent: boolean }> {

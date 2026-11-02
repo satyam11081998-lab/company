@@ -90,6 +90,7 @@ import {
 } from '@/lib/interview-api';
 import ModePicker from '@/components/solve/mode-picker';
 import StructureTree from '@/components/solve/structure-tree';
+import StageRail from '@/components/solve/stage-rail';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS } from '@/lib/limits';
 import { useTrackAction } from '@/hooks/use-track-action';
@@ -162,6 +163,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   // Interview, so this simply stays null there and the panel never mounts.
   const [structure, setStructure] = useState<StructureNode | null>(null);
   const [structureActive, setStructureActive] = useState<string | null>(null);
+  const [stage, setStage] = useState<string | null>(null);
+  const [stages, setStages] = useState<string[]>([]);
   const interview = (attempt?.mode ?? mode) === 'interview';
   const [caseDetail, setCaseDetail] = useState<AttemptDetail['case'] | typeof initialCase>(initialCase);
   const [messages, setMessages] = useState<AttemptMessage[]>([]);
@@ -342,6 +345,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         setMessages(detail.messages);
         setStructure(detail.structure ?? null);
         setStructureActive(detail.structure_active ?? null);
+        setStage(detail.structure_stage ?? null);
+        setStages(detail.structure_stages ?? []);
         // attempt_id makes this timeline entry resolvable to THIS conversation.
         // Without it the admin viewer falls back to "latest attempt for this
         // case", which shows the wrong transcript on a re-attempt.
@@ -504,6 +509,8 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           onTree: (t) => {
             setStructure(t.root);
             setStructureActive(t.active_id);
+            if (t.stage) setStage(t.stage);
+            if (t.stages?.length) setStages(t.stages);
           },
           onDone: (info) => {
             done = info;
@@ -1271,6 +1278,14 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
               because it is live; below the prompt because the prompt is what it answers.
               Mounts only once there is something to draw -- an empty frame on turn one
               reads as a broken feature. */}
+          {/* The process rail and the structure are two different objects: where they
+              are, and what they have built. Drawn apart for that reason. */}
+          {stages.length > 0 && structure && (
+            <div className="pt-6 border-t">
+              <StageRail stages={stages} current={stage} />
+            </div>
+          )}
+
           {structure && (
             <div className="pt-6 border-t">
               <h2 className="text-micro font-semibold uppercase tracking-widest text-muted-foreground">

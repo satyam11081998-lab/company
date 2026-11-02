@@ -51,9 +51,9 @@ export interface StructureTreeProps {
 /* Geometry. A fixed pitch keeps siblings on equal columns (§C) and keeps the diagram legible
    whatever the depth — proportional spacing collapses the moment one branch grows. */
 const NODE_W = 168;
-const NODE_H = 46;
+const NODE_H = 52;
 const GAP_X = 20;
-const GAP_Y = 54;
+const GAP_Y = 62;
 const PAD = 14;
 
 interface Laid {
@@ -88,6 +88,9 @@ function NodeBox({ l, activeId }: { l: Laid; activeId?: string | null }) {
   const active = node.id === activeId;
   const gap = node.kind === 'gap';
   const inferred = node.kind === 'inferred';
+  // A branch the framework expects and they have not opened. Drawn as an outline with no
+  // fill and no figure: it names the branch, it does not answer it.
+  const derived = node.role === 'derived';
 
   // §C monochrome only. A gap is a thinner, dashed outline of the same hue — never a
   // different colour, because a second colour would read as a second meaning.
@@ -132,8 +135,24 @@ function NodeBox({ l, activeId }: { l: Laid; activeId?: string | null }) {
                them line up down the tree. */
             <span className="text-micro tabular-nums text-muted-foreground">{node.value}</span>
           )}
+          {!node.value && gap && (
+            /* The gap says what is missing, never what it should be. */
+            <span className="text-micro text-muted-foreground">not yet</span>
+          )}
         </div>
       </foreignObject>
+      {derived && node.formula && (
+        /* The equation that produces this node, under it, between it and its children --
+           so the arrow down the tree reads as "this is how the branches below combine".
+           §B micro class, muted: it is a caption on the structure, not a heading in it. */
+        <foreignObject x={x - 16} y={y + NODE_H + 2} width={NODE_W + 32} height={18}>
+          <div className="flex h-full items-center justify-center">
+            <span className="text-micro text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis px-1">
+              {node.formula}
+            </span>
+          </div>
+        </foreignObject>
+      )}
       {inferred && (
         /* "You implied this" — a hairline under the box, not a badge. */
         <line
