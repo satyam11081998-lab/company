@@ -74,6 +74,10 @@ export interface StructureNode {
   role?: 'input' | 'derived' | null;
   /** "Customers × Penetration × Price", rendered from whichever children exist. */
   formula?: string | null;
+  /** What the children's own figures come to, when the candidate has not stated this node
+   *  themselves. Kept separate from `value` because they did not say it: the renderer
+   *  marks it as the tool's arithmetic, never as their number. */
+  implied?: string | null;
   children?: StructureNode[];
 }
 

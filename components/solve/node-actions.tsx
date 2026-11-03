@@ -57,10 +57,14 @@ export function actionsFor(node: StructureNode): NodeAction[] {
       draft: `Is there a better way to break down ${name}? I was thinking `,
     });
   }
+  // "matters MOST" was on every node, which makes it false on all but one -- and the one
+  // it is true of is a question the tree cannot answer yet. Asking what a branch is FOR is
+  // answerable anywhere in the tree and is the thing a candidate actually needs: a branch
+  // you cannot say the purpose of is a branch you copied from a framework.
   actions.push({
     key: 'why',
-    label: 'Why does it matter?',
-    draft: `Why does ${name} matter most here?`,
+    label: 'What is this for?',
+    draft: `What does ${name} actually tell us in this case?`,
   });
   return actions;
 }

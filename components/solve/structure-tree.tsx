@@ -166,7 +166,17 @@ function NodeBox({ l, activeId, selectedId, onSelect }: {
                them line up down the tree. */
             <span className="text-micro tabular-nums text-muted-foreground">{node.value}</span>
           )}
-          {!node.value && gap && (
+          {!node.value && node.implied && (
+            /* What their own numbers come to. The arrow marks it as arithmetic the tool
+               did, not a figure they gave -- the distinction has to survive a glance,
+               because one is their claim and the other is a consequence of it. */
+            <span className="text-micro tabular-nums text-muted-foreground">
+              <span aria-hidden>⇒ </span>
+              <span className="sr-only">implied: </span>
+              {node.implied}
+            </span>
+          )}
+          {!node.value && !node.implied && gap && (
             /* The gap says what is missing, never what it should be. */
             <span className="text-micro text-muted-foreground">not yet</span>
           )}
@@ -283,8 +293,9 @@ export const StructureLegend = memo(function StructureLegend(
   return (
     <p className={`text-micro text-muted-foreground ${className}`}>
       <span className="text-foreground">Solid</span> is what you have said ·{' '}
-      <span className="text-foreground">dashed</span> is a branch the framework expects
-      next · <span className="text-primary">red</span> is where you are.
+      <span className="text-foreground">dashed</span> is a branch the framework expects ·{' '}
+      <span className="text-foreground">⇒</span> is what your numbers come to ·{' '}
+      <span className="text-primary">red</span> is where you are.
       {' '}Tap any box to take it further.
     </p>
   );
