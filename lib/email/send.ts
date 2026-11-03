@@ -13,7 +13,12 @@ import nodemailer from 'nodemailer';
 import { upgradeReceiptEmail, welcomeEmail, type UpgradeReceiptData } from './templates';
 
 const EMAIL_FROM = process.env.EMAIL_FROM || 'MECE <team@mece.in>';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
+// Same variable lib/seo.ts reads, and the SAME default — it said 'https://mece.in'
+// while seo.ts said 'https://www.mece.in', so every link in every email pointed at
+// a 308 redirect. Read here rather than imported from lib/seo.ts on purpose: that
+// module pulls in the casebook tree, which has no business in an email cold start.
+const SITE_URL = ((process.env.NEXT_PUBLIC_SITE_URL || '').trim() || 'https://www.mece.in')
+  .replace(/\/+$/, '');
 
 /** Crude HTML → plaintext for the alt part. An email that carries a text/plain
  *  part scores far better with spam filters than an HTML-only one; this is a

@@ -9,12 +9,54 @@ import { INTL_MARKET_ACTIVE } from '@/lib/market';
  * entity graph.
  */
 
-// The site is served at www.mece.in — Vercel 308-redirects the bare mece.in
-// there. Canonicals, the sitemap, hreflang, JSON-LD and llms.txt must name the
-// address that actually answers, not one that redirects (2026-10-08: they all
-// said https://mece.in, so every canonical pointed at a redirect, and Bing —
-// the index behind ChatGPT search — flags sitemap URLs that redirect).
-export const SITE_URL = 'https://www.mece.in';
+// Canonicals, metadataBase, the sitemap, hreflang, JSON-LD ids and llms.txt all
+// derive from this one value, so it must name the address that actually ANSWERS,
+// not one that redirects. The site is served at www.mece.in and Vercel
+// 308-redirects the bare mece.in there (2026-10-08: these all said
+// https://mece.in, so every canonical pointed at a redirect, and Bing — the
+// index behind ChatGPT search — flags sitemap URLs that redirect).
+//
+// Env-driven because the domain is moving. Hardcoded, a cutover serves the new
+// domain while every page still declares the OLD one canonical, which is not a
+// cosmetic bug: it asks Google to keep indexing a host that no longer exists.
+// NEXT_PUBLIC_ so the value survives into any client component that imports it
+// (a server-only var inlines to `undefined` in the browser), and so this and
+// lib/email/send.ts read the SAME variable rather than drifting apart.
+//
+// Set it to the variant that serves 200, WITH the scheme and WITHOUT a trailing
+// slash: `https://www.newdomain.com`. Pointing it at a host that 308s is the
+// exact mistake logged above.
+// Checked at module load, which on the SEO surfaces is build time. A bad value
+// must fail the BUILD, not fall back quietly: Vercel keeps the previous
+// deployment serving when a build fails, so a loud failure costs nothing, while
+// a silent fallback to the old domain is invisible until organic traffic dies.
+function resolveSiteUrl(): string {
+  // Trim BEFORE the fallback: a whitespace-only var means "not set", same as empty.
+  const raw = ((process.env.NEXT_PUBLIC_SITE_URL || '').trim() || 'https://www.mece.in')
+    .replace(/\/+$/, '');
+  let parsed: URL | null = null;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    parsed = null;
+  }
+  if (!parsed) {
+    throw new Error(`NEXT_PUBLIC_SITE_URL is not a URL: ${JSON.stringify(raw)}. ` +
+      'Expected something like https://www.example.com — scheme included, no trailing slash.');
+  }
+  const u: URL = parsed;
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+    throw new Error(`NEXT_PUBLIC_SITE_URL must be http(s), got ${u.protocol}`);
+  }
+  // A path, query or hash here would be concatenated into every canonical.
+  if (u.pathname !== '/' || u.search || u.hash) {
+    throw new Error(`NEXT_PUBLIC_SITE_URL must be an origin only, got ${JSON.stringify(raw)}. ` +
+      'Drop everything after the host.');
+  }
+  return u.origin;
+}
+
+export const SITE_URL = resolveSiteUrl();
 export const SITE_NAME = 'MECE';
 export const SITE_TITLE = 'Practice real cases & guesstimates for MBA placements | MECE';
 export const SITE_DESC =
