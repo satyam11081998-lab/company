@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import type { StructureNode } from '@/lib/interview-api';
 
@@ -62,6 +62,23 @@ const GAP_X = 20;
 const GAP_Y = 62;
 const PAD = 14;
 
+/**
+ * How small the diagram may be scaled to fit its panel before it starts scrolling instead.
+ *
+ * A tidy top-down tree gets WIDE: five leaves is already ~950px, and this draws inside a
+ * rail the candidate can drag as narrow as they like. Rendered 1:1 in a 430px rail, the
+ * SVG overflowed and the panel opened scrolled hard left -- so what you saw was two
+ * arbitrary leaf boxes, while the root, the gap branch and the red node marking where the
+ * conversation actually is were all off-screen to the right. The diagram looked broken
+ * because the only parts of it on screen were the parts that mean least.
+ *
+ * Scaling to fit alone is not the answer either: 430/950 is 45%, which puts body text at
+ * about 6px. So the SVG shrinks to fit only down to this floor, and past it the panel
+ * scrolls -- with the view parked on the node that matters (see the effect below) rather
+ * than at x=0.
+ */
+const MIN_SCALE = 0.7;
+
 interface Laid {
   node: StructureNode;
   x: number;
@@ -101,8 +118,13 @@ function NodeBox({ l, activeId, selectedId, onSelect }: {
   const clickable = Boolean(onSelect) && node.id !== '__root';
   const gap = node.kind === 'gap';
   const inferred = node.kind === 'inferred';
-  // A branch the framework expects and they have not opened. Drawn as an outline with no
-  // fill and no figure: it names the branch, it does not answer it.
+  // The branch that actually explained the case, on a worked answer. §C reserves colour, so
+  // this is carried by stroke weight and a bolder label — which also means it composes with
+  // the active treatment instead of fighting it: colour says "where you are", weight says
+  // "this is the branch that mattered", and a node can honestly be both.
+  const driver = node.kind === 'driver';
+  // A node computed from its children, rather than a figure they supplied. Its formula is
+  // drawn beneath it, between the node and the branches it combines.
   const derived = node.role === 'derived';
 
   // §C monochrome only. A gap is a thinner, dashed outline of the same hue — never a
@@ -142,7 +164,7 @@ function NodeBox({ l, activeId, selectedId, onSelect }: {
         rx={8}                       /* §14 radius scale: 12 / 8 / 16 */
         fill={fill}
         stroke={stroke}
-        strokeWidth={active ? 1.5 : 1}
+        strokeWidth={driver ? 2 : active || selected ? 1.5 : 1}
         strokeDasharray={gap ? '4 3' : undefined}
       />
       <foreignObject x={x} y={y} width={NODE_W} height={NODE_H}>
@@ -150,23 +172,39 @@ function NodeBox({ l, activeId, selectedId, onSelect }: {
           <span
             className={
               'text-small leading-tight ' +
-              (active ? 'font-semibold text-foreground' : gap ? 'text-muted-foreground' : 'text-foreground')
+              (active || driver
+                ? 'font-semibold text-foreground'
+                : gap
+                  ? 'text-muted-foreground'
+                  : 'text-foreground')
             }
             style={{
               display: '-webkit-box',
-              WebkitLineClamp: node.value ? 1 : 2,
+              WebkitLineClamp: node.value || node.share ? 1 : 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
             } as CSSProperties}
           >
             {node.label}
           </span>
-          {node.value && (
+          {(node.value || node.share) && (
             /* Figures are the one thing a reader scans for. Tabular numerals so columns of
-               them line up down the tree. */
-            <span className="text-micro tabular-nums text-muted-foreground">{node.value}</span>
+               them line up down the tree.
+
+               A segmentation node carries both: "~900 Mn (65%)". The share goes SECOND and
+               stays muted — the absolute is the quantity the arithmetic above uses, the
+               share is how it was arrived at. Leading with the percentage reads as though
+               the percentage were the value, which is the error this split exists to avoid. */
+            <span className="text-micro tabular-nums text-muted-foreground">
+              {node.value}
+              {node.share && (
+                <span className={node.value ? 'ml-1' : ''}>
+                  {node.value ? `(${node.share})` : node.share}
+                </span>
+              )}
+            </span>
           )}
-          {!node.value && node.implied && (
+          {!node.value && !node.share && node.implied && (
             /* What their own numbers come to. The arrow marks it as arithmetic the tool
                did, not a figure they gave -- the distinction has to survive a glance,
                because one is their claim and the other is a consequence of it. */
@@ -176,7 +214,7 @@ function NodeBox({ l, activeId, selectedId, onSelect }: {
               {node.implied}
             </span>
           )}
-          {!node.value && !node.implied && gap && (
+          {!node.value && !node.share && !node.implied && gap && (
             /* The gap says what is missing, never what it should be. */
             <span className="text-micro text-muted-foreground">not yet</span>
           )}
@@ -221,12 +259,14 @@ function Edges({ l }: { l: Laid }) {
         const mid = y1 + GAP_Y / 2;
         return (
           <g key={c.node.id}>
-            {/* Orthogonal elbows, not curves: a consulting tree is drawn square. */}
+            {/* Orthogonal elbows, not curves: a consulting tree is drawn square. The edge
+                INTO a driver node is weighted with it, so the branch that explained the case
+                reads as a path down the tree rather than as a run of unrelated bold boxes. */}
             <path
               d={`M ${x1} ${y1} V ${mid} H ${x2} V ${y2}`}
               fill="none"
               stroke="hsl(var(--border))"
-              strokeWidth={1}
+              strokeWidth={c.node.kind === 'driver' ? 1.75 : 1}
               strokeDasharray={c.node.kind === 'gap' ? '4 3' : undefined}
             />
             <Edges l={c} />
@@ -255,21 +295,104 @@ function StructureTreeImpl({ root, activeId, selectedId, onSelect, className = '
   const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + PAD + 6;
 
   return (
-    <div className={`overflow-auto ${className}`}>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        width={width}
-        height={height}
-        role="img"
-        aria-label="Your structure so far"
-        className="max-w-none"
-      >
-        <Edges l={laid} />
-        {nodes.map((n) => (
-          <NodeBox key={n.node.id} l={n} activeId={activeId}
-                   selectedId={selectedId} onSelect={onSelect} />
-        ))}
-      </svg>
+    <TreeViewport width={width} height={height} nodes={nodes}
+                  focusId={activeId || selectedId || null} className={className}>
+      <Edges l={laid} />
+      {nodes.map((n) => (
+        <NodeBox key={n.node.id} l={n} activeId={activeId}
+                 selectedId={selectedId} onSelect={onSelect} />
+      ))}
+    </TreeViewport>
+  );
+}
+
+/**
+ * The scroll box the diagram sits in, and the only part of this component that knows the
+ * drawing might not fit.
+ *
+ * Two jobs, both of which the old plain `overflow-auto` div got wrong by doing nothing:
+ *
+ *   FIT   the SVG is laid out at its natural size but allowed to scale down to the panel,
+ *         to a floor of MIN_SCALE. `width: 100%` with a viewBox does the scaling natively,
+ *         `maxWidth` stops it ever blowing up past 1:1 on a wide rail, and `minWidth`
+ *         enforces the floor. All three are CSS -- no measuring, no ResizeObserver, and
+ *         it re-fits on a rail drag for free.
+ *
+ *   FOCUS when it still overflows, the useful part is parked in view instead of the left
+ *         edge: the node the conversation is on, else the one they tapped, else the root.
+ *         Centred where there is room, clamped to the ends so it never scrolls into
+ *         padding.
+ */
+function TreeViewport({ width, height, nodes, focusId, className = '', children }: {
+  width: number;
+  height: number;
+  nodes: Laid[];
+  focusId: string | null;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const box = useRef<HTMLDivElement | null>(null);
+  const fadeL = useRef<HTMLDivElement | null>(null);
+  const fadeR = useRef<HTMLDivElement | null>(null);
+
+  /* Show an edge fade on whichever side has more diagram off-screen.
+   *
+   * Written straight to the DOM rather than held in state ON PURPOSE. As state this fires a
+   * React render on every scroll frame, and this component's render re-runs the whole tree
+   * layout -- a measurable cost on a drag, for two divs changing opacity. The refs are the
+   * cheap way and the correct one: nothing else reads this. */
+  const paint = () => {
+    const el = box.current;
+    if (!el) return;
+    const over = el.scrollWidth - el.clientWidth;
+    if (fadeL.current) fadeL.current.style.opacity = el.scrollLeft > 2 ? '1' : '0';
+    if (fadeR.current) fadeR.current.style.opacity = over - el.scrollLeft > 2 ? '1' : '0';
+  };
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const over = el.scrollWidth - el.clientWidth;
+    if (over <= 1) { paint(); return; }          // it fits; nothing to park
+    const target = (focusId && nodes.find((n) => n.node.id === focusId)) || nodes[0];
+    if (!target) return;
+    // SVG units -> rendered px. scrollWidth is the drawn width, `width` the viewBox width.
+    const scale = el.scrollWidth / width;
+    const centre = (target.x + NODE_W / 2) * scale - el.clientWidth / 2;
+    el.scrollLeft = Math.max(0, Math.min(over, centre));
+    paint();
+    // `width`/`height` are in the deps because a redrawn tree of a different size has to be
+    // re-parked even when the focused node id has not changed.
+  }, [focusId, nodes, width, height]);
+
+  return (
+    /* `relative` so the fades can sit over the scroll box, and the fades are OUTSIDE the
+       scrolling element so they stay pinned to its edges instead of scrolling away. */
+    <div className="relative">
+      <div ref={box} onScroll={paint} className={`overflow-auto ${className}`}>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label="Your structure so far"
+          style={{
+            width: '100%',
+            maxWidth: width,
+            minWidth: Math.round(width * MIN_SCALE),
+            height: 'auto',
+          }}
+        >
+          {children}
+        </svg>
+      </div>
+      {/* §C: a tint of the surface the panel already sits on, not a new colour. aria-hidden
+          and pointer-events-none -- it is a hint that the diagram continues, and it must
+          never eat a tap meant for the node underneath it. */}
+      <div ref={fadeL} aria-hidden style={{ opacity: 0 }}
+           className="pointer-events-none absolute inset-y-0 left-0 w-8 transition-opacity
+                      bg-gradient-to-r from-card to-transparent" />
+      <div ref={fadeR} aria-hidden style={{ opacity: 0 }}
+           className="pointer-events-none absolute inset-y-0 right-0 w-8 transition-opacity
+                      bg-gradient-to-l from-card to-transparent" />
     </div>
   );
 }

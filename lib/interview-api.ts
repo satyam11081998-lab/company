@@ -64,7 +64,13 @@ export interface StructureNode {
   id: string;
   label: string;
   value?: string | null;
-  kind?: 'stated' | 'inferred' | 'gap';
+  /** A segmentation node's share of its parent — "65%" on Rural under Population. Its own
+   *  field rather than baked into the label, so it stays a number the renderer can set
+   *  quietly beside the figure and the label stays the name of the thing. */
+  share?: string | null;
+  /** 'driver' marks the branch that actually explained the case, on a worked answer. The
+   *  design contract reserves colour (§C), so the renderer carries it by WEIGHT. */
+  kind?: 'stated' | 'inferred' | 'gap' | 'driver';
   /** How this node's CHILDREN combine to produce it. The formula is derived from this
    *  server-side and sent as `formula`; the operator is here for the renderer to draw
    *  between sibling branches. */
@@ -95,6 +101,9 @@ export interface AttemptDetail {
   /** The framework's equation for this case — what they are being asked to build.
    *  Distinct from a node's own `formula`, which is what they have built. */
   structure_equation?: string | null;
+  /** The worked decomposition for this case type, in the same node shape as `structure`,
+   *  so one renderer draws both and the comparison reads as like against like. */
+  structure_approach?: StructureNode | null;
 }
 
 export interface UploadResponse {
@@ -214,6 +223,10 @@ export async function postMessageStream(
       stage?: string | null;
       stages?: string[] | null;
       equation?: string | null;
+      /** The worked decomposition for this case type, to read the live tree against.
+       *  Deterministic server-side, so it is correct by construction rather than reviewed;
+       *  absent whenever the archetype is not known yet. */
+      approach?: StructureNode | null;
     }) => void;
     onError?: (err: string) => void;
   } = {},

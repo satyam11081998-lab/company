@@ -94,6 +94,7 @@ import StageRail from '@/components/solve/stage-rail';
 import { RailSplitter, useRailWidth } from '@/components/solve/rail-splitter';
 import { StructureLegend, outlineOf } from '@/components/solve/structure-tree';
 import NodeActionBar from '@/components/solve/node-actions';
+import CaseFrameworkPanel from '@/components/solve/case-framework';
 import { transcribeAudio, fetchAiQuota, type AiQuota } from '@/lib/api';
 import { MESSAGE_MAX_CHARS } from '@/lib/limits';
 import { useTrackAction } from '@/hooks/use-track-action';
@@ -169,6 +170,11 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
   const [stage, setStage] = useState<string | null>(null);
   const [stages, setStages] = useState<string[]>([]);
   const [equation, setEquation] = useState<string | null>(null);
+  // The worked decomposition for this case TYPE, to read the live tree against. It rides
+  // the same turn payload but only ever changes when the archetype is first identified, so
+  // it is swapped on a CHANGED equation rather than every turn: a fresh object each turn is
+  // a new prop identity, and that re-runs the approach tree's layout for no reason.
+  const [approach, setApproach] = useState<StructureNode | null>(null);
   // The rail holds a diagram that grows sideways, so its width is the candidate's to set
   // and is remembered between sessions.
   const [selectedNode, setSelectedNode] = useState<StructureNode | null>(null);
@@ -358,6 +364,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
         setStage(detail.structure_stage ?? null);
         setStages(detail.structure_stages ?? []);
         setEquation(detail.structure_equation ?? null);
+        setApproach(detail.structure_approach ?? null);
         // attempt_id makes this timeline entry resolvable to THIS conversation.
         // Without it the admin viewer falls back to "latest attempt for this
         // case", which shows the wrong transcript on a re-attempt.
@@ -523,6 +530,19 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             if (t.stage) setStage(t.stage);
             if (t.stages?.length) setStages(t.stages);
             if (t.equation) setEquation(t.equation);
+            // Keep the object already held when the incoming one describes the same
+            // decomposition, so an unchanged approach is not a new prop identity every turn
+            // and the panel does not re-run its layout. Compared on root id AND formula:
+            // id alone is not enough, because three archetypes (operations, capacity,
+            // infrastructure) all produce a root called "Units required" and would look
+            // identical by id while having completely different children.
+            if (t.approach) {
+              setApproach((prev) =>
+                prev && prev.id === t.approach!.id && prev.formula === t.approach!.formula
+                  ? prev
+                  : t.approach!,
+              );
+            }
           },
           onDone: (info) => {
             done = info;
@@ -1235,6 +1255,16 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
                height when a node is tapped. */
             <StructureLegend className="mt-3" />
           )}
+          {/* The worked structure, under their own and closed.
+              Closed is the whole point: showing the shape before they have generated one
+              causes lock-in, and the practice is then worth nothing. They choose to open
+              it, and `onOpen` lets the attempt record that this run was a run where the
+              model answer was read. */}
+          {/* `onOpen` is left unwired on purpose. Recording "they read the model answer"
+              on the attempt is a scoring decision, not a rendering one, and there is no
+              endpoint for it yet -- wiring it to a stub now would be a silent no-op that
+              later looks like a working feature. The prop is there for when that lands. */}
+          <CaseFrameworkPanel approach={approach} equation={equation} className="mt-3" />
         </div>
       )}
     </>
