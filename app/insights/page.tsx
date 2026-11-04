@@ -89,6 +89,29 @@ export default async function InsightsIndex() {
           your GD, WAT and interviews.
         </p>
         <div className={`mx-auto mt-6 h-[3px] max-w-[1200px] border-y sm:mt-8 ${rule}`} aria-hidden />
+        <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-3 text-small">
+          <span className="font-sans text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+            MBA Prep:
+          </span>
+          <Link
+            href="/insights/gd-topics"
+            className="rounded-full border border-black/15 dark:border-white/15 px-3.5 py-1 font-sans text-[0.82rem] font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          >
+            GD Topics
+          </Link>
+          <Link
+            href="/insights/wat-topics"
+            className="rounded-full border border-black/15 dark:border-white/15 px-3.5 py-1 font-sans text-[0.82rem] font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          >
+            WAT Topics
+          </Link>
+          <Link
+            href="/insights/pi-questions"
+            className="rounded-full border border-black/15 dark:border-white/15 px-3.5 py-1 font-sans text-[0.82rem] font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          >
+            PI Questions
+          </Link>
+        </div>
       </header>
 
       {pages.length === 0 ? (

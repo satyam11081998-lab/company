@@ -6,6 +6,7 @@ import { SITE_URL, isCanonicalisedAway, HREFLANG_HOME, HREFLANG_PRICING } from '
 import { getIndexableDecks } from '@/lib/decks';
 import { getPublishedSeoPages } from '@/lib/seo-pages';
 import { topicOf, topicSlug } from '@/lib/insights/topics';
+import { toMonthSlug } from '@/lib/insights/aspirant-hubs';
 import { LEARN_BASE, LEARN_HUB, LEARN_PAGES, learnPath } from '@/lib/us-learn';
 import { learnLanguages } from '@/lib/us-learn/seo';
 import { INTL_MARKET_ACTIVE } from '@/lib/market';
@@ -157,6 +158,55 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           entry(`/insights/topic/${topicSlug(label)}`, 0.6, 'weekly', when),
         ),
       );
+
+      // MBA preparation hubs (/insights/gd-topics, /insights/wat-topics, /insights/pi-questions)
+      // and their monthly archive roundups. High-intent search landing pages.
+      const newestDate = pages.reduce<Date | undefined>((acc, p) => {
+        const when = p.published_at ? new Date(p.published_at) : (p.updated_at ? new Date(p.updated_at) : undefined);
+        if (!when) return acc;
+        return !acc || when > acc ? when : acc;
+      }, undefined);
+
+      insightEntries.push(
+        entry('/insights/gd-topics', 0.8, 'daily', newestDate),
+        entry('/insights/wat-topics', 0.8, 'daily', newestDate),
+        entry('/insights/pi-questions', 0.8, 'daily', newestDate),
+      );
+
+      // Monthly archives
+      const gdMonths = new Map<string, Date>();
+      const watMonths = new Map<string, Date>();
+      const piMonths = new Map<string, Date>();
+
+      for (const p of pages) {
+        const pub = p.published_at || p.created_at;
+        const when = p.published_at ? new Date(p.published_at) : (p.updated_at ? new Date(p.updated_at) : undefined);
+        const m = toMonthSlug(pub);
+        if (!m || !when) continue;
+
+        if (p.content?.aspirants?.gd_topic) {
+          const prev = gdMonths.get(m);
+          if (!prev || when > prev) gdMonths.set(m, when);
+        }
+        if (p.content?.aspirants?.wat_prompt) {
+          const prev = watMonths.get(m);
+          if (!prev || when > prev) watMonths.set(m, when);
+        }
+        if (p.content?.aspirants?.pi_questions?.length) {
+          const prev = piMonths.get(m);
+          if (!prev || when > prev) piMonths.set(m, when);
+        }
+      }
+
+      for (const [m, when] of gdMonths.entries()) {
+        insightEntries.push(entry(`/insights/gd-topics/${m}`, 0.7, 'weekly', when));
+      }
+      for (const [m, when] of watMonths.entries()) {
+        insightEntries.push(entry(`/insights/wat-topics/${m}`, 0.7, 'weekly', when));
+      }
+      for (const [m, when] of piMonths.entries()) {
+        insightEntries.push(entry(`/insights/pi-questions/${m}`, 0.7, 'weekly', when));
+      }
     }
   } catch (err) {
     console.error('Failed to load SEO pages for sitemap:', err);

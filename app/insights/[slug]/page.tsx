@@ -501,7 +501,9 @@ function Aspirants({ a }: { a: NonNullable<SeoContent['aspirants']> }) {
       </h2>
       {a.gd_topic && (
         <p className="mt-5 font-editorial text-[1.3rem] italic leading-snug text-[#141413] dark:text-[#f1ede5]">
-          <span className="not-italic font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">GD topic</span>
+          <span className="not-italic font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+            GD topic · <Link href="/insights/gd-topics" className="underline underline-offset-4 hover:text-[color:var(--accent)]">Browse all GD topics</Link>
+          </span>
           <br />{a.gd_topic}
         </p>
       )}
@@ -521,7 +523,9 @@ function Aspirants({ a }: { a: NonNullable<SeoContent['aspirants']> }) {
       ) : null}
       {a.pi_questions?.length ? (
         <div className="mt-7">
-          <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">Questions an interviewer could ask</p>
+          <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+            Questions an interviewer could ask · <Link href="/insights/pi-questions" className="underline underline-offset-4 hover:text-[color:var(--accent)]">Browse all PI questions</Link>
+          </p>
           <ol className="mt-3 space-y-2.5 font-editorial text-[1.04rem] leading-[1.55]">
             {a.pi_questions.map((q, i) => (
               <li key={i} className="flex gap-3">
@@ -536,7 +540,9 @@ function Aspirants({ a }: { a: NonNullable<SeoContent['aspirants']> }) {
         <dl className="mt-7 grid gap-5 sm:grid-cols-2">
           {a.wat_prompt && (
             <div>
-              <dt className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">WAT prompt</dt>
+              <dt className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                WAT prompt · <Link href="/insights/wat-topics" className="underline underline-offset-4 hover:text-[color:var(--accent)]">Browse all WAT prompts</Link>
+              </dt>
               <dd className="mt-2 font-editorial text-[1.04rem] leading-[1.55]">{a.wat_prompt}</dd>
             </div>
           )}
@@ -548,6 +554,14 @@ function Aspirants({ a }: { a: NonNullable<SeoContent['aspirants']> }) {
           )}
         </dl>
       )}
+      <div className="mt-8 border-t border-black/10 pt-4 text-[0.82rem] text-neutral-600 sm:flex sm:items-center sm:justify-between dark:border-white/10 dark:text-neutral-400">
+        <span className="font-medium text-neutral-900 dark:text-neutral-200">MBA Prep Hubs:</span>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 sm:mt-0">
+          <Link href="/insights/gd-topics" className="underline underline-offset-4 hover:text-[color:var(--accent)]">All GD Topics</Link>
+          <Link href="/insights/wat-topics" className="underline underline-offset-4 hover:text-[color:var(--accent)]">All WAT Topics</Link>
+          <Link href="/insights/pi-questions" className="underline underline-offset-4 hover:text-[color:var(--accent)]">All PI Questions</Link>
+        </div>
+      </div>
     </section>
   );
 }
