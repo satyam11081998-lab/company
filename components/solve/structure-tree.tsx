@@ -106,11 +106,13 @@ function flatten(l: Laid, out: Laid[] = []): Laid[] {
   return out;
 }
 
-function NodeBox({ l, activeId, selectedId, onSelect }: {
+function NodeBox({ l, activeId, selectedId, onSelect, isNew }: {
   l: Laid;
   activeId?: string | null;
   selectedId?: string | null;
   onSelect?: (node: StructureNode) => void;
+  /** Appeared on this turn. Animates in once so the candidate sees it arrive. */
+  isNew?: boolean;
 }) {
   const { node, x, y } = l;
   const active = node.id === activeId;
@@ -144,6 +146,7 @@ function NodeBox({ l, activeId, selectedId, onSelect }: {
 
   return (
     <g
+      data-new={isNew ? '' : undefined}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       aria-pressed={clickable ? selected : undefined}
@@ -281,25 +284,41 @@ function StructureTreeImpl({ root, activeId, selectedId, onSelect, className = '
   const laid = useMemo(() => (root ? layout(root, 0, { x: PAD }) : null), [root]);
   const nodes = useMemo(() => (laid ? flatten(laid) : []), [laid]);
 
-  if (!laid) {
-    return (
-      <div className={`flex h-full items-center justify-center px-6 ${className}`}>
-        <p className="text-small text-muted-foreground">
-          Your structure appears here as you talk through it.
-        </p>
-      </div>
-    );
-  }
+  /* Which boxes are new since the last turn.
+   *
+   * The diagram used to simply redraw, so a branch the candidate had just earned appeared
+   * with no more ceremony than the ones already sitting there. They often missed it, which
+   * wasted the one moment the panel has to prove it is listening. Only the new boxes
+   * animate; animating the whole tree every turn would be the same noise with more motion.
+   *
+   * The FIRST fold is excluded on purpose: resuming a case mid-way would otherwise explode
+   * a finished tree onto the screen one box at a time. */
+  const seen = useRef<Set<string> | null>(null);
+  const fresh = useMemo(() => {
+    const ids = nodes.map((n) => n.node.id);
+    const prev = seen.current;
+    seen.current = new Set(ids);
+    if (!prev) return new Set<string>();              // first paint: nothing is "new"
+    return new Set(ids.filter((id) => !prev.has(id)));
+  }, [nodes]);
+
+  /* How much of the framework is still unopened. A candidate cannot tell from a hint how
+   * deep this case goes -- the hint gives two rungs, the worked answer has four -- so the
+   * tree states it plainly instead of leaving them to guess when to stop. */
+  const mapped = nodes.filter((n) => n.node.id !== '__root' && n.node.kind !== 'gap').length;
+  const open = nodes.filter((n) => n.node.kind === 'gap').length;
+
+  if (!laid) return <EmptyState className={className} />;
 
   const width = Math.max(...nodes.map((n) => n.x)) + NODE_W + PAD;
   const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + PAD + 6;
 
   return (
-    <TreeViewport width={width} height={height} nodes={nodes}
+    <TreeViewport width={width} height={height} nodes={nodes} mapped={mapped} open={open}
                   focusId={activeId || selectedId || null} className={className}>
       <Edges l={laid} />
       {nodes.map((n) => (
-        <NodeBox key={n.node.id} l={n} activeId={activeId}
+        <NodeBox key={n.node.id} l={n} activeId={activeId} isNew={fresh.has(n.node.id)}
                  selectedId={selectedId} onSelect={onSelect} />
       ))}
     </TreeViewport>
@@ -323,11 +342,13 @@ function StructureTreeImpl({ root, activeId, selectedId, onSelect, className = '
  *         Centred where there is room, clamped to the ends so it never scrolls into
  *         padding.
  */
-function TreeViewport({ width, height, nodes, focusId, className = '', children }: {
+function TreeViewport({ width, height, nodes, focusId, mapped, open, className = '', children }: {
   width: number;
   height: number;
   nodes: Laid[];
   focusId: string | null;
+  mapped: number;
+  open: number;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -368,9 +389,30 @@ function TreeViewport({ width, height, nodes, focusId, className = '', children 
   return (
     /* `relative` so the fades can sit over the scroll box, and the fades are OUTSIDE the
        scrolling element so they stay pinned to its edges instead of scrolling away. */
-    <div className="relative">
+    <div>
+      <style>{`
+        @keyframes mece-node-in { from { opacity: 0; transform: translateY(7px) }
+                                  to   { opacity: 1; transform: none } }
+        .mece-tree g[data-new] { animation: mece-node-in 340ms cubic-bezier(.2,.7,.3,1) both }
+        @media (prefers-reduced-motion: reduce) { .mece-tree g[data-new] { animation: none } }
+      `}</style>
+
+      {/* How far in they are. Two numbers, because "mapped" alone reads as a score and
+          "open" alone reads as a rebuke; together they read as a map. */}
+      {(mapped > 0 || open > 0) && (
+        <p className="mb-2 text-micro text-muted-foreground tabular-nums">
+          <span className="text-foreground">{mapped}</span> branch{mapped === 1 ? '' : 'es'} mapped
+          {open > 0 && <> · <span className="text-foreground">{open}</span> still open</>}
+        </p>
+      )}
+
+      {/* `relative` wraps ONLY the scroll box. It used to wrap the counter line above it
+          too, so the left edge-fade — which is inset-y-0 — painted over that text and ate
+          its first character. */}
+      <div className="relative">
       <div ref={box} onScroll={paint} className={`overflow-auto ${className}`}>
         <svg
+          className="mece-tree"
           viewBox={`0 0 ${width} ${height}`}
           role="img"
           aria-label="Your structure so far"
@@ -393,6 +435,86 @@ function TreeViewport({ width, height, nodes, focusId, className = '', children 
       <div ref={fadeR} aria-hidden style={{ opacity: 0 }}
            className="pointer-events-none absolute inset-y-0 right-0 w-8 transition-opacity
                       bg-gradient-to-l from-card to-transparent" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * What the panel shows before the candidate has said anything.
+ *
+ * WHY THIS IS NOT ONE GREY SENTENCE ANY MORE
+ *
+ * It used to be: "Your structure appears here as you talk through it." A first-time visitor
+ * read that, understood nothing, and had no reason to believe anything worth seeing was
+ * coming. The most distinctive thing this product does was represented, at the exact moment
+ * a new user decides whether to bother, by a line of muted text.
+ *
+ * So the empty state DEMONSTRATES instead of describing. A three-box skeleton draws itself
+ * on a loop: root, then two branches, then a dashed one. That last beat is the whole pitch
+ * -- it shows the diagram naming a branch the candidate has NOT opened, which is the thing
+ * no chat transcript can do for them. By the time they type, they already know what the
+ * dashes mean, so the legend has less work to do and the first real node lands as a payoff
+ * rather than a surprise.
+ *
+ * It is a loop and not a one-shot because the panel is often off-screen on first paint; a
+ * single play would be missed by most of the people it exists for.
+ */
+function EmptyState({ className = '' }: { className?: string }) {
+  return (
+    <div className={`flex h-full flex-col justify-center gap-4 px-1 py-6 ${className}`}>
+      <style>{`
+        @keyframes mece-draw { to { stroke-dashoffset: 0; } }
+        @keyframes mece-pop  { 0%,100% { opacity: 0 } 8%,92% { opacity: 1 } }
+        .mece-seed [data-draw] {
+          stroke-dasharray: 220; stroke-dashoffset: 220;
+          animation: mece-draw 5.2s ease-in-out infinite;
+        }
+        .mece-seed [data-pop] { opacity: 0; animation: mece-pop 5.2s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .mece-seed [data-draw] { stroke-dashoffset: 0; animation: none }
+          .mece-seed [data-pop]  { opacity: 1; animation: none }
+        }
+      `}</style>
+
+      <svg className="mece-seed w-full" viewBox="0 0 300 150" fill="none" role="img"
+           aria-label="A diagram of your structure will be drawn here as you talk">
+        {/* root */}
+        <rect data-pop style={{ animationDelay: '0s' }} x="86" y="8" width="128" height="34"
+              rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1.5"/>
+        <rect data-pop style={{ animationDelay: '0s' }} x="96" y="19" width="78" height="5" rx="2.5"
+              fill="hsl(var(--muted-foreground) / 0.35)"/>
+        {/* connectors */}
+        <path data-draw style={{ animationDelay: '.35s' }} d="M150 42 V62 H40 V82" fill="none"
+              stroke="hsl(var(--border))" strokeWidth="1.5"/>
+        <path data-draw style={{ animationDelay: '.55s' }} d="M150 42 V62 H150 V82" fill="none"
+              stroke="hsl(var(--border))" strokeWidth="1.5"/>
+        <path data-draw style={{ animationDelay: '1.5s' }} d="M150 42 V62 H260 V82" fill="none"
+              stroke="hsl(var(--border))" strokeWidth="1.5" strokeDasharray="4 3"/>
+        {/* two branches they said */}
+        <rect data-pop style={{ animationDelay: '.5s' }} x="2" y="82" width="76" height="32"
+              rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1.5"/>
+        <rect data-pop style={{ animationDelay: '.5s' }} x="11" y="92" width="44" height="4.5" rx="2.25"
+              fill="hsl(var(--muted-foreground) / 0.35)"/>
+        <rect data-pop style={{ animationDelay: '.9s' }} x="112" y="82" width="76" height="32"
+              rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1.5"/>
+        <rect data-pop style={{ animationDelay: '.9s' }} x="121" y="92" width="52" height="4.5" rx="2.25"
+              fill="hsl(var(--muted-foreground) / 0.35)"/>
+        {/* the branch they have NOT opened — the point of the whole panel */}
+        <rect data-pop style={{ animationDelay: '1.7s' }} x="222" y="82" width="76" height="32"
+              rx="6" fill="none" stroke="hsl(var(--border))" strokeWidth="1.5" strokeDasharray="4 3"/>
+        <rect data-pop style={{ animationDelay: '1.7s' }} x="231" y="92" width="38" height="4.5" rx="2.25"
+              fill="hsl(var(--muted-foreground) / 0.22)"/>
+      </svg>
+
+      <div className="space-y-1.5 px-2">
+        <p className="text-small font-medium text-foreground">Your thinking, drawn as you talk.</p>
+        <p className="text-micro text-muted-foreground">
+          Say how you&rsquo;d break the problem down. Each split becomes a box — and the
+          branches you haven&rsquo;t opened yet appear dashed, so you can see what is missing
+          before the interviewer does.
+        </p>
+      </div>
     </div>
   );
 }
