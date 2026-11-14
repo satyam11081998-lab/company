@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Check as CheckIcon, ChevronRight, Info, Loader2, Mail, RefreshCw, XCircle } from 'lucide-react';
-import { loadInsights, loadOverview, previewDigest, previewNudges, runNow, saveSettings, upgradeDecide, upgradeDrafts, upgradeScan, upgradeTest, upgradeWrite } from './actions';
-import type { LifecycleInsights, LifecycleOverview, UpgradeDraft, UpgradeScan } from '@/lib/lifecycle/types';
+import { loadInsights, loadOverview, mailDiagnosis, previewDigest, previewNudges, runNow, saveSettings, upgradeDecide, upgradeDrafts, upgradeScan, upgradeTest, upgradeWrite } from './actions';
+import type { LifecycleInsights, LifecycleOverview, MailDiagnosis, UpgradeDraft, UpgradeScan } from '@/lib/lifecycle/types';
 import type { LifecycleMode, LifecycleSettings } from '@/lib/lifecycle/settings';
 import type { Verdict } from '@/lib/lifecycle/deliverability';
 import type { ContentMarket } from '@/lib/market';
@@ -68,6 +68,7 @@ export default function DailyEmailClient() {
   const [scan, setScan] = useState<UpgradeScan | null>(null);
   const [drafts, setDrafts] = useState<UpgradeDraft[] | null>(null);
   const [armAll, setArmAll] = useState(false);
+  const [diag, setDiag] = useState<MailDiagnosis | null>(null);
   const [preview, setPreview] = useState<{ title: string; subject?: string; html: string } | null>(null);
   const [draft, setDraft] = useState<{ testEmail: string; replyTo: string; sendHourIst: number; sendHourEt: number; nudgeCap: number } | null>(null);
 
@@ -139,6 +140,14 @@ export default function DailyEmailClient() {
       } else {
         setErr(r.error || 'Could not save.');
       }
+    });
+
+  const doDiagnose = () =>
+    void guard(async () => {
+      setErr(null);
+      const r = await mailDiagnosis();
+      if (r.success && r.data) setDiag(r.data);
+      else setErr(r.error || 'Check failed.');
     });
 
   /* ── upgrade emails ──────────────────────────────────────────────────── */
@@ -490,6 +499,45 @@ export default function DailyEmailClient() {
             </div>
           ))}
         </div>
+      </Card>
+
+      {/* ── why didn't it arrive? ──────────────────────────────────────── */}
+      <Card title="Email not arriving?" sub="Checks each thing that can stop a send, in the order it happens, and shows the last ten attempts exactly as they were recorded.">
+        <button type="button" disabled={busy} onClick={doDiagnose} className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted/40 disabled:opacity-50">
+          Find out why
+        </button>
+        {diag ? (
+          <div className="mt-4 space-y-4">
+            <ul className="space-y-2">
+              {diag.problems.map((p, i) => (
+                <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  <span className="break-words">{p}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground">
+              Mode: {diag.mode} · Test address: {diag.testEmail || 'not set'} · Transport: {diag.transport} · From: {diag.from} · Signing key: {diag.signingKey ? 'set' : 'missing'} · Outbox: {diag.outboxOk ? 'ok' : 'unreadable'}
+            </p>
+            {diag.recent.length ? (
+              <div className="-mx-2 overflow-x-auto">
+                <table className="w-full min-w-[520px] text-xs">
+                  <tbody>
+                    {diag.recent.map((r, i) => (
+                      <tr key={i} className="border-t border-border/60 align-top">
+                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-muted-foreground">{new Date(r.at).toLocaleString()}</td>
+                        <td className="px-2 py-1.5 font-mono">{r.what}</td>
+                        <td className="break-all px-2 py-1.5">{r.to}</td>
+                        <td className={`px-2 py-1.5 font-medium ${r.status === 'sent' ? 'text-green-700' : r.status === 'failed' ? 'text-red-700' : ''}`}>{r.status}</td>
+                        <td className="break-words px-2 py-1.5 text-muted-foreground">{r.reason || ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </Card>
 
       {/* ── upgrade emails ─────────────────────────────────────────────── */}

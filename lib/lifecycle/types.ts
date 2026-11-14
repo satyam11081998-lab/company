@@ -101,3 +101,17 @@ export interface UpgradeScan {
   total: number;
   segments: Array<{ segment: string; label: string; count: number; sampleSubject: string; sampleHtml: string; sampleWhy: string }>;
 }
+
+/** "Why didn't it arrive?" — the facts, with no secret values in them. */
+export interface MailDiagnosis {
+  transport: 'resend' | 'gmail' | 'none';
+  from: string;
+  mode: string;
+  testEmail: string;
+  signingKey: boolean;
+  outboxOk: boolean;
+  outboxError?: string;
+  /** Plain-language problems, worst first. Empty means the setup itself is sound. */
+  problems: string[];
+  recent: Array<{ at: string; to: string; what: string; status: string; reason: string | null }>;
+}

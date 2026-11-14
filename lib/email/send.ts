@@ -130,11 +130,48 @@ export interface BulkResult {
  * hundreds of recipients per send). For a very large list, send in segments,
  * or set RESEND_API_KEY to switch to the volume path automatically.
  */
+/**
+ * One POST to Resend's batch endpoint, paced and retried.
+ *
+ * Resend allows only a couple of requests per second per account. The lifecycle
+ * job sends one request per recipient at small volumes (so each row gets its own
+ * exact status), which meant four test emails fired back to back: the first was
+ * accepted and the other three came back 429 and were recorded as failures.
+ * So: never start a request within RESEND_GAP_MS of the previous one, and when a
+ * 429 or a 5xx does come back, wait as long as the response asks and try again.
+ */
+const RESEND_GAP_MS = 600;
+let lastResendAt = 0;
+const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function resendPost(key: string, batch: unknown[]): Promise<Response> {
+  let res: Response | null = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const wait = lastResendAt + RESEND_GAP_MS - Date.now();
+    if (wait > 0) await pause(wait);
+    lastResendAt = Date.now();
+    res = await fetch('https://api.resend.com/emails/batch', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(batch),
+    });
+    if (res.status !== 429 && res.status < 500) return res;
+    if (attempt === 3) break;
+    const asked = Number(res.headers.get('retry-after'));
+    await pause(Number.isFinite(asked) && asked > 0 ? Math.min(asked * 1000, 5000) : 1000 * (attempt + 1));
+  }
+  return res as Response;
+}
+
 export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
   const key = process.env.RESEND_API_KEY;
   if (key) {
     let sent = 0;
     let failed = 0;
+    // The provider's own words. Without this a rejected send (unverified domain,
+    // bad key, test-mode recipient limit) reached the admin page as a bare
+    // "1 failed", which is the one moment the reason is needed.
+    let firstError: string | undefined;
     for (let i = 0; i < messages.length; i += 100) {
       const batch = messages.slice(i, i + 100).map((m) => ({
         from: EMAIL_FROM,
@@ -148,23 +185,29 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
         ...(m.replyTo ? { reply_to: m.replyTo } : {}),
       }));
       try {
-        const res = await fetch('https://api.resend.com/emails/batch', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(batch),
-        });
+        const res = await resendPost(key, batch);
         if (res.ok) {
           sent += batch.length;
         } else {
           failed += batch.length;
-          console.error('[email] resend batch failed:', res.status, await res.text().catch(() => ''));
+          const body = await res.text().catch(() => '');
+          let detail = body;
+          try {
+            const j = JSON.parse(body);
+            detail = String(j?.message || j?.error?.message || j?.name || body);
+          } catch {
+            /* not JSON — keep the raw text */
+          }
+          if (!firstError) firstError = `Resend ${res.status}: ${detail.replace(/\s+/g, ' ').slice(0, 240)}`;
+          console.error('[email] resend batch failed:', res.status, body);
         }
       } catch (e: any) {
         failed += batch.length;
+        if (!firstError) firstError = `Resend unreachable: ${e?.message || e}`;
         console.error('[email] resend batch error:', e?.message || e);
       }
     }
-    return { sent, failed };
+    return { sent, failed, ...(firstError ? { error: firstError } : {}) };
   }
 
   // FREE fallback — Gmail / Workspace SMTP via nodemailer.

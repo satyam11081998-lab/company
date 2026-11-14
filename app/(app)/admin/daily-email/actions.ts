@@ -9,7 +9,7 @@ import { NUDGE_LABEL, renderNudge } from '@/lib/lifecycle/nudges';
 import { buildDailyDigest } from '@/lib/email/digest';
 import { dnsChecks, structuralChecks, worstVerdict, fromDomain } from '@/lib/lifecycle/deliverability';
 import { approveUpgradeDrafts, draftUpgrades, listUpgradeDrafts, rejectUpgradeDrafts, scanUpgrades, testUpgradeDraft } from '@/lib/lifecycle/upgrade';
-import type { UpgradeDraft, UpgradeScan } from '@/lib/lifecycle/types';
+import type { MailDiagnosis, UpgradeDraft, UpgradeScan } from '@/lib/lifecycle/types';
 import type { BucketCount, Funnel, LifecycleInsights, LifecycleOverview, LifecycleRunResult } from '@/lib/lifecycle/types';
 import type { ContentMarket } from '@/lib/market';
 import type { UserRow } from '@/lib/types';
@@ -257,5 +257,61 @@ export async function upgradeDecide(
     return { success: !r.error || r.sent > 0, sent: r.sent, failed: r.failed, skipped: r.skipped, error: r.error };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Could not send.' };
+  }
+}
+
+/* ── why didn't it arrive? ───────────────────────────────────────────────── */
+
+/**
+ * Everything that can stop a test email, checked in the order it happens, plus
+ * the last ten attempts as the outbox recorded them. Reports whether each
+ * secret is SET, never its value.
+ */
+export async function mailDiagnosis(): Promise<{ success: boolean; data?: MailDiagnosis; error?: string }> {
+  try {
+    await requireAdmin();
+    const s = await readLifecycleSettings();
+    const transport: MailDiagnosis['transport'] = process.env.RESEND_API_KEY
+      ? 'resend'
+      : process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD
+        ? 'gmail'
+        : 'none';
+    const from = process.env.EMAIL_FROM || 'MECE <team@mece.in>';
+    const signingKey = !!(process.env.CRM_TRACKING_SECRET || process.env.UNSUBSCRIBE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+    const db = createServiceClient();
+    const { data, error } = await db
+      .from('crm_outbox')
+      .select('created_at, to_email, source_id, status, status_reason')
+      .like('source_id', 'lifecycle:%')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    const recent = ((data as any[]) || []).map((r) => ({
+      at: r.created_at as string,
+      to: r.to_email as string,
+      what: String(r.source_id || '').replace(/^lifecycle:/, ''),
+      status: r.status as string,
+      reason: (r.status_reason as string) ?? null,
+    }));
+
+    const problems: string[] = [];
+    if (error) problems.push(`The outbox table cannot be read (${error.message}). Migrations 0071 and 0072 have probably not been run on this database, so nothing can be queued.`);
+    if (!signingKey) problems.push('No signing key on this deployment (CRM_TRACKING_SECRET or SUPABASE_SERVICE_ROLE_KEY). Links cannot be signed, so every send stops before it starts.');
+    if (transport === 'none') problems.push('No mail transport on this deployment. Add RESEND_API_KEY, or GMAIL_USER and GMAIL_APP_PASSWORD, to the Vercel project and redeploy.');
+    if (s.mode === 'off') problems.push('The mode is Off. Nothing sends in this mode.');
+    if (s.mode === 'manual' && !s.testEmail) problems.push('Manual mode sends only to the test address, and none is saved. Type it under “Schedule and addresses” and press Save.');
+    const lastFail = recent.find((r) => r.status === 'failed');
+    if (lastFail && recent[0]?.status === 'failed') problems.push(`The last attempt failed: ${lastFail.reason || 'no reason recorded'}`);
+    if (!problems.length && recent[0]?.status === 'sent') {
+      problems.push(`The last email to ${recent[0].to} was accepted by ${transport === 'resend' ? 'Resend' : 'Gmail'}. If it is not in the inbox, look in Spam and Promotions, and check that address is spelled correctly.`);
+    }
+    if (!problems.length && !recent.length) problems.push('Nothing has been attempted yet. Press “Send to test address now” and run this check again.');
+
+    return {
+      success: true,
+      data: { transport, from, mode: s.mode, testEmail: s.testEmail, signingKey, outboxOk: !error, ...(error ? { outboxError: error.message } : {}), problems, recent },
+    };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Check failed.' };
   }
 }

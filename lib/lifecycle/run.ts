@@ -67,7 +67,11 @@ const MAX_PER_RUN = 400;
  * for the function budget and a failure is attributed to a block of 20 instead
  * of to every row in the run.
  */
-const EXACT_ATTRIBUTION_UPTO = 60;
+// Was 60. Each call is one HTTP request, and the mail provider allows about two
+// a second, so 60 single-recipient calls take over half a minute — most of the
+// function budget. Ten keeps exact per-row status where a person is reading
+// every row (tests, the first handful of sends) and batches beyond that.
+const EXACT_ATTRIBUTION_UPTO = 10;
 const BULK_CHUNK = 20;
 
 /** Length of the send window, in the market's own clock. */
