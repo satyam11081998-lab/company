@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Check as CheckIcon, ChevronRight, Info, Loader2, Mail, RefreshCw, XCircle } from 'lucide-react';
-import { loadInsights, loadOverview, mailDiagnosis, previewDigest, previewNudges, runNow, saveSettings, upgradeDecide, upgradeDrafts, upgradeScan, upgradeTest, upgradeWrite } from './actions';
+import { loadInsights, loadOverview, mailDiagnosis, previewDigest, previewNudges, runNow, saveSettings, upgradeDecide, upgradeDrafts, upgradeSentByHand, upgradeScan, upgradeTest, upgradeWrite } from './actions';
 import type { LifecycleInsights, LifecycleOverview, MailDiagnosis, UpgradeDraft, UpgradeScan } from '@/lib/lifecycle/types';
 import type { LifecycleMode, LifecycleSettings } from '@/lib/lifecycle/settings';
 import type { Verdict } from '@/lib/lifecycle/deliverability';
@@ -20,6 +20,40 @@ const VERDICT_STYLE: Record<Verdict, { cls: string; Icon: React.FC<{ className?:
   fail: { cls: 'text-red-700', Icon: XCircle },
   unknown: { cls: 'text-muted-foreground', Icon: Info },
 };
+
+/**
+ * An email's HTML as text you can paste into your own mail client. Links become
+ * "label: url". Tracked links, the unsubscribe placeholder and the hidden
+ * preview line are dropped — a hand-sent email should carry none of them.
+ */
+function htmlToPlain(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('[style*="display:none"], title, style, script, img').forEach((n) => n.remove());
+  doc.querySelectorAll('a').forEach((a) => {
+    const href = a.getAttribute('href') || '';
+    const label = (a.textContent || '').trim();
+    const usable = /^https?:/i.test(href) && !/\/api\/crm\/t\//.test(href) && !/unsubscribe/i.test(href + label);
+    a.replaceWith(doc.createTextNode(usable ? `${label}: ${href}` : /unsubscribe/i.test(label) ? '' : label));
+  });
+  doc.querySelectorAll('p, div, tr, li, h1, h2, h3, br').forEach((n) => n.append(doc.createTextNode('\n\n')));
+  return (doc.body.textContent || '')
+    .split('\n')
+    .map((l) => l.replace(/\s+/g, ' ').trim())
+    .filter((l) => !/^you('|’)?re? (get|receiv)|^you get this because/i.test(l))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** The text part of a queued draft, minus the automated footer. */
+function handText(text: string): string {
+  return text
+    .split('\n')
+    .filter((l) => !/unsubscribe/i.test(l))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 function Card({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
@@ -69,7 +103,8 @@ export default function DailyEmailClient() {
   const [drafts, setDrafts] = useState<UpgradeDraft[] | null>(null);
   const [armAll, setArmAll] = useState(false);
   const [diag, setDiag] = useState<MailDiagnosis | null>(null);
-  const [preview, setPreview] = useState<{ title: string; subject?: string; html: string } | null>(null);
+  const [preview, setPreview] = useState<{ title: string; subject?: string; html: string; text?: string; to?: string } | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ testEmail: string; replyTo: string; sendHourIst: number; sendHourEt: number; nudgeCap: number } | null>(null);
 
   /**
@@ -140,6 +175,26 @@ export default function DailyEmailClient() {
       } else {
         setErr(r.error || 'Could not save.');
       }
+    });
+
+  const copy = async (what: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(what);
+      setTimeout(() => setCopied((c) => (c === what ? null : c)), 1600);
+    } catch {
+      setErr('The browser refused to copy. Select the text and copy it by hand.');
+    }
+  };
+  const doSentByHand = (id: string) =>
+    void guard(async () => {
+      setMsg(null);
+      setErr(null);
+      const r = await upgradeSentByHand([id]);
+      if (r.success) setMsg(r.marked ? 'Marked as sent by you. It will not be sent again.' : 'That draft was no longer waiting.');
+      else setErr(r.error || 'Could not mark it.');
+      setPreview(null);
+      await reloadDrafts();
     });
 
   const doDiagnose = () =>
@@ -622,7 +677,7 @@ export default function DailyEmailClient() {
                     <p className="mt-1 text-xs text-muted-foreground">Why: {d.why || 'not recorded'}</p>
                     <p className="mt-1.5 text-sm text-foreground">“{d.subject}”</p>
                     <div className="mt-2.5 flex flex-wrap gap-2 text-xs font-medium">
-                      <button type="button" onClick={() => setPreview({ title: `To ${d.to}`, subject: d.subject, html: d.html })} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
+                      <button type="button" onClick={() => setPreview({ title: `To ${d.to}`, subject: d.subject, html: d.html, text: handText(d.text), to: d.to })} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
                         Read
                       </button>
                       <button type="button" disabled={busy} onClick={() => doTest(d.id)} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40 disabled:opacity-50">
@@ -633,6 +688,27 @@ export default function DailyEmailClient() {
                       </button>
                       <button type="button" disabled={busy} onClick={() => doDecide([d.id], false)} className="rounded-md border border-border px-2.5 py-1 text-red-700 hover:bg-red-50 disabled:opacity-50">
                         Reject
+                      </button>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border/60 pt-2 text-xs font-medium">
+                      <span className="font-normal text-muted-foreground">Send it yourself:</span>
+                      <button type="button" onClick={() => void copy(`${d.id}:to`, d.to)} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
+                        {copied === `${d.id}:to` ? 'Copied' : 'Copy address'}
+                      </button>
+                      <button type="button" onClick={() => void copy(`${d.id}:subject`, d.subject)} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
+                        {copied === `${d.id}:subject` ? 'Copied' : 'Copy subject'}
+                      </button>
+                      <button type="button" onClick={() => void copy(`${d.id}:body`, handText(d.text))} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
+                        {copied === `${d.id}:body` ? 'Copied' : 'Copy message'}
+                      </button>
+                      <a
+                        href={`mailto:${encodeURIComponent(d.to)}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(handText(d.text))}`}
+                        className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40"
+                      >
+                        Open in my mail app
+                      </a>
+                      <button type="button" disabled={busy} onClick={() => doSentByHand(d.id)} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40 disabled:opacity-50">
+                        I sent it myself
                       </button>
                     </div>
                   </li>
@@ -727,6 +803,22 @@ export default function DailyEmailClient() {
               </div>
               <button type="button" onClick={() => setPreview(null)} className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted/40">
                 Close
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs font-medium">
+              <span className="font-normal text-muted-foreground">To send it from your own mailbox:</span>
+              {preview.to ? (
+                <button type="button" onClick={() => void copy('pv:to', preview.to!)} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
+                  {copied === 'pv:to' ? 'Copied' : 'Copy address'}
+                </button>
+              ) : null}
+              {preview.subject ? (
+                <button type="button" onClick={() => void copy('pv:subject', preview.subject!)} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
+                  {copied === 'pv:subject' ? 'Copied' : 'Copy subject'}
+                </button>
+              ) : null}
+              <button type="button" onClick={() => void copy('pv:body', preview.text ?? htmlToPlain(preview.html))} className="rounded-md border border-border px-2.5 py-1 hover:bg-muted/40">
+                {copied === 'pv:body' ? 'Copied' : 'Copy message'}
               </button>
             </div>
             <iframe title="Email preview" srcDoc={preview.html} className="h-[70vh] w-full border-0 bg-white" sandbox="" />

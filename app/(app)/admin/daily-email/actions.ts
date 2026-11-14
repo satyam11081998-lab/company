@@ -8,7 +8,7 @@ import { nudgeTargets } from '@/lib/lifecycle/recipients';
 import { NUDGE_LABEL, renderNudge } from '@/lib/lifecycle/nudges';
 import { buildDailyDigest } from '@/lib/email/digest';
 import { dnsChecks, structuralChecks, worstVerdict, fromDomain } from '@/lib/lifecycle/deliverability';
-import { approveUpgradeDrafts, draftUpgrades, listUpgradeDrafts, rejectUpgradeDrafts, scanUpgrades, testUpgradeDraft } from '@/lib/lifecycle/upgrade';
+import { approveUpgradeDrafts, markUpgradeSentByHand, draftUpgrades, listUpgradeDrafts, rejectUpgradeDrafts, scanUpgrades, testUpgradeDraft } from '@/lib/lifecycle/upgrade';
 import type { MailDiagnosis, UpgradeDraft, UpgradeScan } from '@/lib/lifecycle/types';
 import type { BucketCount, Funnel, LifecycleInsights, LifecycleOverview, LifecycleRunResult } from '@/lib/lifecycle/types';
 import type { ContentMarket } from '@/lib/market';
@@ -257,6 +257,16 @@ export async function upgradeDecide(
     return { success: !r.error || r.sent > 0, sent: r.sent, failed: r.failed, skipped: r.skipped, error: r.error };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Could not send.' };
+  }
+}
+
+/** The owner sent these himself from his own mailbox; take them out of the queue. */
+export async function upgradeSentByHand(ids: string[]): Promise<{ success: boolean; marked?: number; error?: string }> {
+  try {
+    const actor = await requireAdmin();
+    return { success: true, marked: await markUpgradeSentByHand(ids, actor) };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Could not mark it.' };
   }
 }
 

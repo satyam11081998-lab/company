@@ -59,7 +59,7 @@ async function soft<T>(fn: () => PromiseLike<{ data: any; error: any }>): Promis
 export async function upgradeTargets(): Promise<UpgradeTarget[]> {
   const db = createServiceClient();
   const cols = 'id, email, name, subscription_tier, subscription_expires_at, marketing_opt_out, created_at';
-  let { data, error }: { data: any; error: any } = await db.from('users').select(`${cols}, market`).limit(FETCH_LIMIT);
+  let { data, error } = await db.from('users').select(`${cols}, market`).limit(FETCH_LIMIT);
   if (error && /market/i.test(error.message || '')) ({ data, error } = await db.from('users').select(cols).limit(FETCH_LIMIT));
   if (error) throw new Error(error.message);
   const users = ((data as any[]) || []).filter((u) => u?.email && !u.marketing_opt_out && contentMarketOf(u.market) === 'IN');
@@ -169,7 +169,7 @@ export async function listUpgradeDrafts(): Promise<UpgradeDraft[]> {
   const db = createServiceClient();
   const { data, error } = await db
     .from('crm_outbox')
-    .select('id, to_email, to_name, subject, html, source_id, status_reason, created_at')
+    .select('id, to_email, to_name, subject, html, text_body, source_id, status_reason, created_at')
     .eq('status', 'pending')
     .like('source_id', `${SOURCE}%`)
     .order('created_at', { ascending: false })
@@ -183,6 +183,7 @@ export async function listUpgradeDrafts(): Promise<UpgradeDraft[]> {
       name: r.to_name ?? null,
       subject: r.subject,
       html: r.html,
+      text: r.text_body ?? '',
       segment,
       label: UPGRADE_LABEL[segment] ?? segment,
       why: r.status_reason ?? '',
@@ -201,6 +202,27 @@ export async function rejectUpgradeDrafts(ids: string[], actorId: string): Promi
   const { data, error } = await db
     .from('crm_outbox')
     .update({ status: 'rejected', decided_by: actorId, decided_at: new Date().toISOString(), status_reason: 'rejected in review' })
+    .in('id', list)
+    .eq('status', 'pending')
+    .like('source_id', `${SOURCE}%`)
+    .select('id');
+  if (error) throw new Error(error.message);
+  return (data ?? []).length;
+}
+
+/**
+ * Record drafts the owner sent himself, from his own mailbox. They leave the
+ * review queue as 'sent', so the 30-day cooldown counts them and nobody is
+ * written to twice — once by hand and once by the system.
+ */
+export async function markUpgradeSentByHand(ids: string[], actorId: string): Promise<number> {
+  const list = ids.filter(isUuid).slice(0, 300);
+  if (!list.length) return 0;
+  const db = createServiceClient();
+  const now = new Date().toISOString();
+  const { data, error } = await db
+    .from('crm_outbox')
+    .update({ status: 'sent', sent_at: now, decided_by: actorId, decided_at: now, status_reason: 'sent by hand, outside the system' })
     .in('id', list)
     .eq('status', 'pending')
     .like('source_id', `${SOURCE}%`)
