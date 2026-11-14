@@ -11,33 +11,21 @@
  * Pure except for reads. Never sends; never writes.
  */
 import { createServiceClient } from '@/lib/supabase/service';
-import { baseEmailLayout, emailTagline } from '@/lib/email/templates';
+import { statutoryIdentityLines } from '@/lib/legal/company';
+import { renderDailyLetter } from '@/lib/email/digest-letter';
 import { marketToday, type ContentMarket } from '@/lib/market';
 import { marketScoped } from '@/lib/market-db';
-import { usTypeLabel } from '@/lib/us-market/labels';
 
-const _SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://mece.in';
-
-function esc(s: unknown): string {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function digestCard(label: string, title: string, sub: string, href: string, cta: string): string {
-  return `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;border:1px solid #E7E3DC;border-radius:12px;">
-    <tr><td style="padding:18px 20px;">
-      <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C8102E;">${esc(label)}</p>
-      <p style="margin:0 0 ${sub ? '4' : '12'}px;font-size:17px;font-weight:700;color:#0F1C33;line-height:1.3;">${esc(title)}</p>
-      ${sub ? `<p style="margin:0 0 12px;font-size:13px;color:#5B6472;line-height:1.5;">${esc(sub)}</p>` : ''}
-      <a href="${href}" style="display:inline-block;background:#C8102E;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:9px 18px;border-radius:8px;">${esc(cta)} &rarr;</a>
-    </td></tr>
-  </table>`;
-}
+// Same default as lib/email/send.ts. It was 'https://mece.in', so every link in
+// the digest pointed at a redirect — one more thing a spam filter counts.
+const _SITE = ((process.env.NEXT_PUBLIC_SITE_URL || '').trim() || 'https://www.mece.in').replace(/\/+$/, '');
 
 export type DigestResult = {
   success: boolean;
   subject?: string;
   html?: string;
+  /** The hand-written text/plain part. */
+  text?: string;
   note?: string;
   market?: ContentMarket;
   error?: string;
@@ -140,126 +128,8 @@ async function digestBankPicks(
     .map((x) => x.c);
 }
 
-function digestTypeLabel(item: DigestItem, market: ContentMarket): string {
-  if (item.type === 'guesstimate') return market === 'US' ? 'Market sizing' : 'Guesstimate';
-  const t = market === 'US' ? usTypeLabel(item.type) : item.type.replace(/_/g, ' ');
-  return `Case · ${t.charAt(0).toUpperCase()}${t.slice(1)}`;
-}
-
-/** Compact list of extra practice links (one row per case / guesstimate). */
-function digestMoreBlock(items: DigestItem[], market: ContentMarket): string {
-  if (!items.length) return '';
-  const rows = items
-    .map((it, i) => {
-      const href = `${_SITE}/cases/${it.id}`;
-      const meta = [digestTypeLabel(it, market), it.difficulty ? `${it.difficulty.charAt(0).toUpperCase()}${it.difficulty.slice(1)}` : '']
-        .filter(Boolean)
-        .join(' · ');
-      return `
-      <tr><td style="padding:12px 20px ${i === items.length - 1 ? '16' : '12'}px;border-top:1px solid #F0ECE6;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="vertical-align:middle;">
-            <p style="margin:0 0 3px;font-size:12px;color:#5B6472;line-height:1.4;">${esc(meta)}</p>
-            <a href="${href}" style="font-size:15px;font-weight:600;color:#0F1C33;text-decoration:none;line-height:1.35;">${esc(it.title)}</a>
-          </td>
-          <td align="right" style="vertical-align:middle;padding-left:14px;white-space:nowrap;">
-            <a href="${href}" style="font-size:13px;font-weight:600;color:#C8102E;text-decoration:none;">Practice &rarr;</a>
-          </td>
-        </tr></table>
-      </td></tr>`;
-    })
-    .join('');
-  return `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;border:1px solid #E7E3DC;border-radius:12px;">
-    <tr><td style="padding:16px 20px 10px;">
-      <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C8102E;">More practice${market === 'US' ? '' : ' from the case bank'}</p>
-    </td></tr>${rows}
-  </table>`;
-}
-
-/* ───────────────────────────────────────────────────────────────────────────
- * Subject line.
- *
- * The old subject was the constant "Your MECE practice for today". A constant
- * subject is the worst case on two counts at once: on a phone the notification
- * says nothing (so it is ignored), and Gmail groups a repeated subject from a
- * repeated sender into one Promotions thread.
- *
- * So the subject IS the question. It leads with the real guesstimate title, which
- * changes every day, and the framing rotates on a hash of the date so two
- * consecutive days never read the same way. Nothing here is brand-prefixed:
- * "MECE:" in front of a subject buys nothing and costs the first 5 characters of
- * the notification.
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/** Trim to a mobile notification's useful width, on a word boundary. */
-function clip(s: string, max = 78): string {
-  const t = s.replace(/\s+/g, ' ').trim();
-  if (t.length <= max) return t;
-  const cut = t.slice(0, max - 1);
-  const sp = cut.lastIndexOf(' ');
-  return `${(sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '')}…`;
-}
-
-/**
- * Strip a leading "Estimate the…" scaffold down to the subject itself. Used by the
- * preheader, where the title is being quoted mid-sentence; the subject line
- * leaves the title exactly as written.
- */
-function coreOf(title: string): string {
-  return title
-    .replace(/\s+/g, ' ')
-    .replace(/^\s*(estimate|guesstimate|calculate|work out|figure out)\s+(the\s+)?/i, '')
-    .replace(/[.?!]\s*$/, '')
-    .trim();
-}
-
-/**
- * The framings. Every one of these only ADDS to the question — none of them
- * rewrites it. That is the whole trick: the generator phrases a title either as
- * "Estimate the number of…" or as "How many…?", and a prefix that assumes one
- * shape reads broken against the other ("Today's number: number of air
- * purifiers…"). Appending, or prefixing with a bare time word, is grammatical
- * against both.
- */
-const FRAMINGS: ((q: string) => string)[] = [
-  (q) => q,
-  (q) => `${q} — ten minutes, start to finish`,
-  (q) => `Tonight: ${q}`,
-];
-
-/**
- * Subject for one day's digest.
- *
- * Deterministic, so a preview and a re-send never disagree with what went out —
- * and rotated on the DAY NUMBER rather than on a hash of the date. A hash
- * collides: two days running would land on the same framing roughly a fifth of
- * the time, which is exactly the repetition this is meant to remove. A day index
- * cycles cleanly and can never repeat on consecutive days.
- */
-export function dailySubject(market: ContentMarket, guessTitle: string | null, caseTitle: string | null, dateKey: string): string {
-  const lead = (guessTitle || caseTitle || '').replace(/\s+/g, ' ').trim();
-  // No content at all — the only case where a generic subject is honest.
-  if (!lead) return market === 'US' ? 'Your case practice for today' : 'Your practice for today';
-  const day = Math.floor(Date.parse(`${dateKey}T00:00:00Z`) / 86_400_000);
-  const i = Number.isFinite(day) ? ((day % FRAMINGS.length) + FRAMINGS.length) % FRAMINGS.length : 0;
-  return clip(FRAMINGS[i](lead));
-}
-
-/** Preheader (the grey line next to the subject in the inbox). Also varies. */
-function dailyPreheader(market: ContentMarket, caseTitle: string | null, dateKey: string): string {
-  const us = market === 'US';
-  const opts = caseTitle
-    ? [
-        `Plus today's case: ${coreOf(caseTitle)}.`,
-        `Today's case is in here too — ${coreOf(caseTitle)}.`,
-        `And a full case: ${coreOf(caseTitle)}.`,
-      ]
-    : us
-      ? ['A fresh case and market sizing question to sharpen your thinking.']
-      : ['A fresh guesstimate and case to sharpen your thinking.'];
-  return clip(opts[digestHash(`pre:${market}:${dateKey}`) % opts.length], 110);
-}
+// The subject, preview line and body live in ./digest-letter (pure, tested).
+export { dailySubject } from '@/lib/email/digest-letter';
 
 /**
  * Today's digest for ONE market. Every digest links to real cases and
@@ -288,91 +158,44 @@ export async function buildDailyDigest(market: ContentMarket = 'IN', extra: numb
     ]);
     const headCase = pair.case ?? moreCases.shift() ?? null;
     const headGuess = pair.guess ?? moreGuesses.shift() ?? null;
-    const caseIsDaily = !!pair.case;
-    const guessIsDaily = !!pair.guess;
-
-    const more: DigestItem[] = [];
-    for (let i = 0; i < Math.max(moreCases.length, moreGuesses.length); i++) {
-      if (moreCases[i]) more.push(moreCases[i]);
-      if (moreGuesses[i]) more.push(moreGuesses[i]);
-    }
-
-    let body: string;
-    if (us) {
-      body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">Here&rsquo;s today&rsquo;s pair${more.length ? ', plus a few more from the case bank if you have time' : ''}. Work through each like a real interview, then see your score.</p>`;
-      if (headCase) {
-        const diff = headCase.difficulty ? ` · ${esc(headCase.difficulty)}` : '';
-        body += digestCard(`${caseIsDaily ? 'Today’s case' : 'Case to practice'}${diff}`, headCase.title, 'Clarify, structure, run the numbers and make a recommendation. The MECE interviewer pushes back, then scores you.', `${_SITE}/cases/${headCase.id}`, 'Start the case');
-      }
-      if (headGuess) {
-        body += digestCard(guessIsDaily ? 'Today’s market sizing' : 'Market sizing to practice', headGuess.title, 'Build your estimate step by step, state your assumptions and land on a number you can defend.', `${_SITE}/cases/${headGuess.id}`, 'Practice market sizing');
-      }
-    } else {
-      body = `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#1A2233;">${more.length ? 'Here&rsquo;s today&rsquo;s set — the daily guesstimate and case, plus a few more from the case bank if you have time.' : 'Here&rsquo;s the set — about 10 focused minutes, start to finish.'}</p>`;
-      if (headGuess) {
-        body += digestCard(guessIsDaily ? 'Today’s guesstimate' : 'Guesstimate to practise', headGuess.title, 'Build your estimate step by step, make your assumptions explicit, and arrive at a defendable number.', `${_SITE}/cases/${headGuess.id}`, 'Practice the guesstimate');
-      }
-      if (headCase) {
-        const diff = headCase.difficulty ? ` · ${esc(headCase.difficulty)}` : '';
-        body += digestCard(`${caseIsDaily ? 'Today’s case' : 'Case to practise'}${diff}`, headCase.title, 'Clarify, structure, quantify, and recommend — then get scored by the MECE AI interviewer.', `${_SITE}/cases/${headCase.id}`, 'Start the case');
-      }
-    }
-    if (!headCase && !headGuess) {
-      // Only when the bank itself is empty: never the normal outcome.
-      body += digestCard('Practice', us ? 'Your daily case and market sizing question' : 'Your daily case & guesstimate', 'Open MECE to practise.', `${_SITE}/practice`, 'Open practice');
-    }
-    body += digestMoreBlock(more, m);
-
+    // India only: the top headline from the last ~2 days, for the GD line.
+    let headline: string | null = null;
     if (!us) {
-      // Top news from the last ~2 days for the GD angle (India only).
       const since = new Date(Date.now() - 2 * 86_400_000).toISOString();
       const { data: news } = await db
         .from('news_headlines')
-        .select('title, source_name')
+        .select('title')
         .gte('published_at', since)
         .order('published_at', { ascending: false })
-        .limit(3);
-      if (news && news.length > 0) {
-        const items = (news as any[])
-          .map((n: any) => `<li style="margin:0 0 6px;">${esc(n.title)}${n.source_name ? ` <span style="color:#5B6472;">— ${esc(n.source_name)}</span>` : ''}</li>`)
-          .join('');
-        body += `
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;border:1px solid #E7E3DC;border-radius:12px;">
-        <tr><td style="padding:18px 20px;">
-          <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#C8102E;">In the news — for your GD</p>
-          <ul style="margin:0 0 12px;padding-left:18px;font-size:14px;line-height:1.55;color:#1A2233;">${items}</ul>
-          <a href="${_SITE}/gd-briefs" style="display:inline-block;background:#0F1C33;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:9px 18px;border-radius:8px;">Read today’s GD briefs &rarr;</a>
-        </td></tr>
-      </table>`;
-      }
+        .limit(1);
+      headline = ((news as Array<{ title: string }> | null)?.[0]?.title as string) ?? null;
     }
 
-    body += `<p style="margin:16px 0 0;font-size:14px;color:#5B6472;line-height:1.6;">That&rsquo;s it for today. Keep practicing.</p>`;
-
     const dateKey = pair.date || pair.today;
-    const subject = dailySubject(m, headGuess?.title ?? null, headCase?.title ?? null, dateKey);
-
-    const html = baseEmailLayout({
-      preheader: dailyPreheader(m, headCase?.title ?? null, dateKey),
-      // The heading stays stable inside the email — it is the subject line that
-      // has to earn the open, and a heading that repeats the subject wastes the
-      // first line of the body.
-      heading: 'Your MECE practice for today',
-      contentHtml: body,
-      unsubscribeUrl: '{{UNSUBSCRIBE}}',
-      ...(us ? { tagline: emailTagline('US') } : {}),
+    const letter = renderDailyLetter({
+      market: m,
+      site: _SITE,
+      dateKey,
+      guess: headGuess ? { id: headGuess.id, title: headGuess.title } : null,
+      kase: headCase ? { id: headCase.id, title: headCase.title, difficulty: headCase.difficulty } : null,
+      headline,
+      identity: statutoryIdentityLines(),
+      unsubscribe: '{{UNSUBSCRIBE}}',
     });
+    const subject = letter.subject;
+    const html = letter.html;
+    const text = letter.text;
 
     const label = us ? 'US' : 'India';
     const zone = us ? 'US Eastern' : 'IST';
-    const total = [headCase, headGuess].filter(Boolean).length + more.length;
+    const total = letter.links;
     let note: string;
     if (!pair.date) {
       note = `No ${label} daily pair has been scheduled yet, so all ${total} links come from the ${label} case bank.`;
     } else if (pair.date !== pair.today) {
       note = `${label} digest built with ${total} practice links. Today’s ${label} pair (${pair.today}, ${zone}) isn’t scheduled yet — the daily job runs after midnight and often starts late — so this uses the latest one (${pair.date}), which is what ${label} users see on their dashboard right now.`;
     } else {
-      note = `${label} digest built with ${total} practice links — today’s pair plus ${more.length} from the bank. Preview it on the right, then send.`;
+      note = `${label} digest built with ${total} practice links — a plain letter, no images. Preview it on the right, then send.`;
     }
     if (!pair.case && pair.date) note += ` The scheduled case could not be found, so a bank case stands in.`;
     if (!pair.guess && pair.date) note += ` The scheduled ${us ? 'market sizing question' : 'guesstimate'} could not be found, so a bank one stands in.`;
@@ -380,6 +203,7 @@ export async function buildDailyDigest(market: ContentMarket = 'IN', extra: numb
       success: true,
       subject,
       html,
+      text,
       note,
       market: m,
       picked: {

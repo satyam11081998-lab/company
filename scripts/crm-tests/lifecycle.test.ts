@@ -17,7 +17,7 @@
  * network, run `npx tsx scripts/check-deliverability.ts`.
  */
 import { test, eq, ok } from './harness';
-import { dailySubject } from '../../lib/email/digest';
+import { dailySubject, dailyPreheader, renderDailyLetter, coreOf } from '../../lib/email/digest-letter';
 import { renderNudge } from '../../lib/lifecycle/nudges';
 import type { NudgeTarget } from '../../lib/lifecycle/recipients';
 import { fromDomain, structuralChecks, worstVerdict, type Check } from '../../lib/lifecycle/deliverability';
@@ -63,6 +63,65 @@ test('subject: falls back to the case, and only goes generic with no content at 
   ok(/margins/i.test(dailySubject('IN', null, CASE, WEEK[0])));
   eq(dailySubject('IN', null, null, WEEK[0]), 'Your practice for today');
   eq(dailySubject('US', null, null, WEEK[0]), 'Your case practice for today');
+});
+
+test('subject: reads like a question worth answering, in three rotating shapes', () => {
+  const K = 'Estimate the Number of Daily Metro Commuters in Kolkata';
+  const subs = ['2026-11-14', '2026-11-15', '2026-11-16'].map((d) => dailySubject('IN', K, CASE, d));
+  eq([...subs].sort(), ['Daily Metro Commuters in Kolkata. Ten minutes.', 'Daily Metro Commuters in Kolkata: what’s your number?', 'Guess first: Daily Metro Commuters in Kolkata'].sort());
+  for (const s of subs) ok(!/^estimate|^tonight:|practice for today/i.test(s), s);
+  // a title that is already a question is left as one, never double-framed
+  for (const d of WEEK) ok(!/\?:|\?\.\s*Ten|number\?: what/i.test(dailySubject('IN', 'How many crackers will Delhi burn this Diwali?', CASE, d)));
+  eq(coreOf('Estimate the total number of EVs sold in Pune.'), 'EVs sold in Pune');
+});
+
+test('letter: the preview line never repeats the subject', () => {
+  for (const d of WEEK) {
+    const s = dailySubject('IN', GUESS, CASE, d).toLowerCase();
+    const p = dailyPreheader('IN', CASE, d).toLowerCase();
+    ok(p.length > 20 && p.length <= 110, p);
+    ok(!p.includes('air purifiers') && !s.includes(p.slice(0, 20)), `preview echoes subject on ${d}: ${p}`);
+  }
+});
+
+test('letter: built to be read as mail from a person, not a promotion', () => {
+  for (const market of ['IN', 'US'] as const) {
+    const m = renderDailyLetter({
+      market,
+      site: 'https://www.mece.in/',
+      dateKey: '2026-11-14',
+      guess: { id: 'g1', title: GUESS },
+      kase: { id: 'c1', title: CASE },
+      headline: 'RBI holds the repo rate <again>',
+      identity: ['MECE Technologies Private Limited', 'CIN U85499HR2026PTC152350'],
+      unsubscribe: '{{UNSUBSCRIBE}}',
+    });
+    ok(!/<img|<table|background:#0F1C33|display:inline-block/i.test(m.html), 'no image, table, band or button');
+    const hrefs = [...m.html.matchAll(/href="([^"]+)"/g)].map((x) => x[1]);
+    ok(hrefs.length <= 4, `${hrefs.length} links`);
+    ok(hrefs.every((h) => h === '{{UNSUBSCRIBE}}' || h.startsWith('https://www.mece.in/')), `off-domain or redirecting link: ${hrefs.join(' ')}`);
+    ok(!m.html.includes('//cases') && m.html.includes('https://www.mece.in/cases/g1'), 'clean case link');
+    ok(m.html.includes('{{UNSUBSCRIBE}}') && m.text.includes('{{UNSUBSCRIBE}}'), 'unsubscribe in both parts');
+    ok(m.text.includes(GUESS) && m.text.includes(CASE) && m.text.includes('— Satyam, MECE'), 'a real text part');
+    ok(!m.html.includes('<again>') , 'headline escaped');
+    ok(m.html.includes('CIN U85499HR2026PTC152350'), 'company identity in the footer');
+    ok(!/Your MECE practice for today|Keep practicing/i.test(m.html), 'the old constant heading is gone');
+    // the first thing a reader sees is the question, not a greeting or a heading
+    const firstBig = m.html.indexOf(GUESS);
+    ok(firstBig > 0 && firstBig < m.html.indexOf('Then build it properly'), 'question comes first');
+    eq(market === 'US' ? /group discussion/.test(m.html) : true, market === 'US' ? false : true, 'GD line is India only');
+    const words = m.text.split(/\s+/).length;
+    ok(words >= 60, `only ${words} words of text`);
+  }
+});
+
+test('letter: a night with only a case, or nothing, still reads properly', () => {
+  const base = { market: 'IN' as const, site: 'https://www.mece.in', dateKey: '2026-11-14', unsubscribe: '#' };
+  const onlyCase = renderDailyLetter({ ...base, guess: null, kase: { id: 'c1', title: CASE } });
+  ok(/Tonight’s case:/.test(onlyCase.text) && !/guesstimate/i.test(onlyCase.text));
+  const none = renderDailyLetter({ ...base, guess: null, kase: null });
+  eq(none.subject, 'Your practice for today');
+  ok(none.html.includes('https://www.mece.in/practice'));
 });
 
 const target = (kind: NudgeTarget['kind'], over: Partial<NudgeTarget> = {}): NudgeTarget =>

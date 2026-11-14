@@ -314,6 +314,7 @@ async function runDigest(market: ContentMarket, s: LifecycleSettings, o: RunOpti
     to: u ? u.email : s.testEmail,
     subject,
     html,
+    text: digest.text,
     // A live send is keyed on the day, so it can happen only once. A test send is
     // keyed on the minute, so reviewing it twice in an evening actually works —
     // there is nobody to spam but himself.
