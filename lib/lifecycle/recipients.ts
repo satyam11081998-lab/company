@@ -58,7 +58,7 @@ export async function optedInUsers(market: ContentMarket): Promise<LifecycleUser
   // The limit is explicit because PostgREST caps a response at 1000 rows by
   // default, and an unbounded select would truncate there without saying so —
   // which, for an audience query, means quietly not emailing people.
-  let { data, error } = await db.from('users').select(`${USER_COLS}, market`).limit(USER_FETCH_LIMIT);
+  let { data, error }: { data: any; error: any } = await db.from('users').select(`${USER_COLS}, market`).limit(USER_FETCH_LIMIT);
   if (error && /market/i.test(error.message || '')) {
     // Before migration 0070 there is no users.market: every account is India.
     ({ data, error } = await db.from('users').select(USER_COLS).limit(USER_FETCH_LIMIT));
