@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24in" height="18in" viewBox="0 0 2400 1800">
+<rect width="2400" height="1800" fill="#FAF9F6"/>
+<rect x="70" y="70" width="2260" height="1660" fill="none" stroke="#0F1C33" stroke-width="14"/>
+<rect x="96" y="96" width="2208" height="1608" fill="none" stroke="#C8102E" stroke-width="5"/>
+<text x="1200" y="380" text-anchor="middle" font-family="Inter" font-weight="700" font-size="173" fill="#0F1C33" letter-spacing="6">MECE TECHNOLOGIES</text>
+<text x="1200" y="584" text-anchor="middle" font-family="Inter" font-weight="700" font-size="173" fill="#0F1C33" letter-spacing="6">PRIVATE LIMITED</text>
+<text x="1200" y="770" text-anchor="middle" font-family="Noto Sans Devanagari" font-weight="700" font-size="112" fill="#0F1C33" letter-spacing="0">मेसी टेक्नोलॉजीज़ प्राइवेट लिमिटेड</text>
+<rect x="180" y="862" width="2040" height="9" fill="#C8102E"/>
+<text x="1200" y="995" text-anchor="middle" font-family="Inter" font-weight="600" font-size="96" fill="#1A2233" letter-spacing="2">CIN: U85499HR2026PTC152350</text>
+<text x="1200" y="1125" text-anchor="middle" font-family="Inter" font-weight="600" font-size="58" fill="#5B6472" letter-spacing="12">REGISTERED OFFICE</text>
+<text x="1200" y="1225" text-anchor="middle" font-family="Inter" font-weight="400" font-size="70" fill="#1A2233" letter-spacing="0">Radhey Shayam, Vill. Chandhat, Palwal, Haryana – 121102</text>
+<text x="1200" y="1325" text-anchor="middle" font-family="Noto Sans Devanagari" font-weight="400" font-size="76" fill="#1A2233" letter-spacing="0">राधेश्याम, गाँव चांदहट, पलवल, हरियाणा – 121102</text>
+<rect x="940" y="1415" width="520" height="4" fill="#5B6472" opacity="0.4"/>
+<text x="1200" y="1530" text-anchor="middle" font-family="Inter" font-weight="600" font-size="78" fill="#1A2233" letter-spacing="0">team@mece.in</text>
+<text x="1200" y="1645" text-anchor="middle" font-family="Inter" font-weight="600" font-size="78" fill="#1A2233" letter-spacing="0">+91 74164 40232</text>
+</svg>

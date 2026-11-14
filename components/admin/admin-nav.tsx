@@ -6,7 +6,7 @@ import {
   LayoutDashboard, MessageSquareQuote, Users, Megaphone, FileText,
   FolderLock, Flag, Sparkles, Activity, BadgeCheck, BarChart3,
   UsersRound, TicketPercent, Award, Cpu, Bot, Rocket, Globe, ClipboardCheck, Contact,
-  Swords,
+  Swords, MailCheck,
 } from 'lucide-react';
 
 const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -30,6 +30,7 @@ const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: stri
   { href: '/admin/team', label: 'Who builds MECE', icon: Users },
   { href: '/admin/cases', label: 'Cases', icon: Sparkles },
   { href: '/admin/broadcast', label: 'Broadcast', icon: Megaphone },
+  { href: '/admin/daily-email', label: 'Daily email', icon: MailCheck },
   { href: '/admin/decks', label: 'Deck Vault', icon: FolderLock },
   { href: '/crm/m/cases?view=feedback', label: 'Feedback → CRM', icon: Flag },
 ];

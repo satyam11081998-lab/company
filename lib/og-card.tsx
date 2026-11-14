@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { OG_FONTS } from './og-fonts';
 
 /**
  * The MECE Open Graph share card (1200×630). ONE implementation, used by:
@@ -54,7 +55,7 @@ export function renderOgCard({ title, subtitle, badge }: OgCardInput): ImageResp
           padding: 72,
           background: 'linear-gradient(135deg, #16294a 0%, #0F1C33 60%, #0a1424 100%)',
           color: '#ffffff',
-          fontFamily: 'sans-serif',
+          fontFamily: 'Inter, sans-serif',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -113,6 +114,10 @@ export function renderOgCard({ title, subtitle, badge }: OgCardInput): ImageResp
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      width: 1200,
+      height: 630,
+      fonts: OG_FONTS,
+    }
   );
 }

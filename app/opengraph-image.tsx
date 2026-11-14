@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { OG_FONTS } from '@/lib/og-fonts';
 
 // Node runtime (no `runtime = 'edge'`) so the card is drawn once at build time
 // instead of on the edge after every deploy (2026-10-07). Same pixels.

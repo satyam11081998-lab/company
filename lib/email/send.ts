@@ -103,6 +103,13 @@ export interface BulkMessage {
   text?: string;
   /** Per-recipient unsubscribe URL → List-Unsubscribe (one-click) header. */
   listUnsubscribe?: string;
+  /**
+   * Reply-To. Worth setting on anything that invites an answer: a reply is the
+   * strongest positive engagement signal a mailbox provider can observe, and it
+   * is the one deliverability lever that also hands you the thing you actually
+   * wanted — a sentence from a real user.
+   */
+  replyTo?: string;
 }
 export interface BulkResult {
   sent: number;
@@ -136,6 +143,9 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
         html: m.html,
         text: m.text || htmlToText(m.html),
         headers: unsubHeaders(m.listUnsubscribe),
+        // Resend's field name is snake_case; omitted entirely when unset so the
+        // payload is unchanged for every existing caller.
+        ...(m.replyTo ? { reply_to: m.replyTo } : {}),
       }));
       try {
         const res = await fetch('https://api.resend.com/emails/batch', {
@@ -206,6 +216,7 @@ export async function sendBulk(messages: BulkMessage[]): Promise<BulkResult> {
           html: m.html,
           text: m.text || htmlToText(m.html),
           headers: unsubHeaders(m.listUnsubscribe),
+          ...(m.replyTo ? { replyTo: m.replyTo } : {}),
         });
         sent += 1;
       } catch (e: any) {

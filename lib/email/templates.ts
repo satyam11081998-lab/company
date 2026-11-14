@@ -2,7 +2,22 @@
  * Branded HTML email templates for MECE.
  * Table-based layout + inline styles for broad email-client compatibility.
  * Brand: navy #0F1C33, cardinal red #C8102E, warm off-white #FAF9F6, Inter.
+ *
+ * STATUTORY NOTE (2026-11-08). Companies Act 2013 s.12(3)(c) requires the
+ * company name, registered office address and CIN — with telephone, e-mail and
+ * (if any) website — on ALL business letters and billheads, not only on
+ * invoices. That block therefore lives in `baseEmailLayout` and so appears on
+ * every email this file can produce. Tax particulars under CGST Rule 46 are a
+ * separate matter and appear only in the invoice section of the receipt.
+ * Source of truth for every identifier: `lib/legal/company.ts`.
  */
+
+import { statutoryIdentityLines } from '@/lib/legal/company';
+import {
+  formatInvoiceDate,
+  formatMinor,
+  type InvoiceDocument,
+} from '@/lib/legal/invoice';
 
 const NAVY = '#0F1C33';
 const RED = '#C8102E';
@@ -40,6 +55,20 @@ export const EMAIL_TAGLINE_INTL = 'Case interview prep for consulting, finance a
 /** The footer line for a content market ('IN' | 'US'). */
 export function emailTagline(content: 'IN' | 'US'): string {
   return content === 'US' ? EMAIL_TAGLINE_INTL : EMAIL_TAGLINE_IN;
+}
+
+/**
+ * The Companies Act s.12(3)(c) identity block, rendered small and grey at the
+ * foot of every email. Returns '' while `lib/legal/company.ts` has nothing to
+ * print, so output is byte-identical to before until the registration details
+ * are filled in — and `missingStatutoryFields()` is what surfaces the gap.
+ */
+function statutoryFooterHtml(): string {
+  const lines = statutoryIdentityLines();
+  if (lines.length === 0) return '';
+  return `<div style="margin:0 0 10px;font-size:11px;color:${MUTED};line-height:1.6;">${lines
+    .map((l) => escapeHtml(l))
+    .join('<br/>')}</div>`;
 }
 
 /** The shared shell every MECE email renders inside. */
@@ -83,7 +112,7 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
         </tr></table>
       </td></tr>
       <tr><td style="padding:12px 28px 22px;background:${OFFWHITE};font-family:Inter,Helvetica,Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.6;">
-        <a href="${SITE_URL}" style="color:${MUTED};text-decoration:underline;">mece.in</a>${unsub}
+        ${statutoryFooterHtml()}<a href="${SITE_URL}" style="color:${MUTED};text-decoration:underline;">mece.in</a>${unsub}
       </td></tr>
     </table>
   </td></tr>
@@ -99,6 +128,82 @@ export interface UpgradeReceiptData {
   expiresAt?: string | null; // ISO
   /** International orders (2026-09-25). Absent → INR, byte-identical to before. */
   currency?: 'INR' | 'USD' | 'EUR';
+  /**
+   * The statutory invoice, when one could be issued (`lib/legal/issue-invoice.ts`).
+   * Absent → the email stays the plain payment confirmation it has always been.
+   * That is the deliberate fallback: a confirmation that does not call itself an
+   * invoice breaks no rule, whereas an invoice short of its mandatory
+   * particulars is a default on every copy sent.
+   */
+  invoice?: InvoiceDocument | null;
+}
+
+/**
+ * The invoice, as the recipient sees it. Every row here is a particular that
+ * CGST Rule 46 requires, or — while the company is not GST-registered — the
+ * explanation of why the tax rows are absent. Renders nothing itself: the
+ * caller decides where it sits in the email.
+ */
+function invoiceBlockHtml(doc: InvoiceDocument): string {
+  const cur = doc.currency;
+  const money = (minor: number) => formatMinor(minor, cur);
+  const { tax } = doc;
+
+  // [label, already-safe value HTML, emphasise?]
+  const rows: Array<[string, string, boolean]> = [
+    [`${doc.title} no.`, `<strong>${escapeHtml(doc.number)}</strong>`, false],
+    ['Date of issue', escapeHtml(formatInvoiceDate(doc.issuedAt, cur)), false],
+  ];
+
+  if (doc.recipient.name) rows.push(['Billed to', escapeHtml(doc.recipient.name), false]);
+  if (doc.recipient.gstin) rows.push(['Customer GSTIN', escapeHtml(doc.recipient.gstin), false]);
+
+  // Rule 46 proviso for online services supplied to an unregistered recipient:
+  // the recipient's State name goes on the invoice whatever the value.
+  if (doc.recipient.stateCode && doc.kind === 'tax-invoice') {
+    rows.push(['Recipient State code', escapeHtml(doc.recipient.stateCode), false]);
+  }
+  if (doc.placeOfSupply) rows.push(['Place of supply', escapeHtml(doc.placeOfSupply), false]);
+
+  const sac = doc.line.sacCode ? ` (SAC ${doc.line.sacCode})` : '';
+  rows.push(['Description', escapeHtml(doc.line.description + sac), false]);
+
+  if (tax.cgstMinor + tax.sgstMinor + tax.igstMinor > 0) {
+    const half = (tax.ratePercent / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    rows.push(['Taxable value', money(tax.taxableMinor), false]);
+    if (tax.igstMinor > 0) {
+      rows.push([`IGST @ ${tax.ratePercent}%`, money(tax.igstMinor), false]);
+    } else {
+      rows.push([`CGST @ ${half}%`, money(tax.cgstMinor), false]);
+      rows.push([`SGST @ ${half}%`, money(tax.sgstMinor), false]);
+    }
+  }
+  rows.push(['Total paid', `<strong>${money(tax.grossMinor)}</strong>`, true]);
+  rows.push(['Tax payable on reverse charge', doc.reverseCharge ? 'Yes' : 'No', false]);
+
+  const html = rows
+    .map(([label, value, strong], i) => {
+      // No rule under the final row: it would cut across the rounded corner.
+      const edge = i === rows.length - 1 ? '' : `border-bottom:1px solid ${BORDER};`;
+      const base = `padding:9px 14px;${edge}font-size:13px;`;
+      return (
+        `<tr><td style="${base}color:${MUTED};">${escapeHtml(label)}</td>` +
+        `<td style="${base}text-align:right;color:${INK};${strong ? 'font-weight:700;' : ''}">${value}</td></tr>`
+      );
+    })
+    .join('\n      ');
+
+  const notes = [doc.noTaxNote, doc.exportEndorsement, doc.signatureNote]
+    .filter((n): n is string => Boolean(n))
+    .map((text) => `<p style="margin:10px 0 0;font-size:11px;color:${MUTED};line-height:1.55;">${escapeHtml(text)}</p>`)
+    .join('');
+
+  return `
+    <div style="margin:22px 0 4px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${NAVY};">${escapeHtml(doc.title)}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 0;border:1px solid ${BORDER};border-radius:10px;border-collapse:separate;">
+      ${html}
+    </table>
+    ${notes}`;
 }
 
 /** Receipt amount labels. INR output is exactly what the template always printed. */
@@ -112,7 +217,44 @@ function receiptAmount(d: UpgradeReceiptData): { html: string; text: string } {
   return { html: `&#8377;${d.amountInr.toLocaleString('en-IN')}`, text: `Rs ${d.amountInr.toLocaleString('en-IN')}` };
 }
 
-/** Transactional payment/upgrade confirmation. */
+/** The same particulars as `invoiceBlockHtml`, for the plain-text alternative. */
+function invoiceBlockText(doc: InvoiceDocument): string {
+  const cur = doc.currency;
+  const money = (minor: number) => formatMinor(minor, cur);
+  const { tax } = doc;
+  const lines: string[] = [
+    doc.title.toUpperCase(),
+    `${doc.title} no.: ${doc.number}`,
+    `Date of issue: ${formatInvoiceDate(doc.issuedAt, cur)}`,
+  ];
+  if (doc.recipient.name) lines.push(`Billed to: ${doc.recipient.name}`);
+  if (doc.recipient.gstin) lines.push(`Customer GSTIN: ${doc.recipient.gstin}`);
+  if (doc.recipient.stateCode && doc.kind === 'tax-invoice') {
+    lines.push(`Recipient State code: ${doc.recipient.stateCode}`);
+  }
+  if (doc.placeOfSupply) lines.push(`Place of supply: ${doc.placeOfSupply}`);
+  lines.push(
+    `Description: ${doc.line.description}${doc.line.sacCode ? ` (SAC ${doc.line.sacCode})` : ''}`,
+  );
+  if (tax.cgstMinor + tax.sgstMinor + tax.igstMinor > 0) {
+    const half = tax.ratePercent / 2;
+    lines.push(`Taxable value: ${money(tax.taxableMinor)}`);
+    if (tax.igstMinor > 0) {
+      lines.push(`IGST @ ${tax.ratePercent}%: ${money(tax.igstMinor)}`);
+    } else {
+      lines.push(`CGST @ ${half}%: ${money(tax.cgstMinor)}`);
+      lines.push(`SGST @ ${half}%: ${money(tax.sgstMinor)}`);
+    }
+  }
+  lines.push(`Total paid: ${money(tax.grossMinor)}`);
+  lines.push(`Tax payable on reverse charge: ${doc.reverseCharge ? 'Yes' : 'No'}`);
+  for (const n of [doc.noTaxNote, doc.exportEndorsement, doc.signatureNote]) {
+    if (n) lines.push(n);
+  }
+  return lines.join('\n');
+}
+
+/** Transactional payment/upgrade confirmation, carrying the invoice when one was issued. */
 export function upgradeReceiptEmail(d: UpgradeReceiptData): { subject: string; html: string; text: string } {
   const firstName = d.name ? escapeHtml(d.name.split(' ')[0]) : null;
   const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
@@ -131,14 +273,16 @@ export function upgradeReceiptEmail(d: UpgradeReceiptData): { subject: string; h
       ${row('Amount paid', amount.html, !expiry)}
       ${expiry ? row('Access until', expiry, true) : ''}
     </table>
-    <p style="margin:0;">Jump back in and put it to work:</p>`;
+    ${d.invoice ? invoiceBlockHtml(d.invoice) : ''}
+    <p style="margin:18px 0 0;">Jump back in and put it to work:</p>`;
   const html = baseEmailLayout({
     preheader: `Your MECE ${d.tierLabel} upgrade is confirmed.`,
     heading: `You're now on MECE ${escapeHtml(d.tierLabel)}`,
     contentHtml: content,
     cta: { label: 'Go to your dashboard', url: `${SITE_URL}/dashboard` },
-    footerNote:
-      'This is a payment confirmation for your records. Questions about your subscription? Just reply to this email.',
+    footerNote: d.invoice
+      ? `${d.invoice.title} ${d.invoice.number} is reproduced above and is valid for your records and for reimbursement. Questions about your subscription? Just reply to this email.`
+      : 'This is a payment confirmation for your records. Questions about your subscription? Just reply to this email.',
   });
   const text = `${firstName ? `Hi ${d.name},` : 'Hi there,'}
 
@@ -146,11 +290,15 @@ Your upgrade to MECE ${d.tierLabel} is confirmed.
 
 Plan: ${d.tierLabel} (${d.periodLabel})
 Amount paid: ${amount.text}${expiry ? `\nAccess until: ${expiry}` : ''}
-
+${d.invoice ? `\n${invoiceBlockText(d.invoice)}\n` : ''}
 Go to your dashboard: ${SITE_URL}/dashboard
 
-— MECE · mece.in`;
-  return { subject: `Your MECE ${d.tierLabel} upgrade is confirmed`, html, text };
+— MECE · mece.in
+${statutoryIdentityLines().join('\n')}`;
+  const subject = d.invoice
+    ? `Your MECE ${d.tierLabel} upgrade is confirmed — ${d.invoice.title.toLowerCase()} ${d.invoice.number}`
+    : `Your MECE ${d.tierLabel} upgrade is confirmed`;
+  return { subject, html, text };
 }
 
 /** Transactional welcome email, sent once when a user finishes onboarding. */

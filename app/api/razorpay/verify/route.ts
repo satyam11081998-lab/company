@@ -12,6 +12,8 @@ import {
 } from '@/lib/payments-region';
 import { sendUpgradeReceipt } from '@/lib/email/send';
 import { notifyAdmin } from '@/lib/telegram';
+import { issueInvoiceForPayment } from '@/lib/legal/issue-invoice';
+import type { InvoiceDocument } from '@/lib/legal/invoice';
 import { DECK_SINGLE_PRICE_INR, DECK_VAULT_PRICE_INR } from '@/lib/deck-access';
 import { realtimePack } from '@/lib/realtime-packs';
 import {
@@ -388,20 +390,59 @@ export async function POST(req: Request) {
         });
       }
 
+      const recipientRow = updatedRows[0] as { name?: string | null; email?: string | null };
+      const tierLabel = tier === 'pro' ? 'Pro' : 'Lite';
+      const periodLabel = BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'];
+
+      // Statutory invoice: Companies Act s.12(3)(c) identifiers plus, once the
+      // company is GST-registered, the CGST Rule 46 particulars. The number is
+      // allocated here — after the payment is known good — so the series stays
+      // consecutive and abandoned checkouts burn no numbers.
+      // Non-blocking by design: if it cannot be issued the customer still gets
+      // access and a plain payment confirmation, and the alert says what to fix.
+      let invoice: InvoiceDocument | null = null;
+      try {
+        const issued = await issueInvoiceForPayment(db, {
+          razorpayPaymentId: razorpay_payment_id,
+          grossMinor: amountPaise,
+          currency,
+          paidAt: now,
+          recipient: {
+            name: recipientRow?.name ?? null,
+            email: recipientRow?.email ?? user.email ?? null,
+            // Not collected at checkout yet. Harmless while unregistered; the
+            // Rule 46 proviso for online services makes it mandatory from the
+            // day of GST registration. See migration 0082, note 2.
+            stateCode: null,
+            gstin: null,
+            countryOfDestination: null,
+          },
+          description: `MECE ${tierLabel} subscription — ${periodLabel}`,
+        });
+        if (issued.issued) {
+          invoice = issued.document;
+        } else {
+          console.warn('[verify] no invoice issued:', issued.reason);
+          await notifyAdmin(`⚠️ MECE: no invoice issued for payment ${razorpay_payment_id} — ${issued.reason}`);
+        }
+      } catch (e) {
+        console.error('[verify] invoice issue threw:', e);
+      }
+
       // Branded upgrade receipt (transactional, via Google Workspace SMTP).
       // Non-blocking: an email failure must never fail a paid upgrade. Runs only
       // on first processing (the replay guard returned above for repeats), so the
       // webhook backstop won't double-send.
       try {
-        const recipient = updatedRows[0] as { name?: string | null; email?: string | null };
-        const target = recipient?.email || user.email || '';
+        const target = recipientRow?.email || user.email || '';
         const res = await sendUpgradeReceipt(target, {
-          name: recipient?.name ?? null,
-          tierLabel: tier === 'pro' ? 'Pro' : 'Lite',
-          periodLabel: BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'],
+          name: recipientRow?.name ?? null,
+          tierLabel,
+          periodLabel,
           amountInr: currency === 'INR' ? Math.round(Number(order.amount) / 100) : Number(order.amount) / 100,
           expiresAt: expiresAt.toISOString(),
           ...(currency !== 'INR' ? { currency } : {}),
+          invoice,
         });
         // Visibility: a paying customer with no receipt is a silent failure —
         // surface it on Telegram so it can be fixed (usually missing/incorrect

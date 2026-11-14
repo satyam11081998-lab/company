@@ -10,6 +10,8 @@ import {
 } from '@/lib/payments-region';
 import { sendUpgradeReceipt } from '@/lib/email/send';
 import { notifyAdmin } from '@/lib/telegram';
+import { issueInvoiceForPayment } from '@/lib/legal/issue-invoice';
+import type { InvoiceDocument } from '@/lib/legal/invoice';
 import {
   loadCoupon,
   couponHonouredAtPayment,
@@ -213,14 +215,42 @@ export async function POST(req: Request) {
         try {
           const { data: u } = await supabase.from('users').select('name, email').eq('id', uid).maybeSingle();
           const target = u as { name?: string | null; email?: string | null } | null;
+          const tierLabel = tier === 'pro' ? 'Pro' : 'Lite';
+          const periodLabel = BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'];
+
+          // Same statutory invoice as /verify, through the same allocator, so a
+          // payment settled by this backstop is never numbered twice or skipped.
+          let invoice: InvoiceDocument | null = null;
+          const issued = await issueInvoiceForPayment(supabase, {
+            razorpayPaymentId: paymentId,
+            grossMinor: Number(order.amount),
+            currency,
+            paidAt: now,
+            recipient: {
+              name: target?.name ?? null,
+              email: target?.email ?? null,
+              stateCode: null, // see migration 0082, note 2
+              gstin: null,
+              countryOfDestination: null,
+            },
+            description: `MECE ${tierLabel} subscription — ${periodLabel}`,
+          });
+          if (issued.issued) {
+            invoice = issued.document;
+          } else {
+            console.warn('[webhook] no invoice issued:', issued.reason);
+            await notifyAdmin(`⚠️ MECE: no invoice issued for payment ${paymentId} — ${issued.reason}`);
+          }
+
           if (target?.email) {
             await sendUpgradeReceipt(target.email, {
               name: target.name ?? null,
-              tierLabel: tier === 'pro' ? 'Pro' : 'Lite',
-              periodLabel: BILLING_PERIOD_LABELS[isBillingPeriod(period) ? period : 'monthly'],
+              tierLabel,
+              periodLabel,
               amountInr: currency === 'INR' ? Math.round(Number(order.amount) / 100) : Number(order.amount) / 100,
               expiresAt: expiresAt.toISOString(),
               ...(currency !== 'INR' ? { currency } : {}),
+              invoice,
             });
           }
         } catch (e) {

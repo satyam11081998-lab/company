@@ -7,5 +7,7 @@ import './service.test';
 import './automation.test';
 import './insights.test';
 import './staff-paths.test';
+import './lifecycle.test';
+import './upgrade.test';
 
 run();
