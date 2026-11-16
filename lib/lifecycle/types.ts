@@ -89,6 +89,7 @@ export interface UpgradeDraft {
   name: string | null;
   subject: string;
   html: string;
+  text: string;
   segment: string;
   label: string;
   /** The recipient's own numbers that put them in this segment. */

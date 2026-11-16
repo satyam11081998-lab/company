@@ -59,7 +59,7 @@ async function soft<T>(fn: () => PromiseLike<{ data: any; error: any }>): Promis
 export async function upgradeTargets(): Promise<UpgradeTarget[]> {
   const db = createServiceClient();
   const cols = 'id, email, name, subscription_tier, subscription_expires_at, marketing_opt_out, created_at';
-  let { data, error } = await db.from('users').select(`${cols}, market`).limit(FETCH_LIMIT);
+  let { data, error }: { data: any; error: any } = await db.from('users').select(`${cols}, market`).limit(FETCH_LIMIT);
   if (error && /market/i.test(error.message || '')) ({ data, error } = await db.from('users').select(cols).limit(FETCH_LIMIT));
   if (error) throw new Error(error.message);
   const users = ((data as any[]) || []).filter((u) => u?.email && !u.marketing_opt_out && contentMarketOf(u.market) === 'IN');
