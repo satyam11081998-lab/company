@@ -235,7 +235,7 @@ export default async function ResultPage({ params }: { params: { id: string } })
   return (
     <div className="min-h-screen bg-muted">
       <main className="container max-w-6xl py-10">
-        <TrackPageAction action="view_results" category="case" label={ranked ? `Score: ${score}/100` : 'Whiteboard run (not ranked)'} value={{ submission_id: params.id, score, ranked, is_guesstimate: isGuesstimate, attempt_id: attemptId }} />
+        <TrackPageAction action="view_results" category="case" label={ranked ? `Score: ${score}/100` : 'Learning mode run (not ranked)'} value={{ submission_id: params.id, score, ranked, is_guesstimate: isGuesstimate, attempt_id: attemptId }} />
 
         {newBadges.length > 0 && (
           <Card className="mb-6 border-primary/20 bg-primary/[0.03] p-5">

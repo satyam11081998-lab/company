@@ -5,7 +5,7 @@ import { Check, X } from 'lucide-react';
 import type { AttemptMode } from '@/lib/interview-api';
 
 /**
- * The choice that opens a case: Interview or Whiteboard.
+ * The choice that opens a case: Interview or Learning mode (internally still `whiteboard`).
  *
  * Shown before the attempt is created, because the mode is immutable once it exists
  * (migration 0076) — a candidate must not be able to take the help and then claim the
@@ -118,17 +118,17 @@ function ModePickerImpl({ caseTitle, onChoose, busy }: ModePickerProps) {
           busy={busy}
         />
         <Option
-          name="Whiteboard"
+          name="Learning mode"
           blurb="Work it out in the open, with your thinking drawn as you go."
           rows={WHITEBOARD}
-          cta={busy ? 'Starting…' : 'Open the whiteboard'}
+          cta={busy ? 'Starting…' : 'Start learning mode'}
           onPick={() => onChoose('whiteboard')}
           busy={busy}
         />
       </div>
 
       <p className="mt-6 text-small text-muted-foreground">
-        New to this case? The Whiteboard is where you learn it. Come back and sit the Interview
+        New to this case? Learning mode is where you learn it. Come back and sit the Interview
         when you want the number.
       </p>
     </div>

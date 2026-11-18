@@ -168,7 +168,7 @@ export default function ResultsDeck(p: ResultsDeckProps) {
               </div>
             ) : (
               <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <p className="text-small font-semibold text-foreground">Whiteboard run — not scored</p>
+                <p className="text-small font-semibold text-foreground">Learning mode run — not scored</p>
                 <p className="mt-1 text-small leading-relaxed text-muted-foreground">
                   You worked this one through with help, so there is no mark and it does not count
                   toward your ranking. What is below is the part that transfers. Run it as an

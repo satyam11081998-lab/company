@@ -1284,7 +1284,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
           {/* Which room they are in. The two modes behave very differently, so this is
               never implicit -- and it is the mode the ATTEMPT carries, not the one that
               was asked for. */}
-          <span className="text-foreground">{interview ? 'Interview' : 'Whiteboard'}</span>
+          <span className="text-foreground">{interview ? 'Interview' : 'Learning mode'}</span>
         </div>
         <h1 className="mt-1 text-h4 font-semibold leading-tight text-foreground">{caseDetail.title}</h1>
       </header>
@@ -1361,7 +1361,7 @@ export default function ConversationalSolve({ caseId, initialCase, historyPanel,
             {/* Which room they are in. The two modes behave very differently, so this is
                 never implicit -- and it is the mode the ATTEMPT carries, not the one that
                 was asked for. */}
-            <span className="text-foreground">{interview ? 'Interview' : 'Whiteboard'}</span>
+            <span className="text-foreground">{interview ? 'Interview' : 'Learning mode'}</span>
           </div>
           <h1 className="mt-1 text-h4 font-semibold leading-tight text-foreground">
             {caseDetail.title}
