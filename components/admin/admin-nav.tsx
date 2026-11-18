@@ -17,7 +17,6 @@ const SECTIONS: { href: string; label: string; icon: React.FC<{ className?: stri
   { href: '/admin/journeys', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
   { href: '/admin/status', label: 'Status', icon: Activity },
-  { href: '/admin/ai-usage', label: 'AI usage', icon: BarChart3 },
   { href: '/admin/ai-providers', label: 'AI providers', icon: Cpu },
   { href: '/admin/agentic', label: 'Agentic AI', icon: Bot },
   { href: '/admin/arena', label: 'Interviewer arena', icon: Swords },
